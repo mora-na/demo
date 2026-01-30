@@ -1,44 +1,43 @@
 package com.example.demo.controller;
 
-import com.example.demo.entity.User;
+import com.example.demo.framework.config.UserConfig;
 import com.example.demo.service.UserService;
+import com.example.demo.vo.UserVO;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @Slf4j
-@RestController("/")
-public class HelloWorld {
+@RestController
+@RequestMapping("/hello")
+@RequiredArgsConstructor
+public class HelloWorldController {
 
-    private final UserService masterUserService;
+    private final UserService userService;
 
-    private final UserService slaveUserService;
-
-    public HelloWorld(@Qualifier("masterUserServiceImpl") UserService masterUserService, @Qualifier("slaveUserServiceImpl") UserService slaveUserService) {
-        this.masterUserService = masterUserService;
-        this.slaveUserService = slaveUserService;
+    @RequestMapping("/selectUsers")
+    public List<UserVO> listUser(@RequestParam(defaultValue = "1") int pageNum,
+                                 @RequestParam(defaultValue = "10")int pageSize,
+                                 @RequestParam UserVO userVO) {
+        return userService.getUserVO(userService.selectUsers(pageNum, pageSize, userVO));
     }
 
-    @RequestMapping("/")
-    public String helloWorld() {
-        log.info("Received request to helloWorld");
-        return "Hello World";
-    }
 
-    @GetMapping("/getAllMasterUserInfo")
-    public List<User> getAllMasterUserInfo() {
-        return masterUserService.getAllUserInfo();
-    }
-
-    @GetMapping("/getAllSlaveUserInfo")
-    public List<User> getAllSlaveUserInfo() {
-        return slaveUserService.getAllUserInfo();
+    @GetMapping("/getKeyValue")
+    public Object getKeyValue(String key) {
+        log.info("Received request to getKeyValue,key:[{}]", key);
+        if (StringUtils.isBlank(key)){
+            return null;
+        }
+        Object value = UserConfig.CONFIG.get(key);
+        log.info("key:[{}],value:[{}]", key, value);
+        return value;
     }
 
 }

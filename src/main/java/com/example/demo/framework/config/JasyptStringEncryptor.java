@@ -1,10 +1,8 @@
-package com.example.demo.tools;
+package com.example.demo.framework.config;
 
-import com.baomidou.dynamic.datasource.provider.YmlDynamicDataSourceProvider;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jasypt.encryption.StringEncryptor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
@@ -49,6 +47,16 @@ public class JasyptStringEncryptor implements StringEncryptor {
         }
     }
 
+    public static void main(String[] args) {
+        String password = "fuck";
+        JasyptStringEncryptor jasyptUtil = new JasyptStringEncryptor(password);
+        String encrypt = jasyptUtil.encrypt("Unitech@1234");
+        System.out.println(encrypt);
+        String decrypt = jasyptUtil.decrypt(encrypt);
+        System.out.println(decrypt);
+
+    }
+
     @Override
     public String encrypt(String message) {
         try {
@@ -72,17 +80,6 @@ public class JasyptStringEncryptor implements StringEncryptor {
         } catch (Exception e) {
             throw new RuntimeException("SM4 ECB decryption error", e);
         }
-    }
-
-
-    public static void main(String[] args) {
-        String password = "fuck";
-        JasyptStringEncryptor jasyptUtil = new JasyptStringEncryptor(password);
-        String encrypt = jasyptUtil.encrypt("Unitech@1234");
-        System.out.println(encrypt);
-        String decrypt = jasyptUtil.decrypt(encrypt);
-        System.out.println(decrypt);
-
     }
 
 }

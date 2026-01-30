@@ -15,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName(value = "sys_user")
-public class User implements Serializable {
+public class UserDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -29,6 +29,6 @@ public class User implements Serializable {
     private String sex;
 
     @TableField(exist = false)
-    private List<Order> orders; // 一对多
+    private List<OrderDTO> orderDTOS; // 一对多
 
 }

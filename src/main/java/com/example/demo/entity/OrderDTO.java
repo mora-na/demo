@@ -11,10 +11,10 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Data
-@TableName(value = "order")
+@TableName(value = "sys_order")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Order implements Serializable {
+public class OrderDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
