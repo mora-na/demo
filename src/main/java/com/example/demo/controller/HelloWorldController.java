@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.entity.UserDTO;
 import com.example.demo.framework.config.UserConfig;
 import com.example.demo.service.UserService;
 import com.example.demo.vo.UserVO;
@@ -23,16 +24,23 @@ public class HelloWorldController {
 
     @RequestMapping("/selectUsers")
     public List<UserVO> listUser(@RequestParam(defaultValue = "1") int pageNum,
-                                 @RequestParam(defaultValue = "10")int pageSize,
+                                 @RequestParam(defaultValue = "10") int pageSize,
                                  @RequestParam UserVO userVO) {
         return userService.getUserVO(userService.selectUsers(pageNum, pageSize, userVO));
     }
 
+    @RequestMapping("/update")
+    public UserVO update() {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setName("test");
+        userDTO.setSex("1");
+        return userService.getUserVO(userService.selectOneByMultiId(userDTO));
+    }
 
     @GetMapping("/getKeyValue")
     public Object getKeyValue(String key) {
         log.info("Received request to getKeyValue,key:[{}]", key);
-        if (StringUtils.isBlank(key)){
+        if (StringUtils.isBlank(key)) {
             return null;
         }
         Object value = UserConfig.CONFIG.get(key);

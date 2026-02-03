@@ -12,4 +12,6 @@ public interface UserService extends IMppService<UserDTO> {
 
     List<UserVO> getUserVO(List<UserDTO> userDTOList);
 
+    UserVO getUserVO(UserDTO userDTO);
+
 }

@@ -40,4 +40,9 @@ public class UserServiceImpl extends MppServiceImpl<UserMapper, UserDTO> impleme
         return userDTOList.stream().map(userDTO -> new UserVO(userDTO.getId(), userDTO.getName(), userDTO.getSex(), orderService.getOrderVO(userDTO.getOrderDTOS()))).collect(Collectors.toList());
     }
 
+    @Override
+    public UserVO getUserVO(UserDTO userDTO) {
+        return new UserVO(userDTO.getId(), userDTO.getName(), userDTO.getSex(), orderService.getOrderVO(userDTO.getOrderDTOS()));
+    }
+
 }

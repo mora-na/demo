@@ -39,7 +39,7 @@
         <commons-io.version>2.20.0</commons-io.version>
         <httpclient.version>4.5.14</httpclient.version>
         <postgresql.version>42.7.7</postgresql.version>
-        <mybatis-plus.version>3.5.12</mybatis-plus.version>
+        <mybatis-plus.version>3.5.16</mybatis-plus.version>
         <commons-lang3.version>3.18.0</commons-lang3.version>
         <bcprov-jdk18on.version>1.81</bcprov-jdk18on.version>
         <junit-platform.version>1.8.2</junit-platform.version>
