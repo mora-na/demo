@@ -1,5 +1,6 @@
 package com.example.demo.vo;
 
+import com.example.demo.entity.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,15 @@ public class UserVO implements Serializable {
 
     private String sex;
 
+    private String tst;
+
     private List<OrderVO> orderVOS; // 一对多
+
+    public UserDTO toUserDTO(UserVO userVO) {
+        if (userVO == null) {
+            return new UserDTO();
+        }
+        return new UserDTO(userVO.getId(), userVO.getName(), userVO.getSex(), userVO.getTst());
+    }
 
 }

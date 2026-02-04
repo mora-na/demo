@@ -1,0 +1,86 @@
+package com.example.demo.framework.controller;
+
+
+import com.example.demo.framework.web.PageParam;
+import com.example.demo.framework.web.PageResult;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+public abstract class BaseController {
+
+    protected void startPage() {
+        HttpServletRequest req = currentRequest();
+
+        int pageNum = parseInt(req.getParameter("pageNum"), 1);
+        int pageSize = parseInt(req.getParameter("pageSize"), 10);
+
+        // 可加上最大分页大小限制，防止一次拉太多
+        pageSize = Math.min(pageSize, 200);
+
+        PageHelper.startPage(pageNum, pageSize);
+
+    }
+
+    protected <T> PageResult<T> getPageResult(List<T> list) {
+        PageInfo<T> pageInfo = new PageInfo<>(list);
+        PageResult<T> pageResult = new PageResult<>(pageInfo.getTotal(), list, pageInfo.getPageNum(), pageInfo.getPageSize());
+        PageHelper.clearPage();
+        return pageResult;
+    }
+
+
+    protected <T> PageResult<T> page(Supplier<List<T>> select) {
+        PageParam p = getPageParam();
+        PageInfo<T> pageInfo = doPageInfo(p, select);
+        return new PageResult<>(pageInfo.getTotal(), pageInfo.getList(), pageInfo.getPageNum(), pageInfo.getPageSize());
+    }
+
+    protected <E, V> PageResult<V> page(Supplier<List<E>> select, Function<E, V> converter) {
+        PageParam p = getPageParam();
+        PageInfo<E> pageInfo = doPageInfo(p, select);
+        List<V> voList = pageInfo.getList().stream().map(converter).collect(Collectors.toList());
+        return new PageResult<>(pageInfo.getTotal(), voList, pageInfo.getPageNum(), pageInfo.getPageSize());
+    }
+
+    protected <Q, E, V> PageResult<V> page(Q query, Function<Q, List<E>> select, Function<E, V> converter) {
+        return page(() -> select.apply(query), converter);
+    }
+
+    private PageParam getPageParam() {
+        HttpServletRequest req = currentRequest();
+        int pageNum = Math.max(parseInt(req.getParameter("pageNum"), 1), 1);
+        int pageSize = Math.max(parseInt(req.getParameter("pageSize"), 10), 1);
+        pageSize = Math.min(pageSize, 200);
+        return new PageParam(pageNum, pageSize);
+    }
+
+    private <E> PageInfo<E> doPageInfo(PageParam p, Supplier<List<E>> select) {
+        try (Page<Object> ignored = PageHelper.startPage(p.getPageNum(), p.getPageSize())) {
+            return ignored.doSelectPageInfo(select::get);
+        } finally {
+            PageHelper.clearPage();
+        }
+    }
+
+    private HttpServletRequest currentRequest() {
+        return ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+    }
+
+    private int parseInt(String s, int def) {
+        try {
+            return (s == null) ? def : Integer.parseInt(s);
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
+}

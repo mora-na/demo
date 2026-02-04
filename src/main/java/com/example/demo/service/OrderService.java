@@ -8,6 +8,13 @@ import java.util.List;
 
 public interface OrderService extends IMppService<OrderDTO> {
 
+    List<OrderDTO> getOrderListByUserId(Long id);
+
     List<OrderVO> getOrderVO(List<OrderDTO> orderDTOList);
 
+    OrderVO getOrderVO(OrderDTO orderDTO);
+
+    List<OrderDTO> getOrderDto(List<OrderVO> orderVOList);
+
+    OrderDTO getOrderDto(OrderVO orderVO);
 }

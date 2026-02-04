@@ -4,25 +4,15 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.demo.mapper.UserMapper">
     <!-- User 的 ResultMap -->
-    <resultMap id="userResultMap" type="com.example.demo.entity.UserDTO">
-        <id column="id" property="id"/>
-        <result column="name" property="name"/>
-        <result column="sex" property="sex"/>
+    <!--    <resultMap id="userResultMap" type="com.example.demo.entity.UserDTO">-->
+    <!--        <id column="id" property="id"/>-->
+    <!--        <result column="name" property="name"/>-->
+    <!--        <result column="sex" property="sex"/>-->
 
-        <!-- 懒加载的 collection -->
-        <collection property="orderDTOS"
-                    ofType="com.example.demo.entity.OrderDTO"
-                    select="com.example.demo.mapper.OrderMapper.selectByUserId"
-                    column="id"/>
-    </resultMap>
-
-    <!-- 查询用户 -->
-    <select id="selectUserById" resultMap="userResultMap">
-        select id, name, sex from sys_user where id = #{id}
-    </select>
-
-    <select id="selectUsers" resultMap="userResultMap">
-        select id, name, sex
-        from sys_user
-    </select>
+    <!--        &lt;!&ndash; 懒加载的 collection &ndash;&gt;-->
+    <!--        <collection property="orderDTOS"-->
+    <!--                    ofType="com.example.demo.entity.OrderDTO"-->
+    <!--                    select="com.example.demo.mapper.OrderMapper.selectByUserId"-->
+    <!--                    column="id"/>-->
+    <!--    </resultMap>-->
 </mapper>

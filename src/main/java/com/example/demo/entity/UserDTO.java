@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.demo.vo.OrderVO;
+import com.example.demo.vo.UserVO;
 import com.github.jeffreyning.mybatisplus.anno.MppMultiId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -34,7 +36,11 @@ public class UserDTO implements Serializable {
     @TableField("tst")
     private String tst;
 
-    @TableField(exist = false)
-    private List<OrderDTO> orderDTOS; // 一对多
+    public UserVO toUserVO(UserDTO userDTO, List<OrderVO> orderVOList) {
+        if (userDTO == null) {
+            return new UserVO();
+        }
+        return new UserVO(userDTO.getId(), userDTO.getName(), userDTO.getSex(), userDTO.getTst(), orderVOList);
+    }
 
 }

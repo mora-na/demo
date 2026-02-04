@@ -8,10 +8,13 @@ import java.util.List;
 
 public interface UserService extends IMppService<UserDTO> {
 
-    List<UserDTO> selectUsers(int pageNum, int pageSize, UserVO userVO);
+    List<UserDTO> selectUsers(UserVO userVO);
 
     List<UserVO> getUserVO(List<UserDTO> userDTOList);
 
     UserVO getUserVO(UserDTO userDTO);
 
+    List<UserDTO> getUserDTO(List<UserVO> userVOList);
+
+    UserDTO getUserDTO(UserVO userVO);
 }
