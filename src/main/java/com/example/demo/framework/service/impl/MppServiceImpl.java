@@ -1,9 +1,6 @@
 package com.example.demo.framework.service.impl;
 
-import com.example.demo.framework.service.IMppService;
-import com.example.demo.framework.service.MppBaseMapper;
-
-public class MppServiceImpl<M extends MppBaseMapper<T>, T> extends com.github.jeffreyning.mybatisplus.service.MppServiceImpl<M, T> implements IMppService<T> {
+public class MppServiceImpl<M extends com.example.demo.framework.service.MppBaseMapper<T>, T> extends com.github.jeffreyning.mybatisplus.service.MppServiceImpl<M, T> implements com.example.demo.framework.service.IMppService<T> {
 
     @Override
     @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
@@ -24,50 +21,15 @@ public class MppServiceImpl<M extends MppBaseMapper<T>, T> extends com.github.je
         // MP 3.5.x：用 getEntityClass() 取实体类型（替代 currentModelClass()）
         final Class<T> entityClass = this.getEntityClass();
 
-        // 1) 扫描所有 @MppMultiId 字段（支持父类）
-        final java.util.List<java.lang.reflect.Field> multiIdFields = new java.util.ArrayList<>();
-        final java.util.List<String> multiIdColumns = new java.util.ArrayList<>();
-
-        for (Class<?> c = entityClass; c != null && c != Object.class; c = c.getSuperclass()) {
-            for (java.lang.reflect.Field f : c.getDeclaredFields()) {
-                com.github.jeffreyning.mybatisplus.anno.MppMultiId ann = f.getAnnotation(com.github.jeffreyning.mybatisplus.anno.MppMultiId.class);
-                if (ann == null) {
-                    continue;
-                }
-                f.setAccessible(true);
-                multiIdFields.add(f);
-
-                // 注解value优先；为空则用字段名转下划线
-                String col = ann.value();
-                if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(col)) {
-                    col = com.baomidou.mybatisplus.core.toolkit.StringUtils.camelToUnderline(f.getName());
-                }
-                multiIdColumns.add(col);
-            }
-        }
-
-        if (multiIdFields.isEmpty()) {
+        final MultiIdMeta multiIdMeta = resolveMultiIdMeta(entityClass);
+        if (multiIdMeta.fields.isEmpty()) {
             throw new IllegalStateException("saveOrUpdateBatchByMultiId：实体 " + entityClass.getName() + " 未声明任何 @MppMultiId 字段，无法按联合主键执行 saveOrUpdate。");
         }
 
         // 2) 可选：避免更新时把@TableId对应的主键字段也更新掉（如果实体对象里刚好带了id值）
         final com.baomidou.mybatisplus.core.metadata.TableInfo tableInfo = com.baomidou.mybatisplus.core.metadata.TableInfoHelper.getTableInfo(entityClass);
         final String keyProperty = (tableInfo == null ? null : tableInfo.getKeyProperty());
-        final java.lang.reflect.Field tableIdField;
-        if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(keyProperty)) {
-            tableIdField = null;
-        } else {
-            java.lang.reflect.Field found = null;
-            for (Class<?> c = entityClass; c != null && c != Object.class; c = c.getSuperclass()) {
-                try {
-                    found = c.getDeclaredField(keyProperty);
-                    found.setAccessible(true);
-                    break;
-                } catch (NoSuchFieldException ignore) {
-                }
-            }
-            tableIdField = found;
-        }
+        final java.lang.reflect.Field tableIdField = resolveTableIdField(entityClass, keyProperty);
 
         // 3) statementId（MP内部封装的SQL）
         final String insertStatement = getSqlStatement(com.baomidou.mybatisplus.core.enums.SqlMethod.INSERT_ONE);
@@ -78,24 +40,7 @@ public class MppServiceImpl<M extends MppBaseMapper<T>, T> extends com.github.je
         return this.executeBatch(entityList, batchSize, (sqlSession, entity) -> {
 
             // where: multiId1=? AND multiId2=? ...
-            com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<T> where = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
-
-            for (int i = 0; i < multiIdFields.size(); i++) {
-                java.lang.reflect.Field f = multiIdFields.get(i);
-                Object val;
-                try {
-                    val = f.get(entity);
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-
-                // 联合主键字段不能为空，否则where不完整会导致误更新/误插入
-                if (val == null || (val instanceof CharSequence && com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(val.toString()))) {
-                    throw new IllegalArgumentException("saveOrUpdateBatchByMultiId：联合主键字段[" + f.getName() + "] 不能为空，entity=" + entity);
-                }
-
-                where.eq(multiIdColumns.get(i), val);
-            }
+            com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<T> where = buildMultiIdWrapper(entity, "saveOrUpdateBatchByMultiId", multiIdMeta);
 
             // 先count判断是否存在（不要依赖update返回行数判断存在与否，MySQL值不变会返回0）
             org.apache.ibatis.binding.MapperMethod.ParamMap<Object> countParam = new org.apache.ibatis.binding.MapperMethod.ParamMap<>();
@@ -170,68 +115,19 @@ public class MppServiceImpl<M extends MppBaseMapper<T>, T> extends com.github.je
 
         final Class<T> entityClass = this.getEntityClass();
 
-        final java.util.List<java.lang.reflect.Field> multiIdFields = new java.util.ArrayList<>();
-        final java.util.List<String> multiIdColumns = new java.util.ArrayList<>();
-
-        for (Class<?> c = entityClass; c != null && c != Object.class; c = c.getSuperclass()) {
-            for (java.lang.reflect.Field f : c.getDeclaredFields()) {
-                com.github.jeffreyning.mybatisplus.anno.MppMultiId ann = f.getAnnotation(com.github.jeffreyning.mybatisplus.anno.MppMultiId.class);
-                if (ann == null) {
-                    continue;
-                }
-                f.setAccessible(true);
-                multiIdFields.add(f);
-
-                String col = ann.value();
-                if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(col)) {
-                    col = com.baomidou.mybatisplus.core.toolkit.StringUtils.camelToUnderline(f.getName());
-                }
-                multiIdColumns.add(col);
-            }
-        }
-
-        if (multiIdFields.isEmpty()) {
+        final MultiIdMeta multiIdMeta = resolveMultiIdMeta(entityClass);
+        if (multiIdMeta.fields.isEmpty()) {
             throw new IllegalStateException("updateBatchByMultiId：实体 " + entityClass.getName() + " 未声明任何 @MppMultiId 字段，无法按联合主键执行 update。");
         }
 
         final com.baomidou.mybatisplus.core.metadata.TableInfo tableInfo = com.baomidou.mybatisplus.core.metadata.TableInfoHelper.getTableInfo(entityClass);
         final String keyProperty = (tableInfo == null ? null : tableInfo.getKeyProperty());
-        final java.lang.reflect.Field tableIdField;
-        if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(keyProperty)) {
-            tableIdField = null;
-        } else {
-            java.lang.reflect.Field found = null;
-            for (Class<?> c = entityClass; c != null && c != Object.class; c = c.getSuperclass()) {
-                try {
-                    found = c.getDeclaredField(keyProperty);
-                    found.setAccessible(true);
-                    break;
-                } catch (NoSuchFieldException ignore) {
-                }
-            }
-            tableIdField = found;
-        }
+        final java.lang.reflect.Field tableIdField = resolveTableIdField(entityClass, keyProperty);
 
         final String updateStatement = getSqlStatement(com.baomidou.mybatisplus.core.enums.SqlMethod.UPDATE);
 
         return this.executeBatch(entityList, batchSize, (sqlSession, entity) -> {
-            com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<T> where = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
-
-            for (int i = 0; i < multiIdFields.size(); i++) {
-                java.lang.reflect.Field f = multiIdFields.get(i);
-                Object val;
-                try {
-                    val = f.get(entity);
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-
-                if (val == null || (val instanceof CharSequence && com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(val.toString()))) {
-                    throw new IllegalArgumentException("updateBatchByMultiId：联合主键字段[" + f.getName() + "] 不能为空，entity=" + entity);
-                }
-
-                where.eq(multiIdColumns.get(i), val);
-            }
+            com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<T> where = buildMultiIdWrapper(entity, "updateBatchByMultiId", multiIdMeta);
 
             Object oldId = null;
             boolean clearedId = false;
@@ -295,6 +191,35 @@ public class MppServiceImpl<M extends MppBaseMapper<T>, T> extends com.github.je
     private com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<T> buildMultiIdWrapper(T entity, String opName) {
         final Class<T> entityClass = this.getEntityClass();
 
+        final MultiIdMeta multiIdMeta = resolveMultiIdMeta(entityClass);
+        if (multiIdMeta.fields.isEmpty()) {
+            throw new IllegalStateException(opName + "：实体 " + entityClass.getName() + " 未声明任何 @MppMultiId 字段，无法按联合主键执行查询。");
+        }
+
+        return buildMultiIdWrapper(entity, opName, multiIdMeta);
+    }
+
+    private com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<T> buildMultiIdWrapper(T entity, String opName, MultiIdMeta multiIdMeta) {
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<T> where = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+        for (int i = 0; i < multiIdMeta.fields.size(); i++) {
+            java.lang.reflect.Field f = multiIdMeta.fields.get(i);
+            Object val;
+            try {
+                val = f.get(entity);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (val == null || (val instanceof CharSequence && com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(val.toString()))) {
+                throw new IllegalArgumentException(opName + "：联合主键字段[" + f.getName() + "] 不能为空，entity=" + entity);
+            }
+            where.eq(multiIdMeta.columns.get(i), val);
+        }
+
+        return where;
+    }
+
+    private MultiIdMeta resolveMultiIdMeta(Class<T> entityClass) {
         final java.util.List<java.lang.reflect.Field> multiIdFields = new java.util.ArrayList<>();
         final java.util.List<String> multiIdColumns = new java.util.ArrayList<>();
 
@@ -315,27 +240,32 @@ public class MppServiceImpl<M extends MppBaseMapper<T>, T> extends com.github.je
             }
         }
 
-        if (multiIdFields.isEmpty()) {
-            throw new IllegalStateException(opName + "：实体 " + entityClass.getName() + " 未声明任何 @MppMultiId 字段，无法按联合主键执行查询。");
-        }
+        return new MultiIdMeta(multiIdFields, multiIdColumns);
+    }
 
-        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<T> where = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
-        for (int i = 0; i < multiIdFields.size(); i++) {
-            java.lang.reflect.Field f = multiIdFields.get(i);
-            Object val;
+    private java.lang.reflect.Field resolveTableIdField(Class<T> entityClass, String keyProperty) {
+        if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(keyProperty)) {
+            return null;
+        }
+        for (Class<?> c = entityClass; c != null && c != Object.class; c = c.getSuperclass()) {
             try {
-                val = f.get(entity);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
+                java.lang.reflect.Field found = c.getDeclaredField(keyProperty);
+                found.setAccessible(true);
+                return found;
+            } catch (NoSuchFieldException ignore) {
             }
-
-            if (val == null || (val instanceof CharSequence && com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(val.toString()))) {
-                throw new IllegalArgumentException(opName + "：联合主键字段[" + f.getName() + "] 不能为空，entity=" + entity);
-            }
-            where.eq(multiIdColumns.get(i), val);
         }
+        return null;
+    }
 
-        return where;
+    private static class MultiIdMeta {
+        private final java.util.List<java.lang.reflect.Field> fields;
+        private final java.util.List<String> columns;
+
+        private MultiIdMeta(java.util.List<java.lang.reflect.Field> fields, java.util.List<String> columns) {
+            this.fields = fields;
+            this.columns = columns;
+        }
     }
 
 }
