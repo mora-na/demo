@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+
+    <bpmn:process id="leave-process" name="请假流程" isExecutable="true">
+
+        <!-- 开始节点 -->
+        <bpmn:startEvent id="start" name="发起请假"/>
+
+        <!-- 用户任务：组长审批 -->
+        <bpmn:userTask id="leader-approve" name="组长审批"
+                       camunda:assignee="${applicant}">
+            <bpmn:extensionElements>
+                <camunda:formData>
+                    <camunda:formField id="approved" label="是否同意" type="boolean"/>
+                    <camunda:formField id="comment" label="审批意见" type="string"/>
+                </camunda:formData>
+            </bpmn:extensionElements>
+        </bpmn:userTask>
+
+        <!-- 排他网关 -->
+        <bpmn:exclusiveGateway id="gateway" name="审批结果"/>
+
+        <!-- 用户任务：经理审批 -->
+        <bpmn:userTask id="manager-approve" name="经理审批"
+                       camunda:candidateGroups="managers"/>
+
+        <!-- 结束节点 -->
+        <bpmn:endEvent id="end-approved" name="审批通过"/>
+        <bpmn:endEvent id="end-rejected" name="审批拒绝"/>
+
+        <!-- 连线 -->
+        <bpmn:sequenceFlow id="flow1" sourceRef="start" targetRef="leader-approve"/>
+        <bpmn:sequenceFlow id="flow2" sourceRef="leader-approve" targetRef="gateway"/>
+        <bpmn:sequenceFlow id="flow3" sourceRef="gateway" targetRef="manager-approve">
+            <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"
+                                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                ${approved == true &amp;&amp; days > 3}
+            </bpmn:conditionExpression>
+        </bpmn:sequenceFlow>
+        <bpmn:sequenceFlow id="flow4" sourceRef="gateway" targetRef="end-approved">
+            <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"
+                                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                ${approved == true &amp;&amp; days &lt;= 3}
+            </bpmn:conditionExpression>
+        </bpmn:sequenceFlow>
+        <bpmn:sequenceFlow id="flow5" sourceRef="gateway" targetRef="end-rejected">
+            <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression"
+                                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                ${approved == false}
+            </bpmn:conditionExpression>
+        </bpmn:sequenceFlow>
+        <bpmn:sequenceFlow id="flow6" sourceRef="manager-approve" targetRef="end-approved"/>
+    </bpmn:process>
+</bpmn:definitions>

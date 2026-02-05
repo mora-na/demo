@@ -20,13 +20,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserServiceImpl extends MppServiceImpl<UserMapper, UserDTO> implements UserService {
 
-    private final UserMapper userMapper;
-
     private final OrderService orderService;
 
     @Override
     public List<UserDTO> selectUsers(UserVO userVO) {
-        return userMapper.selectList(Wrappers.query(getUserDTO(userVO)));
+        return baseMapper.selectList(Wrappers.query(getUserDTO(userVO)));
     }
 
     @Override
