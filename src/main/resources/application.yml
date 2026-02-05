@@ -10,6 +10,10 @@ spring:
   profiles:
     active: default
 
+  output:
+    ansi:
+      enabled: always
+
   servlet:
     multipart:
       max-file-size: 120MB
@@ -164,57 +168,26 @@ camunda:
       core-pool-size: 3
       max-pool-size: 10
 
-#logging:
-#  # 对应原xml开头的 scan/scanPeriod/debug配置
-#  logback:
-#    configuration:
-#      scan: true
-#      scan-period: 60s
-#      debug: false
-#
-#  # 自定义变量 对应你原来的<property>
-#  pattern:
-#    log-dir: logs
-#    log-file-name: demo.log
-#    deployment-unit-no: 127.0.0.1
-#    log-pattern: "%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %X{traceId} %cyan([%thread]) %magenta(%logger{36} - %msg%n)"
-#
-#  # 自定义Appender配置
-#  appenders:
-#    # 控制台输出 对应你原来name=console的appender
-#    console:
-#      type: console
-#      with-jansi: true
-#      encoder:
-#        pattern: ${logging.pattern.log-pattern}
-#        charset: UTF-8
-#
-#    # 滚动文件输出 对应你原来name=file的appender
-#    file:
-#      type: rolling-file
-#      file-name: \({logging.pattern.log-dir}/\){logging.pattern.log-file-name}
-#      rolling-policy:
-#        type: time
-#        file-name-pattern: \({logging.pattern.log-dir}/\){logging.pattern.log-file-name}.%d{yyyy-MM-dd}.log
-#        max-history: 30
-#        total-size-cap: 1GB
-#      encoder:
-#        pattern: ${logging.pattern.log-pattern}
-#        charset: UTF-8
-#
-#  # Root日志配置 对应原xml的<root>节点
-#  root:
-#    level: info
-#    appenders:
-#      - console
-#      - file
-#
-#  # 各个包的日志级别 和你原来的<logger>配置完全等价
-#  level:
-#    com: debug
-#    cn.com: debug
-#    org.springframework: warn$
-#    org.springframework.web: warn
+logging:
+  file:
+    name: logs/demo.log
+  charset:
+    console: UTF-8
+    file: UTF-8
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %X{traceId} %cyan([%thread]) %magenta(%logger{36} - %msg%n)'
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %X{traceId} %cyan([%thread]) %magenta(%logger{36} - %msg%n)'
+  level:
+    root: info
+    com: debug
+    cn.com: debug
+    org.springframework: warn
+    org.springframework.web: warn
+  logback:
+    rollingpolicy:
+      file-name-pattern: 'logs/demo.log%d{yyyy-MM-dd}.log'
+      max-history: 30
+      total-size-cap: 1GB
 
 user:
   config:
