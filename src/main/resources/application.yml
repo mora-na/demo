@@ -21,12 +21,6 @@ spring:
 
   datasource:
     druid:
-      filter:
-        wall:
-          config:
-            #因为camunda框架的sql有where 1=1
-            select-where-alway-true-check: false
-            condition-and-alway-true-allow: true
       stat-view-servlet:
         enabled: true
         url-pattern: /druid/*
@@ -37,6 +31,11 @@ spring:
         url-pattern: /*
         exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
     dynamic:
+      druid:
+        wall:
+          #因为camunda框架的sql有where 1=1
+          select-where-alway-true-check: false
+          condition-and-alway-true-allow: true
       primary: master           # 指定默认数据源
       strict: false             # true: 未匹配报错；false: 使用默认
       datasource:
