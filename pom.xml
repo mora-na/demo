@@ -45,6 +45,7 @@
         <bcprov-jdk18on.version>1.81</bcprov-jdk18on.version>
         <junit-platform.version>1.8.2</junit-platform.version>
         <jeffreyning.version>1.7.5-RELEASE</jeffreyning.version>
+        <poi.version>5.2.5</poi.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -269,6 +270,12 @@
             <groupId>com.deepoove</groupId>
             <artifactId>poi-tl</artifactId>
             <version>1.12.1</version>
+        </dependency>
+        <!-- Excel处理 -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
         </dependency>
 
         <!-- Word转PDF -->

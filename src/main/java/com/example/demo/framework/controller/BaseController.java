@@ -1,22 +1,33 @@
 package com.example.demo.framework.controller;
 
 
+import com.example.demo.framework.tools.ExcelProcessException;
+import com.example.demo.framework.tools.ExcelTool;
 import com.example.demo.framework.web.CommonResult;
 import com.example.demo.framework.web.PageParam;
 import com.example.demo.framework.web.PageResult;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public abstract class BaseController {
+
+    String XLSX_SUFFIX = ".xlsx";
 
     protected void startPage() {
         HttpServletRequest req = currentRequest();
@@ -106,6 +117,37 @@ public abstract class BaseController {
 
     private HttpServletRequest currentRequest() {
         return ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+    }
+
+    /**
+     * 将数据导出为 Excel 并写入 Http 响应。
+     */
+    protected <T> void exportExcel(HttpServletResponse response, List<T> data, Class<T> type, String fileName) {
+        String targetName = normalizeFileName(fileName);
+        try (ByteArrayOutputStream outputStream = ExcelTool.exportToStream(data, type)) {
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding("UTF-8");
+            String encodedName = URLEncoder.encode(targetName, StandardCharsets.UTF_8.name()).replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedName);
+            response.setContentLength(outputStream.size());
+            response.getOutputStream().write(outputStream.toByteArray());
+            response.flushBuffer();
+        } catch (IOException e) {
+            throw new ExcelProcessException("写出 Excel 响应失败", e);
+        }
+    }
+
+    private String normalizeFileName(String fileName) {
+        String fallback = "export.xlsx";
+        if (StringUtils.isBlank(fileName)) {
+            return fallback;
+        }
+        String trimmed = fileName.trim();
+        // 忽略大小写判断结尾是否是 .xlsx
+        if (trimmed.toLowerCase(Locale.ROOT).endsWith(XLSX_SUFFIX)) {
+            return trimmed;
+        }
+        return trimmed + XLSX_SUFFIX;
     }
 
     private int parseInt(String s, int def) {

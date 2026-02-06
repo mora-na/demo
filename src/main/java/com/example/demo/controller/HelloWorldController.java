@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.entity.UserDTO;
 import com.example.demo.framework.config.UserConfig;
 import com.example.demo.framework.controller.BaseController;
+import com.example.demo.framework.tools.ExcelTool;
 import com.example.demo.framework.web.CommonResult;
 import com.example.demo.framework.web.PageResult;
 import com.example.demo.service.UserService;
@@ -12,11 +13,11 @@ import com.example.demo.vo.UserVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -67,6 +68,24 @@ public class HelloWorldController extends BaseController {
         Object value = UserConfig.CONFIG.get(key);
         log.info("key:[{}],value:[{}]", key, value);
         return success(value);
+    }
+
+    @GetMapping("/export")
+    public void export(@ModelAttribute UserVO userVO, HttpServletResponse response) {
+        List<UserVO> userVOList = userService.getUserVO(userService.selectUsers(userVO));
+        exportExcel(response, userVOList, UserVO.class, "用户信息" + LocalDateTime.now());
+    }
+
+    @PostMapping("/import")
+    public CommonResult<String> importExcel(@RequestParam("file") MultipartFile file) {
+        List<UserVO> userVOList = ExcelTool.importFromMultipart(file, UserVO.class);
+        List<UserDTO> userDTO = userService.getUserDTO(userVOList);
+        log.info("Received request to importExcel,userDTO:[{}]", userDTO);
+        return success();
+//        if (userService.saveOrUpdateBatch(userDTO)) {
+//            return success("导入成功！");
+//        }
+//        return error("导入失败！");
     }
 
 }
