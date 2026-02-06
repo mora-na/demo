@@ -58,20 +58,11 @@ public class HelloWorldController extends BaseController {
         return new PageResult<>(pageResult.getTotal(), userService.getUserVO(pageResult.getData()), pageResult.getPageNum(), pageResult.getPageSize());
     }
 
-    @RequestMapping("/update")
-    public CommonResult<UserVO> update() {
-        UserDTO userDTO = new UserDTO();
-        userDTO.setName("test");
-        userDTO.setSex("1");
-        UserVO userVO = userService.getUserVO(userService.selectOneByMultiId(userDTO));
-        return success(userVO);
-    }
-
     @GetMapping("/getKeyValue")
     public CommonResult<Object> getKeyValue(String key) {
         log.info("Received request to getKeyValue,key:[{}]", key);
         if (StringUtils.isBlank(key)) {
-            return error();
+            return error("key is empty");
         }
         Object value = UserConfig.CONFIG.get(key);
         log.info("key:[{}],value:[{}]", key, value);

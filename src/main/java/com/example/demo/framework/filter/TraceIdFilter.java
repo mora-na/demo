@@ -10,8 +10,7 @@ import java.util.UUID;
 @Component
 public class TraceIdFilter implements Filter {
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         try {
             MDC.put("traceId", UUID.randomUUID().toString()); // 可替换为从请求头提取
             chain.doFilter(request, response);
