@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.demo.framework.annotation.MppMultiField;
 import com.example.demo.vo.OrderVO;
 import com.example.demo.vo.UserVO;
-import com.github.jeffreyning.mybatisplus.anno.MppMultiId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,11 +26,11 @@ public class UserDTO implements Serializable {
     private Long id;
 
     @TableField("name")
-    @MppMultiId
+    @MppMultiField
     private String name;
 
     @TableField("sex")
-    @MppMultiId
+    @MppMultiField
     private String sex;
 
     @TableField("tst")

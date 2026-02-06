@@ -77,15 +77,14 @@ public class HelloWorldController extends BaseController {
     }
 
     @PostMapping("/import")
-    public CommonResult<String> importExcel(@RequestParam("file") MultipartFile file) {
+    public CommonResult<String> importExcel(@RequestPart("file") MultipartFile file) {
         List<UserVO> userVOList = ExcelTool.importFromMultipart(file, UserVO.class);
         List<UserDTO> userDTO = userService.getUserDTO(userVOList);
         log.info("Received request to importExcel,userDTO:[{}]", userDTO);
-        return success();
-//        if (userService.saveOrUpdateBatch(userDTO)) {
-//            return success("导入成功！");
-//        }
-//        return error("导入失败！");
+        if (userService.saveOrUpdateBatchByMultiField(userDTO)) {
+            return success("导入成功！");
+        }
+        return error("导入失败！");
     }
 
 }
