@@ -1,6 +1,7 @@
 package com.example.demo.framework.controller;
 
 
+import com.example.demo.framework.web.CommonResult;
 import com.example.demo.framework.web.PageParam;
 import com.example.demo.framework.web.PageResult;
 import com.github.pagehelper.Page;
@@ -53,6 +54,38 @@ public abstract class BaseController {
 
     protected <Q, E, V> PageResult<V> page(Q query, Function<Q, List<E>> select, Function<E, V> converter) {
         return page(() -> select.apply(query), converter);
+    }
+
+    protected <T> CommonResult<T> success() {
+        return CommonResult.success();
+    }
+
+    protected <T> CommonResult<T> success(T data) {
+        return CommonResult.success(data);
+    }
+
+    protected <T> CommonResult<T> success(String message) {
+        return CommonResult.success(message);
+    }
+
+    protected <T> CommonResult<T> success(String message, T data) {
+        return CommonResult.success(message, data);
+    }
+
+    protected <T> CommonResult<T> error() {
+        return CommonResult.error();
+    }
+
+    protected <T> CommonResult<T> error(String message) {
+        return CommonResult.error(message);
+    }
+
+    protected <T> CommonResult<T> error(int code, String message) {
+        return CommonResult.error(code, message);
+    }
+
+    protected <T> CommonResult<T> error(int code, String message, T data) {
+        return CommonResult.error(code, message, data);
     }
 
     private PageParam getPageParam() {

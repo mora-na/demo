@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.entity.UserDTO;
 import com.example.demo.framework.config.UserConfig;
 import com.example.demo.framework.controller.BaseController;
+import com.example.demo.framework.web.CommonResult;
 import com.example.demo.framework.web.PageResult;
 import com.example.demo.service.UserService;
 import com.example.demo.vo.UserVO;
@@ -58,22 +59,23 @@ public class HelloWorldController extends BaseController {
     }
 
     @RequestMapping("/update")
-    public UserVO update() {
+    public CommonResult<UserVO> update() {
         UserDTO userDTO = new UserDTO();
         userDTO.setName("test");
         userDTO.setSex("1");
-        return userService.getUserVO(userService.selectOneByMultiId(userDTO));
+        UserVO userVO = userService.getUserVO(userService.selectOneByMultiId(userDTO));
+        return success(userVO);
     }
 
     @GetMapping("/getKeyValue")
-    public Object getKeyValue(String key) {
+    public CommonResult<Object> getKeyValue(String key) {
         log.info("Received request to getKeyValue,key:[{}]", key);
         if (StringUtils.isBlank(key)) {
-            return null;
+            return error();
         }
         Object value = UserConfig.CONFIG.get(key);
         log.info("key:[{}],value:[{}]", key, value);
-        return value;
+        return success(value);
     }
 
 }
