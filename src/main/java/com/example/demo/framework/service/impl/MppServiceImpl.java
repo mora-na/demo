@@ -208,7 +208,12 @@ public class MppServiceImpl<M extends com.example.demo.framework.service.MppBase
 //            if (val == null || (val instanceof CharSequence && com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(val.toString()))) {
 //                throw new IllegalArgumentException(opName + "：联合字段[" + f.getName() + "] 不能为空，entity=" + entity);
 //            }
-            where.eq(multiFieldMeta.columns.get(i), val);
+            String column = multiFieldMeta.columns.get(i);
+            if (val == null) {
+                where.isNull(column);
+            } else {
+                where.eq(column, val);
+            }
         }
 
         return where;

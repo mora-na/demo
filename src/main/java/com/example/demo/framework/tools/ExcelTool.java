@@ -6,7 +6,10 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -26,8 +29,10 @@ import java.util.stream.Collectors;
 public final class ExcelTool {
 
     private static final String DEFAULT_SHEET = "Sheet1";
+    public static final String XLSX_SUFFIX = ".xlsx";
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DataFormatter DATA_FORMATTER = new DataFormatter();
     private static final Map<Class<?>, List<FieldMeta>> FIELD_CACHE = new ConcurrentHashMap<>();
 
     private ExcelTool() {
@@ -98,7 +103,7 @@ public final class ExcelTool {
         if (!file.exists()) {
             throw new ExcelProcessException("导入文件不存在: " + file.getAbsolutePath());
         }
-        try (InputStream inputStream = new FileInputStream(file)) {
+        try (InputStream inputStream = Files.newInputStream(file.toPath())) {
             return importFromStream(inputStream, type, headerRowIndex);
         } catch (IOException e) {
             throw new ExcelProcessException("读取导入文件失败", e);
@@ -222,9 +227,7 @@ public final class ExcelTool {
             return fields;
         }
         fields.addAll(collectFields(type.getSuperclass()));
-        for (java.lang.reflect.Field declaredField : type.getDeclaredFields()) {
-            fields.add(declaredField);
-        }
+        fields.addAll(Arrays.asList(type.getDeclaredFields()));
         return fields;
     }
 
@@ -246,10 +249,17 @@ public final class ExcelTool {
             boolean hasValue = false;
             for (Map.Entry<Integer, FieldMeta> entry : columnMapping.entrySet()) {
                 Cell cell = row.getCell(entry.getKey());
-                Object rawValue = entry.getValue().applyImportMapping(readCellValue(cell));
-                Object converted = convertValue(rawValue, entry.getValue().getField().getType());
+                FieldMeta meta = entry.getValue();
+                Object rawValue = meta.applyImportMapping(readCellValueForType(cell, meta.getField().getType()));
+                Object converted;
+                try {
+                    converted = convertValue(rawValue, meta.getField().getType());
+                } catch (ExcelProcessException e) {
+                    Object fallbackRaw = meta.applyImportMapping(readCellValueFallback(cell, meta.getField().getType()));
+                    converted = convertValue(fallbackRaw, meta.getField().getType());
+                }
                 if (converted != null) {
-                    entry.getValue().setValue(instance, converted);
+                    meta.setValue(instance, converted);
                     hasValue = true;
                 }
             }
@@ -262,23 +272,35 @@ public final class ExcelTool {
 
     private static Map<Integer, FieldMeta> mapColumns(Row headerRow, List<FieldMeta> fieldMetas) {
         Map<String, FieldMeta> headerMap = fieldMetas.stream().collect(Collectors.toMap(meta -> meta.getHeaderName().toLowerCase(Locale.ROOT), meta -> meta, (a, b) -> a, LinkedHashMap::new));
+        Map<String, FieldMeta> fieldNameMap = fieldMetas.stream().collect(Collectors.toMap(meta -> meta.getField().getName().toLowerCase(Locale.ROOT), meta -> meta, (a, b) -> a, LinkedHashMap::new));
         Map<Integer, FieldMeta> columnMapping = new HashMap<>();
+        Set<FieldMeta> mappedFields = new HashSet<>();
         short lastCellNum = headerRow.getLastCellNum();
         for (int i = 0; i < lastCellNum; i++) {
-            Cell cell = headerRow.getCell(i);
-            String headerName = toHeaderKey(cell);
-            if (StringUtils.isBlank(headerName)) {
+            buildColumnMappingFromHeaderRow(headerRow, headerMap, columnMapping, mappedFields, i);
+        }
+        for (int i = 0; i < lastCellNum; i++) {
+            if (columnMapping.containsKey(i)) {
                 continue;
             }
-            FieldMeta meta = headerMap.get(headerName);
-            if (meta != null) {
-                columnMapping.put(i, meta);
-            }
+            buildColumnMappingFromHeaderRow(headerRow, fieldNameMap, columnMapping, mappedFields, i);
         }
         if (columnMapping.isEmpty()) {
             throw new ExcelProcessException("表头无法与实体字段匹配");
         }
         return columnMapping;
+    }
+
+    private static void buildColumnMappingFromHeaderRow(Row headerRow, Map<String, FieldMeta> headerMap, Map<Integer, FieldMeta> columnMapping, Set<FieldMeta> mappedFields, int i) {
+        Cell cell = headerRow.getCell(i);
+        String headerName = toHeaderKey(cell);
+        if (StringUtils.isBlank(headerName)) {
+            return;
+        }
+        FieldMeta meta = headerMap.get(headerName);
+        if (meta != null && mappedFields.add(meta)) {
+            columnMapping.put(i, meta);
+        }
     }
 
     private static String toHeaderKey(Cell cell) {
@@ -312,6 +334,34 @@ public final class ExcelTool {
             default:
                 return null;
         }
+    }
+
+    private static Object readCellValueForType(Cell cell, Class<?> targetType) {
+        if (cell == null) {
+            return null;
+        }
+        if (targetType == String.class) {
+            return formatCellValue(cell);
+        }
+        return readCellValue(cell);
+    }
+
+    private static Object readCellValueFallback(Cell cell, Class<?> targetType) {
+        if (cell == null) {
+            return null;
+        }
+        if (targetType == String.class) {
+            return readCellValue(cell);
+        }
+        return formatCellValue(cell);
+    }
+
+    private static String formatCellValue(Cell cell) {
+        String formatted = DATA_FORMATTER.formatCellValue(cell);
+        if (StringUtils.isBlank(formatted)) {
+            return null;
+        }
+        return formatted;
     }
 
     private static Object readFormulaValue(Cell cell) {
@@ -427,12 +477,13 @@ public final class ExcelTool {
         }
     }
 
-    private static String ensureXlsxSuffix(String fileName) {
+    public static String ensureXlsxSuffix(String fileName) {
         String trimmed = fileName.trim();
-        if (StringUtils.endsWithIgnoreCase(trimmed, ".xlsx")) {
+        // 忽略大小写判断结尾是否是 .xlsx
+        if (trimmed.toLowerCase(Locale.ROOT).endsWith(XLSX_SUFFIX)) {
             return trimmed;
         }
-        return trimmed + ".xlsx";
+        return trimmed + XLSX_SUFFIX;
     }
 
     /**
@@ -450,8 +501,7 @@ public final class ExcelTool {
             this.field = field;
             this.headerName = headerName;
             this.exportMapping = exportMapping;
-            this.importMapping = exportMapping.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (a, b) -> a, LinkedHashMap::new));
+            this.importMapping = exportMapping.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (a, b) -> a, LinkedHashMap::new));
             this.field.setAccessible(true);
         }
 
@@ -476,27 +526,36 @@ public final class ExcelTool {
             if (original == null || exportMapping.isEmpty()) {
                 return original;
             }
-            String key = String.valueOf(original);
-            return exportMapping.getOrDefault(key, key);
+            String mapped = resolveMapping(exportMapping, original);
+            return mapped != null ? mapped : original;
         }
 
         Object applyImportMapping(Object raw) {
             if (raw == null || importMapping.isEmpty()) {
                 return raw;
             }
-            String key = toMappingKey(raw);
-            return importMapping.getOrDefault(key, key);
+            String mapped = resolveMapping(importMapping, raw);
+            return mapped != null ? mapped : raw;
         }
 
-        private String toMappingKey(Object raw) {
-            if (raw instanceof Number) {
-                try {
-                    return new BigDecimal(raw.toString()).stripTrailingZeros().toPlainString();
-                } catch (NumberFormatException ignore) {
-                    return raw.toString();
-                }
+        private String resolveMapping(Map<String, String> mapping, Object raw) {
+            String key = raw.toString();
+            String mapped = mapping.get(key);
+            if (mapped != null) {
+                return mapped;
             }
-            return raw.toString();
+            if (raw instanceof Number) {
+                return mapping.get(normalizeNumberKey(raw));
+            }
+            return null;
+        }
+
+        private String normalizeNumberKey(Object raw) {
+            try {
+                return new BigDecimal(raw.toString()).stripTrailingZeros().toPlainString();
+            } catch (NumberFormatException ignore) {
+                return raw.toString();
+            }
         }
     }
 

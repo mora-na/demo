@@ -20,14 +20,11 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public abstract class BaseController {
-
-    String XLSX_SUFFIX = ".xlsx";
 
     protected void startPage() {
         HttpServletRequest req = currentRequest();
@@ -126,7 +123,7 @@ public abstract class BaseController {
         String targetName = normalizeFileName(fileName);
         try (ByteArrayOutputStream outputStream = ExcelTool.exportToStream(data, type)) {
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            response.setCharacterEncoding("UTF-8");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
             String encodedName = URLEncoder.encode(targetName, StandardCharsets.UTF_8.name()).replaceAll("\\+", "%20");
             response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedName);
             response.setContentLength(outputStream.size());
@@ -138,16 +135,12 @@ public abstract class BaseController {
     }
 
     private String normalizeFileName(String fileName) {
-        String fallback = "export.xlsx";
+        String fallback = "export" + ExcelTool.XLSX_SUFFIX;
         if (StringUtils.isBlank(fileName)) {
             return fallback;
         }
         String trimmed = fileName.trim();
-        // 忽略大小写判断结尾是否是 .xlsx
-        if (trimmed.toLowerCase(Locale.ROOT).endsWith(XLSX_SUFFIX)) {
-            return trimmed;
-        }
-        return trimmed + XLSX_SUFFIX;
+        return ExcelTool.ensureXlsxSuffix(trimmed);
     }
 
     private int parseInt(String s, int def) {
