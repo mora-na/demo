@@ -1,4 +1,4 @@
-package com.example.demo.tools;
+package com.example.demo.framework.tools;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
