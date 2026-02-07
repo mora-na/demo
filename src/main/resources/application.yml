@@ -140,7 +140,14 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 
 camunda:
+  # 是否启用Camunda，关闭后不加载Camunda框架
+  enabled: false
   bpm:
+    enabled: ${camunda.enabled:true}
+    webapp:
+      enabled: ${camunda.enabled:true}
+    rest:
+      enabled: ${camunda.enabled:true}
     # 管理后台登录账号
     admin-user:
       id: admin

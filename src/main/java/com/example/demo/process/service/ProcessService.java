@@ -9,6 +9,7 @@ import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 @Slf4j
 @Service
+@ConditionalOnProperty(prefix = "camunda", name = "enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 public class ProcessService {
 
