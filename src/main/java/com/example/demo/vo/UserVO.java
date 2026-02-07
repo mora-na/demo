@@ -1,6 +1,6 @@
 package com.example.demo.vo;
 
-import com.example.demo.entity.UserDTO;
+import com.example.demo.auth.model.User;
 import com.example.demo.framework.tools.ExcelColumn;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -33,11 +33,11 @@ public class UserVO implements Serializable {
     @ExcelColumn(exit = false)
     private List<OrderVO> orderVOS; // 一对多
 
-    public UserDTO toUserDTO(UserVO userVO) {
+    public User toUserDTO(UserVO userVO) {
         if (userVO == null) {
-            return new UserDTO();
+            return new User();
         }
-        return new UserDTO(userVO.getId(), userVO.getUserName(), userVO.getNickName(), null, userVO.getSex(), userVO.getTst());
+        return new User(userVO.getId(), userVO.getUserName(), userVO.getNickName(), null, userVO.getSex(), userVO.getTst());
     }
 
 }

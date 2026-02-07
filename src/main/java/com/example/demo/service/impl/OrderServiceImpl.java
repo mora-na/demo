@@ -1,7 +1,7 @@
 package com.example.demo.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.example.demo.entity.OrderDTO;
+import com.example.demo.auth.model.Order;
 import com.example.demo.framework.service.impl.MppServiceImpl;
 import com.example.demo.mapper.OrderMapper;
 import com.example.demo.service.OrderService;
@@ -17,35 +17,35 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OrderServiceImpl extends MppServiceImpl<OrderMapper, OrderDTO> implements OrderService {
+public class OrderServiceImpl extends MppServiceImpl<OrderMapper, Order> implements OrderService {
 
     @Override
-    public List<OrderDTO> getOrderListByUserId(Long id) {
+    public List<Order> getOrderListByUserId(Long id) {
         if (id == null) {
             return Collections.emptyList();
         }
-        return baseMapper.selectList(Wrappers.lambdaQuery(OrderDTO.class).eq(OrderDTO::getUserId, id));
+        return baseMapper.selectList(Wrappers.lambdaQuery(Order.class).eq(Order::getUserId, id));
     }
 
     @Override
-    public List<OrderVO> getOrderVO(List<OrderDTO> orderDTOList) {
-        if (orderDTOList == null || orderDTOList.isEmpty()) {
+    public List<OrderVO> getOrderVO(List<Order> orderList) {
+        if (orderList == null || orderList.isEmpty()) {
             return Collections.emptyList();
         }
 
-        return orderDTOList.stream().map(this::getOrderVO).collect(Collectors.toList());
+        return orderList.stream().map(this::getOrderVO).collect(Collectors.toList());
     }
 
     @Override
-    public OrderVO getOrderVO(OrderDTO orderDTO) {
-        if (orderDTO == null) {
+    public OrderVO getOrderVO(Order order) {
+        if (order == null) {
             return new OrderVO();
         }
-        return new OrderVO(orderDTO.getId(), orderDTO.getUserId(), orderDTO.getAmount());
+        return new OrderVO(order.getId(), order.getUserId(), order.getAmount());
     }
 
     @Override
-    public List<OrderDTO> getOrderDto(List<OrderVO> orderVOList) {
+    public List<Order> getOrderDto(List<OrderVO> orderVOList) {
         if (orderVOList == null || orderVOList.isEmpty()) {
             return Collections.emptyList();
         }
@@ -53,10 +53,10 @@ public class OrderServiceImpl extends MppServiceImpl<OrderMapper, OrderDTO> impl
     }
 
     @Override
-    public OrderDTO getOrderDto(OrderVO orderVO) {
+    public Order getOrderDto(OrderVO orderVO) {
         if (orderVO == null) {
-            return new OrderDTO();
+            return new Order();
         }
-        return new OrderDTO(orderVO.getId(), orderVO.getUserId(), orderVO.getAmount());
+        return new Order(orderVO.getId(), orderVO.getUserId(), orderVO.getAmount());
     }
 }

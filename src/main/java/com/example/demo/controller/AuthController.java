@@ -5,11 +5,11 @@ import com.example.demo.auth.dto.LoginRequest;
 import com.example.demo.auth.dto.LoginResponse;
 import com.example.demo.auth.dto.LogoutRequest;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.auth.model.User;
 import com.example.demo.auth.service.AuthTokenResolver;
 import com.example.demo.auth.service.CaptchaService;
 import com.example.demo.auth.service.PasswordService;
 import com.example.demo.auth.service.TokenService;
-import com.example.demo.entity.UserDTO;
 import com.example.demo.framework.controller.BaseController;
 import com.example.demo.framework.web.CommonResult;
 import com.example.demo.service.UserService;
@@ -50,7 +50,7 @@ public class AuthController extends BaseController {
         if (!captchaService.verify(request.getCaptchaId(), request.getCaptchaCode())) {
             return error(401, "captcha is invalid");
         }
-        UserDTO user = userService.getByUserName(request.getUserName());
+        User user = userService.getByUserName(request.getUserName());
         if (user == null) {
             return error(401, "user not found");
         }

@@ -2,7 +2,7 @@ package com.example.demo.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.example.demo.entity.UserDTO;
+import com.example.demo.auth.model.User;
 import com.example.demo.framework.config.UserConfig;
 import com.example.demo.framework.controller.BaseController;
 import com.example.demo.framework.tools.ExcelTool;
@@ -30,7 +30,7 @@ public class HelloWorldController extends BaseController {
 
     @RequestMapping("/selectUsers1")
     public PageResult<UserVO> listUser1(@ModelAttribute UserVO userVO) {
-        PageResult<UserDTO> pageResult = page(() -> userService.selectUsers(userVO));
+        PageResult<User> pageResult = page(() -> userService.selectUsers(userVO));
         return new PageResult<>(pageResult.getTotal(), userService.getUserVO(pageResult.getData()), pageResult.getPageNum(), pageResult.getPageSize());
     }
 
@@ -47,15 +47,15 @@ public class HelloWorldController extends BaseController {
     @RequestMapping("/selectUsers4")
     public PageResult<UserVO> listUser4(@ModelAttribute UserVO userVO) {
 
-        QueryWrapper<UserDTO> wrapper = Wrappers.query(userService.getUserDTO(userVO));
+        QueryWrapper<User> wrapper = Wrappers.query(userService.getUserDTO(userVO));
         return page(wrapper, userService.getBaseMapper()::selectList, userService::getUserVO);
     }
 
     @RequestMapping("/selectUsers5")
     public PageResult<UserVO> listUser5(@ModelAttribute UserVO userVO) {
         startPage();
-        List<UserDTO> userDTOS = userService.selectUsers(userVO);
-        PageResult<UserDTO> pageResult = getPageResult(userDTOS);
+        List<User> users = userService.selectUsers(userVO);
+        PageResult<User> pageResult = getPageResult(users);
         return new PageResult<>(pageResult.getTotal(), userService.getUserVO(pageResult.getData()), pageResult.getPageNum(), pageResult.getPageSize());
     }
 
@@ -79,9 +79,9 @@ public class HelloWorldController extends BaseController {
     @PostMapping("/import")
     public CommonResult<String> importExcel(@RequestPart("file") MultipartFile file) {
         List<UserVO> userVOList = ExcelTool.importFromMultipart(file, UserVO.class);
-        List<UserDTO> userDTO = userService.getUserDTO(userVOList);
-        log.info("Received request to importExcel,userDTO:[{}]", userDTO);
-        if (userService.saveOrUpdateBatchByMultiField(userDTO)) {
+        List<User> user = userService.getUserDTO(userVOList);
+        log.info("Received request to importExcel,userDTO:[{}]", user);
+        if (userService.saveOrUpdateBatchByMultiField(user)) {
             return success("导入成功！");
         }
         return error("导入失败！");

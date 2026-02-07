@@ -1,20 +1,20 @@
 package com.example.demo.service;
 
-import com.example.demo.entity.OrderDTO;
+import com.example.demo.auth.model.Order;
 import com.example.demo.framework.service.IMppService;
 import com.example.demo.vo.OrderVO;
 
 import java.util.List;
 
-public interface OrderService extends IMppService<OrderDTO> {
+public interface OrderService extends IMppService<Order> {
 
-    List<OrderDTO> getOrderListByUserId(Long id);
+    List<Order> getOrderListByUserId(Long id);
 
-    List<OrderVO> getOrderVO(List<OrderDTO> orderDTOList);
+    List<OrderVO> getOrderVO(List<Order> orderList);
 
-    OrderVO getOrderVO(OrderDTO orderDTO);
+    OrderVO getOrderVO(Order order);
 
-    List<OrderDTO> getOrderDto(List<OrderVO> orderVOList);
+    List<Order> getOrderDto(List<OrderVO> orderVOList);
 
-    OrderDTO getOrderDto(OrderVO orderVO);
+    Order getOrderDto(OrderVO orderVO);
 }

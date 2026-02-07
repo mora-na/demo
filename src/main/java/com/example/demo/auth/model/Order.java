@@ -1,4 +1,4 @@
-package com.example.demo.entity;
+package com.example.demo.auth.model;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 @TableName(value = "sys_order")
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderDTO implements Serializable {
+public class Order implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

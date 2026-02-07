@@ -1,4 +1,4 @@
-package com.example.demo.entity;
+package com.example.demo.auth.model;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -18,7 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName(value = "sys_user")
-public class UserDTO implements Serializable {
+public class User implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -42,11 +42,11 @@ public class UserDTO implements Serializable {
     @TableField("tst")
     private String tst;
 
-    public UserVO toUserVO(UserDTO userDTO, List<OrderVO> orderVOList) {
-        if (userDTO == null) {
+    public UserVO toUserVO(User user, List<OrderVO> orderVOList) {
+        if (user == null) {
             return new UserVO();
         }
-        return new UserVO(userDTO.getId(), userDTO.getUserName(), userDTO.getNickName(), userDTO.getSex(), userDTO.getTst(), orderVOList);
+        return new UserVO(user.getId(), user.getUserName(), user.getNickName(), user.getSex(), user.getTst(), orderVOList);
     }
 
 }

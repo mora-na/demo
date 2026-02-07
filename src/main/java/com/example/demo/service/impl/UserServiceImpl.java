@@ -1,7 +1,7 @@
 package com.example.demo.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.example.demo.entity.UserDTO;
+import com.example.demo.auth.model.User;
 import com.example.demo.framework.service.impl.MppServiceImpl;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.service.OrderService;
@@ -18,33 +18,33 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl extends MppServiceImpl<UserMapper, UserDTO> implements UserService {
+public class UserServiceImpl extends MppServiceImpl<UserMapper, User> implements UserService {
 
     private final OrderService orderService;
 
     @Override
-    public List<UserDTO> selectUsers(UserVO userVO) {
+    public List<User> selectUsers(UserVO userVO) {
         return baseMapper.selectList(Wrappers.query(getUserDTO(userVO)));
     }
 
     @Override
-    public List<UserVO> getUserVO(List<UserDTO> userDTOList) {
-        if (userDTOList == null || userDTOList.isEmpty()) {
+    public List<UserVO> getUserVO(List<User> userList) {
+        if (userList == null || userList.isEmpty()) {
             return Collections.emptyList();
         }
-        return userDTOList.stream().map(userDTO -> new UserVO(userDTO.getId(), userDTO.getUserName(), userDTO.getNickName(), userDTO.getSex(), userDTO.getTst(), orderService.getOrderVO(orderService.getOrderListByUserId(userDTO.getId())))).collect(Collectors.toList());
+        return userList.stream().map(userDTO -> new UserVO(userDTO.getId(), userDTO.getUserName(), userDTO.getNickName(), userDTO.getSex(), userDTO.getTst(), orderService.getOrderVO(orderService.getOrderListByUserId(userDTO.getId())))).collect(Collectors.toList());
     }
 
     @Override
-    public UserVO getUserVO(UserDTO userDTO) {
-        if (userDTO == null) {
+    public UserVO getUserVO(User user) {
+        if (user == null) {
             return new UserVO();
         }
-        return new UserVO(userDTO.getId(), userDTO.getUserName(), userDTO.getNickName(), userDTO.getSex(), userDTO.getTst(), orderService.getOrderVO(orderService.getOrderListByUserId(userDTO.getId())));
+        return new UserVO(user.getId(), user.getUserName(), user.getNickName(), user.getSex(), user.getTst(), orderService.getOrderVO(orderService.getOrderListByUserId(user.getId())));
     }
 
     @Override
-    public List<UserDTO> getUserDTO(List<UserVO> userVOList) {
+    public List<User> getUserDTO(List<UserVO> userVOList) {
         if (userVOList == null || userVOList.isEmpty()) {
             return Collections.emptyList();
         }
@@ -52,19 +52,19 @@ public class UserServiceImpl extends MppServiceImpl<UserMapper, UserDTO> impleme
     }
 
     @Override
-    public UserDTO getUserDTO(UserVO userVO) {
+    public User getUserDTO(UserVO userVO) {
         if (userVO == null) {
-            return new UserDTO();
+            return new User();
         }
-        return new UserDTO(userVO.getId(), userVO.getUserName(), userVO.getNickName(), null, userVO.getSex(), userVO.getTst());
+        return new User(userVO.getId(), userVO.getUserName(), userVO.getNickName(), null, userVO.getSex(), userVO.getTst());
     }
 
     @Override
-    public UserDTO getByUserName(String userName) {
+    public User getByUserName(String userName) {
         if (userName == null) {
             return null;
         }
-        return baseMapper.selectOne(Wrappers.lambdaQuery(UserDTO.class).eq(UserDTO::getUserName, userName));
+        return baseMapper.selectOne(Wrappers.lambdaQuery(User.class).eq(User::getUserName, userName));
     }
 
 }

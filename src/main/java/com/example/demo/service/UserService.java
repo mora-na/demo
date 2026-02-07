@@ -1,22 +1,22 @@
 package com.example.demo.service;
 
-import com.example.demo.entity.UserDTO;
+import com.example.demo.auth.model.User;
 import com.example.demo.framework.service.IMppService;
 import com.example.demo.vo.UserVO;
 
 import java.util.List;
 
-public interface UserService extends IMppService<UserDTO> {
+public interface UserService extends IMppService<User> {
 
-    List<UserDTO> selectUsers(UserVO userVO);
+    List<User> selectUsers(UserVO userVO);
 
-    List<UserVO> getUserVO(List<UserDTO> userDTOList);
+    List<UserVO> getUserVO(List<User> userList);
 
-    UserVO getUserVO(UserDTO userDTO);
+    UserVO getUserVO(User user);
 
-    List<UserDTO> getUserDTO(List<UserVO> userVOList);
+    List<User> getUserDTO(List<UserVO> userVOList);
 
-    UserDTO getUserDTO(UserVO userVO);
+    User getUserDTO(UserVO userVO);
 
-    UserDTO getByUserName(String userName);
+    User getByUserName(String userName);
 }
