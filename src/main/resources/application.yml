@@ -201,7 +201,7 @@ user:
 
 auth:
   jwt:
-    secret: change-me
+    secret: 0x0000$0001,06a7c00@00x000=0*00&010(784c000,0x00+000-001)0ea7c0+00
     ttl-seconds: 7200
   captcha:
     width: 120
@@ -211,7 +211,7 @@ auth:
     expire-seconds: 120
   password:
     mode: plain
-    salt: ""
+    salt: "4a971387-649c-49f3-910d-1becc50a54e4"
   filter:
     enabled: true
     exclude-paths:

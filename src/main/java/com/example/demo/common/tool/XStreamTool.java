@@ -11,28 +11,29 @@ import java.util.Set;
 
 public class XStreamTool {
     private static final XStream xstream;
+    private static final String DOLLAR_TOKEN = "__DOLLAR__";
 
     static {
         // 自定义 NameCoder，禁止将 "_" 转为 "$"
         NameCoder nc = new NameCoder() {
             @Override
             public String encodeNode(String name) {
-                return name;
+                return name == null ? null : name.replace("$", DOLLAR_TOKEN);
             }
 
             @Override
             public String encodeAttribute(String name) {
-                return name;
+                return name == null ? null : name.replace("$", DOLLAR_TOKEN);
             }
 
             @Override
             public String decodeNode(String nodeName) {
-                return nodeName;
+                return nodeName == null ? null : nodeName.replace(DOLLAR_TOKEN, "$");
             }
 
             @Override
             public String decodeAttribute(String attributeName) {
-                return attributeName;
+                return attributeName == null ? null : attributeName.replace(DOLLAR_TOKEN, "$");
             }
         };
 
