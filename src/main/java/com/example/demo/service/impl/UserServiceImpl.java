@@ -32,7 +32,7 @@ public class UserServiceImpl extends MppServiceImpl<UserMapper, UserDTO> impleme
         if (userDTOList == null || userDTOList.isEmpty()) {
             return Collections.emptyList();
         }
-        return userDTOList.stream().map(userDTO -> new UserVO(userDTO.getId(), userDTO.getName(), userDTO.getSex(), userDTO.getTst(), orderService.getOrderVO(orderService.getOrderListByUserId(userDTO.getId())))).collect(Collectors.toList());
+        return userDTOList.stream().map(userDTO -> new UserVO(userDTO.getId(), userDTO.getUserName(), userDTO.getNickName(), userDTO.getSex(), userDTO.getTst(), orderService.getOrderVO(orderService.getOrderListByUserId(userDTO.getId())))).collect(Collectors.toList());
     }
 
     @Override
@@ -40,7 +40,7 @@ public class UserServiceImpl extends MppServiceImpl<UserMapper, UserDTO> impleme
         if (userDTO == null) {
             return new UserVO();
         }
-        return new UserVO(userDTO.getId(), userDTO.getName(), userDTO.getSex(), userDTO.getTst(), orderService.getOrderVO(orderService.getOrderListByUserId(userDTO.getId())));
+        return new UserVO(userDTO.getId(), userDTO.getUserName(), userDTO.getNickName(), userDTO.getSex(), userDTO.getTst(), orderService.getOrderVO(orderService.getOrderListByUserId(userDTO.getId())));
     }
 
     @Override
@@ -56,7 +56,15 @@ public class UserServiceImpl extends MppServiceImpl<UserMapper, UserDTO> impleme
         if (userVO == null) {
             return new UserDTO();
         }
-        return new UserDTO(userVO.getId(), userVO.getName(), userVO.getSex(), userVO.getTst());
+        return new UserDTO(userVO.getId(), userVO.getUserName(), userVO.getNickName(), null, userVO.getSex(), userVO.getTst());
+    }
+
+    @Override
+    public UserDTO getByUserName(String userName) {
+        if (userName == null) {
+            return null;
+        }
+        return baseMapper.selectOne(Wrappers.lambdaQuery(UserDTO.class).eq(UserDTO::getUserName, userName));
     }
 
 }

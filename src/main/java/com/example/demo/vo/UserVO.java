@@ -19,8 +19,11 @@ public class UserVO implements Serializable {
     @ExcelColumn(exit = false)
     private Long id;
 
-    @ExcelColumn(headerName = "姓名")
-    private String name;
+    @ExcelColumn(headerName = "用户名")
+    private String userName;
+
+    @ExcelColumn(headerName = "昵称")
+    private String nickName;
 
     @ExcelColumn(headerName = "性别", mapping = {"0:女", "1:男"})
     private String sex;
@@ -34,7 +37,7 @@ public class UserVO implements Serializable {
         if (userVO == null) {
             return new UserDTO();
         }
-        return new UserDTO(userVO.getId(), userVO.getName(), userVO.getSex(), userVO.getTst());
+        return new UserDTO(userVO.getId(), userVO.getUserName(), userVO.getNickName(), null, userVO.getSex(), userVO.getTst());
     }
 
 }

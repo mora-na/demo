@@ -25,12 +25,18 @@ public class UserDTO implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @TableField("name")
+    @TableField("user_name")
     @MppMultiField
-    private String name;
+    private String userName;
+
+    @TableField("nick_name")
+    @MppMultiField
+    private String nickName;
+
+    @TableField("password")
+    private String password;
 
     @TableField("sex")
-    @MppMultiField
     private String sex;
 
     @TableField("tst")
@@ -40,7 +46,7 @@ public class UserDTO implements Serializable {
         if (userDTO == null) {
             return new UserVO();
         }
-        return new UserVO(userDTO.getId(), userDTO.getName(), userDTO.getSex(), userDTO.getTst(), orderVOList);
+        return new UserVO(userDTO.getId(), userDTO.getUserName(), userDTO.getNickName(), userDTO.getSex(), userDTO.getTst(), orderVOList);
     }
 
 }

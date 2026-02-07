@@ -1,0 +1,75 @@
+package com.example.demo.framework.filter;
+
+import com.alibaba.fastjson2.JSON;
+import com.example.demo.auth.model.AuthContext;
+import com.example.demo.auth.model.AuthUser;
+import com.example.demo.auth.service.AuthTokenResolver;
+import com.example.demo.auth.service.TokenService;
+import com.example.demo.framework.config.AuthProperties;
+import com.example.demo.framework.web.CommonResult;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@Component
+@RequiredArgsConstructor
+public class AuthTokenFilter extends OncePerRequestFilter {
+
+    private final AuthProperties authProperties;
+    private final TokenService tokenService;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        if (!authProperties.getFilter().isEnabled()) {
+            return true;
+        }
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+        String path = request.getRequestURI();
+        for (String pattern : authProperties.getFilter().getExcludePaths()) {
+            if (pathMatcher.match(pattern, path)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+        String token = AuthTokenResolver.resolve(request);
+        if (StringUtils.isBlank(token)) {
+            writeUnauthorized(response, "token is missing");
+            return;
+        }
+        AuthUser user = tokenService.verifyToken(token);
+        if (user == null) {
+            writeUnauthorized(response, "token is invalid or expired");
+            return;
+        }
+        AuthContext.set(user);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            AuthContext.clear();
+        }
+    }
+
+    private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=UTF-8");
+        CommonResult<Object> result = CommonResult.error(HttpServletResponse.SC_UNAUTHORIZED, message);
+        response.getWriter().write(JSON.toJSONString(result));
+    }
+}

@@ -198,3 +198,25 @@ user:
     settings:
       theme: dark
       notify: true
+
+auth:
+  jwt:
+    secret: change-me
+    ttl-seconds: 7200
+  captcha:
+    width: 120
+    height: 40
+    code-length: 4
+    thickness: 2
+    expire-seconds: 120
+  password:
+    mode: plain
+    salt: ""
+  filter:
+    enabled: true
+    exclude-paths:
+      - /auth/**
+      - /error
+      - /druid/**
+      - /camunda/**
+      - /engine-rest/**
