@@ -1,6 +1,6 @@
 package com.example.demo.auth.service;
 
-import com.example.demo.framework.config.AuthProperties;
+import com.example.demo.auth.config.AuthProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;

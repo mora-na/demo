@@ -2,9 +2,10 @@ package com.example.demo.auth.service;
 
 import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
+import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.dto.LoginResponse;
 import com.example.demo.auth.model.AuthUser;
-import com.example.demo.framework.config.AuthProperties;
+import com.example.demo.auth.store.TokenStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

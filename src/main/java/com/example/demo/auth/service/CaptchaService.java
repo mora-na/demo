@@ -2,8 +2,9 @@ package com.example.demo.auth.service;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.ShearCaptcha;
+import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.dto.CaptchaResponse;
-import com.example.demo.framework.config.AuthProperties;
+import com.example.demo.auth.store.CaptchaStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

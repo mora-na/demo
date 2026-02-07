@@ -11,7 +11,7 @@ import org.springframework.cache.annotation.EnableCaching;
 @Slf4j
 @EnableCaching
 @SpringBootApplication
-@MapperScan("com.example.demo.mapper")
+@MapperScan({"com.example.demo.user.mapper", "com.example.demo.order.mapper"})
 public class DemoApplication extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
