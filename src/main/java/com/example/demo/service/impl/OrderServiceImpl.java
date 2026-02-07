@@ -1,7 +1,7 @@
 package com.example.demo.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.example.demo.auth.model.Order;
+import com.example.demo.entity.Order;
 import com.example.demo.framework.service.impl.MppServiceImpl;
 import com.example.demo.mapper.OrderMapper;
 import com.example.demo.service.OrderService;

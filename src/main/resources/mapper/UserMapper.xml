@@ -4,14 +4,14 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.demo.mapper.UserMapper">
     <!-- User 的 ResultMap -->
-    <!--    <resultMap id="userResultMap" type="com.example.demo.auth.model.User">-->
+    <!--    <resultMap id="userResultMap" type="com.example.demo.entity.User">-->
     <!--        <id column="id" property="id"/>-->
     <!--        <result column="name" property="name"/>-->
     <!--        <result column="sex" property="sex"/>-->
 
     <!--        &lt;!&ndash; 懒加载的 collection &ndash;&gt;-->
     <!--        <collection property="orderDTOS"-->
-    <!--                    ofType="com.example.demo.auth.model.Order"-->
+    <!--                    ofType="com.example.demo.entity.Order"-->
     <!--                    select="com.example.demo.mapper.OrderMapper.selectByUserId"-->
     <!--                    column="id"/>-->
     <!--    </resultMap>-->

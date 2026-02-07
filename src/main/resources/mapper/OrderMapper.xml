@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.demo.mapper.OrderMapper">
-    <!--    <select id="selectByUserId" resultType="com.example.demo.auth.model.Order">-->
+    <!--    <select id="selectByUserId" resultType="com.example.demo.entity.Order">-->
     <!--        select id, user_id, amount-->
     <!--        from sys_order-->
     <!--        where user_id = #{userId}-->

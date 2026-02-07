@@ -1,6 +1,6 @@
 package com.example.demo.service;
 
-import com.example.demo.auth.model.Order;
+import com.example.demo.entity.Order;
 import com.example.demo.framework.service.IMppService;
 import com.example.demo.vo.OrderVO;
 

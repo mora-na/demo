@@ -1,4 +1,4 @@
-package com.example.demo.framework.tools;
+package com.example.demo.framework.exception;
 
 /**
  * 统一的Excel处理异常，便于在控制层统一返回。

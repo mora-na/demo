@@ -1,17 +1,17 @@
-package com.example.demo.controller;
+package com.example.demo.auth.controller;
 
 import com.example.demo.auth.dto.CaptchaResponse;
 import com.example.demo.auth.dto.LoginRequest;
 import com.example.demo.auth.dto.LoginResponse;
 import com.example.demo.auth.dto.LogoutRequest;
 import com.example.demo.auth.model.AuthUser;
-import com.example.demo.auth.model.User;
 import com.example.demo.auth.service.AuthTokenResolver;
 import com.example.demo.auth.service.CaptchaService;
 import com.example.demo.auth.service.PasswordService;
 import com.example.demo.auth.service.TokenService;
+import com.example.demo.entity.User;
 import com.example.demo.framework.controller.BaseController;
-import com.example.demo.framework.web.CommonResult;
+import com.example.demo.framework.model.CommonResult;
 import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;

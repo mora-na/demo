@@ -1,5 +1,7 @@
 package com.example.demo.framework.tools;
 
+import com.example.demo.framework.annotation.ExcelColumn;
+import com.example.demo.framework.exception.ExcelProcessException;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
@@ -28,8 +30,8 @@ import java.util.stream.Collectors;
  */
 public final class ExcelTool {
 
-    private static final String DEFAULT_SHEET = "Sheet1";
     public static final String XLSX_SUFFIX = ".xlsx";
+    private static final String DEFAULT_SHEET = "Sheet1";
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
@@ -486,6 +488,29 @@ public final class ExcelTool {
         return trimmed + XLSX_SUFFIX;
     }
 
+    private static Map<String, String> parseMapping(ExcelColumn annotation) {
+        Map<String, String> mapping = new LinkedHashMap<>();
+        if (annotation == null || annotation.mapping() == null) {
+            return mapping;
+        }
+        for (String rule : annotation.mapping()) {
+            if (StringUtils.isBlank(rule)) {
+                continue;
+            }
+            String[] pair = rule.split(":", 2);
+            if (pair.length != 2) {
+                continue;
+            }
+            String source = pair[0].trim();
+            String target = pair[1].trim();
+            if (source.isEmpty()) {
+                continue;
+            }
+            mapping.put(source, target);
+        }
+        return mapping;
+    }
+
     /**
      * 字段元数据与访问工具。
      */
@@ -557,28 +582,5 @@ public final class ExcelTool {
                 return raw.toString();
             }
         }
-    }
-
-    private static Map<String, String> parseMapping(ExcelColumn annotation) {
-        Map<String, String> mapping = new LinkedHashMap<>();
-        if (annotation == null || annotation.mapping() == null) {
-            return mapping;
-        }
-        for (String rule : annotation.mapping()) {
-            if (StringUtils.isBlank(rule)) {
-                continue;
-            }
-            String[] pair = rule.split(":", 2);
-            if (pair.length != 2) {
-                continue;
-            }
-            String source = pair[0].trim();
-            String target = pair[1].trim();
-            if (source.isEmpty()) {
-                continue;
-            }
-            mapping.put(source, target);
-        }
-        return mapping;
     }
 }

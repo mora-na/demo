@@ -12,12 +12,11 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "user")
 public class UserConfig {
 
+    public static Map<String, Object> CONFIG;
     /**
      * 承载 user.xxx 下的所有配置
      */
     public Map<String, Object> config;
-
-    public static Map<String, Object> CONFIG;
 
     @PostConstruct
     public void init() {

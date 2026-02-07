@@ -2,12 +2,12 @@ package com.example.demo.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.example.demo.auth.model.User;
+import com.example.demo.entity.User;
 import com.example.demo.framework.config.UserConfig;
 import com.example.demo.framework.controller.BaseController;
+import com.example.demo.framework.model.CommonResult;
+import com.example.demo.framework.model.PageResult;
 import com.example.demo.framework.tools.ExcelTool;
-import com.example.demo.framework.web.CommonResult;
-import com.example.demo.framework.web.PageResult;
 import com.example.demo.service.UserService;
 import com.example.demo.vo.UserVO;
 import lombok.RequiredArgsConstructor;

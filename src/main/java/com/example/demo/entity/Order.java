@@ -1,4 +1,4 @@
-package com.example.demo.auth.model;
+package com.example.demo.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;

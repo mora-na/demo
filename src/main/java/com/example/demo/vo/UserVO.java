@@ -1,7 +1,7 @@
 package com.example.demo.vo;
 
-import com.example.demo.auth.model.User;
-import com.example.demo.framework.tools.ExcelColumn;
+import com.example.demo.entity.User;
+import com.example.demo.framework.annotation.ExcelColumn;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

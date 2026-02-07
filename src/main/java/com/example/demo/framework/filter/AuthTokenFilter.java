@@ -6,7 +6,7 @@ import com.example.demo.auth.model.AuthUser;
 import com.example.demo.auth.service.AuthTokenResolver;
 import com.example.demo.auth.service.TokenService;
 import com.example.demo.framework.config.AuthProperties;
-import com.example.demo.framework.web.CommonResult;
+import com.example.demo.framework.model.CommonResult;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
