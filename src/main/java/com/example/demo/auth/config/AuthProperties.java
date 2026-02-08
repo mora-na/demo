@@ -34,6 +34,8 @@ public class AuthProperties {
         private int codeLength = 4;
         private int thickness = 2;
         private int expireSeconds = 120;
+        private int maxEntries = 10000;
+        private int cleanupIntervalSeconds = 60;
     }
 
     @Data

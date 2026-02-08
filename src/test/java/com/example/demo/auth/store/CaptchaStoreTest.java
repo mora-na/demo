@@ -1,5 +1,6 @@
 package com.example.demo.auth.store;
 
+import com.example.demo.auth.config.AuthProperties;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -11,7 +12,7 @@ class CaptchaStoreTest {
 
     @Test
     void saveAndVerify_successThenRemoved() {
-        CaptchaStore store = new CaptchaStore();
+        CaptchaStore store = new CaptchaStore(new AuthProperties());
         long expireAt = Instant.now().getEpochSecond() + 5;
         store.save("id-1", "abcd", expireAt);
 
@@ -21,7 +22,7 @@ class CaptchaStoreTest {
 
     @Test
     void verify_failsWhenExpiredOrWrongCode() {
-        CaptchaStore store = new CaptchaStore();
+        CaptchaStore store = new CaptchaStore(new AuthProperties());
         long expiredAt = Instant.now().getEpochSecond() - 1;
         store.save("id-2", "xyz", expiredAt);
 
