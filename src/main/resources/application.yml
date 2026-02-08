@@ -239,3 +239,32 @@ security:
     enabled: true
     block-full-table: true
     block-multi-statement: true
+  rate-limit:
+    enabled: true
+    window-seconds: 60
+    max-requests: 100
+    key-mode: ip
+    include-path: true
+    max-cache-size: 10000
+    exclude-paths:
+      - /druid/**
+      - /camunda/**
+      - /engine-rest/**
+  duplicate-submit:
+    enabled: true
+    interval-millis: 3000
+    key-mode: ip
+    include-path: true
+    use-idempotency-key: true
+    header-name: Idempotency-Key
+    include-body: true
+    max-cache-size: 10000
+    methods:
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+    exclude-paths:
+      - /druid/**
+      - /camunda/**
+      - /engine-rest/**
