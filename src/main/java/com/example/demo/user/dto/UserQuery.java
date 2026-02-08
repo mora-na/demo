@@ -22,4 +22,6 @@ public class UserQuery implements Serializable {
     private String sex;
 
     private String tst;
+
+    private Integer status;
 }

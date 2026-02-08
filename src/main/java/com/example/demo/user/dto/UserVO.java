@@ -28,6 +28,15 @@ public class UserVO implements Serializable {
     @ExcelColumn(headerName = "性别", mapping = {"0:女", "1:男"})
     private String sex;
 
+    @ExcelColumn(headerName = "状态", mapping = {"0:禁用", "1:启用"})
+    private Integer status;
+
+    @ExcelColumn(exit = false)
+    private String dataScopeType;
+
+    @ExcelColumn(exit = false)
+    private String dataScopeValue;
+
     private String tst;
 
     @ExcelColumn(exit = false)

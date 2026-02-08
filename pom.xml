@@ -37,6 +37,7 @@
         <logcaptor.version>2.7.6</logcaptor.version>
         <fastjson2.version>2.0.60</fastjson2.version>
         <pagehelper.version>2.1.1</pagehelper.version>
+        <jsqlparser.version>4.5</jsqlparser.version>
         <commons-io.version>2.20.0</commons-io.version>
         <httpclient.version>4.5.14</httpclient.version>
         <postgresql.version>42.7.7</postgresql.version>
@@ -257,6 +258,11 @@
             <groupId>com.github.pagehelper</groupId>
             <artifactId>pagehelper-spring-boot-starter</artifactId>
             <version>${pagehelper.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jsqlparser</groupId>
+            <artifactId>jsqlparser</artifactId>
+            <version>${jsqlparser.version}</version>
         </dependency>
 
         <dependency>

@@ -13,7 +13,10 @@ class TokenStoreTest {
     @Test
     void saveGetRevoke() {
         TokenStore store = new TokenStore();
-        AuthUser user = new AuthUser(1L, "alice", "Alice");
+        AuthUser user = new AuthUser();
+        user.setId(1L);
+        user.setUserName("alice");
+        user.setNickName("Alice");
         long expireAt = Instant.now().getEpochSecond() + 10;
 
         store.save("token", user, expireAt);
@@ -27,7 +30,10 @@ class TokenStoreTest {
     @Test
     void get_returnsNullWhenExpired() {
         TokenStore store = new TokenStore();
-        AuthUser user = new AuthUser(2L, "bob", "Bob");
+        AuthUser user = new AuthUser();
+        user.setId(2L);
+        user.setUserName("bob");
+        user.setNickName("Bob");
         long expiredAt = Instant.now().getEpochSecond() - 1;
 
         store.save("expired", user, expiredAt);

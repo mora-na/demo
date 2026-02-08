@@ -67,8 +67,19 @@ class UserControllerTest {
 
     @Test
     void selectUsers_endpointsReturnPage() throws Exception {
-        User user = new User(1L, "alice", "Ali", null, "F", "note");
-        UserVO view = new UserVO(1L, "alice", "Ali", "F", "note", Collections.<OrderVO>emptyList());
+        User user = new User();
+        user.setId(1L);
+        user.setUserName("alice");
+        user.setNickName("Ali");
+        user.setSex("F");
+        user.setTst("note");
+        UserVO view = new UserVO();
+        view.setId(1L);
+        view.setUserName("alice");
+        view.setNickName("Ali");
+        view.setSex("F");
+        view.setTst("note");
+        view.setOrderVOS(Collections.<OrderVO>emptyList());
         when(userService.selectUsers(nullable(UserQuery.class))).thenAnswer(invocation -> {
             Page<User> page = PageHelper.getLocalPage();
             if (page != null) {
@@ -125,8 +136,19 @@ class UserControllerTest {
 
     @Test
     void export_writesExcelResponse() throws Exception {
-        User user = new User(1L, "alice", "Ali", null, "F", "note");
-        UserVO view = new UserVO(1L, "alice", "Ali", "F", "note", Collections.<OrderVO>emptyList());
+        User user = new User();
+        user.setId(1L);
+        user.setUserName("alice");
+        user.setNickName("Ali");
+        user.setSex("F");
+        user.setTst("note");
+        UserVO view = new UserVO();
+        view.setId(1L);
+        view.setUserName("alice");
+        view.setNickName("Ali");
+        view.setSex("F");
+        view.setTst("note");
+        view.setOrderVOS(Collections.<OrderVO>emptyList());
         when(userService.selectUsers(any(UserQuery.class))).thenReturn(Collections.singletonList(user));
         when(userViewService.toViewList(anyList())).thenReturn(Collections.singletonList(view));
 
@@ -137,7 +159,13 @@ class UserControllerTest {
 
     @Test
     void importExcel_returnsSuccess() throws Exception {
-        UserVO view = new UserVO(1L, "alice", "Ali", "F", "note", Collections.<OrderVO>emptyList());
+        UserVO view = new UserVO();
+        view.setId(1L);
+        view.setUserName("alice");
+        view.setNickName("Ali");
+        view.setSex("F");
+        view.setTst("note");
+        view.setOrderVOS(Collections.<OrderVO>emptyList());
         ByteArrayOutputStream outputStream = ExcelTool.exportToStream(Collections.singletonList(view), UserVO.class);
         MockMultipartFile file = new MockMultipartFile("file", "users.xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", outputStream.toByteArray());

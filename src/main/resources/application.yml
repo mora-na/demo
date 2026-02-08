@@ -40,9 +40,10 @@ spring:
       strict: false             # true: 未匹配报错；false: 使用默认
       datasource:
         master:
-          url: jdbc:mysql://xxx:3306/test?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
-          username: xxx
-          password: xxx
+          url: jdbc:mysql://101.37.26.199:3306/test?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
+          username: root
+          #          password: Unitech@1234
+          password: ENC(LDV6GdRm0paqMTGAQbTrKg==)
           driver-class-name: com.mysql.cj.jdbc.Driver
           type: com.alibaba.druid.pool.DruidDataSource
           druid:
@@ -281,3 +282,8 @@ security:
       - /druid/**
       - /camunda/**
       - /engine-rest/**
+  data-scope:
+    enabled: true
+    default-type: ALL
+    source: db
+    cache-seconds: 180

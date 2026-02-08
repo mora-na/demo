@@ -1,5 +1,7 @@
 package com.example.demo.user.service;
 
+import com.example.demo.auth.service.PasswordService;
+import com.example.demo.permission.service.UserRoleService;
 import com.example.demo.user.converter.UserConverter;
 import com.example.demo.user.dto.UserQuery;
 import com.example.demo.user.entity.User;
@@ -20,7 +22,7 @@ class UserServiceImplTest {
 
     @Test
     void selectUsers_usesMapper() {
-        UserServiceImpl service = new UserServiceImpl(new UserConverter());
+        UserServiceImpl service = new UserServiceImpl(new UserConverter(), mock(PasswordService.class), mock(UserRoleService.class));
         UserMapper mapper = mock(UserMapper.class);
         ReflectionTestUtils.setField(service, "baseMapper", mapper);
 
@@ -31,7 +33,7 @@ class UserServiceImplTest {
 
     @Test
     void getByUserName_returnsNullWhenMissing() {
-        UserServiceImpl service = new UserServiceImpl(new UserConverter());
+        UserServiceImpl service = new UserServiceImpl(new UserConverter(), mock(PasswordService.class), mock(UserRoleService.class));
         assertNull(service.getByUserName(null));
     }
 }

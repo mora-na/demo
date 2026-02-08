@@ -24,7 +24,12 @@ class UserViewServiceTest {
         UserConverter userConverter = new UserConverter();
         UserViewService viewService = new UserViewService(orderService, orderConverter, userConverter);
 
-        User user = new User(1L, "alice", "Ali", null, "F", "note");
+        User user = new User();
+        user.setId(1L);
+        user.setUserName("alice");
+        user.setNickName("Ali");
+        user.setSex("F");
+        user.setTst("note");
         when(orderService.getOrderListByUserId(1L))
                 .thenReturn(Collections.singletonList(new Order(10L, 1L, BigDecimal.ONE)));
 

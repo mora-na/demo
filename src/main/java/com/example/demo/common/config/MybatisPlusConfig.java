@@ -2,8 +2,7 @@ package com.example.demo.common.config;
 
 import com.baomidou.mybatisplus.core.injector.ISqlInjector;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
-import com.example.demo.common.mybatis.SqlGuardInnerInterceptor;
-import com.example.demo.common.mybatis.SqlGuardProperties;
+import com.example.demo.common.mybatis.*;
 import com.github.jeffreyning.mybatisplus.base.MppSqlInjector;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,10 +16,15 @@ public class MybatisPlusConfig {
     }
 
     @Bean
-    public MybatisPlusInterceptor mybatisPlusInterceptor(SqlGuardProperties properties) {
+    public MybatisPlusInterceptor mybatisPlusInterceptor(SqlGuardProperties properties,
+                                                         DataScopeProperties dataScopeProperties,
+                                                         DataScopeRuleProvider dataScopeRuleProvider) {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         if (properties.isEnabled()) {
             interceptor.addInnerInterceptor(new SqlGuardInnerInterceptor(properties));
+        }
+        if (dataScopeProperties.isEnabled()) {
+            interceptor.addInnerInterceptor(new DataScopeInnerInterceptor(dataScopeProperties, dataScopeRuleProvider));
         }
         return interceptor;
     }

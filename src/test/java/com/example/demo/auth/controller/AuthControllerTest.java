@@ -67,11 +67,22 @@ class AuthControllerTest {
     @Test
     void login_success_setsAuthorizationHeader() throws Exception {
         when(captchaService.verify("cid", "code")).thenReturn(true);
-        User user = new User(1L, "alice", "Ali", "pw", "F", "note");
+        User user = new User();
+        user.setId(1L);
+        user.setUserName("alice");
+        user.setNickName("Ali");
+        user.setPassword("pw");
+        user.setSex("F");
+        user.setTst("note");
+        user.setStatus(1);
         when(userService.getByUserName("alice")).thenReturn(user);
         when(passwordService.matches("pw", "pw")).thenReturn(true);
+        AuthUser authUser = new AuthUser();
+        authUser.setId(1L);
+        authUser.setUserName("alice");
+        authUser.setNickName("Ali");
         when(tokenService.issueToken(any(AuthUser.class)))
-                .thenReturn(new LoginResponse("token", "Bearer", 100L, new AuthUser(1L, "alice", "Ali")));
+                .thenReturn(new LoginResponse("token", "Bearer", 100L, authUser));
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

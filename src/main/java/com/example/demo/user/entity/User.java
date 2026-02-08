@@ -17,8 +17,9 @@ import java.io.Serializable;
 @TableName(value = "sys_user")
 public class User implements Serializable {
 
+    public static final int STATUS_ENABLED = 1;
+    public static final int STATUS_DISABLED = 0;
     private static final long serialVersionUID = 1L;
-
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
@@ -32,6 +33,15 @@ public class User implements Serializable {
 
     @TableField("password")
     private String password;
+
+    @TableField("status")
+    private Integer status;
+
+    @TableField("data_scope_type")
+    private String dataScopeType;
+
+    @TableField("data_scope_value")
+    private String dataScopeValue;
 
     @TableField("sex")
     private String sex;

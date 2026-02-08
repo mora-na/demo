@@ -17,14 +17,30 @@ public class UserConverter {
         if (query == null) {
             return new User();
         }
-        return new User(query.getId(), query.getUserName(), query.getNickName(), null, query.getSex(), query.getTst());
+        User user = new User();
+        user.setId(query.getId());
+        user.setUserName(query.getUserName());
+        user.setNickName(query.getNickName());
+        user.setSex(query.getSex());
+        user.setTst(query.getTst());
+        user.setStatus(query.getStatus());
+        return user;
     }
 
     public User toEntity(UserVO userVO) {
         if (userVO == null) {
             return new User();
         }
-        return new User(userVO.getId(), userVO.getUserName(), userVO.getNickName(), null, userVO.getSex(), userVO.getTst());
+        User user = new User();
+        user.setId(userVO.getId());
+        user.setUserName(userVO.getUserName());
+        user.setNickName(userVO.getNickName());
+        user.setSex(userVO.getSex());
+        user.setStatus(userVO.getStatus());
+        user.setDataScopeType(userVO.getDataScopeType());
+        user.setDataScopeValue(userVO.getDataScopeValue());
+        user.setTst(userVO.getTst());
+        return user;
     }
 
     public List<User> toEntityList(List<UserVO> userVOList) {
@@ -38,6 +54,16 @@ public class UserConverter {
         if (user == null) {
             return new UserVO();
         }
-        return new UserVO(user.getId(), user.getUserName(), user.getNickName(), user.getSex(), user.getTst(), orderVOList);
+        UserVO view = new UserVO();
+        view.setId(user.getId());
+        view.setUserName(user.getUserName());
+        view.setNickName(user.getNickName());
+        view.setSex(user.getSex());
+        view.setStatus(user.getStatus());
+        view.setDataScopeType(user.getDataScopeType());
+        view.setDataScopeValue(user.getDataScopeValue());
+        view.setTst(user.getTst());
+        view.setOrderVOS(orderVOList);
+        return view;
     }
 }

@@ -17,7 +17,10 @@ class TokenServiceTest {
         TokenStore store = new TokenStore();
         TokenService service = new TokenService(properties, store);
 
-        AuthUser user = new AuthUser(1L, "alice", "Alice");
+        AuthUser user = new AuthUser();
+        user.setId(1L);
+        user.setUserName("alice");
+        user.setNickName("Alice");
         String token = service.issueToken(user).getToken();
         assertNotNull(token);
 
@@ -34,7 +37,10 @@ class TokenServiceTest {
         TokenStore store = new TokenStore();
         TokenService service = new TokenService(properties, store);
 
-        AuthUser user = new AuthUser(2L, "bob", "Bob");
+        AuthUser user = new AuthUser();
+        user.setId(2L);
+        user.setUserName("bob");
+        user.setNickName("Bob");
         String token = service.issueToken(user).getToken();
         assertNull(service.verifyToken(token));
         assertNull(store.get(token));

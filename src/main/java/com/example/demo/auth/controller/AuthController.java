@@ -54,10 +54,19 @@ public class AuthController extends BaseController {
         if (user == null) {
             return error(401, "user not found");
         }
+        if (user.getStatus() != null && user.getStatus().equals(User.STATUS_DISABLED)) {
+            return error(403, "user is disabled");
+        }
         if (!passwordService.matches(request.getPassword(), user.getPassword())) {
             return error(401, "password is incorrect");
         }
-        LoginResponse loginResponse = tokenService.issueToken(new AuthUser(user.getId(), user.getUserName(), user.getNickName()));
+        LoginResponse loginResponse = tokenService.issueToken(new AuthUser(
+                user.getId(),
+                user.getUserName(),
+                user.getNickName(),
+                user.getDataScopeType(),
+                user.getDataScopeValue()
+        ));
         response.setHeader("Authorization", "Bearer " + loginResponse.getToken());
         return success(loginResponse);
     }

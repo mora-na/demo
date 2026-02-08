@@ -11,4 +11,6 @@ public class AuthUser {
     private Long id;
     private String userName;
     private String nickName;
+    private String dataScopeType;
+    private String dataScopeValue;
 }
