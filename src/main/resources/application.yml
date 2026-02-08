@@ -133,7 +133,7 @@ spring:
 
 mybatis-plus:
   #配置扫描mapper XML文件
-  mapper-locations: classpath*:mapper/*.xml
+  mapper-locations: classpath*:/mapper/**/*.xml
   configuration:
     lazy-loading-enabled: true
     aggressive-lazy-loading: false
