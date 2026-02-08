@@ -6,6 +6,7 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.model.PageResult;
 import com.example.demo.common.tool.ExcelTool;
 import com.example.demo.common.web.BaseController;
+import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.user.config.UserConfig;
 import com.example.demo.user.converter.UserConverter;
 import com.example.demo.user.dto.UserQuery;
@@ -35,28 +36,33 @@ public class UserController extends BaseController {
     private final UserConfig userConfig;
 
     @RequestMapping("/selectUsers1")
+    @RequirePermission("user:query")
     public PageResult<UserVO> listUser1(@ModelAttribute UserQuery query) {
         PageResult<User> pageResult = page(() -> userService.selectUsers(query));
         return new PageResult<>(pageResult.getTotal(), userViewService.toViewList(pageResult.getData()), pageResult.getPageNum(), pageResult.getPageSize());
     }
 
     @RequestMapping("/selectUsers2")
+    @RequirePermission("user:query")
     public PageResult<UserVO> listUser2(@ModelAttribute UserQuery query) {
         return page(() -> userService.selectUsers(query), userViewService::toView);
     }
 
     @RequestMapping("/selectUsers3")
+    @RequirePermission("user:query")
     public PageResult<UserVO> listUser3(@ModelAttribute UserQuery query) {
         return page(query, userService::selectUsers, userViewService::toView);
     }
 
     @RequestMapping("/selectUsers4")
+    @RequirePermission("user:query")
     public PageResult<UserVO> listUser4(@ModelAttribute UserQuery query) {
         QueryWrapper<User> wrapper = Wrappers.query(userConverter.toEntity(query));
         return page(wrapper, userService.getBaseMapper()::selectList, userViewService::toView);
     }
 
     @RequestMapping("/selectUsers5")
+    @RequirePermission("user:query")
     public PageResult<UserVO> listUser5(@ModelAttribute UserQuery query) {
         startPage();
         List<User> users = userService.selectUsers(query);
@@ -65,6 +71,7 @@ public class UserController extends BaseController {
     }
 
     @GetMapping("/getKeyValue")
+    @RequirePermission("user:config:read")
     public CommonResult<Object> getKeyValue(String key) {
         log.info("Received request to getKeyValue,key:[{}]", key);
         if (StringUtils.isBlank(key)) {
@@ -76,12 +83,14 @@ public class UserController extends BaseController {
     }
 
     @GetMapping("/export")
+    @RequirePermission("user:export")
     public void export(@ModelAttribute UserQuery query, HttpServletResponse response) {
         List<UserVO> userVOList = userViewService.toViewList(userService.selectUsers(query));
         exportExcel(response, userVOList, UserVO.class, "用户信息" + LocalDateTime.now());
     }
 
     @PostMapping("/import")
+    @RequirePermission("user:import")
     public CommonResult<String> importExcel(@RequestPart("file") MultipartFile file) {
         List<UserVO> userVOList = ExcelTool.importFromMultipart(file, UserVO.class);
         List<User> users = userConverter.toEntityList(userVOList);

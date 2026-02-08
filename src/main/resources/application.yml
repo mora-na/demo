@@ -268,3 +268,17 @@ security:
       - /druid/**
       - /camunda/**
       - /engine-rest/**
+  permission:
+    enabled: true
+    require-login-by-default: true
+    source: db
+    super-users:
+      - master
+    cache-seconds: 0
+    max-cache-size: 10000
+    exclude-paths:
+      - /auth/**
+      - /error
+      - /druid/**
+      - /camunda/**
+      - /engine-rest/**
