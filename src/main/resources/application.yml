@@ -227,3 +227,15 @@ auth:
       - /druid/**
       - /camunda/**
       - /engine-rest/**
+
+security:
+  xss:
+    enabled: true
+    exclude-paths:
+      - /druid/**
+      - /camunda/**
+      - /engine-rest/**
+  sql-guard:
+    enabled: true
+    block-full-table: true
+    block-multi-statement: true
