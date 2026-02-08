@@ -1,5 +1,5 @@
 server:
-  port: 8888
+  port: 8080
   servlet:
     context-path: /
 
@@ -40,10 +40,9 @@ spring:
       strict: false             # true: 未匹配报错；false: 使用默认
       datasource:
         master:
-          url: jdbc:mysql://101.37.26.199:3306/test?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
-          username: root
-          #          password: Unitech@1234
-          password: ENC(LDV6GdRm0paqMTGAQbTrKg==)
+          url: jdbc:mysql://xxx:3306/test?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
+          username: xxx
+          password: xxx
           driver-class-name: com.mysql.cj.jdbc.Driver
           type: com.alibaba.druid.pool.DruidDataSource
           druid:
@@ -72,8 +71,8 @@ spring:
               maxEvictableIdleTimeMillis=900000
 #        slave:
 #          url: jdbc:postgresql://localhost:5432/slave?currentSchema=slave
-#          username: panpan
-#          password: ENC(2DhRoldBv8wA3EH5Vke29w==)
+#          username: xxx
+#          password: xxx
 #          driver-class-name: org.postgresql.Driver
 #          type: com.alibaba.druid.pool.DruidDataSource
 #          druid:
@@ -208,7 +207,7 @@ user:
 
 auth:
   jwt:
-    secret: 0x0000$0001,06a7c00@00x000=0*00&010(784c000,0x00+000-001)0ea7c0+00
+    secret: 0x0daw00$0001,06a7c00@00x0NSwHSw0=0*00&010(784c000,0x00+0nUED3n0-001)0ea7c0+00
     ttl-seconds: 7200
   captcha:
     width: 120
@@ -218,7 +217,7 @@ auth:
     expire-seconds: 120
   password:
     mode: plain
-    salt: "4a971387-649c-49f3-910d-1becc50a54e4"
+    salt: "4a97HT87*7&s649c-49f3-./9nTsdn^5$1becc50a*7!4e4"
   filter:
     enabled: true
     exclude-paths:
