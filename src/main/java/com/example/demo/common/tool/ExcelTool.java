@@ -68,15 +68,20 @@ public final class ExcelTool {
             CellStyle dateStyle = workbook.createCellStyle();
             dateStyle.setDataFormat(creationHelper.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss"));
 
-            Sheet sheet = workbook.createSheet(StringUtils.defaultIfBlank(sheetName, DEFAULT_SHEET));
-            if (sheet instanceof SXSSFSheet) {
-                ((SXSSFSheet) sheet).trackAllColumnsForAutoSizing();
+            SXSSFSheet sheet = workbook.createSheet(StringUtils.defaultIfBlank(sheetName, DEFAULT_SHEET));
+            if (sheet != null) {
+                sheet.trackAllColumnsForAutoSizing();
             }
-            buildHeaderRow(sheet, fieldMetas);
+            if (sheet != null) {
+                buildHeaderRow(sheet, fieldMetas);
+            }
 
             int rowIndex = 1;
             for (T item : data) {
-                Row row = sheet.createRow(rowIndex++);
+                Row row = null;
+                if (sheet != null) {
+                    row = sheet.createRow(rowIndex++);
+                }
                 writeDataRow(row, fieldMetas, item, dateStyle);
             }
 
