@@ -85,7 +85,7 @@ public class PermissionAdminController extends BaseController {
             return error(404, "permission not found");
         }
         Integer status = request.getStatus();
-        if (isNotValidStatus(status)) {
+        if (notValidStatus(status)) {
             return error(400, "invalid status");
         }
         if (!permissionService.updateStatus(id, status)) {
@@ -103,13 +103,13 @@ public class PermissionAdminController extends BaseController {
     }
 
     private Integer normalizeStatus(Integer status) {
-        if (isNotValidStatus(status)) {
+        if (notValidStatus(status)) {
             return 1;
         }
         return status;
     }
 
-    private boolean isNotValidStatus(Integer status) {
+    private boolean notValidStatus(Integer status) {
         return status == null || (status != 0 && status != 1);
     }
 
