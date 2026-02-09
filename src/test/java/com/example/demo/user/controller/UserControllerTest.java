@@ -3,8 +3,18 @@ package com.example.demo.user.controller;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.service.TokenService;
 import com.example.demo.common.tool.ExcelTool;
+import com.example.demo.common.web.limit.DuplicateSubmitProperties;
+import com.example.demo.common.web.limit.RateLimitProperties;
+import com.example.demo.common.web.permission.PermissionProperties;
+import com.example.demo.common.web.permission.PermissionService;
+import com.example.demo.common.web.xss.XssProperties;
+import com.example.demo.datascope.mapper.DataScopeRuleMapper;
 import com.example.demo.order.dto.OrderVO;
 import com.example.demo.order.mapper.OrderMapper;
+import com.example.demo.permission.mapper.PermissionMapper;
+import com.example.demo.permission.mapper.RoleMapper;
+import com.example.demo.permission.mapper.RolePermissionMapper;
+import com.example.demo.permission.mapper.UserRoleMapper;
 import com.example.demo.user.config.UserConfig;
 import com.example.demo.user.converter.UserConverter;
 import com.example.demo.user.dto.UserQuery;
@@ -20,7 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.ByteArrayOutputStream;
@@ -36,6 +48,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UserController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@Import({DuplicateSubmitProperties.class, RateLimitProperties.class, PermissionProperties.class, XssProperties.class})
+@TestPropertySource(properties = "security.permission.enabled=false")
 class UserControllerTest {
 
     @Autowired
@@ -57,6 +71,9 @@ class UserControllerTest {
     private AuthProperties authProperties;
 
     @MockBean
+    private PermissionService permissionService;
+
+    @MockBean
     private TokenService tokenService;
 
     @MockBean
@@ -64,6 +81,21 @@ class UserControllerTest {
 
     @MockBean
     private OrderMapper orderMapper;
+
+    @MockBean
+    private PermissionMapper permissionMapper;
+
+    @MockBean
+    private RoleMapper roleMapper;
+
+    @MockBean
+    private UserRoleMapper userRoleMapper;
+
+    @MockBean
+    private RolePermissionMapper rolePermissionMapper;
+
+    @MockBean
+    private DataScopeRuleMapper dataScopeRuleMapper;
 
     @Test
     void selectUsers_endpointsReturnPage() throws Exception {

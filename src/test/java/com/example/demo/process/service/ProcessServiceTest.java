@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -32,7 +33,7 @@ class ProcessServiceTest {
 
         ProcessInstance instance = Mockito.mock(ProcessInstance.class);
         when(instance.getId()).thenReturn("pid-1");
-        when(runtimeService.startProcessInstanceByKey(anyString(), anyString(), anyString())).thenReturn(instance);
+        when(runtimeService.startProcessInstanceByKey(anyString(), anyString(), anyMap())).thenReturn(instance);
 
         String id = service.startProcess("key", "biz", new HashMap<>());
         assertEquals("pid-1", id);
