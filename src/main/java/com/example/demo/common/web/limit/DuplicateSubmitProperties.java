@@ -25,8 +25,6 @@ public class DuplicateSubmitProperties {
 
     private boolean includeBody = true;
 
-    private int maxCacheSize = 10000;
-
     private List<String> methods = new ArrayList<>(Arrays.asList("POST", "PUT", "PATCH", "DELETE"));
 
     private List<String> excludePaths = new ArrayList<>();
@@ -85,14 +83,6 @@ public class DuplicateSubmitProperties {
 
     public void setIncludeBody(boolean includeBody) {
         this.includeBody = includeBody;
-    }
-
-    public int getMaxCacheSize() {
-        return maxCacheSize;
-    }
-
-    public void setMaxCacheSize(int maxCacheSize) {
-        this.maxCacheSize = maxCacheSize;
     }
 
     public List<String> getMethods() {

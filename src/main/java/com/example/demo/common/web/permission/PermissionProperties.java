@@ -28,6 +28,4 @@ public class PermissionProperties {
 
     private long cacheSeconds = 0;
 
-    private int maxCacheSize = 10000;
-
 }

@@ -20,8 +20,6 @@ public class RateLimitProperties {
 
     private boolean includePath = true;
 
-    private int maxCacheSize = 10000;
-
     private List<String> excludePaths = new ArrayList<>();
 
     public boolean isEnabled() {
@@ -62,14 +60,6 @@ public class RateLimitProperties {
 
     public void setIncludePath(boolean includePath) {
         this.includePath = includePath;
-    }
-
-    public int getMaxCacheSize() {
-        return maxCacheSize;
-    }
-
-    public void setMaxCacheSize(int maxCacheSize) {
-        this.maxCacheSize = maxCacheSize;
     }
 
     public List<String> getExcludePaths() {

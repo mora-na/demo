@@ -2,16 +2,16 @@ package com.example.demo.common.tool;
 
 import com.example.demo.common.annotation.ExcelColumn;
 import com.example.demo.common.exception.ExcelProcessException;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +34,10 @@ public final class ExcelTool {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
-    private static final Map<Class<?>, List<FieldMeta>> FIELD_CACHE = new ConcurrentHashMap<>();
+    private static final Cache<Class<?>, List<FieldMeta>> FIELD_CACHE = Caffeine.newBuilder()
+            .maximumSize(256)
+            .weakKeys()
+            .build();
 
     private ExcelTool() {
     }
@@ -48,17 +50,28 @@ public final class ExcelTool {
     }
 
     public static <T> ByteArrayOutputStream exportToStream(List<T> data, Class<T> type, String sheetName) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        exportToStream(data, type, sheetName, outputStream);
+        return outputStream;
+    }
+
+    public static <T> void exportToStream(List<T> data, Class<T> type, String sheetName, OutputStream outputStream) {
         Objects.requireNonNull(type, "导出的实体类型不能为空");
+        Objects.requireNonNull(outputStream, "输出流不能为空");
         if (data == null) {
             data = new ArrayList<>();
         }
         List<FieldMeta> fieldMetas = getFieldMetas(type);
-        try (Workbook workbook = new XSSFWorkbook()) {
+        try (SXSSFWorkbook workbook = new SXSSFWorkbook(200)) {
+            workbook.setCompressTempFiles(true);
             CreationHelper creationHelper = workbook.getCreationHelper();
             CellStyle dateStyle = workbook.createCellStyle();
             dateStyle.setDataFormat(creationHelper.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss"));
 
             Sheet sheet = workbook.createSheet(StringUtils.defaultIfBlank(sheetName, DEFAULT_SHEET));
+            if (sheet instanceof SXSSFSheet) {
+                ((SXSSFSheet) sheet).trackAllColumnsForAutoSizing();
+            }
             buildHeaderRow(sheet, fieldMetas);
 
             int rowIndex = 1;
@@ -67,11 +80,10 @@ public final class ExcelTool {
                 writeDataRow(row, fieldMetas, item, dateStyle);
             }
 
-            autoSizeColumns(sheet, fieldMetas.size());
+            autoSizeColumns(sheet, fieldMetas.size(), data.size());
 
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             workbook.write(outputStream);
-            return outputStream;
+            outputStream.flush();
         } catch (IOException e) {
             throw new ExcelProcessException("导出 Excel 失败", e);
         }
@@ -193,7 +205,11 @@ public final class ExcelTool {
     }
 
     private static List<FieldMeta> getFieldMetas(Class<?> type) {
-        return FIELD_CACHE.computeIfAbsent(type, ExcelTool::resolveFieldMetas);
+        List<FieldMeta> metas = FIELD_CACHE.get(type, ExcelTool::resolveFieldMetas);
+        if (metas == null) {
+            throw new ExcelProcessException("无法解析 Excel 字段元数据");
+        }
+        return metas;
     }
 
     private static List<FieldMeta> resolveFieldMetas(Class<?> type) {
@@ -468,8 +484,11 @@ public final class ExcelTool {
         }
     }
 
-    private static void autoSizeColumns(Sheet sheet, int columnCount) {
+    private static void autoSizeColumns(Sheet sheet, int columnCount, int rowCount) {
         if (columnCount <= 0) {
+            return;
+        }
+        if (rowCount > 2000) {
             return;
         }
         for (int i = 0; i < columnCount; i++) {

@@ -7,6 +7,7 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.limit.RateLimitProperties;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -16,9 +17,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 5)
@@ -26,10 +27,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitProperties properties;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-    private final ConcurrentHashMap<String, Counter> counters = new ConcurrentHashMap<>();
+    private final StringRedisTemplate stringRedisTemplate;
 
-    public RateLimitFilter(RateLimitProperties properties) {
+    public RateLimitFilter(RateLimitProperties properties,
+                           StringRedisTemplate stringRedisTemplate) {
         this.properties = properties;
+        this.stringRedisTemplate = stringRedisTemplate;
     }
 
     @Override
@@ -60,9 +63,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         long windowMillis = Math.max(1, properties.getWindowSeconds()) * 1000L;
         int maxRequests = Math.max(1, properties.getMaxRequests());
         String key = buildKey(request);
-        long now = System.currentTimeMillis();
-        boolean allowed = tryAcquire(key, now, windowMillis, maxRequests);
-        cleanupIfNeeded(now, windowMillis);
+        boolean allowed = tryAcquire(key, windowMillis, maxRequests);
         if (!allowed) {
             writeRateLimited(response);
             return;
@@ -70,26 +71,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private boolean tryAcquire(String key, long now, long windowMillis, int maxRequests) {
+    private boolean tryAcquire(String key, long windowMillis, int maxRequests) {
         if (key == null) {
             return true;
         }
-        Counter counter = counters.compute(key, (k, old) -> {
-            if (old == null || now - old.windowStart >= windowMillis) {
-                return new Counter(now, 1);
-            }
-            old.count++;
-            return old;
-        });
-        return counter.count <= maxRequests;
-    }
-
-    private void cleanupIfNeeded(long now, long windowMillis) {
-        int maxSize = Math.max(1000, properties.getMaxCacheSize());
-        if (counters.size() <= maxSize) {
-            return;
+        Duration ttl = Duration.ofMillis(windowMillis);
+        Boolean created = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", ttl);
+        if (Boolean.TRUE.equals(created)) {
+            return true;
         }
-        counters.entrySet().removeIf(entry -> now - entry.getValue().windowStart >= windowMillis);
+        Long count = stringRedisTemplate.opsForValue().increment(key);
+        return count == null || count <= maxRequests;
     }
 
     private String buildKey(HttpServletRequest request) {
@@ -138,15 +130,5 @@ public class RateLimitFilter extends OncePerRequestFilter {
         response.setContentType("application/json;charset=UTF-8");
         CommonResult<Object> result = CommonResult.error(429, "rate limit exceeded");
         response.getWriter().write(JSON.toJSONString(result));
-    }
-
-    private static final class Counter {
-        private final long windowStart;
-        private int count;
-
-        private Counter(long windowStart, int count) {
-            this.windowStart = windowStart;
-            this.count = count;
-        }
     }
 }

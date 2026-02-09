@@ -7,6 +7,7 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.limit.DuplicateSubmitProperties;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.DigestUtils;
@@ -17,9 +18,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
@@ -27,10 +28,12 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
 
     private final DuplicateSubmitProperties properties;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-    private final ConcurrentHashMap<String, Entry> cache = new ConcurrentHashMap<>();
+    private final StringRedisTemplate stringRedisTemplate;
 
-    public DuplicateSubmitFilter(DuplicateSubmitProperties properties) {
+    public DuplicateSubmitFilter(DuplicateSubmitProperties properties,
+                                 StringRedisTemplate stringRedisTemplate) {
         this.properties = properties;
+        this.stringRedisTemplate = stringRedisTemplate;
     }
 
     @Override
@@ -70,36 +73,19 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
         HttpServletRequest keyRequest = wrapped == null ? request : wrapped;
         String bodyHash = wrapped == null ? null : DigestUtils.md5DigestAsHex(wrapped.getCachedBody());
         String key = buildKey(keyRequest, bodyHash);
-        long now = System.currentTimeMillis();
-        if (isDuplicate(key, now, interval)) {
+        if (isDuplicate(key, interval)) {
             writeDuplicate(response);
             return;
         }
-        cleanupIfNeeded(now);
         filterChain.doFilter(wrapped == null ? request : wrapped, response);
     }
 
-    private boolean isDuplicate(String key, long now, long interval) {
+    private boolean isDuplicate(String key, long interval) {
         if (key == null) {
             return false;
         }
-        final boolean[] duplicate = {false};
-        cache.compute(key, (k, old) -> {
-            if (old == null || old.expiresAt <= now) {
-                return new Entry(now + interval);
-            }
-            duplicate[0] = true;
-            return old;
-        });
-        return duplicate[0];
-    }
-
-    private void cleanupIfNeeded(long now) {
-        int maxSize = Math.max(1000, properties.getMaxCacheSize());
-        if (cache.size() <= maxSize) {
-            return;
-        }
-        cache.entrySet().removeIf(entry -> entry.getValue().expiresAt <= now);
+        Boolean created = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", Duration.ofMillis(interval));
+        return Boolean.FALSE.equals(created);
     }
 
     private String buildKey(HttpServletRequest request, String bodyHash) {
@@ -200,13 +186,5 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
         response.setContentType("application/json;charset=UTF-8");
         CommonResult<Object> result = CommonResult.error(409, "duplicate submission detected");
         response.getWriter().write(JSON.toJSONString(result));
-    }
-
-    private static final class Entry {
-        private final long expiresAt;
-
-        private Entry(long expiresAt) {
-            this.expiresAt = expiresAt;
-        }
     }
 }

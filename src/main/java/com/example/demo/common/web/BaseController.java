@@ -15,7 +15,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -121,13 +120,12 @@ public abstract class BaseController {
      */
     protected <T> void exportExcel(HttpServletResponse response, List<T> data, Class<T> type, String fileName) {
         String targetName = normalizeFileName(fileName);
-        try (ByteArrayOutputStream outputStream = ExcelTool.exportToStream(data, type)) {
+        try {
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
             String encodedName = URLEncoder.encode(targetName, StandardCharsets.UTF_8.name()).replaceAll("\\+", "%20");
             response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedName);
-            response.setContentLength(outputStream.size());
-            response.getOutputStream().write(outputStream.toByteArray());
+            ExcelTool.exportToStream(data, type, null, response.getOutputStream());
             response.flushBuffer();
         } catch (IOException e) {
             throw new ExcelProcessException("写出 Excel 响应失败", e);

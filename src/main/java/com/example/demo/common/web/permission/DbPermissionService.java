@@ -3,10 +3,11 @@ package com.example.demo.common.web.permission;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.permission.mapper.PermissionMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Component
@@ -15,11 +16,16 @@ public class DbPermissionService implements PermissionService {
 
     private final PermissionMapper permissionMapper;
     private final PermissionProperties properties;
-    private final ConcurrentHashMap<Long, CacheEntry> cache = new ConcurrentHashMap<>();
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public DbPermissionService(PermissionMapper permissionMapper, PermissionProperties properties) {
+    private static final String PERMISSION_KEY_PREFIX = "perm:user:";
+
+    public DbPermissionService(PermissionMapper permissionMapper,
+                               PermissionProperties properties,
+                               RedisTemplate<String, Object> redisTemplate) {
         this.permissionMapper = permissionMapper;
         this.properties = properties;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -81,14 +87,13 @@ public class DbPermissionService implements PermissionService {
         if (ttlSeconds <= 0) {
             return queryPermissions(user.getId());
         }
-        long now = System.currentTimeMillis();
-        CacheEntry entry = cache.get(user.getId());
-        if (entry != null && entry.expiresAt > now) {
-            return entry.permissions;
+        String key = buildKey(user.getId());
+        Set<String> cached = readCachedPermissions(key);
+        if (cached != null) {
+            return cached;
         }
         Set<String> fresh = queryPermissions(user.getId());
-        cache.put(user.getId(), new CacheEntry(fresh, now + ttlSeconds * 1000L));
-        cleanupIfNeeded(now);
+        redisTemplate.opsForValue().set(key, fresh, Duration.ofSeconds(ttlSeconds));
         return fresh;
     }
 
@@ -102,12 +107,19 @@ public class DbPermissionService implements PermissionService {
                 .collect(Collectors.toSet());
     }
 
-    private void cleanupIfNeeded(long now) {
-        int maxSize = Math.max(1000, properties.getMaxCacheSize());
-        if (cache.size() <= maxSize) {
-            return;
+    @SuppressWarnings("unchecked")
+    private Set<String> readCachedPermissions(String key) {
+        Object value = redisTemplate.opsForValue().get(key);
+        if (value == null) {
+            return null;
         }
-        cache.entrySet().removeIf(entry -> entry.getValue().expiresAt <= now);
+        if (value instanceof Set) {
+            return (Set<String>) value;
+        }
+        if (value instanceof Collection) {
+            return new HashSet<>((Collection<String>) value);
+        }
+        return null;
     }
 
     private boolean isSuperUser(AuthUser user) {
@@ -131,13 +143,7 @@ public class DbPermissionService implements PermissionService {
         return false;
     }
 
-    private static final class CacheEntry {
-        private final Set<String> permissions;
-        private final long expiresAt;
-
-        private CacheEntry(Set<String> permissions, long expiresAt) {
-            this.permissions = permissions;
-            this.expiresAt = expiresAt;
-        }
+    private String buildKey(Long userId) {
+        return PERMISSION_KEY_PREFIX + userId;
     }
 }
