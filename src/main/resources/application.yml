@@ -142,6 +142,10 @@ mybatis-plus:
     aggressive-lazy-loading: false
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 
+excel:
+  export:
+    page-size: 1000
+
 camunda:
   # 是否启用Camunda，关闭后不加载Camunda框架
   enabled: false
@@ -165,7 +169,7 @@ camunda:
     # false: 不自动创建（生产环境，用SQL脚本初始化）
     database:
       schema-update: true
-#      type: mysql
+    #      type: mysql
 
     # 历史数据记录级别
     # none/activity/audit/full，推荐audit

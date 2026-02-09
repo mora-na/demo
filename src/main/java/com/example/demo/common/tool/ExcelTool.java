@@ -4,6 +4,8 @@ import com.example.demo.common.annotation.ExcelColumn;
 import com.example.demo.common.exception.ExcelProcessException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
@@ -22,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -31,13 +34,14 @@ public final class ExcelTool {
 
     public static final String XLSX_SUFFIX = ".xlsx";
     private static final String DEFAULT_SHEET = "Sheet1";
+    private static final int DEFAULT_EXPORT_PAGE_SIZE = 1000;
+    private static final long MAX_IMPORT_FILE_SIZE = 50L * 1024 * 1024;
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
-    private static final Cache<Class<?>, List<FieldMeta>> FIELD_CACHE = Caffeine.newBuilder()
-            .maximumSize(256)
-            .weakKeys()
-            .build();
+    private static final Cache<Class<?>, List<FieldMeta>> FIELD_CACHE = Caffeine.newBuilder().maximumSize(256).weakKeys().build();
+    @Getter
+    private static volatile int defaultExportPageSize = DEFAULT_EXPORT_PAGE_SIZE;
 
     private ExcelTool() {
     }
@@ -95,6 +99,61 @@ public final class ExcelTool {
     }
 
     /**
+     * 分页导出到内存流，避免一次性加载所有数据。
+     */
+    public static <T> void exportToStreamByPaging(Supplier<List<T>> query, Class<T> type, String sheetName, OutputStream outputStream) {
+        exportToStreamByPaging(query, type, sheetName, outputStream, defaultExportPageSize);
+    }
+
+    public static <T> void exportToStreamByPaging(Supplier<List<T>> query, Class<T> type, String sheetName, OutputStream outputStream, int pageSize) {
+        Objects.requireNonNull(query, "分页查询方法不能为空");
+        Objects.requireNonNull(type, "导出的实体类型不能为空");
+        Objects.requireNonNull(outputStream, "输出流不能为空");
+        if (pageSize <= 0) {
+            throw new ExcelProcessException("分页大小必须大于 0");
+        }
+        List<FieldMeta> fieldMetas = getFieldMetas(type);
+        try (SXSSFWorkbook workbook = new SXSSFWorkbook(200)) {
+            workbook.setCompressTempFiles(true);
+            CreationHelper creationHelper = workbook.getCreationHelper();
+            CellStyle dateStyle = workbook.createCellStyle();
+            dateStyle.setDataFormat(creationHelper.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss"));
+
+            SXSSFSheet sheet = workbook.createSheet(StringUtils.defaultIfBlank(sheetName, DEFAULT_SHEET));
+            if (sheet != null) {
+                sheet.trackAllColumnsForAutoSizing();
+                buildHeaderRow(sheet, fieldMetas);
+            }
+
+            int rowIndex = 1;
+            int totalRows = 0;
+            int pageNum = 1;
+            while (true) {
+                List<T> pageData = selectPage(query, pageNum, pageSize);
+                if (pageData.isEmpty()) {
+                    break;
+                }
+                for (T item : pageData) {
+                    Row row = sheet != null ? sheet.createRow(rowIndex++) : null;
+                    writeDataRow(row, fieldMetas, item, dateStyle);
+                    totalRows++;
+                }
+                if (pageData.size() < pageSize) {
+                    break;
+                }
+                pageNum++;
+            }
+
+            autoSizeColumns(sheet, fieldMetas.size(), totalRows);
+
+            workbook.write(outputStream);
+            outputStream.flush();
+        } catch (IOException e) {
+            throw new ExcelProcessException("导出 Excel 失败", e);
+        }
+    }
+
+    /**
      * 导出到指定目录文件。
      */
     public static <T> File exportToFile(List<T> data, Class<T> type, Path directory, String fileName) {
@@ -104,8 +163,8 @@ public final class ExcelTool {
         try {
             Files.createDirectories(directory);
             Path target = directory.resolve(targetName);
-            try (ByteArrayOutputStream outputStream = exportToStream(data, type)) {
-                Files.write(target, outputStream.toByteArray());
+            try (OutputStream outputStream = Files.newOutputStream(target)) {
+                exportToStream(data, type, null, outputStream);
             }
             return target.toFile();
         } catch (IOException e) {
@@ -122,6 +181,9 @@ public final class ExcelTool {
         if (!file.exists()) {
             throw new ExcelProcessException("导入文件不存在: " + file.getAbsolutePath());
         }
+        if (file.length() > MAX_IMPORT_FILE_SIZE) {
+            throw new ExcelProcessException("导入文件过大，已拒绝处理");
+        }
         try (InputStream inputStream = Files.newInputStream(file.toPath())) {
             return importFromStream(inputStream, type, headerRowIndex);
         } catch (IOException e) {
@@ -137,6 +199,9 @@ public final class ExcelTool {
         Objects.requireNonNull(multipartFile, "上传文件不能为空");
         if (multipartFile.isEmpty()) {
             throw new ExcelProcessException("上传的 Excel 文件为空");
+        }
+        if (multipartFile.getSize() > MAX_IMPORT_FILE_SIZE) {
+            throw new ExcelProcessException("上传的 Excel 文件过大，已拒绝处理");
         }
         try (InputStream inputStream = multipartFile.getInputStream()) {
             return importFromStream(inputStream, type, headerRowIndex);
@@ -291,6 +356,22 @@ public final class ExcelTool {
             }
         }
         return result;
+    }
+
+    private static <T> List<T> selectPage(Supplier<List<T>> query, int pageNum, int pageSize) {
+        try (Page<Object> ignored = PageHelper.startPage(pageNum, pageSize)) {
+            List<T> pageData = query.get();
+            if (pageData == null) {
+                return Collections.emptyList();
+            }
+            Page<?> pageInfo = PageHelper.getLocalPage();
+            if (pageInfo != null && pageInfo.getTotal() == 0 && pageData.size() >= pageSize) {
+                throw new ExcelProcessException("分页查询未生效，请确认查询方法支持分页");
+            }
+            return pageData;
+        } finally {
+            PageHelper.clearPage();
+        }
     }
 
     private static Map<Integer, FieldMeta> mapColumns(Row headerRow, List<FieldMeta> fieldMetas) {
@@ -510,6 +591,13 @@ public final class ExcelTool {
             return trimmed;
         }
         return trimmed + XLSX_SUFFIX;
+    }
+
+    public static void setDefaultExportPageSize(int pageSize) {
+        if (pageSize <= 0) {
+            throw new ExcelProcessException("分页大小必须大于 0");
+        }
+        defaultExportPageSize = pageSize;
     }
 
     private static Map<String, String> parseMapping(ExcelColumn annotation) {

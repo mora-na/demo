@@ -83,17 +83,7 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
     private boolean applyDataScope(Statement statement, String dataScopeType, AuthUser user,
                                    Map<String, String> tableColumnMap) {
         if (statement instanceof Select) {
-            Select select = (Select) statement;
-            boolean changed = false;
-            if (select.getWithItemsList() != null) {
-                for (WithItem withItem : select.getWithItemsList()) {
-                    if (withItem.getSubSelect() != null) {
-                        changed |= applySelectBody(withItem.getSubSelect().getSelectBody(), dataScopeType, user, tableColumnMap);
-                    }
-                }
-            }
-            changed |= applySelectBody(select.getSelectBody(), dataScopeType, user, tableColumnMap);
-            return changed;
+            return applySelect((Select) statement, dataScopeType, user, tableColumnMap);
         }
         if (statement instanceof Update) {
             return applyUpdate((Update) statement, dataScopeType, user, tableColumnMap);
@@ -104,29 +94,34 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
         return false;
     }
 
-    private boolean applySelectBody(SelectBody body, String dataScopeType, AuthUser user,
-                                    Map<String, String> tableColumnMap) {
-        if (body == null) {
+    private boolean applySelect(Select select, String dataScopeType, AuthUser user,
+                                Map<String, String> tableColumnMap) {
+        if (select == null) {
             return false;
         }
-        if (body instanceof PlainSelect) {
-            return applyPlainSelect((PlainSelect) body, dataScopeType, user, tableColumnMap);
+        boolean changed = false;
+        if (select.getWithItemsList() != null) {
+            for (WithItem withItem : select.getWithItemsList()) {
+                changed |= applySelect(withItem, dataScopeType, user, tableColumnMap);
+            }
         }
-        if (body instanceof SetOperationList) {
-            boolean changed = false;
-            for (SelectBody selectBody : ((SetOperationList) body).getSelects()) {
-                changed |= applySelectBody(selectBody, dataScopeType, user, tableColumnMap);
+        if (select instanceof PlainSelect) {
+            return changed | applyPlainSelect((PlainSelect) select, dataScopeType, user, tableColumnMap);
+        }
+        if (select instanceof SetOperationList) {
+            for (Select subSelect : ((SetOperationList) select).getSelects()) {
+                changed |= applySelect(subSelect, dataScopeType, user, tableColumnMap);
             }
             return changed;
         }
-        if (body instanceof WithItem) {
-            WithItem withItem = (WithItem) body;
-            if (withItem.getSubSelect() != null) {
-                return applySelectBody(withItem.getSubSelect().getSelectBody(), dataScopeType, user, tableColumnMap);
+        if (select instanceof ParenthesedSelect) {
+            Select inner = ((ParenthesedSelect) select).getSelect();
+            if (inner != null) {
+                changed |= applySelect(inner, dataScopeType, user, tableColumnMap);
             }
-            return false;
+            return changed;
         }
-        return false;
+        return changed;
     }
 
     private boolean applyPlainSelect(PlainSelect select, String dataScopeType, AuthUser user,
@@ -195,25 +190,19 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
 
     private boolean applyFromItem(FromItem fromItem, String dataScopeType, AuthUser user,
                                   Map<String, String> tableColumnMap) {
-        if (fromItem instanceof SubSelect) {
-            return applySelectBody(((SubSelect) fromItem).getSelectBody(), dataScopeType, user, tableColumnMap);
+        if (fromItem instanceof ParenthesedSelect) {
+            Select inner = ((ParenthesedSelect) fromItem).getSelect();
+            return applySelect(inner, dataScopeType, user, tableColumnMap);
         }
-        if (fromItem instanceof SubJoin) {
-            SubJoin subJoin = (SubJoin) fromItem;
-            boolean changed = applyFromItem(subJoin.getLeft(), dataScopeType, user, tableColumnMap);
-            if (subJoin.getJoinList() != null) {
-                for (Join join : subJoin.getJoinList()) {
+        if (fromItem instanceof ParenthesedFromItem) {
+            ParenthesedFromItem parenthesed = (ParenthesedFromItem) fromItem;
+            boolean changed = applyFromItem(parenthesed.getFromItem(), dataScopeType, user, tableColumnMap);
+            if (parenthesed.getJoins() != null) {
+                for (Join join : parenthesed.getJoins()) {
                     changed |= applyFromItem(join.getRightItem(), dataScopeType, user, tableColumnMap);
                 }
             }
             return changed;
-        }
-        if (fromItem instanceof LateralSubSelect) {
-            LateralSubSelect lateral = (LateralSubSelect) fromItem;
-            if (lateral.getSubSelect() != null) {
-                return applySelectBody(lateral.getSubSelect().getSelectBody(), dataScopeType, user, tableColumnMap);
-            }
-            return false;
         }
         return false;
     }
@@ -240,17 +229,30 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
     private List<TableRef> collectTableRefs(FromItem fromItem, List<Join> joins,
                                             Map<String, String> tableColumnMap) {
         List<TableRef> refs = new ArrayList<>();
-        if (fromItem instanceof Table) {
-            addTableRef((Table) fromItem, refs, tableColumnMap);
-        }
+        collectTableRefsFromItem(fromItem, refs, tableColumnMap);
         if (joins != null) {
             for (Join join : joins) {
-                if (join.getRightItem() instanceof Table) {
-                    addTableRef((Table) join.getRightItem(), refs, tableColumnMap);
-                }
+                collectTableRefsFromItem(join.getRightItem(), refs, tableColumnMap);
             }
         }
         return refs;
+    }
+
+    private void collectTableRefsFromItem(FromItem fromItem, List<TableRef> refs,
+                                          Map<String, String> tableColumnMap) {
+        if (fromItem instanceof Table) {
+            addTableRef((Table) fromItem, refs, tableColumnMap);
+            return;
+        }
+        if (fromItem instanceof ParenthesedFromItem) {
+            ParenthesedFromItem parenthesed = (ParenthesedFromItem) fromItem;
+            collectTableRefsFromItem(parenthesed.getFromItem(), refs, tableColumnMap);
+            if (parenthesed.getJoins() != null) {
+                for (Join join : parenthesed.getJoins()) {
+                    collectTableRefsFromItem(join.getRightItem(), refs, tableColumnMap);
+                }
+            }
+        }
     }
 
     private void addTableRef(Table table, List<TableRef> refs, Map<String, String> tableColumnMap) {
@@ -309,7 +311,7 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
             }
             InExpression in = new InExpression();
             in.setLeftExpression(ref.toColumn());
-            in.setRightItemsList(new ExpressionList(values));
+            in.setRightExpression(new ExpressionList<>(values));
             return in;
         }
         return null;

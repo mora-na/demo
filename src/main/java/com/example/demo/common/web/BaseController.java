@@ -132,6 +132,23 @@ public abstract class BaseController {
         }
     }
 
+    /**
+     * 分页导出 Excel，避免一次性加载所有数据。
+     */
+    protected <T> void exportExcel(HttpServletResponse response, Supplier<List<T>> query, Class<T> type, String fileName) {
+        String targetName = normalizeFileName(fileName);
+        try {
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            String encodedName = URLEncoder.encode(targetName, StandardCharsets.UTF_8.name()).replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedName);
+            ExcelTool.exportToStreamByPaging(query, type, null, response.getOutputStream());
+            response.flushBuffer();
+        } catch (IOException e) {
+            throw new ExcelProcessException("写出 Excel 响应失败", e);
+        }
+    }
+
     private String normalizeFileName(String fileName) {
         String fallback = "export" + ExcelTool.XLSX_SUFFIX;
         if (StringUtils.isBlank(fileName)) {

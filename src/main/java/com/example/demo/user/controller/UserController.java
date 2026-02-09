@@ -85,8 +85,7 @@ public class UserController extends BaseController {
     @GetMapping("/export")
     @RequirePermission("user:export")
     public void export(@ModelAttribute UserQuery query, HttpServletResponse response) {
-        List<UserVO> userVOList = userViewService.toViewList(userService.selectUsers(query));
-        exportExcel(response, userVOList, UserVO.class, "用户信息" + LocalDateTime.now());
+        exportExcel(response, () -> userViewService.toViewList(userService.selectUsers(query)), UserVO.class, "用户信息" + LocalDateTime.now());
     }
 
     @PostMapping("/import")

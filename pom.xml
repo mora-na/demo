@@ -37,7 +37,7 @@
         <logcaptor.version>2.7.6</logcaptor.version>
         <fastjson2.version>2.0.60</fastjson2.version>
         <pagehelper.version>2.1.1</pagehelper.version>
-        <jsqlparser.version>4.5</jsqlparser.version>
+        <jsqlparser.version>4.7</jsqlparser.version>
         <commons-io.version>2.20.0</commons-io.version>
         <httpclient.version>4.5.14</httpclient.version>
         <postgresql.version>42.7.7</postgresql.version>
