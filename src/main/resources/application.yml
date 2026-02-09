@@ -145,6 +145,12 @@ mybatis-plus:
 excel:
   export:
     page-size: 1000
+    row-window-size: 200
+    use-shared-strings: false
+    auto-size: false
+    auto-size-max-rows: 2000
+    count-enabled: false
+    compress-temp-files: true
 
 camunda:
   # 是否启用Camunda，关闭后不加载Camunda框架

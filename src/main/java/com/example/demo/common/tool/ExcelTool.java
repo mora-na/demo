@@ -7,10 +7,12 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
@@ -35,6 +37,12 @@ public final class ExcelTool {
     public static final String XLSX_SUFFIX = ".xlsx";
     private static final String DEFAULT_SHEET = "Sheet1";
     private static final int DEFAULT_EXPORT_PAGE_SIZE = 1000;
+    private static final int DEFAULT_ROW_WINDOW_SIZE = 200;
+    private static final boolean DEFAULT_USE_SHARED_STRINGS = false;
+    private static final boolean DEFAULT_AUTO_SIZE = false;
+    private static final int DEFAULT_AUTO_SIZE_MAX_ROWS = 2000;
+    private static final boolean DEFAULT_COUNT_ENABLED = false;
+    private static final boolean DEFAULT_COMPRESS_TEMP_FILES = true;
     private static final long MAX_IMPORT_FILE_SIZE = 50L * 1024 * 1024;
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -42,6 +50,20 @@ public final class ExcelTool {
     private static final Cache<Class<?>, List<FieldMeta>> FIELD_CACHE = Caffeine.newBuilder().maximumSize(256).weakKeys().build();
     @Getter
     private static volatile int defaultExportPageSize = DEFAULT_EXPORT_PAGE_SIZE;
+    @Getter
+    private static volatile int defaultRowWindowSize = DEFAULT_ROW_WINDOW_SIZE;
+    private static volatile boolean defaultUseSharedStrings = DEFAULT_USE_SHARED_STRINGS;
+    @Getter
+    @Setter
+    private static volatile boolean defaultAutoSize = DEFAULT_AUTO_SIZE;
+    @Getter
+    private static volatile int defaultAutoSizeMaxRows = DEFAULT_AUTO_SIZE_MAX_ROWS;
+    @Getter
+    @Setter
+    private static volatile boolean defaultCountEnabled = DEFAULT_COUNT_ENABLED;
+    @Getter
+    @Setter
+    private static volatile boolean defaultCompressTempFiles = DEFAULT_COMPRESS_TEMP_FILES;
 
     private ExcelTool() {
     }
@@ -66,16 +88,13 @@ public final class ExcelTool {
             data = new ArrayList<>();
         }
         List<FieldMeta> fieldMetas = getFieldMetas(type);
-        try (SXSSFWorkbook workbook = new SXSSFWorkbook(200)) {
-            workbook.setCompressTempFiles(true);
+        try (SXSSFWorkbook workbook = createWorkbook()) {
             CreationHelper creationHelper = workbook.getCreationHelper();
             CellStyle dateStyle = workbook.createCellStyle();
             dateStyle.setDataFormat(creationHelper.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss"));
 
             SXSSFSheet sheet = workbook.createSheet(StringUtils.defaultIfBlank(sheetName, DEFAULT_SHEET));
-            if (sheet != null) {
-                sheet.trackAllColumnsForAutoSizing();
-            }
+            prepareSheetForExport(sheet);
             if (sheet != null) {
                 buildHeaderRow(sheet, fieldMetas);
             }
@@ -89,7 +108,7 @@ public final class ExcelTool {
                 writeDataRow(row, fieldMetas, item, dateStyle);
             }
 
-            autoSizeColumns(sheet, fieldMetas.size(), data.size());
+            autoSizeColumns(sheet, fieldMetas.size(), data.size(), defaultAutoSize, defaultAutoSizeMaxRows);
 
             workbook.write(outputStream);
             outputStream.flush();
@@ -113,17 +132,14 @@ public final class ExcelTool {
             throw new ExcelProcessException("分页大小必须大于 0");
         }
         List<FieldMeta> fieldMetas = getFieldMetas(type);
-        try (SXSSFWorkbook workbook = new SXSSFWorkbook(200)) {
-            workbook.setCompressTempFiles(true);
+        try (SXSSFWorkbook workbook = createWorkbook()) {
             CreationHelper creationHelper = workbook.getCreationHelper();
             CellStyle dateStyle = workbook.createCellStyle();
             dateStyle.setDataFormat(creationHelper.createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss"));
 
             SXSSFSheet sheet = workbook.createSheet(StringUtils.defaultIfBlank(sheetName, DEFAULT_SHEET));
-            if (sheet != null) {
-                sheet.trackAllColumnsForAutoSizing();
-                buildHeaderRow(sheet, fieldMetas);
-            }
+            prepareSheetForExport(sheet);
+            buildHeaderRow(sheet, fieldMetas);
 
             int rowIndex = 1;
             int totalRows = 0;
@@ -144,7 +160,7 @@ public final class ExcelTool {
                 pageNum++;
             }
 
-            autoSizeColumns(sheet, fieldMetas.size(), totalRows);
+            autoSizeColumns(sheet, fieldMetas.size(), totalRows, defaultAutoSize, defaultAutoSizeMaxRows);
 
             workbook.write(outputStream);
             outputStream.flush();
@@ -237,13 +253,16 @@ public final class ExcelTool {
     }
 
     private static <T> void writeDataRow(Row row, List<FieldMeta> fieldMetas, T item, CellStyle dateStyle) {
-        if (item == null) {
+        if (item == null || row == null) {
             return;
         }
         for (int i = 0; i < fieldMetas.size(); i++) {
             FieldMeta meta = fieldMetas.get(i);
-            Cell cell = row.createCell(i);
             Object value = meta.getValue(item);
+            if (value == null) {
+                continue;
+            }
+            Cell cell = row.createCell(i);
             setCellValue(cell, value, dateStyle);
         }
     }
@@ -359,13 +378,12 @@ public final class ExcelTool {
     }
 
     private static <T> List<T> selectPage(Supplier<List<T>> query, int pageNum, int pageSize) {
-        try (Page<Object> ignored = PageHelper.startPage(pageNum, pageSize)) {
+        try (Page<Object> ignored = PageHelper.startPage(pageNum, pageSize, defaultCountEnabled)) {
             List<T> pageData = query.get();
             if (pageData == null) {
                 return Collections.emptyList();
             }
-            Page<?> pageInfo = PageHelper.getLocalPage();
-            if (pageInfo != null && pageInfo.getTotal() == 0 && pageData.size() >= pageSize) {
+            if (pageData.size() > pageSize) {
                 throw new ExcelProcessException("分页查询未生效，请确认查询方法支持分页");
             }
             return pageData;
@@ -570,11 +588,11 @@ public final class ExcelTool {
         }
     }
 
-    private static void autoSizeColumns(Sheet sheet, int columnCount, int rowCount) {
-        if (columnCount <= 0) {
+    private static void autoSizeColumns(Sheet sheet, int columnCount, int rowCount, boolean autoSize, int maxRows) {
+        if (!autoSize || sheet == null || columnCount <= 0) {
             return;
         }
-        if (rowCount > 2000) {
+        if (maxRows > 0 && rowCount > maxRows) {
             return;
         }
         for (int i = 0; i < columnCount; i++) {
@@ -598,6 +616,43 @@ public final class ExcelTool {
             throw new ExcelProcessException("分页大小必须大于 0");
         }
         defaultExportPageSize = pageSize;
+    }
+
+    public static void setDefaultRowWindowSize(int rowWindowSize) {
+        if (rowWindowSize <= 0) {
+            throw new ExcelProcessException("内存窗口大小必须大于 0");
+        }
+        defaultRowWindowSize = rowWindowSize;
+    }
+
+    public static boolean isDefaultUseSharedStringsTable() {
+        return defaultUseSharedStrings;
+    }
+
+    public static void setDefaultUseSharedStringsTable(boolean useSharedStrings) {
+        defaultUseSharedStrings = useSharedStrings;
+    }
+
+    public static void setDefaultAutoSizeMaxRows(int maxRows) {
+        if (maxRows < 0) {
+            throw new ExcelProcessException("自动列宽最大行数不能小于 0");
+        }
+        defaultAutoSizeMaxRows = maxRows;
+    }
+
+    private static SXSSFWorkbook createWorkbook() {
+        SXSSFWorkbook workbook = new SXSSFWorkbook(new XSSFWorkbook(), defaultRowWindowSize, defaultCompressTempFiles, defaultUseSharedStrings);
+        workbook.setCompressTempFiles(defaultCompressTempFiles);
+        return workbook;
+    }
+
+    private static void prepareSheetForExport(SXSSFSheet sheet) {
+        if (sheet == null) {
+            return;
+        }
+        if (defaultAutoSize) {
+            sheet.trackAllColumnsForAutoSizing();
+        }
     }
 
     private static Map<String, String> parseMapping(ExcelColumn annotation) {
