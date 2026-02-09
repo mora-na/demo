@@ -45,7 +45,7 @@ spring:
       datasource:
         master:
           url: jdbc:postgresql://localhost:5432/test?currentSchema=test
-          username: panpan
+          username: angelabeini
           password: 1
           driver-class-name: org.postgresql.Driver
           type: com.alibaba.druid.pool.DruidDataSource
