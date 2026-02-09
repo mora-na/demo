@@ -33,18 +33,17 @@ spring:
     dynamic:
       druid:
         wall:
-          #因为camunda框架的sql有where 1=1
+          # 因为camunda框架的sql有where 1=1
           select-where-alway-true-check: false
           condition-and-alway-true-allow: true
       primary: master           # 指定默认数据源
       strict: false             # true: 未匹配报错；false: 使用默认
       datasource:
         master:
-          url: jdbc:mysql://101.37.26.199:3306/test?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
-          username: root
-          #          password: Unitech@1234
-          password: ENC(LDV6GdRm0paqMTGAQbTrKg==)
-          driver-class-name: com.mysql.cj.jdbc.Driver
+          url: jdbc:postgresql://localhost:5432/test?currentSchema=test
+          username: panpan
+          password: 1
+          driver-class-name: org.postgresql.Driver
           type: com.alibaba.druid.pool.DruidDataSource
           druid:
             initial-size: 1
@@ -71,9 +70,9 @@ spring:
               keepAlive=true;
               maxEvictableIdleTimeMillis=900000
 #        slave:
-#          url: jdbc:postgresql://localhost:5432/slave?currentSchema=slave
-#          username: xxx
-#          password: xxx
+#          url: jdbc:postgresql://localhost:5432/test?currentSchema=test
+#          username: panpan
+#          password: 1
 #          driver-class-name: org.postgresql.Driver
 #          type: com.alibaba.druid.pool.DruidDataSource
 #          druid:
@@ -162,7 +161,7 @@ camunda:
     # false: 不自动创建（生产环境，用SQL脚本初始化）
     database:
       schema-update: true
-      type: mysql
+#      type: mysql
 
     # 历史数据记录级别
     # none/activity/audit/full，推荐audit

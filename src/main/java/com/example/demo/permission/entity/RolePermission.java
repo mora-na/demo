@@ -19,13 +19,22 @@ public class RolePermission implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * 主键ID
+     */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
+    /**
+     * 角色ID
+     */
     @MppMultiField
     @TableField("role_id")
     private Long roleId;
 
+    /**
+     * 权限ID
+     */
     @MppMultiField
     @TableField("permission_id")
     private Long permissionId;

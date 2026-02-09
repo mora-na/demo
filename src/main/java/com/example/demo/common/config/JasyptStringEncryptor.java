@@ -72,4 +72,14 @@ public class JasyptStringEncryptor implements StringEncryptor {
         }
     }
 
+//    public static void main(String[] args) {
+//        String password = "xxx";
+//        JasyptStringEncryptor jasyptUtil = new JasyptStringEncryptor(password);
+//        String encrypt = jasyptUtil.encrypt("xxx");
+//        System.out.println(encrypt);
+//        String decrypt = jasyptUtil.decrypt(encrypt);
+//        System.out.println(decrypt);
+//
+//    }
+
 }

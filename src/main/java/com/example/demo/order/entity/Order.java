@@ -18,12 +18,21 @@ public class Order implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * 订单ID（外部传入，非自增）
+     */
     @TableId("id")
     private Long id;
 
+    /**
+     * 下单用户ID
+     */
     @TableField("user_id")
     private Long userId;
 
+    /**
+     * 订单金额
+     */
     @TableField("amount")
     private BigDecimal amount;
 

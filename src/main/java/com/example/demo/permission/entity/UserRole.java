@@ -19,13 +19,22 @@ public class UserRole implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * 主键ID
+     */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
+    /**
+     * 用户ID
+     */
     @MppMultiField
     @TableField("user_id")
     private Long userId;
 
+    /**
+     * 角色ID
+     */
     @MppMultiField
     @TableField("role_id")
     private Long roleId;

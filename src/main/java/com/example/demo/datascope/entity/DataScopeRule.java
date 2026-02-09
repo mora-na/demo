@@ -18,15 +18,27 @@ public class DataScopeRule implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * 主键ID
+     */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
+    /**
+     * 目标表名（小写匹配）
+     */
     @TableField("table_name")
     private String tableName;
 
+    /**
+     * 数据范围字段名
+     */
     @TableField("column_name")
     private String columnName;
 
+    /**
+     * 是否启用：1-启用；0-禁用
+     */
     @TableField("enabled")
     private Integer enabled;
 }
