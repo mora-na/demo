@@ -7,9 +7,23 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+/**
+ * RedisTemplate 配置，统一序列化策略。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Configuration
 public class RedisConfig {
 
+    /**
+     * 构建 RedisTemplate，设置 Key 与 Value 的序列化器。
+     *
+     * @param connectionFactory Redis 连接工厂
+     * @return RedisTemplate 实例
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();

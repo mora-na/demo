@@ -1,13 +1,36 @@
 package com.example.demo.common.mybatis;
 
+/**
+ * 基于多字段联合条件的 MppService 扩展实现，补齐按联合字段的批量保存/更新能力。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 public class MppServiceImpl<M extends com.example.demo.common.mybatis.MppBaseMapper<T>, T> extends com.github.jeffreyning.mybatisplus.service.MppServiceImpl<M, T> implements com.example.demo.common.mybatis.IMppService<T> {
 
+    /**
+     * 按联合字段批量保存或更新（默认批大小）。
+     *
+     * @param entityList 待处理实体集合
+     * @return true 表示触发执行
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     @Override
     public boolean saveOrUpdateBatchByMultiField(java.util.Collection<T> entityList) {
         return saveOrUpdateBatchByMultiField(entityList, com.baomidou.mybatisplus.extension.service.IService.DEFAULT_BATCH_SIZE);
     }
 
+    /**
+     * 按联合字段批量保存或更新，存在则更新命中记录，不存在则插入。
+     *
+     * @param entityList 待处理实体集合
+     * @param batchSize  批处理大小
+     * @return true 表示触发执行
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     @Override
     public boolean saveOrUpdateBatchByMultiField(java.util.Collection<T> entityList, int batchSize) {
@@ -88,6 +111,14 @@ public class MppServiceImpl<M extends com.example.demo.common.mybatis.MppBaseMap
         });
     }
 
+    /**
+     * 按联合字段更新单条记录。
+     *
+     * @param entity 待更新实体
+     * @return true 表示触发执行
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     @Override
     public boolean updateByMultiField(T entity) {
@@ -97,12 +128,29 @@ public class MppServiceImpl<M extends com.example.demo.common.mybatis.MppBaseMap
         return updateBatchByMultiField(java.util.Collections.singletonList(entity), com.baomidou.mybatisplus.extension.service.IService.DEFAULT_BATCH_SIZE);
     }
 
+    /**
+     * 按联合字段批量更新（默认批大小）。
+     *
+     * @param entityList 待更新实体集合
+     * @return true 表示触发执行
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     @Override
     public boolean updateBatchByMultiField(java.util.Collection<T> entityList) {
         return updateBatchByMultiField(entityList, com.baomidou.mybatisplus.extension.service.IService.DEFAULT_BATCH_SIZE);
     }
 
+    /**
+     * 按联合字段批量更新，避免更新主键字段。
+     *
+     * @param entityList 待更新实体集合
+     * @param batchSize  批处理大小
+     * @return true 表示触发执行
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     @Override
     public boolean updateBatchByMultiField(java.util.Collection<T> entityList, int batchSize) {
@@ -160,6 +208,14 @@ public class MppServiceImpl<M extends com.example.demo.common.mybatis.MppBaseMap
         });
     }
 
+    /**
+     * 按联合字段查询列表。
+     *
+     * @param entity 查询条件实体
+     * @return 命中列表
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @Override
     public java.util.List<T> selectByMultiField(T entity) {
         if (entity == null) {
@@ -169,6 +225,14 @@ public class MppServiceImpl<M extends com.example.demo.common.mybatis.MppBaseMap
         return this.baseMapper.selectList(where);
     }
 
+    /**
+     * 按联合字段查询单条记录。
+     *
+     * @param entity 查询条件实体
+     * @return 命中实体，未命中返回 null
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @Override
     public T selectOneByMultiField(T entity) {
         if (entity == null) {
@@ -183,6 +247,15 @@ public class MppServiceImpl<M extends com.example.demo.common.mybatis.MppBaseMap
         return list.get(0);
     }
 
+    /**
+     * 构建联合字段查询条件包装器。
+     *
+     * @param entity 查询条件实体
+     * @param opName 操作名称（用于异常提示）
+     * @return 查询条件包装器
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<T> buildMultiFieldWrapper(T entity, String opName) {
         final Class<T> entityClass = this.getEntityClass();
 
@@ -194,6 +267,16 @@ public class MppServiceImpl<M extends com.example.demo.common.mybatis.MppBaseMap
         return buildMultiFieldWrapper(entity, opName, multiFieldMeta);
     }
 
+    /**
+     * 根据联合字段元数据组装查询条件。
+     *
+     * @param entity         查询条件实体
+     * @param opName         操作名称
+     * @param multiFieldMeta 联合字段元数据
+     * @return 查询条件包装器
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<T> buildMultiFieldWrapper(T entity, String opName, MultiFieldMeta multiFieldMeta) {
         com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<T> where = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
         for (int i = 0; i < multiFieldMeta.fields.size(); i++) {
@@ -219,6 +302,14 @@ public class MppServiceImpl<M extends com.example.demo.common.mybatis.MppBaseMap
         return where;
     }
 
+    /**
+     * 解析实体上的 @MppMultiField 注解，生成联合字段元数据。
+     *
+     * @param entityClass 实体类型
+     * @return 联合字段元数据
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private MultiFieldMeta resolveMultiFieldMeta(Class<T> entityClass) {
         final java.util.List<java.lang.reflect.Field> multiFieldFields = new java.util.ArrayList<>();
         final java.util.List<String> multiFieldColumns = new java.util.ArrayList<>();
@@ -262,6 +353,15 @@ public class MppServiceImpl<M extends com.example.demo.common.mybatis.MppBaseMap
         return new MultiFieldMeta(multiFieldFields, multiFieldColumns);
     }
 
+    /**
+     * 根据主键属性名定位实体字段。
+     *
+     * @param entityClass 实体类型
+     * @param keyProperty 主键属性名
+     * @return 主键字段，未命中返回 null
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private java.lang.reflect.Field resolveTableIdField(Class<T> entityClass, String keyProperty) {
         if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(keyProperty)) {
             return null;
@@ -277,10 +377,24 @@ public class MppServiceImpl<M extends com.example.demo.common.mybatis.MppBaseMap
         return null;
     }
 
+    /**
+     * 联合字段元数据容器。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static class MultiFieldMeta {
         private final java.util.List<java.lang.reflect.Field> fields;
         private final java.util.List<String> columns;
 
+        /**
+         * 构造联合字段元数据。
+         *
+         * @param fields  联合字段列表
+         * @param columns 联合字段列名列表
+         * @author GPT-5.2-codex(high)
+         * @date 2026/2/9
+         */
         private MultiFieldMeta(java.util.List<java.lang.reflect.Field> fields, java.util.List<String> columns) {
             this.fields = fields;
             this.columns = columns;

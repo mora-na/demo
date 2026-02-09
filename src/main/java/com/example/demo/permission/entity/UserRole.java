@@ -11,6 +11,12 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * 用户-角色关联实体，映射 sys_user_role 表。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,20 +26,29 @@ public class UserRole implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 主键ID
+     * 自增主键 ID，用于唯一标识关联记录。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
      */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     /**
-     * 用户ID
+     * 用户 ID，联合字段之一。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
      */
     @MppMultiField
     @TableField("user_id")
     private Long userId;
 
     /**
-     * 角色ID
+     * 角色 ID，联合字段之一。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
      */
     @MppMultiField
     @TableField("role_id")

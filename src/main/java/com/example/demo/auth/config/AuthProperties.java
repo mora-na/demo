@@ -8,6 +8,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * 认证模块配置项，绑定 auth 前缀。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Data
 @Component
 @ConfigurationProperties(prefix = "auth")
@@ -21,12 +27,24 @@ public class AuthProperties {
 
     private Filter filter = new Filter();
 
+    /**
+     * JWT 配置，定义密钥与过期时间。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @Data
     public static class Jwt {
         private String secret = "change-me";
         private long ttlSeconds = 7200;
     }
 
+    /**
+     * 验证码配置，定义尺寸、长度、过期与清理策略。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @Data
     public static class Captcha {
         private int width = 120;
@@ -38,12 +56,24 @@ public class AuthProperties {
         private int cleanupIntervalSeconds = 60;
     }
 
+    /**
+     * 密码处理配置，定义哈希模式与盐值。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @Data
     public static class Password {
         private String mode = "plain";
         private String salt = "";
     }
 
+    /**
+     * 认证过滤器配置，定义启用状态与排除路径。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @Data
     public static class Filter {
         private boolean enabled = true;

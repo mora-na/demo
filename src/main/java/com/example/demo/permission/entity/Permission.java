@@ -10,6 +10,12 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * 权限实体，映射 sys_permission 表。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,25 +25,37 @@ public class Permission implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 主键ID
+     * 自增主键 ID，用于唯一标识权限记录。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
      */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     /**
-     * 权限编码（唯一）
+     * 权限编码（全局唯一）。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
      */
     @TableField("code")
     private String code;
 
     /**
-     * 权限名称
+     * 权限名称（展示用）。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
      */
     @TableField("name")
     private String name;
 
     /**
-     * 状态：1-启用；0-禁用
+     * 状态标识：1-启用；0-禁用。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
      */
     @TableField("status")
     private Integer status;

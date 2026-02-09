@@ -20,6 +20,12 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * 认证接口控制器，处理验证码、登录与登出流程。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -30,11 +36,23 @@ public class AuthController extends BaseController {
     private final PasswordService passwordService;
     private final UserService userService;
 
+    /**
+     * 生成验证码并返回验证码 ID 与图片数据。
+     *
+     * @return 包含验证码信息的通用响应
+     */
     @GetMapping("/captcha")
     public CommonResult<CaptchaResponse> captcha() {
         return success(captchaService.createCaptcha());
     }
 
+    /**
+     * 登录接口，校验账号、密码与验证码，签发 JWT 并写入响应头。
+     *
+     * @param request  登录请求参数
+     * @param response HTTP 响应
+     * @return 登录结果与令牌信息
+     */
     @PostMapping("/login")
     public CommonResult<LoginResponse> login(@RequestBody(required = false) LoginRequest request,
                                              HttpServletResponse response) {
@@ -71,6 +89,13 @@ public class AuthController extends BaseController {
         return success(loginResponse);
     }
 
+    /**
+     * 登出接口，撤销当前令牌。
+     *
+     * @param request HTTP 请求
+     * @param body    登出请求体（可选）
+     * @return 通用响应结果
+     */
     @PostMapping("/logout")
     public CommonResult<Void> logout(HttpServletRequest request,
                                      @RequestBody(required = false) LogoutRequest body) {

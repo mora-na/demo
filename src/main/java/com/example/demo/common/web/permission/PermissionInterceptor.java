@@ -17,6 +17,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 权限拦截器，基于注解与配置进行登录与权限校验。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Component
 public class PermissionInterceptor implements HandlerInterceptor {
 
@@ -25,6 +31,15 @@ public class PermissionInterceptor implements HandlerInterceptor {
     private final CommonExcludePathsProperties commonExcludePaths;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
+    /**
+     * 构造函数，注入权限配置、服务与公共排除路径。
+     *
+     * @param properties          权限配置
+     * @param permissionService   权限服务
+     * @param commonExcludePaths  公共排除路径配置
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public PermissionInterceptor(PermissionProperties properties,
                                  PermissionService permissionService,
                                  CommonExcludePathsProperties commonExcludePaths) {
@@ -33,6 +48,17 @@ public class PermissionInterceptor implements HandlerInterceptor {
         this.commonExcludePaths = commonExcludePaths;
     }
 
+    /**
+     * 拦截请求并执行登录与权限校验。
+     *
+     * @param request  HTTP 请求
+     * @param response HTTP 响应
+     * @param handler  处理器
+     * @return true 表示放行
+     * @throws Exception 校验异常
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
@@ -76,6 +102,14 @@ public class PermissionInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    /**
+     * 判断当前请求是否在权限排除路径中。
+     *
+     * @param request HTTP 请求
+     * @return true 表示排除
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private boolean isExcluded(HttpServletRequest request) {
         List<String> excludePaths = commonExcludePaths.merge(properties.getExcludePaths());
         if (excludePaths == null || excludePaths.isEmpty()) {
@@ -93,6 +127,14 @@ public class PermissionInterceptor implements HandlerInterceptor {
         return false;
     }
 
+    /**
+     * 解析方法或类上的 RequirePermission 注解。
+     *
+     * @param handlerMethod 处理器方法
+     * @return RequirePermission 注解或 null
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private RequirePermission resolvePermission(HandlerMethod handlerMethod) {
         RequirePermission permission = AnnotatedElementUtils.findMergedAnnotation(
                 handlerMethod.getMethod(), RequirePermission.class);
@@ -103,6 +145,14 @@ public class PermissionInterceptor implements HandlerInterceptor {
                 handlerMethod.getBeanType(), RequirePermission.class);
     }
 
+    /**
+     * 解析方法或类上的 RequireLogin 注解。
+     *
+     * @param handlerMethod 处理器方法
+     * @return RequireLogin 注解或 null
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private RequireLogin resolveLogin(HandlerMethod handlerMethod) {
         RequireLogin login = AnnotatedElementUtils.findMergedAnnotation(
                 handlerMethod.getMethod(), RequireLogin.class);
@@ -113,6 +163,15 @@ public class PermissionInterceptor implements HandlerInterceptor {
                 handlerMethod.getBeanType(), RequireLogin.class);
     }
 
+    /**
+     * 写出 401 未授权响应。
+     *
+     * @param response HTTP 响应
+     * @param message  错误信息
+     * @throws Exception IO 异常
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private void writeUnauthorized(HttpServletResponse response, String message) throws Exception {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json;charset=UTF-8");
@@ -120,6 +179,15 @@ public class PermissionInterceptor implements HandlerInterceptor {
         response.getWriter().write(JSON.toJSONString(result));
     }
 
+    /**
+     * 写出 403 禁止访问响应。
+     *
+     * @param response HTTP 响应
+     * @param message  错误信息
+     * @throws Exception IO 异常
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private void writeForbidden(HttpServletResponse response, String message) throws Exception {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json;charset=UTF-8");

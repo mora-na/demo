@@ -30,7 +30,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
- * Excel 导入导出工具。
+ * Excel 导入导出工具，支持分页导出与安全导入。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
  */
 public final class ExcelTool {
 
@@ -65,22 +68,57 @@ public final class ExcelTool {
     @Setter
     private static volatile boolean defaultCompressTempFiles = DEFAULT_COMPRESS_TEMP_FILES;
 
+    /**
+     * 工具类禁止实例化。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private ExcelTool() {
     }
 
     /**
-     * 导出到内存流，供 Web 响应直接使用。
+     * 导出到内存流（默认 Sheet），用于 Web 响应。
+     *
+     * @param data 导出数据
+     * @param type 实体类型
+     * @param <T>  实体类型
+     * @return 内存流
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
      */
     public static <T> ByteArrayOutputStream exportToStream(List<T> data, Class<T> type) {
         return exportToStream(data, type, DEFAULT_SHEET);
     }
 
+    /**
+     * 导出到内存流（指定 Sheet）。
+     *
+     * @param data      导出数据
+     * @param type      实体类型
+     * @param sheetName Sheet 名称
+     * @param <T>       实体类型
+     * @return 内存流
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static <T> ByteArrayOutputStream exportToStream(List<T> data, Class<T> type, String sheetName) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         exportToStream(data, type, sheetName, outputStream);
         return outputStream;
     }
 
+    /**
+     * 导出到指定输出流。
+     *
+     * @param data         导出数据
+     * @param type         实体类型
+     * @param sheetName    Sheet 名称
+     * @param outputStream 输出流
+     * @param <T>          实体类型
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static <T> void exportToStream(List<T> data, Class<T> type, String sheetName, OutputStream outputStream) {
         Objects.requireNonNull(type, "导出的实体类型不能为空");
         Objects.requireNonNull(outputStream, "输出流不能为空");
@@ -119,11 +157,31 @@ public final class ExcelTool {
 
     /**
      * 分页导出到内存流，避免一次性加载所有数据。
+     *
+     * @param query        分页查询方法
+     * @param type         实体类型
+     * @param sheetName    Sheet 名称
+     * @param outputStream 输出流
+     * @param <T>          实体类型
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
      */
     public static <T> void exportToStreamByPaging(Supplier<List<T>> query, Class<T> type, String sheetName, OutputStream outputStream) {
         exportToStreamByPaging(query, type, sheetName, outputStream, defaultExportPageSize);
     }
 
+    /**
+     * 分页导出到内存流（指定分页大小）。
+     *
+     * @param query        分页查询方法
+     * @param type         实体类型
+     * @param sheetName    Sheet 名称
+     * @param outputStream 输出流
+     * @param pageSize     分页大小
+     * @param <T>          实体类型
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static <T> void exportToStreamByPaging(Supplier<List<T>> query, Class<T> type, String sheetName, OutputStream outputStream, int pageSize) {
         Objects.requireNonNull(query, "分页查询方法不能为空");
         Objects.requireNonNull(type, "导出的实体类型不能为空");
@@ -171,6 +229,15 @@ public final class ExcelTool {
 
     /**
      * 导出到指定目录文件。
+     *
+     * @param data      导出数据
+     * @param type      实体类型
+     * @param directory 目标目录
+     * @param fileName  文件名
+     * @param <T>       实体类型
+     * @return 导出后的文件
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
      */
     public static <T> File exportToFile(List<T> data, Class<T> type, Path directory, String fileName) {
         Objects.requireNonNull(directory, "导出目录不能为空");
@@ -188,10 +255,31 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 从本地文件导入（表头行索引默认 0）。
+     *
+     * @param file 导入文件
+     * @param type 实体类型
+     * @param <T>  实体类型
+     * @return 导入结果
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static <T> List<T> importFromFile(File file, Class<T> type) {
         return importFromFile(file, type, 0);
     }
 
+    /**
+     * 从本地文件导入。
+     *
+     * @param file           导入文件
+     * @param type           实体类型
+     * @param headerRowIndex 表头行索引
+     * @param <T>            实体类型
+     * @return 导入结果
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static <T> List<T> importFromFile(File file, Class<T> type, int headerRowIndex) {
         Objects.requireNonNull(file, "导入文件不能为空");
         if (!file.exists()) {
@@ -207,10 +295,31 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 从上传文件导入（表头行索引默认 0）。
+     *
+     * @param multipartFile 上传文件
+     * @param type          实体类型
+     * @param <T>           实体类型
+     * @return 导入结果
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static <T> List<T> importFromMultipart(MultipartFile multipartFile, Class<T> type) {
         return importFromMultipart(multipartFile, type, 0);
     }
 
+    /**
+     * 从上传文件导入。
+     *
+     * @param multipartFile  上传文件
+     * @param type           实体类型
+     * @param headerRowIndex 表头行索引
+     * @param <T>            实体类型
+     * @return 导入结果
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static <T> List<T> importFromMultipart(MultipartFile multipartFile, Class<T> type, int headerRowIndex) {
         Objects.requireNonNull(multipartFile, "上传文件不能为空");
         if (multipartFile.isEmpty()) {
@@ -226,6 +335,17 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 从输入流导入 Excel 数据。
+     *
+     * @param inputStream    输入流
+     * @param type           实体类型
+     * @param headerRowIndex 表头行索引
+     * @param <T>            实体类型
+     * @return 导入结果
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static <T> List<T> importFromStream(InputStream inputStream, Class<T> type, int headerRowIndex) {
         Objects.requireNonNull(inputStream, "输入流不能为空");
         Objects.requireNonNull(type, "导入的实体类型不能为空");
@@ -244,6 +364,14 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 构建表头行。
+     *
+     * @param sheet      Sheet
+     * @param fieldMetas 字段元数据
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static void buildHeaderRow(Sheet sheet, List<FieldMeta> fieldMetas) {
         Row headerRow = sheet.createRow(0);
         for (int i = 0; i < fieldMetas.size(); i++) {
@@ -252,6 +380,17 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 写入一行数据。
+     *
+     * @param row        行对象
+     * @param fieldMetas 字段元数据
+     * @param item       行数据
+     * @param dateStyle  日期样式
+     * @param <T>        实体类型
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static <T> void writeDataRow(Row row, List<FieldMeta> fieldMetas, T item, CellStyle dateStyle) {
         if (item == null || row == null) {
             return;
@@ -267,6 +406,15 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 将值写入单元格，支持日期与数字类型。
+     *
+     * @param cell      单元格
+     * @param value     值
+     * @param dateStyle 日期样式
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static void setCellValue(Cell cell, Object value, CellStyle dateStyle) {
         if (value == null) {
             return;
@@ -293,6 +441,14 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 获取字段元数据（带缓存）。
+     *
+     * @param type 实体类型
+     * @return 字段元数据列表
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static List<FieldMeta> getFieldMetas(Class<?> type) {
         List<FieldMeta> metas = FIELD_CACHE.get(type, ExcelTool::resolveFieldMetas);
         if (metas == null) {
@@ -301,6 +457,14 @@ public final class ExcelTool {
         return metas;
     }
 
+    /**
+     * 解析实体字段上的 ExcelColumn 注解。
+     *
+     * @param type 实体类型
+     * @return 字段元数据列表
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static List<FieldMeta> resolveFieldMetas(Class<?> type) {
         List<FieldMeta> metas = new ArrayList<>();
         for (java.lang.reflect.Field field : collectFields(type)) {
@@ -328,6 +492,14 @@ public final class ExcelTool {
         return metas;
     }
 
+    /**
+     * 递归收集实体及其父类字段。
+     *
+     * @param type 实体类型
+     * @return 字段列表
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static List<java.lang.reflect.Field> collectFields(Class<?> type) {
         List<java.lang.reflect.Field> fields = new ArrayList<>();
         if (type == null || Object.class.equals(type)) {
@@ -338,6 +510,18 @@ public final class ExcelTool {
         return fields;
     }
 
+    /**
+     * 读取 Sheet 内容并映射到实体列表。
+     *
+     * @param sheet          Sheet
+     * @param fieldMetas     字段元数据
+     * @param type           实体类型
+     * @param headerRowIndex 表头行索引
+     * @param <T>            实体类型
+     * @return 实体列表
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static <T> List<T> readSheet(Sheet sheet, List<FieldMeta> fieldMetas, Class<T> type, int headerRowIndex) {
         Row headerRow = sheet.getRow(headerRowIndex);
         if (headerRow == null) {
@@ -377,6 +561,17 @@ public final class ExcelTool {
         return result;
     }
 
+    /**
+     * 通过 PageHelper 触发分页查询并返回一页数据。
+     *
+     * @param query    分页查询方法
+     * @param pageNum  页码
+     * @param pageSize 分页大小
+     * @param <T>      实体类型
+     * @return 当前页数据
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static <T> List<T> selectPage(Supplier<List<T>> query, int pageNum, int pageSize) {
         try (Page<Object> ignored = PageHelper.startPage(pageNum, pageSize, defaultCountEnabled)) {
             List<T> pageData = query.get();
@@ -392,6 +587,15 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 根据表头映射字段元数据。
+     *
+     * @param headerRow  表头行
+     * @param fieldMetas 字段元数据
+     * @return 列索引 -> 字段元数据 映射
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static Map<Integer, FieldMeta> mapColumns(Row headerRow, List<FieldMeta> fieldMetas) {
         Map<String, FieldMeta> headerMap = fieldMetas.stream().collect(Collectors.toMap(meta -> meta.getHeaderName().toLowerCase(Locale.ROOT), meta -> meta, (a, b) -> a, LinkedHashMap::new));
         Map<String, FieldMeta> fieldNameMap = fieldMetas.stream().collect(Collectors.toMap(meta -> meta.getField().getName().toLowerCase(Locale.ROOT), meta -> meta, (a, b) -> a, LinkedHashMap::new));
@@ -413,6 +617,17 @@ public final class ExcelTool {
         return columnMapping;
     }
 
+    /**
+     * 从表头单元格中构建列映射。
+     *
+     * @param headerRow     表头行
+     * @param headerMap     表头名 -> 字段元数据
+     * @param columnMapping 列索引 -> 字段元数据
+     * @param mappedFields  已映射字段集合
+     * @param i             列索引
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static void buildColumnMappingFromHeaderRow(Row headerRow, Map<String, FieldMeta> headerMap, Map<Integer, FieldMeta> columnMapping, Set<FieldMeta> mappedFields, int i) {
         Cell cell = headerRow.getCell(i);
         String headerName = toHeaderKey(cell);
@@ -425,6 +640,14 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 读取表头单元格并规范化为匹配键。
+     *
+     * @param cell 表头单元格
+     * @return 小写表头键
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static String toHeaderKey(Cell cell) {
         Object value = readCellValue(cell);
         if (value == null) {
@@ -433,6 +656,14 @@ public final class ExcelTool {
         return value.toString().trim().toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * 读取单元格原始值。
+     *
+     * @param cell 单元格
+     * @return 单元格值
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static Object readCellValue(Cell cell) {
         if (cell == null) {
             return null;
@@ -458,6 +689,15 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 根据目标类型读取单元格值（字符串类型走格式化）。
+     *
+     * @param cell       单元格
+     * @param targetType 目标类型
+     * @return 单元格值
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static Object readCellValueForType(Cell cell, Class<?> targetType) {
         if (cell == null) {
             return null;
@@ -468,6 +708,15 @@ public final class ExcelTool {
         return readCellValue(cell);
     }
 
+    /**
+     * 读取单元格值的兜底方案（与主方案互斥）。
+     *
+     * @param cell       单元格
+     * @param targetType 目标类型
+     * @return 单元格值
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static Object readCellValueFallback(Cell cell, Class<?> targetType) {
         if (cell == null) {
             return null;
@@ -478,6 +727,14 @@ public final class ExcelTool {
         return formatCellValue(cell);
     }
 
+    /**
+     * 读取单元格格式化文本。
+     *
+     * @param cell 单元格
+     * @return 格式化字符串
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static String formatCellValue(Cell cell) {
         String formatted = DATA_FORMATTER.formatCellValue(cell);
         if (StringUtils.isBlank(formatted)) {
@@ -486,6 +743,14 @@ public final class ExcelTool {
         return formatted;
     }
 
+    /**
+     * 读取公式单元格的缓存结果。
+     *
+     * @param cell 单元格
+     * @return 缓存值
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static Object readFormulaValue(Cell cell) {
         CellType cached = cell.getCachedFormulaResultType();
         switch (cached) {
@@ -503,6 +768,15 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 将单元格值转换为目标类型。
+     *
+     * @param rawValue   原始值
+     * @param targetType 目标类型
+     * @return 转换后的值
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static Object convertValue(Object rawValue, Class<?> targetType) {
         if (rawValue == null) {
             return null;
@@ -580,6 +854,15 @@ public final class ExcelTool {
         return rawValue;
     }
 
+    /**
+     * 反射创建实体实例。
+     *
+     * @param type 实体类型
+     * @param <T>  实体类型
+     * @return 实体实例
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static <T> T newInstance(Class<T> type) {
         try {
             return type.getDeclaredConstructor().newInstance();
@@ -588,6 +871,17 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 自动调整列宽（可限制最大行数）。
+     *
+     * @param sheet       Sheet
+     * @param columnCount 列数
+     * @param rowCount    行数
+     * @param autoSize    是否启用自动列宽
+     * @param maxRows     自动列宽最大行数
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static void autoSizeColumns(Sheet sheet, int columnCount, int rowCount, boolean autoSize, int maxRows) {
         if (!autoSize || sheet == null || columnCount <= 0) {
             return;
@@ -602,6 +896,14 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 确保文件名包含 .xlsx 后缀。
+     *
+     * @param fileName 文件名
+     * @return 追加后缀后的文件名
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static String ensureXlsxSuffix(String fileName) {
         String trimmed = fileName.trim();
         // 忽略大小写判断结尾是否是 .xlsx
@@ -611,6 +913,13 @@ public final class ExcelTool {
         return trimmed + XLSX_SUFFIX;
     }
 
+    /**
+     * 设置默认分页大小。
+     *
+     * @param pageSize 分页大小
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static void setDefaultExportPageSize(int pageSize) {
         if (pageSize <= 0) {
             throw new ExcelProcessException("分页大小必须大于 0");
@@ -618,6 +927,13 @@ public final class ExcelTool {
         defaultExportPageSize = pageSize;
     }
 
+    /**
+     * 设置导出内存窗口大小。
+     *
+     * @param rowWindowSize 内存窗口大小
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static void setDefaultRowWindowSize(int rowWindowSize) {
         if (rowWindowSize <= 0) {
             throw new ExcelProcessException("内存窗口大小必须大于 0");
@@ -625,14 +941,35 @@ public final class ExcelTool {
         defaultRowWindowSize = rowWindowSize;
     }
 
+    /**
+     * 获取共享字符串表开关。
+     *
+     * @return true 表示启用共享字符串表
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static boolean isDefaultUseSharedStringsTable() {
         return defaultUseSharedStrings;
     }
 
+    /**
+     * 设置共享字符串表开关。
+     *
+     * @param useSharedStrings 是否启用共享字符串表
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static void setDefaultUseSharedStringsTable(boolean useSharedStrings) {
         defaultUseSharedStrings = useSharedStrings;
     }
 
+    /**
+     * 设置自动列宽最大行数（0 表示不限制）。
+     *
+     * @param maxRows 最大行数
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     public static void setDefaultAutoSizeMaxRows(int maxRows) {
         if (maxRows < 0) {
             throw new ExcelProcessException("自动列宽最大行数不能小于 0");
@@ -640,12 +977,26 @@ public final class ExcelTool {
         defaultAutoSizeMaxRows = maxRows;
     }
 
+    /**
+     * 创建 SXSSFWorkbook 并应用默认导出参数。
+     *
+     * @return SXSSFWorkbook
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static SXSSFWorkbook createWorkbook() {
         SXSSFWorkbook workbook = new SXSSFWorkbook(new XSSFWorkbook(), defaultRowWindowSize, defaultCompressTempFiles, defaultUseSharedStrings);
         workbook.setCompressTempFiles(defaultCompressTempFiles);
         return workbook;
     }
 
+    /**
+     * 导出前初始化 Sheet（如开启自动列宽跟踪）。
+     *
+     * @param sheet Sheet
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static void prepareSheetForExport(SXSSFSheet sheet) {
         if (sheet == null) {
             return;
@@ -655,6 +1006,14 @@ public final class ExcelTool {
         }
     }
 
+    /**
+     * 解析 ExcelColumn.mapping 规则为映射表。
+     *
+     * @param annotation ExcelColumn 注解
+     * @return 映射表
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static Map<String, String> parseMapping(ExcelColumn annotation) {
         Map<String, String> mapping = new LinkedHashMap<>();
         if (annotation == null || annotation.mapping() == null) {
@@ -680,6 +1039,9 @@ public final class ExcelTool {
 
     /**
      * 字段元数据与访问工具。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
      */
     private static class FieldMeta {
         @Getter
@@ -689,6 +1051,15 @@ public final class ExcelTool {
         private final Map<String, String> exportMapping;
         private final Map<String, String> importMapping;
 
+        /**
+         * 构建字段元数据。
+         *
+         * @param field         字段
+         * @param headerName    表头名称
+         * @param exportMapping 导出映射
+         * @author GPT-5.2-codex(high)
+         * @date 2026/2/9
+         */
         FieldMeta(java.lang.reflect.Field field, String headerName, Map<String, String> exportMapping) {
             this.field = field;
             this.headerName = headerName;
@@ -697,6 +1068,14 @@ public final class ExcelTool {
             this.field.setAccessible(true);
         }
 
+        /**
+         * 读取字段值并应用导出映射。
+         *
+         * @param target 目标对象
+         * @return 字段值
+         * @author GPT-5.2-codex(high)
+         * @date 2026/2/9
+         */
         Object getValue(Object target) {
             try {
                 Object original = field.get(target);
@@ -706,6 +1085,14 @@ public final class ExcelTool {
             }
         }
 
+        /**
+         * 写入字段值。
+         *
+         * @param target 目标对象
+         * @param value  字段值
+         * @author GPT-5.2-codex(high)
+         * @date 2026/2/9
+         */
         void setValue(Object target, Object value) {
             try {
                 field.set(target, value);
@@ -714,6 +1101,14 @@ public final class ExcelTool {
             }
         }
 
+        /**
+         * 应用导出映射规则。
+         *
+         * @param original 原始值
+         * @return 映射后的值
+         * @author GPT-5.2-codex(high)
+         * @date 2026/2/9
+         */
         Object applyExportMapping(Object original) {
             if (original == null || exportMapping.isEmpty()) {
                 return original;
@@ -722,6 +1117,14 @@ public final class ExcelTool {
             return mapped != null ? mapped : original;
         }
 
+        /**
+         * 应用导入映射规则。
+         *
+         * @param raw 原始值
+         * @return 映射后的值
+         * @author GPT-5.2-codex(high)
+         * @date 2026/2/9
+         */
         Object applyImportMapping(Object raw) {
             if (raw == null || importMapping.isEmpty()) {
                 return raw;
@@ -730,6 +1133,15 @@ public final class ExcelTool {
             return mapped != null ? mapped : raw;
         }
 
+        /**
+         * 根据映射表解析值。
+         *
+         * @param mapping 映射表
+         * @param raw     原始值
+         * @return 映射结果
+         * @author GPT-5.2-codex(high)
+         * @date 2026/2/9
+         */
         private String resolveMapping(Map<String, String> mapping, Object raw) {
             String key = raw.toString();
             String mapped = mapping.get(key);
@@ -742,6 +1154,14 @@ public final class ExcelTool {
             return null;
         }
 
+        /**
+         * 规范化数字键，避免 1 与 1.0 不一致。
+         *
+         * @param raw 原始值
+         * @return 规范化后的字符串
+         * @author GPT-5.2-codex(high)
+         * @date 2026/2/9
+         */
         private String normalizeNumberKey(Object raw) {
             try {
                 return new BigDecimal(raw.toString()).stripTrailingZeros().toPlainString();

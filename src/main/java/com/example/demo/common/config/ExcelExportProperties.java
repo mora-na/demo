@@ -7,6 +7,12 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
+/**
+ * Excel 导出配置绑定与应用，将配置值同步到 ExcelTool。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Data
 @Component
 @ConfigurationProperties(prefix = "excel.export")
@@ -20,6 +26,12 @@ public class ExcelExportProperties {
     private boolean countEnabled = ExcelTool.isDefaultCountEnabled();
     private boolean compressTempFiles = ExcelTool.isDefaultCompressTempFiles();
 
+    /**
+     * 容器初始化后应用配置到导出工具。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @PostConstruct
     public void apply() {
         ExcelTool.setDefaultExportPageSize(pageSize);

@@ -4,6 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * 认证上下文中的用户摘要信息，承载鉴权与数据范围字段。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

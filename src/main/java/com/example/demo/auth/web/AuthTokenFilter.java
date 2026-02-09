@@ -24,6 +24,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+/**
+ * 认证过滤器，校验请求令牌并注入认证上下文。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Component
 @RequiredArgsConstructor
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
@@ -35,6 +41,12 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private final UserService userService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
+    /**
+     * 判断当前请求是否跳过认证过滤。
+     *
+     * @param request HTTP 请求
+     * @return true 表示跳过过滤
+     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         if (!authProperties.getFilter().isEnabled()) {
@@ -52,6 +64,15 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         return false;
     }
 
+    /**
+     * 执行认证过滤逻辑，验证令牌、加载用户并写入上下文。
+     *
+     * @param request     HTTP 请求
+     * @param response    HTTP 响应
+     * @param filterChain 过滤器链
+     * @throws ServletException Servlet 异常
+     * @throws IOException      IO 异常
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -91,6 +112,13 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         }
     }
 
+    /**
+     * 写出 401 未授权响应。
+     *
+     * @param response HTTP 响应
+     * @param message  错误信息
+     * @throws IOException IO 异常
+     */
     private void writeUnauthorized(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json;charset=UTF-8");
@@ -98,6 +126,13 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         response.getWriter().write(JSON.toJSONString(result));
     }
 
+    /**
+     * 写出 403 禁止访问响应。
+     *
+     * @param response HTTP 响应
+     * @param message  错误信息
+     * @throws IOException IO 异常
+     */
     private void writeForbidden(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json;charset=UTF-8");

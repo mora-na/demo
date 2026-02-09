@@ -13,13 +13,14 @@ import java.security.Security;
 import java.util.Base64;
 
 /**
- * @author panzhiwei
- * date   2025/9/3
- * description jasypt工具类 采用SM4算法加解密配置文件
- * （SM4算法需要128位密钥，固定长度限制为16个字符，为了适配任意长度字符密钥，采用SM3哈希算法计算密钥截取前 16 字节作为密钥）
+ * Jasypt 加解密实现，采用 SM4/ECB/PKCS5Padding 处理配置密文。
+ * 由于 SM4 需要 128 位密钥，使用 SM3 哈希后取前 16 字节作为固定长度密钥。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
  */
-@Component("jasyptStringEncryptor")
-public class JasyptStringEncryptor implements StringEncryptor {
+@Component("jasyptEncryptor")
+public class JasyptEncryptor implements StringEncryptor {
 
     private static final String ALGORITHM_NAME = "SM4/ECB/PKCS5Padding";
 
@@ -30,11 +31,26 @@ public class JasyptStringEncryptor implements StringEncryptor {
 
     private final SecretKeySpec keySpec;
 
-    public JasyptStringEncryptor(@Value("${jasypt.encryptor.password}") String password) {
+    /**
+     * 构造加解密器并初始化密钥。
+     *
+     * @param password 原始密钥字符串
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
+    public JasyptEncryptor(@Value("${jasypt.encryptor.password}") String password) {
         byte[] key = normalizeKey(password);
         this.keySpec = new SecretKeySpec(key, "SM4");
     }
 
+    /**
+     * 将任意长度密钥归一化为 16 字节 SM4 密钥。
+     *
+     * @param keyStr 原始密钥字符串
+     * @return 16 字节密钥
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     private static byte[] normalizeKey(String keyStr) {
         try {
             MessageDigest md = MessageDigest.getInstance("SM3", "BC");
@@ -47,6 +63,14 @@ public class JasyptStringEncryptor implements StringEncryptor {
         }
     }
 
+    /**
+     * 对明文进行 SM4 加密并返回 Base64 字符串。
+     *
+     * @param message 明文
+     * @return 密文（Base64）
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @Override
     public String encrypt(String message) {
         try {
@@ -59,6 +83,14 @@ public class JasyptStringEncryptor implements StringEncryptor {
         }
     }
 
+    /**
+     * 对 Base64 密文进行 SM4 解密并返回明文。
+     *
+     * @param encryptedMessage Base64 密文
+     * @return 明文
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @Override
     public String decrypt(String encryptedMessage) {
         try {

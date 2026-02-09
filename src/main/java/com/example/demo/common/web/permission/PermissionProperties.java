@@ -9,6 +9,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 权限配置项，绑定 security.permission 前缀。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Data
 @Component
 @ConfigurationProperties(prefix = "security.permission")

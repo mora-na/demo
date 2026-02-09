@@ -14,12 +14,27 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 角色服务实现，负责角色权限关系维护与状态更新。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Service
 @RequiredArgsConstructor
 public class RoleServiceImpl extends MppServiceImpl<RoleMapper, Role> implements RoleService {
 
     private final RolePermissionService rolePermissionService;
 
+    /**
+     * 为角色重置并分配权限集合。
+     *
+     * @param roleId        角色 ID
+     * @param permissionIds 权限 ID 集合
+     * @return true 表示分配成功
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean assignPermissions(Long roleId, List<Long> permissionIds) {
@@ -41,6 +56,15 @@ public class RoleServiceImpl extends MppServiceImpl<RoleMapper, Role> implements
         return rolePermissionService.saveBatch(relations);
     }
 
+    /**
+     * 更新角色状态。
+     *
+     * @param roleId 角色 ID
+     * @param status 状态值
+     * @return true 表示更新成功
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
     @Override
     public boolean updateStatus(Long roleId, Integer status) {
         if (roleId == null) {
