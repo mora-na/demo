@@ -1,5 +1,6 @@
 package com.example.demo.common.web.filter;
 
+import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.common.web.xss.XssHttpServletRequestWrapper;
 import com.example.demo.common.web.xss.XssProperties;
 import org.springframework.core.Ordered;
@@ -17,10 +18,13 @@ import java.util.List;
 public class XssFilter implements Filter {
 
     private final XssProperties properties;
+    private final CommonExcludePathsProperties commonExcludePaths;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    public XssFilter(XssProperties properties) {
+    public XssFilter(XssProperties properties,
+                     CommonExcludePathsProperties commonExcludePaths) {
         this.properties = properties;
+        this.commonExcludePaths = commonExcludePaths;
     }
 
     @Override
@@ -39,7 +43,7 @@ public class XssFilter implements Filter {
     }
 
     private boolean isExcluded(HttpServletRequest request) {
-        List<String> excludePaths = properties.getExcludePaths();
+        List<String> excludePaths = commonExcludePaths.merge(properties.getExcludePaths());
         if (excludePaths == null || excludePaths.isEmpty()) {
             return false;
         }

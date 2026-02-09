@@ -7,6 +7,7 @@ import com.example.demo.auth.model.AuthUser;
 import com.example.demo.auth.service.TokenService;
 import com.example.demo.auth.support.AuthTokenResolver;
 import com.example.demo.common.model.CommonResult;
+import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.user.entity.User;
 import com.example.demo.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ import java.io.IOException;
 public class AuthTokenFilter extends OncePerRequestFilter {
 
     private final AuthProperties authProperties;
+    private final CommonExcludePathsProperties commonExcludePaths;
     private final TokenService tokenService;
     private final UserService userService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
@@ -42,7 +44,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             return true;
         }
         String path = request.getRequestURI();
-        for (String pattern : authProperties.getFilter().getExcludePaths()) {
+        for (String pattern : commonExcludePaths.merge(authProperties.getFilter().getExcludePaths())) {
             if (pathMatcher.match(pattern, path)) {
                 return true;
             }

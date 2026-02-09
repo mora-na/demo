@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.model.CommonResult;
+import com.example.demo.common.web.CommonExcludePathsProperties;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -21,11 +22,15 @@ public class PermissionInterceptor implements HandlerInterceptor {
 
     private final PermissionProperties properties;
     private final PermissionService permissionService;
+    private final CommonExcludePathsProperties commonExcludePaths;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    public PermissionInterceptor(PermissionProperties properties, PermissionService permissionService) {
+    public PermissionInterceptor(PermissionProperties properties,
+                                 PermissionService permissionService,
+                                 CommonExcludePathsProperties commonExcludePaths) {
         this.properties = properties;
         this.permissionService = permissionService;
+        this.commonExcludePaths = commonExcludePaths;
     }
 
     @Override
@@ -72,7 +77,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
     }
 
     private boolean isExcluded(HttpServletRequest request) {
-        List<String> excludePaths = properties.getExcludePaths();
+        List<String> excludePaths = commonExcludePaths.merge(properties.getExcludePaths());
         if (excludePaths == null || excludePaths.isEmpty()) {
             return false;
         }

@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.model.CommonResult;
+import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.common.web.limit.RateLimitProperties;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -26,12 +27,15 @@ import java.util.Locale;
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitProperties properties;
+    private final CommonExcludePathsProperties commonExcludePaths;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final StringRedisTemplate stringRedisTemplate;
 
     public RateLimitFilter(RateLimitProperties properties,
+                           CommonExcludePathsProperties commonExcludePaths,
                            StringRedisTemplate stringRedisTemplate) {
         this.properties = properties;
+        this.commonExcludePaths = commonExcludePaths;
         this.stringRedisTemplate = stringRedisTemplate;
     }
 
@@ -40,7 +44,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (!properties.isEnabled()) {
             return true;
         }
-        List<String> excludePaths = properties.getExcludePaths();
+        List<String> excludePaths = commonExcludePaths.merge(properties.getExcludePaths());
         if (excludePaths == null || excludePaths.isEmpty()) {
             return false;
         }

@@ -1,5 +1,6 @@
 package com.example.demo.common.web.xss;
 
+import com.example.demo.common.web.CommonExcludePathsProperties;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -16,10 +17,13 @@ import java.util.List;
 public class XssRequestBodyAdvice extends RequestBodyAdviceAdapter {
 
     private final XssProperties properties;
+    private final CommonExcludePathsProperties commonExcludePaths;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    public XssRequestBodyAdvice(XssProperties properties) {
+    public XssRequestBodyAdvice(XssProperties properties,
+                                CommonExcludePathsProperties commonExcludePaths) {
         this.properties = properties;
+        this.commonExcludePaths = commonExcludePaths;
     }
 
     @Override
@@ -44,7 +48,7 @@ public class XssRequestBodyAdvice extends RequestBodyAdviceAdapter {
     }
 
     private boolean isExcluded(HttpServletRequest request) {
-        List<String> excludePaths = properties.getExcludePaths();
+        List<String> excludePaths = commonExcludePaths.merge(properties.getExcludePaths());
         if (excludePaths == null || excludePaths.isEmpty()) {
             return false;
         }

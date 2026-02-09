@@ -48,7 +48,7 @@ public class AuthProperties {
     public static class Filter {
         private boolean enabled = true;
         private List<String> excludePaths = new ArrayList<>(
-                Arrays.asList("/auth/**", "/error", "/druid/**", "/camunda/**", "/engine-rest/**")
+                Arrays.asList("/auth/**", "/error")
         );
     }
 }
