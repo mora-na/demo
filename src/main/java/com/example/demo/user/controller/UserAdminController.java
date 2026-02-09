@@ -35,8 +35,7 @@ public class UserAdminController extends BaseController {
 
     @PutMapping("/{id}")
     @RequirePermission("user:update")
-    public CommonResult<Void> update(@PathVariable("id") Long id,
-                                     @Valid @RequestBody UserUpdateRequest request) {
+    public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest request) {
         User existing = userService.getById(id);
         if (existing == null) {
             return error(404, "user not found");
@@ -55,8 +54,7 @@ public class UserAdminController extends BaseController {
 
     @PutMapping("/{id}/status")
     @RequirePermission("user:disable")
-    public CommonResult<Void> updateStatus(@PathVariable("id") Long id,
-                                           @Valid @RequestBody UserStatusRequest request) {
+    public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody UserStatusRequest request) {
         if (userService.getById(id) == null) {
             return error(404, "user not found");
         }
@@ -72,8 +70,7 @@ public class UserAdminController extends BaseController {
 
     @PutMapping("/{id}/reset-password")
     @RequirePermission("user:password:reset")
-    public CommonResult<Void> resetPassword(@PathVariable("id") Long id,
-                                            @Valid @RequestBody UserResetPasswordRequest request) {
+    public CommonResult<Void> resetPassword(@PathVariable Long id, @Valid @RequestBody UserResetPasswordRequest request) {
         if (userService.getById(id) == null) {
             return error(404, "user not found");
         }
@@ -85,8 +82,7 @@ public class UserAdminController extends BaseController {
 
     @PutMapping("/{id}/roles")
     @RequirePermission("user:role:assign")
-    public CommonResult<Void> assignRoles(@PathVariable("id") Long id,
-                                          @Valid @RequestBody UserRoleAssignRequest request) {
+    public CommonResult<Void> assignRoles(@PathVariable Long id, @Valid @RequestBody UserRoleAssignRequest request) {
         if (userService.getById(id) == null) {
             return error(404, "user not found");
         }
@@ -98,8 +94,7 @@ public class UserAdminController extends BaseController {
 
     @PutMapping("/{id}/data-scope")
     @RequirePermission("user:data-scope:set")
-    public CommonResult<Void> updateDataScope(@PathVariable("id") Long id,
-                                              @Valid @RequestBody UserDataScopeRequest request) {
+    public CommonResult<Void> updateDataScope(@PathVariable Long id, @Valid @RequestBody UserDataScopeRequest request) {
         if (userService.getById(id) == null) {
             return error(404, "user not found");
         }

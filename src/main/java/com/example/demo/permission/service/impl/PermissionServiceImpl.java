@@ -8,4 +8,15 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class PermissionServiceImpl extends MppServiceImpl<PermissionMapper, Permission> implements PermissionService {
+
+    @Override
+    public boolean updateStatus(Long id, Integer status) {
+        if (id == null) {
+            return false;
+        }
+        Permission permission = new Permission();
+        permission.setId(id);
+        permission.setStatus(status);
+        return updateById(permission);
+    }
 }
