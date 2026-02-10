@@ -6,6 +6,12 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * 用户查询参数，支持按基础信息与状态过滤。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -12,6 +12,12 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * 用户实体，映射 sys_user 表并承载基础导出字段定义。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

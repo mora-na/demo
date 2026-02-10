@@ -24,6 +24,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 用户示例接口，演示分页查询、配置读取以及 Excel 导入导出能力。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Slf4j
 @RestController
 @RequestMapping("/hello")

@@ -10,6 +10,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 用户实体与视图对象转换器，封装导入导出及聚合场景下的转换逻辑。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Component
 public class UserConverter {
 

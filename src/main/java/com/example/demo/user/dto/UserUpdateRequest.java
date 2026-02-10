@@ -4,6 +4,12 @@ import lombok.Data;
 
 import javax.validation.constraints.Size;
 
+/**
+ * 用户更新请求参数，允许部分字段可选修改。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Data
 public class UserUpdateRequest {
 

@@ -13,6 +13,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 用户视图装配服务，聚合订单信息后生成用户视图对象。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Service
 @RequiredArgsConstructor
 public class UserViewService {

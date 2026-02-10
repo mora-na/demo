@@ -14,6 +14,12 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
+/**
+ * 用户后台管理接口，覆盖创建、更新、状态、角色与数据范围的维护操作。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/9
+ */
 @Validated
 @RestController
 @RequestMapping("/users")
