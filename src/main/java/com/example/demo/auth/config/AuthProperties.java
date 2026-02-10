@@ -64,8 +64,14 @@ public class AuthProperties {
      */
     @Data
     public static class Password {
-        private String mode = "plain";
+        private String mode = "bcrypt";
         private String salt = "";
+        private String defaultPassword = "";
+        private String transportMode = "plain";
+        private String transportKey = "";
+        private boolean strongCheckEnabled = false;
+        private int strongMinLength = 8;
+        private String strongPattern = "";
     }
 
     /**

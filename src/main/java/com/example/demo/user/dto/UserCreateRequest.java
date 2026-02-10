@@ -21,8 +21,7 @@ public class UserCreateRequest {
     @Size(max = 64)
     private String nickName;
 
-    @NotBlank
-    @Size(min = 6, max = 128)
+    @Size(max = 128)
     private String password;
 
     @Size(max = 16)

@@ -75,7 +75,11 @@ public class AuthController extends BaseController {
         if (user.getStatus() != null && user.getStatus().equals(User.STATUS_DISABLED)) {
             return error(403, "user is disabled");
         }
-        if (!passwordService.matches(request.getPassword(), user.getPassword())) {
+        String rawPassword = passwordService.decodeTransportPassword(request.getPassword());
+        if (StringUtils.isBlank(rawPassword)) {
+            return error(400, "password is invalid");
+        }
+        if (!passwordService.matches(rawPassword, user.getPassword())) {
             return error(401, "password is incorrect");
         }
         AuthUser authUser = new AuthUser();

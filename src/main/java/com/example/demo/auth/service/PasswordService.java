@@ -2,11 +2,17 @@ package com.example.demo.auth.service;
 
 import com.example.demo.auth.config.AuthProperties;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.regex.Pattern;
 
 /**
  * 密码处理服务，支持 plain、md5、bcrypt 模式。
@@ -40,6 +46,81 @@ public class PasswordService {
             return md5(rawPassword).equalsIgnoreCase(encodedPassword);
         }
         return rawPassword.equals(encodedPassword);
+    }
+
+    /**
+     * 解密传输中的密码（支持 plain/aes-gcm/base64）。
+     *
+     * @param cipherText 传输中的密码
+     * @return 解密后的明文密码，解密失败返回 null
+     */
+    public String decodeTransportPassword(String cipherText) {
+        if (cipherText == null) {
+            return null;
+        }
+        String mode = normalizeTransportMode(authProperties.getPassword().getTransportMode());
+        if ("plain".equals(mode)) {
+            return cipherText;
+        }
+        if ("base64".equals(mode)) {
+            try {
+                byte[] decoded = Base64.getDecoder().decode(cipherText);
+                return new String(decoded, StandardCharsets.UTF_8);
+            } catch (IllegalArgumentException ex) {
+                return null;
+            }
+        }
+        if ("aes".equals(mode) || "aes-gcm".equals(mode)) {
+            return decryptAesGcm(cipherText, authProperties.getPassword().getTransportKey());
+        }
+        return cipherText;
+    }
+
+    /**
+     * 解析创建用户时的原始密码：若未提供则使用默认密码。
+     *
+     * @param rawPassword 原始输入密码（可能为密文）
+     * @return 明文密码，解析失败返回 null
+     */
+    public String resolveRawPassword(String rawPassword) {
+        if (StringUtils.isBlank(rawPassword)) {
+            String fallback = authProperties.getPassword().getDefaultPassword();
+            return StringUtils.isBlank(fallback) ? null : fallback;
+        }
+        return decodeTransportPassword(rawPassword);
+    }
+
+    /**
+     * 获取默认密码配置。
+     *
+     * @return 默认密码
+     */
+    public String getDefaultPassword() {
+        return authProperties.getPassword().getDefaultPassword();
+    }
+
+    /**
+     * 校验密码强度（可配置开关与规则）。
+     *
+     * @param rawPassword 明文密码
+     * @return true 表示通过校验
+     */
+    public boolean isStrongPassword(String rawPassword) {
+        if (!authProperties.getPassword().isStrongCheckEnabled()) {
+            return true;
+        }
+        if (rawPassword == null) {
+            return false;
+        }
+        int minLength = authProperties.getPassword().getStrongMinLength();
+        if (minLength > 0 && rawPassword.length() < minLength) {
+            return false;
+        }
+        String pattern = authProperties.getPassword().getStrongPattern();
+        if (StringUtils.isNotBlank(pattern)) {
+            return Pattern.matches(pattern, rawPassword);
+        }
+        return hasLower(rawPassword) && hasUpper(rawPassword) && hasDigit(rawPassword) && hasSpecial(rawPassword);
     }
 
     /**
@@ -82,5 +163,71 @@ public class PasswordService {
      */
     private String normalizeMode(String mode) {
         return mode == null ? "plain" : mode.trim().toLowerCase();
+    }
+
+    private String normalizeTransportMode(String mode) {
+        return mode == null ? "plain" : mode.trim().toLowerCase();
+    }
+
+    private String decryptAesGcm(String cipherText, String base64Key) {
+        if (StringUtils.isBlank(base64Key)) {
+            return null;
+        }
+        String[] parts = cipherText.split(":", 2);
+        if (parts.length != 2) {
+            return null;
+        }
+        try {
+            byte[] keyBytes = Base64.getDecoder().decode(base64Key);
+            byte[] iv = Base64.getDecoder().decode(parts[0]);
+            byte[] encrypted = Base64.getDecoder().decode(parts[1]);
+            SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            GCMParameterSpec spec = new GCMParameterSpec(128, iv);
+            cipher.init(Cipher.DECRYPT_MODE, keySpec, spec);
+            byte[] plain = cipher.doFinal(encrypted);
+            return new String(plain, StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private boolean hasLower(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c >= 'a' && c <= 'z') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasUpper(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c >= 'A' && c <= 'Z') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasDigit(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (Character.isDigit(value.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasSpecial(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (!Character.isLetterOrDigit(c)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

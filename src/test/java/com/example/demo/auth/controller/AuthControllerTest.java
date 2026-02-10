@@ -148,6 +148,7 @@ class AuthControllerTest {
         user.setTst("note");
         user.setStatus(1);
         when(userService.getByUserName("alice")).thenReturn(user);
+        when(passwordService.decodeTransportPassword("pw")).thenReturn("pw");
         when(passwordService.matches("pw", "pw")).thenReturn(true);
         AuthUser authUser = new AuthUser();
         authUser.setId(1L);

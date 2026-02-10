@@ -1,5 +1,6 @@
 package com.example.demo.user.controller;
 
+import com.example.demo.auth.service.PasswordService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
@@ -30,6 +31,7 @@ public class UserAdminController extends BaseController {
     private final UserService userService;
     private final UserConverter userConverter;
     private final DeptService deptService;
+    private final PasswordService passwordService;
 
     @PostMapping
     @RequirePermission("user:create")
@@ -40,6 +42,17 @@ public class UserAdminController extends BaseController {
         if (request.getDeptId() != null && deptService.getById(request.getDeptId()) == null) {
             return error(400, "dept not found");
         }
+        String rawPassword = passwordService.resolveRawPassword(request.getPassword());
+        if (StringUtils.isBlank(rawPassword)) {
+            return error(400, "password is empty");
+        }
+        if (rawPassword.length() < 6) {
+            return error(400, "password length is invalid");
+        }
+        if (!passwordService.isStrongPassword(rawPassword)) {
+            return error(400, "password is too weak");
+        }
+        request.setPassword(rawPassword);
         User created = userService.createUser(request);
         return success(userConverter.toView(created, java.util.Collections.emptyList()));
     }
@@ -88,7 +101,17 @@ public class UserAdminController extends BaseController {
         if (userService.getById(id) == null) {
             return error(404, "user not found");
         }
-        if (!userService.resetPassword(id, request.getNewPassword())) {
+        String rawPassword = passwordService.decodeTransportPassword(request.getNewPassword());
+        if (StringUtils.isBlank(rawPassword)) {
+            return error(400, "password is invalid");
+        }
+        if (rawPassword.length() < 6) {
+            return error(400, "password length is invalid");
+        }
+        if (!passwordService.isStrongPassword(rawPassword)) {
+            return error(400, "password is too weak");
+        }
+        if (!userService.resetPassword(id, rawPassword)) {
             return error(500, "reset password failed");
         }
         return success();
