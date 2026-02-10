@@ -105,6 +105,8 @@ public class RoleAdminController extends BaseController {
         role.setCode(request.getCode());
         role.setName(request.getName());
         role.setStatus(normalizeStatus(request.getStatus()));
+        role.setDataScopeType(request.getDataScopeType());
+        role.setDataScopeValue(request.getDataScopeValue());
         roleService.save(role);
         return success(toVO(role, Collections.emptyList()));
     }
@@ -132,6 +134,8 @@ public class RoleAdminController extends BaseController {
         role.setId(id);
         role.setCode(request.getCode());
         role.setName(request.getName());
+        role.setDataScopeType(request.getDataScopeType());
+        role.setDataScopeValue(request.getDataScopeValue());
         if (!roleService.updateById(role)) {
             return error(500, "update failed");
         }
@@ -283,6 +287,8 @@ public class RoleAdminController extends BaseController {
         vo.setCode(role.getCode());
         vo.setName(role.getName());
         vo.setStatus(role.getStatus());
+        vo.setDataScopeType(role.getDataScopeType());
+        vo.setDataScopeValue(role.getDataScopeValue());
         vo.setPermissionIds(permissionIds);
         return vo;
     }

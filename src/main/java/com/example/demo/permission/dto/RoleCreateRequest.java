@@ -23,4 +23,8 @@ public class RoleCreateRequest {
     private String name;
 
     private Integer status;
+
+    private String dataScopeType;
+
+    private String dataScopeValue;
 }

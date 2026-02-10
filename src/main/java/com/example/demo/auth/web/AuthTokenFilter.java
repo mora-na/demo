@@ -8,6 +8,7 @@ import com.example.demo.auth.service.TokenService;
 import com.example.demo.auth.support.AuthTokenResolver;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
+import com.example.demo.datascope.service.DataScopeResolver;
 import com.example.demo.user.entity.User;
 import com.example.demo.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private final CommonExcludePathsProperties commonExcludePaths;
     private final TokenService tokenService;
     private final UserService userService;
+    private final DataScopeResolver dataScopeResolver;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     /**
@@ -102,8 +104,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         }
         user.setUserName(dbUser.getUserName());
         user.setNickName(dbUser.getNickName());
-        user.setDataScopeType(dbUser.getDataScopeType());
-        user.setDataScopeValue(dbUser.getDataScopeValue());
+        user.setDeptId(dbUser.getDeptId());
+        DataScopeResolver.DataScopeResult dataScope = dataScopeResolver.resolve(dbUser);
+        user.setDataScopeType(dataScope.getType());
+        user.setDataScopeValue(dataScope.getValue());
         AuthContext.set(user);
         try {
             filterChain.doFilter(request, response);

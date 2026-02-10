@@ -145,7 +145,7 @@ class RoleAdminControllerTest {
 
     @Test
     void list_returnsRolesWithPermissions() throws Exception {
-        Role role = new Role(1L, "admin", "Administrator", 1);
+        Role role = new Role(1L, "admin", "Administrator", 1, null, null);
         when(roleService.list()).thenReturn(Collections.singletonList(role));
         RolePermission rp = new RolePermission(10L, 1L, 2L);
         when(rolePermissionService.list()).thenReturn(Collections.singletonList(rp));
@@ -174,7 +174,7 @@ class RoleAdminControllerTest {
 
     @Test
     void assignPermissions_checksExistenceAndSaves() throws Exception {
-        Role role = new Role(1L, "admin", "Administrator", 1);
+        Role role = new Role(1L, "admin", "Administrator", 1, null, null);
         when(roleService.getById(1L)).thenReturn(role);
         Permission p1 = new Permission(2L, "sys:user:list", "List", 1);
         Permission p2 = new Permission(3L, "sys:user:create", "Create", 1);
@@ -191,7 +191,7 @@ class RoleAdminControllerTest {
 
     @Test
     void assignMenus_checksExistenceAndSaves() throws Exception {
-        Role role = new Role(1L, "admin", "Administrator", 1);
+        Role role = new Role(1L, "admin", "Administrator", 1, null, null);
         when(roleService.getById(1L)).thenReturn(role);
         Menu m1 = new Menu(2L, "Dashboard", "DASH", null, "/dash", "Dashboard", "dash:view", 1, 0, null);
         Menu m2 = new Menu(3L, "Users", "USER", null, "/users", "Users", "user:query", 1, 0, null);

@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS sys_role (
     code VARCHAR(64) NOT NULL COMMENT '角色编码（唯一）',
     name VARCHAR(128) NOT NULL COMMENT '角色名称',
     status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    data_scope_type VARCHAR(32) COMMENT '数据范围类型：ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE',
+    data_scope_value VARCHAR(512) COMMENT '数据范围值，CUSTOM_DEPT时存储部门ID列表',
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_role_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色表';

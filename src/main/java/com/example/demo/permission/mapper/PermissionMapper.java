@@ -23,10 +23,18 @@ public interface PermissionMapper extends MppBaseMapper<Permission> {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    @Select("select distinct p.code from sys_permission p " +
+    @Select("select distinct code from (" +
+            "select p.code as code from sys_permission p " +
             "join sys_role_permission rp on rp.permission_id = p.id " +
             "join sys_role r on r.id = rp.role_id " +
             "join sys_user_role ur on ur.role_id = rp.role_id " +
-            "where ur.user_id = #{userId} and p.status = 1 and r.status = 1")
+            "where ur.user_id = #{userId} and p.status = 1 and r.status = 1 " +
+            "union " +
+            "select m.permission as code from sys_menu m " +
+            "join sys_role_menu rm on rm.menu_id = m.id " +
+            "join sys_role r2 on r2.id = rm.role_id " +
+            "join sys_user_role ur2 on ur2.role_id = rm.role_id " +
+            "where ur2.user_id = #{userId} and m.status = 1 and r2.status = 1" +
+            ") t where t.code is not null and t.code <> ''")
     List<String> selectPermissionCodesByUserId(@Param("userId") Long userId);
 }

@@ -53,7 +53,9 @@ CREATE TABLE IF NOT EXISTS sys_role (
     id BIGINT PRIMARY KEY DEFAULT nextval('sys_role_id_seq'),
     code VARCHAR(64) NOT NULL,
     name VARCHAR(128) NOT NULL,
-    status SMALLINT NOT NULL DEFAULT 1
+    status SMALLINT NOT NULL DEFAULT 1,
+    data_scope_type VARCHAR(32),
+    data_scope_value VARCHAR(512)
 );
 ALTER SEQUENCE sys_role_id_seq OWNED BY sys_role.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_code ON sys_role(code);
@@ -62,6 +64,8 @@ COMMENT ON COLUMN sys_role.id IS '主键ID';
 COMMENT ON COLUMN sys_role.code IS '角色编码（唯一）';
 COMMENT ON COLUMN sys_role.name IS '角色名称';
 COMMENT ON COLUMN sys_role.status IS '状态：1-启用，0-禁用';
+COMMENT ON COLUMN sys_role.data_scope_type IS '数据范围类型：ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE';
+COMMENT ON COLUMN sys_role.data_scope_value IS '数据范围值，CUSTOM_DEPT时存储部门ID列表';
 
 CREATE SEQUENCE IF NOT EXISTS sys_permission_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_permission (

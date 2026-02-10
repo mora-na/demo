@@ -78,13 +78,14 @@ public class AuthController extends BaseController {
         if (!passwordService.matches(request.getPassword(), user.getPassword())) {
             return error(401, "password is incorrect");
         }
-        LoginResponse loginResponse = tokenService.issueToken(new AuthUser(
-                user.getId(),
-                user.getUserName(),
-                user.getNickName(),
-                user.getDataScopeType(),
-                user.getDataScopeValue()
-        ));
+        AuthUser authUser = new AuthUser();
+        authUser.setId(user.getId());
+        authUser.setUserName(user.getUserName());
+        authUser.setNickName(user.getNickName());
+        authUser.setDeptId(user.getDeptId());
+        authUser.setDataScopeType(user.getDataScopeType());
+        authUser.setDataScopeValue(user.getDataScopeValue());
+        LoginResponse loginResponse = tokenService.issueToken(authUser);
         response.setHeader("Authorization", "Bearer " + loginResponse.getToken());
         return success(loginResponse);
     }

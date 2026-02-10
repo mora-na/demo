@@ -456,7 +456,15 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
             }
             return new EqualsTo(ref.toColumn(), new LongValue(user.getId()));
         }
-        if (DataScopeType.CUSTOM.equals(dataScopeType)) {
+        if (DataScopeType.DEPT.equals(dataScopeType)) {
+            if (user.getDeptId() == null) {
+                return new EqualsTo(new LongValue(1), new LongValue(0));
+            }
+            return new EqualsTo(ref.toColumn(), new LongValue(user.getDeptId()));
+        }
+        if (DataScopeType.DEPT_AND_CHILD.equals(dataScopeType)
+                || DataScopeType.CUSTOM_DEPT.equals(dataScopeType)
+                || DataScopeType.CUSTOM.equals(dataScopeType)) {
             String value = user.getDataScopeValue();
             if (value == null || value.trim().isEmpty()) {
                 return new EqualsTo(new LongValue(1), new LongValue(0));

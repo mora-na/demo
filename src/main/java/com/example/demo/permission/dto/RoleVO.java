@@ -17,5 +17,7 @@ public class RoleVO {
     private String code;
     private String name;
     private Integer status;
+    private String dataScopeType;
+    private String dataScopeValue;
     private List<Long> permissionIds;
 }

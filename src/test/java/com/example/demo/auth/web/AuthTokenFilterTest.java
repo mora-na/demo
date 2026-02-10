@@ -4,6 +4,7 @@ import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.auth.service.TokenService;
 import com.example.demo.common.web.CommonExcludePathsProperties;
+import com.example.demo.datascope.service.DataScopeResolver;
 import com.example.demo.user.entity.User;
 import com.example.demo.user.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -26,8 +27,9 @@ class AuthTokenFilterTest {
         properties.getFilter().setExcludePaths(Collections.singletonList("/auth/**"));
         TokenService tokenService = Mockito.mock(TokenService.class);
         UserService userService = Mockito.mock(UserService.class);
+        DataScopeResolver dataScopeResolver = Mockito.mock(DataScopeResolver.class);
         CommonExcludePathsProperties commonExcludePaths = new CommonExcludePathsProperties();
-        AuthTokenFilter filter = new AuthTokenFilter(properties, commonExcludePaths, tokenService, userService);
+        AuthTokenFilter filter = new AuthTokenFilter(properties, commonExcludePaths, tokenService, userService, dataScopeResolver);
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/auth/login");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -46,8 +48,9 @@ class AuthTokenFilterTest {
         properties.getFilter().setExcludePaths(Collections.emptyList());
         TokenService tokenService = Mockito.mock(TokenService.class);
         UserService userService = Mockito.mock(UserService.class);
+        DataScopeResolver dataScopeResolver = Mockito.mock(DataScopeResolver.class);
         CommonExcludePathsProperties commonExcludePaths = new CommonExcludePathsProperties();
-        AuthTokenFilter filter = new AuthTokenFilter(properties, commonExcludePaths, tokenService, userService);
+        AuthTokenFilter filter = new AuthTokenFilter(properties, commonExcludePaths, tokenService, userService, dataScopeResolver);
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -71,6 +74,7 @@ class AuthTokenFilterTest {
         user.setNickName("Alice");
         when(tokenService.verifyToken("token")).thenReturn(user);
         UserService userService = Mockito.mock(UserService.class);
+        DataScopeResolver dataScopeResolver = Mockito.mock(DataScopeResolver.class);
         User dbUser = new User();
         dbUser.setId(1L);
         dbUser.setUserName("alice");
@@ -78,7 +82,8 @@ class AuthTokenFilterTest {
         dbUser.setStatus(User.STATUS_ENABLED);
         when(userService.getById(1L)).thenReturn(dbUser);
         CommonExcludePathsProperties commonExcludePaths = new CommonExcludePathsProperties();
-        AuthTokenFilter filter = new AuthTokenFilter(properties, commonExcludePaths, tokenService, userService);
+        when(dataScopeResolver.resolve(dbUser)).thenReturn(new DataScopeResolver.DataScopeResult("ALL", null));
+        AuthTokenFilter filter = new AuthTokenFilter(properties, commonExcludePaths, tokenService, userService, dataScopeResolver);
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users");
         request.addHeader("Authorization", "Bearer token");

@@ -21,4 +21,8 @@ public class RoleUpdateRequest {
     @NotBlank
     @Size(max = 128)
     private String name;
+
+    private String dataScopeType;
+
+    private String dataScopeValue;
 }
