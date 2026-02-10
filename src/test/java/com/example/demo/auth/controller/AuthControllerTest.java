@@ -20,6 +20,9 @@ import com.example.demo.common.web.permission.PermissionProperties;
 import com.example.demo.common.web.permission.PermissionService;
 import com.example.demo.common.web.xss.XssProperties;
 import com.example.demo.datascope.mapper.DataScopeRuleMapper;
+import com.example.demo.dept.mapper.DeptMapper;
+import com.example.demo.menu.mapper.MenuMapper;
+import com.example.demo.menu.mapper.RoleMenuMapper;
 import com.example.demo.order.mapper.OrderMapper;
 import com.example.demo.permission.mapper.PermissionMapper;
 import com.example.demo.permission.mapper.RoleMapper;
@@ -75,6 +78,15 @@ class AuthControllerTest {
 
     @MockBean
     private UserMapper userMapper;
+
+    @MockBean
+    private DeptMapper deptMapper;
+
+    @MockBean
+    private MenuMapper menuMapper;
+
+    @MockBean
+    private RoleMenuMapper roleMenuMapper;
 
     @MockBean
     private OrderMapper orderMapper;

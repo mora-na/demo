@@ -78,6 +78,34 @@ COMMENT ON COLUMN sys_permission.code IS '权限编码（唯一）';
 COMMENT ON COLUMN sys_permission.name IS '权限名称';
 COMMENT ON COLUMN sys_permission.status IS '状态：1-启用，0-禁用';
 
+CREATE SEQUENCE IF NOT EXISTS sys_menu_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_menu (
+    id BIGINT PRIMARY KEY DEFAULT nextval('sys_menu_id_seq'),
+    name VARCHAR(128) NOT NULL,
+    code VARCHAR(64),
+    parent_id BIGINT,
+    path VARCHAR(255),
+    component VARCHAR(255),
+    permission VARCHAR(64),
+    status SMALLINT NOT NULL DEFAULT 1,
+    sort INTEGER NOT NULL DEFAULT 0,
+    remark VARCHAR(255)
+);
+ALTER SEQUENCE sys_menu_id_seq OWNED BY sys_menu.id;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_menu_code ON sys_menu(code);
+CREATE INDEX IF NOT EXISTS idx_sys_menu_parent ON sys_menu(parent_id);
+COMMENT ON TABLE sys_menu IS '菜单表';
+COMMENT ON COLUMN sys_menu.id IS '主键ID';
+COMMENT ON COLUMN sys_menu.name IS '菜单名称';
+COMMENT ON COLUMN sys_menu.code IS '菜单编码（唯一）';
+COMMENT ON COLUMN sys_menu.parent_id IS '上级菜单ID';
+COMMENT ON COLUMN sys_menu.path IS '路由路径';
+COMMENT ON COLUMN sys_menu.component IS '前端组件';
+COMMENT ON COLUMN sys_menu.permission IS '菜单权限标识';
+COMMENT ON COLUMN sys_menu.status IS '状态：1-启用，0-禁用';
+COMMENT ON COLUMN sys_menu.sort IS '排序';
+COMMENT ON COLUMN sys_menu.remark IS '备注';
+
 CREATE SEQUENCE IF NOT EXISTS sys_role_permission_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_role_permission (
     id BIGINT PRIMARY KEY DEFAULT nextval('sys_role_permission_id_seq'),
@@ -92,6 +120,21 @@ COMMENT ON TABLE sys_role_permission IS '角色-权限关联表';
 COMMENT ON COLUMN sys_role_permission.id IS '主键ID';
 COMMENT ON COLUMN sys_role_permission.role_id IS '角色ID';
 COMMENT ON COLUMN sys_role_permission.permission_id IS '权限ID';
+
+CREATE SEQUENCE IF NOT EXISTS sys_role_menu_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_role_menu (
+    id BIGINT PRIMARY KEY DEFAULT nextval('sys_role_menu_id_seq'),
+    role_id BIGINT NOT NULL,
+    menu_id BIGINT NOT NULL
+);
+ALTER SEQUENCE sys_role_menu_id_seq OWNED BY sys_role_menu.id;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_menu_role_menu ON sys_role_menu(role_id, menu_id);
+CREATE INDEX IF NOT EXISTS idx_sys_role_menu_role ON sys_role_menu(role_id);
+CREATE INDEX IF NOT EXISTS idx_sys_role_menu_menu ON sys_role_menu(menu_id);
+COMMENT ON TABLE sys_role_menu IS '角色-菜单关联表';
+COMMENT ON COLUMN sys_role_menu.id IS '主键ID';
+COMMENT ON COLUMN sys_role_menu.role_id IS '角色ID';
+COMMENT ON COLUMN sys_role_menu.menu_id IS '菜单ID';
 
 CREATE SEQUENCE IF NOT EXISTS sys_user_role_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_user_role (

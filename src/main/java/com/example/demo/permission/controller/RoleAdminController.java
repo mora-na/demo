@@ -4,6 +4,10 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.menu.dto.RoleMenuAssignRequest;
+import com.example.demo.menu.entity.Menu;
+import com.example.demo.menu.service.MenuService;
+import com.example.demo.menu.service.RoleMenuService;
 import com.example.demo.permission.dto.*;
 import com.example.demo.permission.entity.Permission;
 import com.example.demo.permission.entity.Role;
@@ -37,6 +41,8 @@ public class RoleAdminController extends BaseController {
     private final RoleService roleService;
     private final RolePermissionService rolePermissionService;
     private final PermissionService permissionService;
+    private final RoleMenuService roleMenuService;
+    private final MenuService menuService;
 
     /**
      * 获取角色列表并附带权限集合。
@@ -183,6 +189,35 @@ public class RoleAdminController extends BaseController {
         }
         if (!roleService.assignPermissions(id, permissionIds)) {
             return error(500, "assign permissions failed");
+        }
+        return success();
+    }
+
+    /**
+     * 为角色分配菜单权限。
+     *
+     * @param id      角色 ID
+     * @param request 菜单分配请求
+     * @return 分配结果
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
+    @PutMapping("/{id}/menus")
+    @RequirePermission("role:menu:assign")
+    public CommonResult<Void> assignMenus(@PathVariable Long id, @Valid @RequestBody RoleMenuAssignRequest request) {
+        Role existing = roleService.getById(id);
+        if (existing == null) {
+            return error(404, "role not found");
+        }
+        List<Long> menuIds = request.getMenuIds();
+        if (menuIds != null && !menuIds.isEmpty()) {
+            List<Menu> menus = menuService.listByIds(menuIds);
+            if (menus.size() != menuIds.stream().filter(mid -> mid != null).distinct().count()) {
+                return error(400, "menu not found");
+            }
+        }
+        if (!roleMenuService.assignMenus(id, menuIds)) {
+            return error(500, "assign menus failed");
         }
         return success();
     }

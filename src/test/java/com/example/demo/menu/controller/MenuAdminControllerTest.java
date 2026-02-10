@@ -1,4 +1,4 @@
-package com.example.demo.permission.controller;
+package com.example.demo.menu.controller;
 
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.service.TokenService;
@@ -19,18 +19,11 @@ import com.example.demo.menu.entity.Menu;
 import com.example.demo.menu.mapper.MenuMapper;
 import com.example.demo.menu.mapper.RoleMenuMapper;
 import com.example.demo.menu.service.MenuService;
-import com.example.demo.menu.service.RoleMenuService;
 import com.example.demo.order.mapper.OrderMapper;
-import com.example.demo.permission.entity.Permission;
-import com.example.demo.permission.entity.Role;
-import com.example.demo.permission.entity.RolePermission;
 import com.example.demo.permission.mapper.PermissionMapper;
 import com.example.demo.permission.mapper.RoleMapper;
 import com.example.demo.permission.mapper.RolePermissionMapper;
 import com.example.demo.permission.mapper.UserRoleMapper;
-import com.example.demo.permission.service.PermissionService;
-import com.example.demo.permission.service.RolePermissionService;
-import com.example.demo.permission.service.RoleService;
 import com.example.demo.user.mapper.UserMapper;
 import com.example.demo.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,38 +38,24 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(RoleAdminController.class)
+@WebMvcTest(MenuAdminController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import({DuplicateSubmitProperties.class, RateLimitProperties.class, PermissionProperties.class, XssProperties.class, CommonExcludePathsProperties.class, FastJsonWebMvcConfig.class})
 @TestPropertySource(properties = "security.permission.enabled=false")
-class RoleAdminControllerTest {
+class MenuAdminControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @MockBean
-    private RoleService roleService;
-
-    @MockBean
-    private RolePermissionService rolePermissionService;
-
-    @MockBean
-    private PermissionService permissionService;
-
-    @MockBean
-    private RoleMenuService roleMenuService;
 
     @MockBean
     private MenuService menuService;
@@ -144,65 +123,41 @@ class RoleAdminControllerTest {
     }
 
     @Test
-    void list_returnsRolesWithPermissions() throws Exception {
-        Role role = new Role(1L, "admin", "Administrator", 1);
-        when(roleService.list()).thenReturn(Collections.singletonList(role));
-        RolePermission rp = new RolePermission(10L, 1L, 2L);
-        when(rolePermissionService.list()).thenReturn(Collections.singletonList(rp));
+    void list_returnsMenus() throws Exception {
+        Menu menu = new Menu(1L, "Dashboard", "DASH", null, "/dash", "Dashboard", "dash:view", 1, 0, "remark");
+        when(menuService.list()).thenReturn(Collections.singletonList(menu));
 
-        mockMvc.perform(get("/roles"))
+        mockMvc.perform(get("/menus"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].code").value("admin"))
-                .andExpect(jsonPath("$.data[0].permissionIds[0]").value(2));
+                .andExpect(jsonPath("$.data[0].name").value("Dashboard"));
     }
 
     @Test
-    void create_savesRole() throws Exception {
-        when(roleService.getOne(any())).thenReturn(null);
-        when(roleService.save(any(Role.class))).thenReturn(true);
+    void create_savesMenu() throws Exception {
+        when(menuService.getOne(any())).thenReturn(null);
+        when(menuService.save(any(Menu.class))).thenReturn(true);
 
-        mockMvc.perform(post("/roles")
+        mockMvc.perform(post("/menus")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"code\":\"editor\",\"name\":\"Editor\"}"))
+                        .content("{\"name\":\"Dashboard\",\"code\":\"DASH\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.code").value("editor"));
+                .andExpect(jsonPath("$.data.name").value("Dashboard"));
 
-        ArgumentCaptor<Role> captor = ArgumentCaptor.forClass(Role.class);
-        verify(roleService).save(captor.capture());
+        ArgumentCaptor<Menu> captor = ArgumentCaptor.forClass(Menu.class);
+        verify(menuService).save(captor.capture());
         assertThat(captor.getValue().getStatus()).isEqualTo(1);
+        assertThat(captor.getValue().getSort()).isEqualTo(0);
     }
 
     @Test
-    void assignPermissions_checksExistenceAndSaves() throws Exception {
-        Role role = new Role(1L, "admin", "Administrator", 1);
-        when(roleService.getById(1L)).thenReturn(role);
-        Permission p1 = new Permission(2L, "sys:user:list", "List", 1);
-        Permission p2 = new Permission(3L, "sys:user:create", "Create", 1);
-        when(permissionService.listByIds(Arrays.asList(2L, 3L))).thenReturn(Arrays.asList(p1, p2));
-        when(roleService.assignPermissions(anyLong(), any())).thenReturn(true);
+    void updateStatus_updatesMenu() throws Exception {
+        Menu menu = new Menu(1L, "Dashboard", "DASH", null, "/dash", "Dashboard", "dash:view", 1, 0, "remark");
+        when(menuService.getById(1L)).thenReturn(menu);
+        when(menuService.updateStatus(1L, 0)).thenReturn(true);
 
-        mockMvc.perform(put("/roles/1/permissions")
+        mockMvc.perform(put("/menus/1/status")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"permissionIds\":[2,3]}"))
+                        .content("{\"status\":0}"))
                 .andExpect(status().isOk());
-
-        verify(roleService).assignPermissions(1L, Arrays.asList(2L, 3L));
-    }
-
-    @Test
-    void assignMenus_checksExistenceAndSaves() throws Exception {
-        Role role = new Role(1L, "admin", "Administrator", 1);
-        when(roleService.getById(1L)).thenReturn(role);
-        Menu m1 = new Menu(2L, "Dashboard", "DASH", null, "/dash", "Dashboard", "dash:view", 1, 0, null);
-        Menu m2 = new Menu(3L, "Users", "USER", null, "/users", "Users", "user:query", 1, 0, null);
-        when(menuService.listByIds(Arrays.asList(2L, 3L))).thenReturn(Arrays.asList(m1, m2));
-        when(roleMenuService.assignMenus(anyLong(), any())).thenReturn(true);
-
-        mockMvc.perform(put("/roles/1/menus")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"menuIds\":[2,3]}"))
-                .andExpect(status().isOk());
-
-        verify(roleMenuService).assignMenus(1L, Arrays.asList(2L, 3L));
     }
 }

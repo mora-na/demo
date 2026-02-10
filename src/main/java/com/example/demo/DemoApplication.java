@@ -15,6 +15,7 @@ import org.springframework.cache.annotation.EnableCaching;
         "com.example.demo.user.mapper",
         "com.example.demo.dept.mapper",
         "com.example.demo.order.mapper",
+        "com.example.demo.menu.mapper",
         "com.example.demo.permission.mapper",
         "com.example.demo.datascope.mapper"
 })

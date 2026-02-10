@@ -45,6 +45,22 @@ CREATE TABLE IF NOT EXISTS sys_permission (
     UNIQUE KEY uk_sys_permission_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='权限表';
 
+CREATE TABLE IF NOT EXISTS sys_menu (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    name VARCHAR(128) NOT NULL COMMENT '菜单名称',
+    code VARCHAR(64) COMMENT '菜单编码（唯一）',
+    parent_id BIGINT COMMENT '上级菜单ID',
+    path VARCHAR(255) COMMENT '路由路径',
+    component VARCHAR(255) COMMENT '前端组件',
+    permission VARCHAR(64) COMMENT '菜单权限标识',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    sort INT NOT NULL DEFAULT 0 COMMENT '排序',
+    remark VARCHAR(255) COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_menu_code (code),
+    KEY idx_sys_menu_parent (parent_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='菜单表';
+
 CREATE TABLE IF NOT EXISTS sys_role_permission (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     role_id BIGINT NOT NULL COMMENT '角色ID',
@@ -54,6 +70,16 @@ CREATE TABLE IF NOT EXISTS sys_role_permission (
     KEY idx_sys_role_permission_role (role_id),
     KEY idx_sys_role_permission_perm (permission_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色-权限关联表';
+
+CREATE TABLE IF NOT EXISTS sys_role_menu (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    menu_id BIGINT NOT NULL COMMENT '菜单ID',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_role_menu_role_menu (role_id, menu_id),
+    KEY idx_sys_role_menu_role (role_id),
+    KEY idx_sys_role_menu_menu (menu_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色-菜单关联表';
 
 CREATE TABLE IF NOT EXISTS sys_user_role (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
