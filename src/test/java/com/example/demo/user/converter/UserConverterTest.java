@@ -22,11 +22,13 @@ class UserConverterTest {
         query.setNickName("Ali");
         query.setSex("F");
         query.setTst("note");
+        query.setDeptId(9L);
         User user = converter.toEntity(query);
 
         assertEquals(query.getId(), user.getId());
         assertEquals(query.getUserName(), user.getUserName());
         assertEquals(query.getNickName(), user.getNickName());
+        assertEquals(query.getDeptId(), user.getDeptId());
     }
 
     @Test
@@ -38,11 +40,13 @@ class UserConverterTest {
         vo.setNickName("B");
         vo.setSex("M");
         vo.setTst("memo");
+        vo.setDeptId(5L);
         vo.setOrderVOS(Collections.emptyList());
         User user = converter.toEntity(vo);
 
         assertEquals(vo.getUserName(), user.getUserName());
         assertEquals(vo.getNickName(), user.getNickName());
+        assertEquals(vo.getDeptId(), user.getDeptId());
     }
 
     @Test
@@ -54,10 +58,12 @@ class UserConverterTest {
         user.setNickName("Ali");
         user.setSex("F");
         user.setTst("note");
+        user.setDeptId(2L);
         OrderVO orderVO = new OrderVO(10L, 1L, java.math.BigDecimal.ONE);
 
         UserVO view = converter.toView(user, Collections.singletonList(orderVO));
         assertEquals(1, view.getOrderVOS().size());
+        assertEquals(user.getDeptId(), view.getDeptId());
     }
 
     @Test

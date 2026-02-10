@@ -1,0 +1,151 @@
+package com.example.demo.dept.controller;
+
+import com.example.demo.auth.config.AuthProperties;
+import com.example.demo.auth.service.TokenService;
+import com.example.demo.auth.web.AuthTokenFilter;
+import com.example.demo.common.web.CommonExcludePathsProperties;
+import com.example.demo.common.web.FastJsonWebMvcConfig;
+import com.example.demo.common.web.filter.DuplicateSubmitFilter;
+import com.example.demo.common.web.filter.RateLimitFilter;
+import com.example.demo.common.web.filter.XssFilter;
+import com.example.demo.common.web.limit.DuplicateSubmitProperties;
+import com.example.demo.common.web.limit.RateLimitProperties;
+import com.example.demo.common.web.permission.PermissionInterceptor;
+import com.example.demo.common.web.permission.PermissionProperties;
+import com.example.demo.common.web.xss.XssProperties;
+import com.example.demo.datascope.mapper.DataScopeRuleMapper;
+import com.example.demo.dept.entity.Dept;
+import com.example.demo.dept.service.DeptService;
+import com.example.demo.order.mapper.OrderMapper;
+import com.example.demo.permission.mapper.PermissionMapper;
+import com.example.demo.permission.mapper.RoleMapper;
+import com.example.demo.permission.mapper.RolePermissionMapper;
+import com.example.demo.permission.mapper.UserRoleMapper;
+import com.example.demo.user.mapper.UserMapper;
+import com.example.demo.user.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.Collections;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(DeptAdminController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import({DuplicateSubmitProperties.class, RateLimitProperties.class, PermissionProperties.class, XssProperties.class, CommonExcludePathsProperties.class, FastJsonWebMvcConfig.class})
+@TestPropertySource(properties = "security.permission.enabled=false")
+class DeptAdminControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private DeptService deptService;
+
+    @MockBean
+    private AuthProperties authProperties;
+
+    @MockBean
+    private TokenService tokenService;
+
+    @MockBean
+    private UserService userService;
+
+    @MockBean
+    private UserMapper userMapper;
+
+    @MockBean
+    private OrderMapper orderMapper;
+
+    @MockBean
+    private PermissionMapper permissionMapper;
+
+    @MockBean
+    private RoleMapper roleMapper;
+
+    @MockBean
+    private UserRoleMapper userRoleMapper;
+
+    @MockBean
+    private RolePermissionMapper rolePermissionMapper;
+
+    @MockBean
+    private AuthTokenFilter authTokenFilter;
+
+    @MockBean
+    private DuplicateSubmitFilter duplicateSubmitFilter;
+
+    @MockBean
+    private RateLimitFilter rateLimitFilter;
+
+    @MockBean
+    private XssFilter xssFilter;
+
+    @MockBean
+    private PermissionInterceptor permissionInterceptor;
+
+    @MockBean
+    private DataScopeRuleMapper dataScopeRuleMapper;
+
+    @MockBean(name = "permissionServiceForInterceptor")
+    private com.example.demo.common.web.permission.PermissionService permissionServiceForInterceptor;
+
+    @BeforeEach
+    void setupPermissionInterceptor() throws Exception {
+        when(permissionInterceptor.preHandle(any(), any(), any())).thenReturn(true);
+    }
+
+    @Test
+    void list_returnsDepts() throws Exception {
+        Dept dept = new Dept(1L, "Sales", "SALES", null, 1, 0, "remark");
+        when(deptService.list()).thenReturn(Collections.singletonList(dept));
+
+        mockMvc.perform(get("/depts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].name").value("Sales"));
+    }
+
+    @Test
+    void create_savesDept() throws Exception {
+        when(deptService.getOne(any())).thenReturn(null);
+        when(deptService.save(any(Dept.class))).thenReturn(true);
+
+        mockMvc.perform(post("/depts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Sales\",\"code\":\"SALES\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.name").value("Sales"));
+
+        ArgumentCaptor<Dept> captor = ArgumentCaptor.forClass(Dept.class);
+        verify(deptService).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(1);
+        assertThat(captor.getValue().getSort()).isEqualTo(0);
+    }
+
+    @Test
+    void updateStatus_updatesDept() throws Exception {
+        Dept dept = new Dept(1L, "Sales", "SALES", null, 1, 0, "remark");
+        when(deptService.getById(1L)).thenReturn(dept);
+        when(deptService.updateStatus(1L, 0)).thenReturn(true);
+
+        mockMvc.perform(put("/depts/1/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":0}"))
+                .andExpect(status().isOk());
+    }
+}

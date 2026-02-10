@@ -24,6 +24,8 @@ public class UserUpdateRequest {
 
     private Integer status;
 
+    private Long deptId;
+
     @Size(max = 255)
     private String tst;
 }

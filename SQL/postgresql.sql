@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS sys_user (
     nick_name VARCHAR(64),
     password VARCHAR(128) NOT NULL,
     status SMALLINT NOT NULL DEFAULT 1,
+    dept_id BIGINT,
     data_scope_type VARCHAR(32),
     data_scope_value VARCHAR(512),
     sex VARCHAR(16),
@@ -18,10 +19,34 @@ COMMENT ON COLUMN sys_user.user_name IS '用户名（唯一）';
 COMMENT ON COLUMN sys_user.nick_name IS '昵称';
 COMMENT ON COLUMN sys_user.password IS '登录密码（加密存储）';
 COMMENT ON COLUMN sys_user.status IS '状态：1-启用，0-禁用';
+COMMENT ON COLUMN sys_user.dept_id IS '部门ID';
 COMMENT ON COLUMN sys_user.data_scope_type IS '数据范围类型：ALL全量/SELF仅本人/CUSTOM自定义/NONE无数据';
 COMMENT ON COLUMN sys_user.data_scope_value IS '数据范围值，CUSTOM时存储自定义范围内容（如ID列表）';
 COMMENT ON COLUMN sys_user.sex IS '性别';
 COMMENT ON COLUMN sys_user.tst IS '备注/测试字段';
+CREATE INDEX IF NOT EXISTS idx_sys_user_dept ON sys_user(dept_id);
+
+CREATE SEQUENCE IF NOT EXISTS sys_dept_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_dept (
+    id BIGINT PRIMARY KEY DEFAULT nextval('sys_dept_id_seq'),
+    name VARCHAR(128) NOT NULL,
+    code VARCHAR(64),
+    parent_id BIGINT,
+    status SMALLINT NOT NULL DEFAULT 1,
+    sort INTEGER NOT NULL DEFAULT 0,
+    remark VARCHAR(255)
+);
+ALTER SEQUENCE sys_dept_id_seq OWNED BY sys_dept.id;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_dept_code ON sys_dept(code);
+CREATE INDEX IF NOT EXISTS idx_sys_dept_parent ON sys_dept(parent_id);
+COMMENT ON TABLE sys_dept IS '部门表';
+COMMENT ON COLUMN sys_dept.id IS '主键ID';
+COMMENT ON COLUMN sys_dept.name IS '部门名称';
+COMMENT ON COLUMN sys_dept.code IS '部门编码（唯一）';
+COMMENT ON COLUMN sys_dept.parent_id IS '上级部门ID';
+COMMENT ON COLUMN sys_dept.status IS '状态：1-启用，0-禁用';
+COMMENT ON COLUMN sys_dept.sort IS '排序';
+COMMENT ON COLUMN sys_dept.remark IS '备注';
 
 CREATE SEQUENCE IF NOT EXISTS sys_role_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_role (

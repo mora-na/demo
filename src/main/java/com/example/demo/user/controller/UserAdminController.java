@@ -3,6 +3,7 @@ package com.example.demo.user.controller;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.dept.service.DeptService;
 import com.example.demo.user.converter.UserConverter;
 import com.example.demo.user.dto.*;
 import com.example.demo.user.entity.User;
@@ -28,12 +29,16 @@ public class UserAdminController extends BaseController {
 
     private final UserService userService;
     private final UserConverter userConverter;
+    private final DeptService deptService;
 
     @PostMapping
     @RequirePermission("user:create")
     public CommonResult<UserVO> create(@Valid @RequestBody UserCreateRequest request) {
         if (userService.getByUserName(request.getUserName()) != null) {
             return error(400, "username already exists");
+        }
+        if (request.getDeptId() != null && deptService.getById(request.getDeptId()) == null) {
+            return error(400, "dept not found");
         }
         User created = userService.createUser(request);
         return success(userConverter.toView(created, java.util.Collections.emptyList()));
@@ -51,6 +56,9 @@ public class UserAdminController extends BaseController {
             if (sameName != null && !sameName.getId().equals(id)) {
                 return error(400, "username already exists");
             }
+        }
+        if (request.getDeptId() != null && deptService.getById(request.getDeptId()) == null) {
+            return error(400, "dept not found");
         }
         if (!userService.updateUser(id, request)) {
             return error(500, "update failed");

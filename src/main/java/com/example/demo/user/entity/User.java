@@ -65,6 +65,13 @@ public class User implements Serializable {
     private Integer status;
 
     /**
+     * 部门ID（组织归属）
+     */
+    @TableField("dept_id")
+    @ExcelColumn(headerName = "部门ID")
+    private Long deptId;
+
+    /**
      * 数据范围类型：ALL全量；SELF仅本人；CUSTOM自定义；NONE无数据
      */
     @TableField("data_scope_type")

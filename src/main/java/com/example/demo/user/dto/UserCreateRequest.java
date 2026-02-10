@@ -30,6 +30,8 @@ public class UserCreateRequest {
 
     private Integer status;
 
+    private Long deptId;
+
     private String dataScopeType;
 
     private String dataScopeValue;

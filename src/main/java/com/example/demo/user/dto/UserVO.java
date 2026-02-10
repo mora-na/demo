@@ -37,6 +37,9 @@ public class UserVO implements Serializable {
     @ExcelColumn(headerName = "状态", mapping = {"0:禁用", "1:启用"})
     private Integer status;
 
+    @ExcelColumn(headerName = "部门ID")
+    private Long deptId;
+
     @ExcelColumn(exit = false)
     private String dataScopeType;
 

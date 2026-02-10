@@ -4,13 +4,28 @@ CREATE TABLE IF NOT EXISTS sys_user (
     nick_name VARCHAR(64) COMMENT '昵称',
     password VARCHAR(128) NOT NULL COMMENT '登录密码（加密存储）',
     status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    dept_id BIGINT COMMENT '部门ID',
     data_scope_type VARCHAR(32) COMMENT '数据范围类型：ALL全量/SELF仅本人/CUSTOM自定义/NONE无数据',
     data_scope_value VARCHAR(512) COMMENT '数据范围值，CUSTOM时存储自定义范围内容（如ID列表）',
     sex VARCHAR(16) COMMENT '性别',
     tst VARCHAR(255) COMMENT '备注/测试字段',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_sys_user_user_name (user_name)
+    UNIQUE KEY uk_sys_user_user_name (user_name),
+    KEY idx_sys_user_dept (dept_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统用户表';
+
+CREATE TABLE IF NOT EXISTS sys_dept (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    name VARCHAR(128) NOT NULL COMMENT '部门名称',
+    code VARCHAR(64) COMMENT '部门编码（唯一）',
+    parent_id BIGINT COMMENT '上级部门ID',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    sort INT NOT NULL DEFAULT 0 COMMENT '排序',
+    remark VARCHAR(255) COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_dept_code (code),
+    KEY idx_sys_dept_parent (parent_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='部门表';
 
 CREATE TABLE IF NOT EXISTS sys_role (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',

@@ -54,6 +54,7 @@ public class UserServiceImpl extends MppServiceImpl<UserMapper, User> implements
         user.setSex(request.getSex());
         user.setTst(request.getTst());
         user.setStatus(request.getStatus() == null ? User.STATUS_ENABLED : request.getStatus());
+        user.setDeptId(request.getDeptId());
         user.setDataScopeType(request.getDataScopeType());
         user.setDataScopeValue(request.getDataScopeValue());
         user.setPassword(passwordService.encode(request.getPassword()));
@@ -73,6 +74,7 @@ public class UserServiceImpl extends MppServiceImpl<UserMapper, User> implements
         user.setNickName(request.getNickName());
         user.setSex(request.getSex());
         user.setStatus(request.getStatus());
+        user.setDeptId(request.getDeptId());
         user.setTst(request.getTst());
         return updateById(user);
     }

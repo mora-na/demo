@@ -30,6 +30,7 @@ public class UserConverter {
         user.setSex(query.getSex());
         user.setTst(query.getTst());
         user.setStatus(query.getStatus());
+        user.setDeptId(query.getDeptId());
         return user;
     }
 
@@ -43,6 +44,7 @@ public class UserConverter {
         user.setNickName(userVO.getNickName());
         user.setSex(userVO.getSex());
         user.setStatus(userVO.getStatus());
+        user.setDeptId(userVO.getDeptId());
         user.setDataScopeType(userVO.getDataScopeType());
         user.setDataScopeValue(userVO.getDataScopeValue());
         user.setTst(userVO.getTst());
@@ -66,6 +68,7 @@ public class UserConverter {
         view.setNickName(user.getNickName());
         view.setSex(user.getSex());
         view.setStatus(user.getStatus());
+        view.setDeptId(user.getDeptId());
         view.setDataScopeType(user.getDataScopeType());
         view.setDataScopeValue(user.getDataScopeValue());
         view.setTst(user.getTst());

@@ -1,4 +1,4 @@
-package com.example.demo.user.dto;
+package com.example.demo.dept.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
- * 用户查询参数，支持按基础信息与状态过滤。
+ * 部门视图对象。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
@@ -15,21 +15,21 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserQuery implements Serializable {
+public class DeptVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private Long id;
 
-    private String userName;
+    private String name;
 
-    private String nickName;
+    private String code;
 
-    private String sex;
-
-    private String tst;
+    private Long parentId;
 
     private Integer status;
 
-    private Long deptId;
+    private Integer sort;
+
+    private String remark;
 }
