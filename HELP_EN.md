@@ -42,6 +42,7 @@ This Spring Boot backend demo includes authentication, authorization, data-scope
 - Connections & monitoring
   - Druid monitor login: `spring.datasource.druid.stat-view-servlet.*`
   - Camunda admin user: `camunda.bpm.admin-user.*`
+  - Jasypt encryptor: `jasypt.encryptor.bean` / `jasypt.encryptor.password`
 
 ## Notes
 

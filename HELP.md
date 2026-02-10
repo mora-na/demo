@@ -42,6 +42,7 @@
 - 连接与监控
   - Druid 监控登录配置：`spring.datasource.druid.stat-view-servlet.*`
   - Camunda 管理员：`camunda.bpm.admin-user.*`
+  - Jasypt 加解密器：`jasypt.encryptor.bean` / `jasypt.encryptor.password`
 
 ## 注意事项
 

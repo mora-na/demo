@@ -1,3 +1,11 @@
+# Jasypt 配置：指定配置加解密器，支持 ENC(...) 形式的密文属性
+jasypt:
+  encryptor:
+    # StringEncryptor Bean 名称（需与 @Component(name=...) 一致）
+    bean: jasyptStringEncryptor
+    # 加解密口令（建议用环境变量覆盖）
+    password: ${JASYPT_ENCRYPTOR_PASSWORD:encryptorPassword}
+
 # 服务器配置
 server:
   # HTTP 监听端口
@@ -52,10 +60,10 @@ spring:
         enabled: true
         # 监控页面 URL 匹配
         url-pattern: /druid/*
-        # 监控页面登录用户名
-        login-username: admin
-        # 监控页面登录密码
-        login-password: admin
+        # 监控页面登录用户名 admin
+        login-username: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
+        # 监控页面登录密码 admin
+        login-password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
       # Web 统计过滤器配置
       web-stat-filter:
         # 是否启用 Web 统计
@@ -87,8 +95,8 @@ spring:
           url: jdbc:postgresql://localhost:5432/test?currentSchema=test
           # 数据库用户名
           username: panpan
-          # 数据库密码
-          password: 1
+          # 数据库密码 admin
+          password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
           # JDBC 驱动类
           driver-class-name: org.postgresql.Driver
           # 连接池实现类
@@ -138,7 +146,7 @@ spring:
 #          # 数据库用户名
 #          username: panpan
 #          # 数据库密码
-#          password: 1
+#          password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
 #          # JDBC 驱动类
 #          driver-class-name: org.postgresql.Driver
 #          # 连接池实现类
@@ -285,10 +293,10 @@ camunda:
     admin-user:
       # 管理员账号
       id: admin
-      # 管理员密码
-      password: admin
-      # 管理员名称
-      first-name: Admin
+      # 管理员密码 admin
+      password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
+      # 管理员名称 admin
+      first-name: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
 
     # 自动部署resources/bpmn下的流程文件
     auto-deployment-enabled: true
@@ -379,7 +387,7 @@ auth:
   # JWT 配置
   jwt:
     # JWT 密钥
-    secret: 0x0daw00$0001,06a7c00@00x0NSwHSw0=0*00&010(784c000,0x00+0nUED3n0-001)0ea7c0+00
+    secret: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
     # Token 有效期（秒）
     ttl-seconds: 7200
   # 验证码配置
@@ -401,11 +409,11 @@ auth:
     # 密码盐
     salt: "4a97HT87*7&s649c-49f3-./9nTsdn^5$1becc50a*7!4e4"
     # 默认密码（支持使用环境变量覆盖）
-    default-password: ${AUTH_DEFAULT_PASSWORD:ChangeMe123!}
+    default-password: ${AUTH_DEFAULT_PASSWORD:ENC(hf7z4h+P3Ranjc8Ana8ZQg==)}
     # 登录密码传输模式：plain/base64/aes-gcm
     transport-mode: aes-gcm
     # AES-GCM Base64 密钥（建议使用环境变量覆盖）
-    transport-key: ${AUTH_PASSWORD_TRANSPORT_KEY:}
+    transport-key: ${AUTH_PASSWORD_TRANSPORT_KEY:ENC(hf7z4h+P3Ranjc8Ana8ZQg==)}
     # 强密码校验开关
     strong-check-enabled: true
     # 强密码最小长度（pattern为空时生效）

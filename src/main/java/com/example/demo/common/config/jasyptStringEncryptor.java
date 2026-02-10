@@ -19,8 +19,8 @@ import java.util.Base64;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-@Component("jasyptEncryptor")
-public class JasyptEncryptor implements StringEncryptor {
+@Component("jasyptStringEncryptor")
+public class jasyptStringEncryptor implements StringEncryptor {
 
     private static final String ALGORITHM_NAME = "SM4/ECB/PKCS5Padding";
 
@@ -38,7 +38,7 @@ public class JasyptEncryptor implements StringEncryptor {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    public JasyptEncryptor(@Value("${jasypt.encryptor.password}") String password) {
+    public jasyptStringEncryptor(@Value("${jasypt.encryptor.password}") String password) {
         byte[] key = normalizeKey(password);
         this.keySpec = new SecretKeySpec(key, "SM4");
     }
@@ -104,14 +104,14 @@ public class JasyptEncryptor implements StringEncryptor {
         }
     }
 
-//    public static void main(String[] args) {
-//        String password = "xxx";
-//        JasyptStringEncryptor jasyptUtil = new JasyptStringEncryptor(password);
-//        String encrypt = jasyptUtil.encrypt("xxx");
-//        System.out.println(encrypt);
-//        String decrypt = jasyptUtil.decrypt(encrypt);
-//        System.out.println(decrypt);
-//
-//    }
+    public static void main(String[] args) {
+        String password = "encryptorPassword";
+        jasyptStringEncryptor jasyptUtil = new jasyptStringEncryptor(password);
+        String encrypt = jasyptUtil.encrypt("admin");
+        System.out.println(encrypt);
+        String decrypt = jasyptUtil.decrypt(encrypt);
+        System.out.println(decrypt);
+
+    }
 
 }
