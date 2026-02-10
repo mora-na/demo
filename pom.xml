@@ -23,7 +23,7 @@
         <junit.version>5.8.2</junit.version>
         <druid.version>1.2.27</druid.version>
         <jasypt.version>3.0.5</jasypt.version>
-        <okhttp.version>5.1.0</okhttp.version>
+        <okhttp.version>4.12.0</okhttp.version>
         <hutool.version>5.8.39</hutool.version>
         <tomcat.version>9.0.113</tomcat.version>
         <dynamic.version>4.3.1</dynamic.version>
@@ -32,7 +32,6 @@
         <xstream.version>1.4.21</xstream.version>
         <mockito.version>4.11.0</mockito.version>
         <camunda.version>7.18.0</camunda.version>
-        <powerjob.version>4.3.8</powerjob.version>
         <netty.version>4.2.5.Final</netty.version>
         <json-path.version>2.9.0</json-path.version>
         <logcaptor.version>2.7.6</logcaptor.version>
@@ -318,28 +317,6 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>tech.powerjob</groupId>
-            <artifactId>powerjob-worker-spring-boot-starter</artifactId>
-            <version>${powerjob.version}</version>
-        </dependency>
-
-        <!--<dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>17.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-fxml</artifactId>
-            <version>17.0.10</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>17.0.10</version>
-        </dependency>-->
 
         <!-- Camunda核心启动器 -->
         <dependency>

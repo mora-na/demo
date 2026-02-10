@@ -94,7 +94,7 @@ spring:
           # JDBC 连接地址
           url: jdbc:postgresql://localhost:5432/test?currentSchema=test
           # 数据库用户名
-          username: panpan
+          username: angelabeini
           # 数据库密码 admin
           password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
           # JDBC 驱动类
@@ -322,24 +322,6 @@ camunda:
       # 最大线程数
       max-pool-size: 10
 
-# PowerJob Worker 配置
-powerjob:
-  worker:
-    # 是否启用 PowerJob Worker
-    enabled: true
-    # 应用名（建议与控制台 AppName 一致）
-    app-name: ${spring.application.name}
-    # PowerJob Server 地址（IP:PORT），多个用逗号分隔
-    server-address: ${POWERJOB_SERVER_ADDRESS:127.0.0.1:7700}
-    # Worker 监听端口
-    port: ${POWERJOB_WORKER_PORT:27777}
-    # Worker 认证口令 admin（建议环境变量覆盖）
-    password: ${POWERJOB_WORKER_PASSWORD:ENC(hf7z4h+P3Ranjc8Ana8ZQg==)}
-    # 通信协议（http/https）
-    protocol: http
-    # 任务结果存储策略（disk/memory）
-    store-strategy: disk
-
 # 日志配置
 logging:
   # 日志文件配置
@@ -456,7 +438,6 @@ security:
       - /druid/** # 排除 Druid 监控
       - /camunda/** # 排除 Camunda Web
       - /engine-rest/** # 排除 Camunda REST
-      - /powerjob/** # 排除 PowerJob Worker 内部回调
   # XSS 防护配置
   xss:
     # 是否启用 XSS 防护
