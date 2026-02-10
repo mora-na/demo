@@ -7,10 +7,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class XStreamToolTest {
 
     @Test
-    void toXmlAndFromXml_roundTrip() {
+    void toXmlAndXmlToBean_roundTrip() {
         Person person = new Person("alice", 30);
         String xml = XStreamTool.toXML(person);
-        Person parsed = XStreamTool.fromXML(xml, Person.class);
+        Person parsed = XStreamTool.xmlToBean(xml, Person.class);
 
         assertEquals("alice", parsed.name);
         assertEquals(30, parsed.age);

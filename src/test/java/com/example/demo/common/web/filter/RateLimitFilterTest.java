@@ -1,14 +1,24 @@
 package com.example.demo.common.web.filter;
 
+import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.common.web.limit.RateLimitProperties;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import javax.servlet.FilterChain;
+import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class RateLimitFilterTest {
 
@@ -17,8 +27,12 @@ class RateLimitFilterTest {
         RateLimitProperties properties = new RateLimitProperties();
         properties.setMaxRequests(1);
         properties.setWindowSeconds(60);
+        properties.setEnabled(true);
 
-        RateLimitFilter filter = new RateLimitFilter(properties);
+        StringRedisTemplate redisTemplate = mockStringRedisTemplate();
+        CommonExcludePathsProperties commonExcludePaths = new CommonExcludePathsProperties();
+
+        RateLimitFilter filter = new RateLimitFilter(properties, commonExcludePaths, redisTemplate);
         AtomicInteger chainCount = new AtomicInteger();
         FilterChain chain = (req, res) -> {
             chainCount.incrementAndGet();
@@ -45,5 +59,56 @@ class RateLimitFilterTest {
         request.setRequestURI("/api/resource");
         request.setRemoteAddr("127.0.0.1");
         return request;
+    }
+
+    private StringRedisTemplate mockStringRedisTemplate() {
+        StringRedisTemplate template = mock(StringRedisTemplate.class);
+        @SuppressWarnings("unchecked")
+        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
+        Map<String, String> store = new ConcurrentHashMap<>();
+        Map<String, Long> expiry = new ConcurrentHashMap<>();
+        when(template.opsForValue()).thenReturn(valueOps);
+        when(valueOps.setIfAbsent(anyString(), anyString(), any(Duration.class)))
+                .thenAnswer(inv -> {
+                    String key = inv.getArgument(0);
+                    String val = inv.getArgument(1);
+                    Duration ttl = inv.getArgument(2);
+                    long expireAt = System.currentTimeMillis() + ttl.toMillis();
+                    if (store.putIfAbsent(key, val) == null) {
+                        expiry.put(key, expireAt);
+                        return true;
+                    }
+                    return false;
+                });
+        when(valueOps.increment(anyString())).thenAnswer(inv -> {
+            String key = inv.getArgument(0);
+            Long expireAt = expiry.get(key);
+            if (expireAt != null && System.currentTimeMillis() > expireAt) {
+                store.remove(key);
+                expiry.remove(key);
+                store.put(key, "1");
+                return 1L;
+            }
+            String current = store.get(key);
+            long next = current == null ? 1 : Long.parseLong(current) + 1;
+            store.put(key, String.valueOf(next));
+            return next;
+        });
+        when(valueOps.get(anyString())).thenAnswer(inv -> {
+            String key = inv.getArgument(0);
+            Long expireAt = expiry.get(key);
+            if (expireAt != null && System.currentTimeMillis() > expireAt) {
+                store.remove(key);
+                expiry.remove(key);
+                return null;
+            }
+            return store.get(key);
+        });
+        when(template.delete(anyString())).thenAnswer(inv -> {
+            String key = inv.getArgument(0);
+            expiry.remove(key);
+            return store.remove(key) != null;
+        });
+        return template;
     }
 }

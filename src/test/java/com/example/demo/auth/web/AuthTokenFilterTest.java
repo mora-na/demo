@@ -3,6 +3,7 @@ package com.example.demo.auth.web;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.auth.service.TokenService;
+import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.user.entity.User;
 import com.example.demo.user.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,8 @@ class AuthTokenFilterTest {
         properties.getFilter().setExcludePaths(Collections.singletonList("/auth/**"));
         TokenService tokenService = Mockito.mock(TokenService.class);
         UserService userService = Mockito.mock(UserService.class);
-        AuthTokenFilter filter = new AuthTokenFilter(properties, tokenService, userService);
+        CommonExcludePathsProperties commonExcludePaths = new CommonExcludePathsProperties();
+        AuthTokenFilter filter = new AuthTokenFilter(properties, commonExcludePaths, tokenService, userService);
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/auth/login");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -44,7 +46,8 @@ class AuthTokenFilterTest {
         properties.getFilter().setExcludePaths(Collections.emptyList());
         TokenService tokenService = Mockito.mock(TokenService.class);
         UserService userService = Mockito.mock(UserService.class);
-        AuthTokenFilter filter = new AuthTokenFilter(properties, tokenService, userService);
+        CommonExcludePathsProperties commonExcludePaths = new CommonExcludePathsProperties();
+        AuthTokenFilter filter = new AuthTokenFilter(properties, commonExcludePaths, tokenService, userService);
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -74,7 +77,8 @@ class AuthTokenFilterTest {
         dbUser.setNickName("Alice");
         dbUser.setStatus(User.STATUS_ENABLED);
         when(userService.getById(1L)).thenReturn(dbUser);
-        AuthTokenFilter filter = new AuthTokenFilter(properties, tokenService, userService);
+        CommonExcludePathsProperties commonExcludePaths = new CommonExcludePathsProperties();
+        AuthTokenFilter filter = new AuthTokenFilter(properties, commonExcludePaths, tokenService, userService);
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/users");
         request.addHeader("Authorization", "Bearer token");

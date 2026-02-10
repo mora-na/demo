@@ -2,8 +2,15 @@ package com.example.demo.permission.controller;
 
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.service.TokenService;
+import com.example.demo.auth.web.AuthTokenFilter;
+import com.example.demo.common.web.CommonExcludePathsProperties;
+import com.example.demo.common.web.FastJsonWebMvcConfig;
+import com.example.demo.common.web.filter.DuplicateSubmitFilter;
+import com.example.demo.common.web.filter.RateLimitFilter;
+import com.example.demo.common.web.filter.XssFilter;
 import com.example.demo.common.web.limit.DuplicateSubmitProperties;
 import com.example.demo.common.web.limit.RateLimitProperties;
+import com.example.demo.common.web.permission.PermissionInterceptor;
 import com.example.demo.common.web.permission.PermissionProperties;
 import com.example.demo.common.web.xss.XssProperties;
 import com.example.demo.datascope.mapper.DataScopeRuleMapper;
@@ -16,6 +23,7 @@ import com.example.demo.permission.mapper.UserRoleMapper;
 import com.example.demo.permission.service.PermissionService;
 import com.example.demo.user.mapper.UserMapper;
 import com.example.demo.user.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(PermissionAdminController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import({DuplicateSubmitProperties.class, RateLimitProperties.class, PermissionProperties.class, XssProperties.class})
+@Import({DuplicateSubmitProperties.class, RateLimitProperties.class, PermissionProperties.class, XssProperties.class, CommonExcludePathsProperties.class, FastJsonWebMvcConfig.class})
 @TestPropertySource(properties = "security.permission.enabled=false")
 class PermissionAdminControllerTest {
 
@@ -82,6 +90,26 @@ class PermissionAdminControllerTest {
 
     @MockBean(name = "permissionServiceForInterceptor")
     private com.example.demo.common.web.permission.PermissionService permissionServiceForInterceptor;
+
+    @MockBean
+    private AuthTokenFilter authTokenFilter;
+
+    @MockBean
+    private DuplicateSubmitFilter duplicateSubmitFilter;
+
+    @MockBean
+    private RateLimitFilter rateLimitFilter;
+
+    @MockBean
+    private XssFilter xssFilter;
+
+    @MockBean
+    private PermissionInterceptor permissionInterceptor;
+
+    @BeforeEach
+    void setupPermissionInterceptor() throws Exception {
+        when(permissionInterceptor.preHandle(any(), any(), any())).thenReturn(true);
+    }
 
     @Test
     void list_returnsPermissions() throws Exception {
