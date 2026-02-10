@@ -1,7 +1,7 @@
 package com.example.demo.permission.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.example.demo.common.mybatis.MppServiceImpl;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.permission.entity.Role;
 import com.example.demo.permission.entity.RolePermission;
 import com.example.demo.permission.mapper.RoleMapper;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class RoleServiceImpl extends MppServiceImpl<RoleMapper, Role> implements RoleService {
+public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements RoleService {
 
     private final RolePermissionService rolePermissionService;
 

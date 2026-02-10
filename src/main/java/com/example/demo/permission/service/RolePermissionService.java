@@ -1,6 +1,6 @@
 package com.example.demo.permission.service;
 
-import com.example.demo.common.mybatis.IMppService;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.permission.entity.RolePermission;
 
 /**
@@ -9,5 +9,5 @@ import com.example.demo.permission.entity.RolePermission;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public interface RolePermissionService extends IMppService<RolePermission> {
+public interface RolePermissionService extends IService<RolePermission> {
 }

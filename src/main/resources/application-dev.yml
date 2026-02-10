@@ -1,0 +1,196 @@
+# 开发环境可定制配置
+server:
+  # HTTP 监听端口
+  port: 8080
+
+# 日志级别配置
+logging:
+  # 日志文件配置
+  file:
+    # 日志文件路径
+    name: logs/demo.log
+  # 日志级别配置
+  level:
+    # 根日志级别
+    root: info
+    # 业务包日志级别
+    com: debug
+    # 兼容包日志级别
+    cn.com: debug
+    # Spring 核心日志级别
+    org.springframework: warn
+    # Spring Web 日志级别
+    org.springframework.web: warn
+
+# 用户自定义配置
+user:
+  # 用户配置集合
+  config:
+    # 示例姓名
+    name: zhangsan
+    # 示例年龄
+    age: 18
+    # 示例角色列表
+    roles:
+      - admin # 角色：admin
+      - user  # 角色：user
+    # 示例扩展配置
+    settings:
+      # 主题配置
+      theme: dark
+      # 通知开关
+      notify: true
+
+# 认证配置
+auth:
+  # JWT 配置
+  jwt:
+    # JWT 密钥
+    secret: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
+    # Token 有效期（秒）
+    ttl-seconds: 7200
+  # 验证码配置
+  captcha:
+    # 图片宽度
+    width: 120
+    # 图片高度
+    height: 40
+    # 验证码长度
+    code-length: 4
+    # 干扰线宽度
+    thickness: 2
+    # 内置字体资源（可配置多个以混用）
+    font-resources:
+      # 常用字体示例: DejaVuSans.ttf, NotoSans-Regular.ttf, IndieFlower-Regular.ttf
+      - classpath:front/IndieFlower-Regular.ttf
+    # 验证码有效期（秒）
+    expire-seconds: 120
+  # 密码策略配置
+  password:
+    # 用户密码加密持久化处理模式：plain/md5/bcrypt/sm3
+    mode: sm3
+    # 密码盐（用于 md5/sm3）
+    salt: "4a97HT87*7&s649c-49f3-./9nTsdn^5$1becc50a*7!4e4"
+    # 默认密码（支持使用环境变量覆盖）
+    default-password: ${AUTH_DEFAULT_PASSWORD:ENC(hf7z4h+P3Ranjc8Ana8ZQg==)}
+    # 登录密码传输模式：plain/base64/aes-gcm/sm2
+    transport-mode: plain
+    # AES-GCM Base64 密钥（建议使用环境变量覆盖）
+    transport-key: ${AUTH_PASSWORD_TRANSPORT_KEY:ENC(hf7z4h+P3Ranjc8Ana8ZQg==)}
+    # SM2 私钥（Base64 PKCS8，transport-mode=sm2）
+    transport-sm2-private-key: ${AUTH_PASSWORD_TRANSPORT_SM2_PRIVATE_KEY:}
+    # SM2 公钥（Base64 X.509，提供前端加密使用）
+    transport-sm2-public-key: ${AUTH_PASSWORD_TRANSPORT_SM2_PUBLIC_KEY:}
+    # 强密码校验开关
+    strong-check-enabled: true
+    # 强密码最小长度（pattern为空时生效）
+    strong-min-length: 8
+    # 强密码校验正则（为空则使用默认组合校验）
+    strong-pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d]).{8,}$"
+  # 认证过滤器配置
+  filter:
+    # 是否启用认证过滤器
+    enabled: true
+    # 认证过滤排除路径（会与 security.common.exclude-paths 合并）
+    exclude-paths:
+      - /auth/** # 排除认证接口
+      - /error # 排除错误接口
+
+# 数据源与缓存配置
+spring:
+  # Redis 连接配置
+  redis:
+    # Redis 主机地址
+    host: localhost
+    # Redis 端口
+    port: 6379
+
+  # 数据源配置
+  datasource:
+    # Druid 连接池通用配置
+    druid:
+      # Druid 监控页面配置
+      stat-view-servlet:
+        # 是否启用监控页面
+        enabled: true
+        # 监控页面 URL 匹配
+        url-pattern: /druid/*
+        # 监控页面登录用户名 admin
+        login-username: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
+        # 监控页面登录密码 admin
+        login-password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
+      # Web 统计过滤器配置
+      web-stat-filter:
+        # 是否启用 Web 统计
+        enabled: true
+        # Web 统计过滤 URL 匹配
+        url-pattern: /*
+        # 过滤器排除资源
+        exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
+    # 动态数据源配置
+    dynamic:
+      # 动态数据源下 Druid 配置
+      druid:
+        # Wall 防火墙配置
+        wall:
+          # 是否拦截 where 条件恒真
+          select-where-alway-true-check: false
+          # 是否允许 AND 条件恒真
+          condition-and-alway-true-allow: false
+      # 默认数据源名称
+      primary: master
+      # 严格匹配模式（true: 未匹配直接报错）
+      strict: false
+      # 数据源集合
+      datasource:
+        # 主库配置
+        master:
+          # JDBC 连接地址
+          url: jdbc:postgresql://localhost:5432/test?currentSchema=test
+          # 数据库用户名
+          username: angelabeini
+          # 数据库密码 admin
+          password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
+          # JDBC 驱动类
+          driver-class-name: org.postgresql.Driver
+          # 连接池实现类
+          type: com.alibaba.druid.pool.DruidDataSource
+          # Druid 连接池细项
+          druid:
+            # 初始化连接数
+            initial-size: 1
+            # 最小空闲连接数
+            min-idle: 1
+            # 最大活跃连接数
+            max-active: 3
+            # 获取连接最大等待时间（ms）
+            max-wait: 60000
+            # 连接检测间隔（ms）
+            time-between-eviction-runs-millis: 60000
+            # 连接最小空闲时间（ms）
+            min-evictable-idle-time-millis: 300000
+            # 连接校验 SQL
+            validation-query: SELECT 1
+            # 空闲时检测连接
+            test-while-idle: true
+            # 获取连接时检测
+            test-on-borrow: false
+            # 归还连接时检测
+            test-on-return: false
+            # 是否缓存预编译语句
+            pool-prepared-statements: true
+            # 每连接最大缓存 PS 数
+            max-pool-prepared-statement-per-connection-size: 20
+            # 启用过滤器
+            filters: stat,wall,slf4j
+            # 连接属性
+            connection-properties: >
+              druid.stat.mergeSql=true;
+              druid.stat.slowSqlMillis=5000;
+              wall.config.multiStatementAllow=true;
+              wall.config.noneBaseStatementAllow=true;
+              removeAbandoned=true;
+              removeAbandonedTimeout=180;
+              logAbandoned=false;
+              keepAlive=true;
+              maxEvictableIdleTimeMillis=900000

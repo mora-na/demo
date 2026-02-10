@@ -1,6 +1,6 @@
 package com.example.demo.menu.service.impl;
 
-import com.example.demo.common.mybatis.MppServiceImpl;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.menu.entity.Menu;
 import com.example.demo.menu.mapper.MenuMapper;
 import com.example.demo.menu.service.MenuService;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
  * @date 2026/2/9
  */
 @Service
-public class MenuServiceImpl extends MppServiceImpl<MenuMapper, Menu> implements MenuService {
+public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements MenuService {
 
     /**
      * 更新菜单启用状态。

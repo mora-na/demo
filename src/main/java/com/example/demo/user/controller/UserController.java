@@ -81,7 +81,7 @@ public class UserController extends BaseController {
     public CommonResult<Object> getKeyValue(String key) {
         log.info("Received request to getKeyValue,key:[{}]", key);
         if (StringUtils.isBlank(key)) {
-            return error("key is empty");
+            return error(i18n("user.config.key.empty"));
         }
         Object value = userConfig.getConfig() == null ? null : userConfig.getConfig().get(key);
         log.info("key:[{}],value:[{}]", key, value);
@@ -97,13 +97,12 @@ public class UserController extends BaseController {
     @PostMapping("/import")
     @RequirePermission("user:import")
     public CommonResult<String> importExcel(@RequestPart("file") MultipartFile file) {
-        List<UserVO> userVOList = ExcelTool.importFromMultipart(file, UserVO.class);
-        List<User> users = userConverter.toEntityList(userVOList);
+        List<User> users = ExcelTool.importFromMultipart(file, User.class);
         log.info("Received request to importExcel,users:[{}]", users);
-        if (userService.saveOrUpdateBatchByMultiField(users)) {
-            return success("导入成功！");
+        if (userService.saveOrUpdateBatch(users)) {
+            return success(i18n("user.import.success"));
         }
-        return error("导入失败！");
+        return error(i18n("user.import.failed"));
     }
 
 }

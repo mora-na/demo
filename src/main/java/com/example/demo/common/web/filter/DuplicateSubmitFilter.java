@@ -1,11 +1,12 @@
 package com.example.demo.common.web.filter;
 
-import com.alibaba.fastjson2.JSON;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.common.web.limit.DuplicateSubmitProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -33,10 +34,13 @@ import java.util.Locale;
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
 public class DuplicateSubmitFilter extends OncePerRequestFilter {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private final DuplicateSubmitProperties properties;
     private final CommonExcludePathsProperties commonExcludePaths;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final StringRedisTemplate stringRedisTemplate;
+    private final I18nService i18nService;
 
     /**
      * 构造函数，注入重复提交配置与 Redis 模板。
@@ -49,10 +53,12 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
      */
     public DuplicateSubmitFilter(DuplicateSubmitProperties properties,
                                  CommonExcludePathsProperties commonExcludePaths,
-                                 StringRedisTemplate stringRedisTemplate) {
+                                 StringRedisTemplate stringRedisTemplate,
+                                 I18nService i18nService) {
         this.properties = properties;
         this.commonExcludePaths = commonExcludePaths;
         this.stringRedisTemplate = stringRedisTemplate;
+        this.i18nService = i18nService;
     }
 
     /**
@@ -112,7 +118,7 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
         String bodyHash = wrapped == null ? null : DigestUtils.md5DigestAsHex(wrapped.getCachedBody());
         String key = buildKey(keyRequest, bodyHash);
         if (isDuplicate(key, interval)) {
-            writeDuplicate(response);
+            writeDuplicate(request, response);
             return;
         }
         filterChain.doFilter(wrapped == null ? request : wrapped, response);
@@ -294,10 +300,11 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private void writeDuplicate(HttpServletResponse response) throws IOException {
+    private void writeDuplicate(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setStatus(409);
         response.setContentType("application/json;charset=UTF-8");
-        CommonResult<Object> result = CommonResult.error(409, "duplicate submission detected");
-        response.getWriter().write(JSON.toJSONString(result));
+        String message = i18nService.getMessage(request, "common.duplicate.submission");
+        CommonResult<Object> result = CommonResult.error(409, message);
+        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
     }
 }

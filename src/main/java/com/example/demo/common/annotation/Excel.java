@@ -11,7 +11,7 @@ import java.lang.annotation.*;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface ExcelColumn {
+public @interface Excel {
 
     /**
      * 表头名称，留空时默认使用字段名。
@@ -20,16 +20,16 @@ public @interface ExcelColumn {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    String headerName() default "";
+    String value() default "";
 
     /**
-     * 是否参与导入导出，exit=false 时忽略该字段。
+     * 表头名称（推荐使用），留空时默认使用字段名。
      *
-     * @return 是否导入导出
+     * @return 表头名称
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    boolean exit() default true;
+    String header() default "";
 
     /**
      * 自定义值映射，格式 "源值:目标值"，导出可替换，导入可反向映射。
@@ -39,4 +39,13 @@ public @interface ExcelColumn {
      * @date 2026/2/9
      */
     String[] mapping() default {};
+
+    /**
+     * 排序值，值越小越靠前；默认不参与排序。
+     *
+     * @return 排序值
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
+    int sort() default Integer.MIN_VALUE;
 }

@@ -63,6 +63,16 @@ public class jasyptStringEncryptor implements StringEncryptor {
         }
     }
 
+    public static void main(String[] args) {
+        String password = "encryptorPassword";
+        jasyptStringEncryptor jasyptUtil = new jasyptStringEncryptor(password);
+        String encrypt = jasyptUtil.encrypt("admin");
+        System.out.println(encrypt);
+        String decrypt = jasyptUtil.decrypt(encrypt);
+        System.out.println(decrypt);
+
+    }
+
     /**
      * 对明文进行 SM4 加密并返回 Base64 字符串。
      *
@@ -102,16 +112,6 @@ public class jasyptStringEncryptor implements StringEncryptor {
         } catch (Exception e) {
             throw new RuntimeException("SM4 ECB decryption error", e);
         }
-    }
-
-    public static void main(String[] args) {
-        String password = "encryptorPassword";
-        jasyptStringEncryptor jasyptUtil = new jasyptStringEncryptor(password);
-        String encrypt = jasyptUtil.encrypt("admin");
-        System.out.println(encrypt);
-        String decrypt = jasyptUtil.decrypt(encrypt);
-        System.out.println(decrypt);
-
     }
 
 }

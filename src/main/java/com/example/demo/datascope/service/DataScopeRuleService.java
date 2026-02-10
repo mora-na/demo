@@ -1,6 +1,6 @@
 package com.example.demo.datascope.service;
 
-import com.example.demo.common.mybatis.IMppService;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.datascope.entity.DataScopeRule;
 
 import java.util.Map;
@@ -11,7 +11,7 @@ import java.util.Map;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public interface DataScopeRuleService extends IMppService<DataScopeRule> {
+public interface DataScopeRuleService extends IService<DataScopeRule> {
 
     /**
      * 获取启用规则的表->字段映射。

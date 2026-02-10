@@ -1,6 +1,6 @@
 package com.example.demo.menu.service;
 
-import com.example.demo.common.mybatis.IMppService;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.menu.entity.RoleMenu;
 
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.List;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public interface RoleMenuService extends IMppService<RoleMenu> {
+public interface RoleMenuService extends IService<RoleMenu> {
 
     /**
      * 为角色重置并分配菜单集合。

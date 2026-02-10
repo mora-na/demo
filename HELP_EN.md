@@ -2,7 +2,8 @@
 
 ## Overview
 
-This Spring Boot backend demo includes authentication, authorization, data-scope controls, organization departments, and menu permissions, plus several built-in security protections and utilities.
+This Spring Boot backend demo includes authentication, authorization, data-scope controls, organization departments, and
+menu permissions, plus several built-in security protections and utilities.
 
 ## Key Features
 
@@ -17,32 +18,31 @@ This Spring Boot backend demo includes authentication, authorization, data-scope
 ## Notable Configs
 
 - Auth & password
-  - `auth.jwt.secret` / `auth.jwt.ttl-seconds`
-  - `auth.password.mode` (default `bcrypt`)
-  - `auth.password.transport-mode` (`plain`/`base64`/`aes-gcm`)
-  - `auth.password.transport-key` (AES-GCM Base64 key)
-  - `auth.password.default-password`
-  - `auth.password.strong-check-enabled`
-  - `auth.password.strong-min-length` / `auth.password.strong-pattern`
+    - `auth.jwt.secret` / `auth.jwt.ttl-seconds`
+    - `auth.password.mode` (default `bcrypt`)
+    - `auth.password.transport-mode` (`plain`/`base64`/`aes-gcm`)
+    - `auth.password.transport-key` (AES-GCM Base64 key)
+    - `auth.password.default-password`
+    - `auth.password.strong-check-enabled`
+    - `auth.password.strong-min-length` / `auth.password.strong-pattern`
 
 - Permissions & menus
-  - Schemas in `SQL/mysql.sql` and `SQL/postgresql.sql`
-  - Menu permissions from `sys_menu.permission` are included in permission checks
+    - Schemas in `SQL/mysql.sql` and `SQL/postgresql.sql`
+    - Menu permissions from `sys_menu.permission` are included in permission checks
 
 - Data scope
-  - `security.data-scope.enabled` / `security.data-scope.default-type`
-  - `sys_data_scope_rule` defines the table → column mapping for filtering
+    - `security.data-scope.enabled` / `security.data-scope.default-type`
+    - `sys_data_scope_rule` defines the table → column mapping for filtering
 
 - Protections
-  - `security.sql-guard.*`
-  - `security.xss.*`
-  - `security.rate-limit.*`
-  - `security.duplicate-submit.*`
+    - `security.sql-guard.*`
+    - `security.xss.*`
+    - `security.rate-limit.*`
+    - `security.duplicate-submit.*`
 
 - Connections & monitoring
-  - Druid monitor login: `spring.datasource.druid.stat-view-servlet.*`
-  - Camunda admin user: `camunda.bpm.admin-user.*`
-  - Jasypt encryptor: `jasypt.encryptor.bean` / `jasypt.encryptor.password`
+    - Druid monitor login: `spring.datasource.druid.stat-view-servlet.*`
+    - Jasypt encryptor: `jasypt.encryptor.bean` / `jasypt.encryptor.password`
 
 ## Notes
 

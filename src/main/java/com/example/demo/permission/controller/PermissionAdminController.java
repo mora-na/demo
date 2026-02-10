@@ -59,7 +59,7 @@ public class PermissionAdminController extends BaseController {
     public CommonResult<PermissionVO> detail(@PathVariable Long id) {
         Permission permission = permissionService.getById(id);
         if (permission == null) {
-            return error(404, "permission not found");
+            return error(404, i18n("permission.not.found"));
         }
         return success(toVO(permission));
     }
@@ -76,7 +76,7 @@ public class PermissionAdminController extends BaseController {
     @RequirePermission("permission:create")
     public CommonResult<PermissionVO> create(@Valid @RequestBody PermissionCreateRequest request) {
         if (existsCode(request.getCode(), null)) {
-            return error(400, "permission code already exists");
+            return error(400, i18n("permission.code.exists"));
         }
         Permission permission = new Permission();
         permission.setCode(request.getCode());
@@ -100,17 +100,17 @@ public class PermissionAdminController extends BaseController {
     public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody PermissionUpdateRequest request) {
         Permission existing = permissionService.getById(id);
         if (existing == null) {
-            return error(404, "permission not found");
+            return error(404, i18n("permission.not.found"));
         }
         if (existsCode(request.getCode(), id)) {
-            return error(400, "permission code already exists");
+            return error(400, i18n("permission.code.exists"));
         }
         Permission permission = new Permission();
         permission.setId(id);
         permission.setCode(request.getCode());
         permission.setName(request.getName());
         if (!permissionService.updateById(permission)) {
-            return error(500, "update failed");
+            return error(500, i18n("common.update.failed"));
         }
         return success();
     }
@@ -129,14 +129,14 @@ public class PermissionAdminController extends BaseController {
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody PermissionStatusRequest request) {
         Permission existing = permissionService.getById(id);
         if (existing == null) {
-            return error(404, "permission not found");
+            return error(404, i18n("permission.not.found"));
         }
         Integer status = request.getStatus();
         if (notValidStatus(status)) {
-            return error(400, "invalid status");
+            return error(400, i18n("common.status.invalid"));
         }
         if (!permissionService.updateStatus(id, status)) {
-            return error(500, "update status failed");
+            return error(500, i18n("common.status.update.failed"));
         }
         return success();
     }

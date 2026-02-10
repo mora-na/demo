@@ -1,6 +1,6 @@
 package com.example.demo.dept.service;
 
-import com.example.demo.common.mybatis.IMppService;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.dept.entity.Dept;
 
 /**
@@ -9,7 +9,7 @@ import com.example.demo.dept.entity.Dept;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public interface DeptService extends IMppService<Dept> {
+public interface DeptService extends IService<Dept> {
 
     /**
      * 更新部门状态。

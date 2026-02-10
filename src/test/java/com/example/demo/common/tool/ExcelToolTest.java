@@ -1,6 +1,6 @@
 package com.example.demo.common.tool;
 
-import com.example.demo.common.annotation.ExcelColumn;
+import com.example.demo.common.annotation.Excel;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -32,20 +32,20 @@ class ExcelToolTest {
     void exportToStream_emptyListStillCreatesWorkbook() {
         ByteArrayOutputStream outputStream = ExcelTool.exportToStream(Collections.emptyList(), SampleRow.class);
         assertNotNull(outputStream);
-        assertFalse(outputStream.toByteArray().length == 0);
+        assertNotEquals(0, outputStream.toByteArray().length);
     }
 
     private static class SampleRow {
-        @ExcelColumn(exit = false)
+
         private Long id;
 
-        @ExcelColumn(headerName = "Name")
+        @Excel("Name")
         private String name;
 
-        @ExcelColumn(headerName = "Sex", mapping = {"0:Female", "1:Male"})
+        @Excel(header = "Sex", mapping = {"0:Female", "1:Male"})
         private String sex;
 
-        @ExcelColumn(headerName = "CreatedAt")
+        @Excel(header = "CreatedAt")
         private LocalDateTime createdAt;
 
         public SampleRow() {

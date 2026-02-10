@@ -1,6 +1,6 @@
 package com.example.demo.menu.service;
 
-import com.example.demo.common.mybatis.IMppService;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.menu.entity.Menu;
 
 /**
@@ -9,7 +9,7 @@ import com.example.demo.menu.entity.Menu;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public interface MenuService extends IMppService<Menu> {
+public interface MenuService extends IService<Menu> {
 
     /**
      * 更新菜单状态。

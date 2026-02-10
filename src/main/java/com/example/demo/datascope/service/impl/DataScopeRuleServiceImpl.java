@@ -1,6 +1,6 @@
 package com.example.demo.datascope.service.impl;
 
-import com.example.demo.common.mybatis.MppServiceImpl;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.datascope.entity.DataScopeRule;
 import com.example.demo.datascope.mapper.DataScopeRuleMapper;
 import com.example.demo.datascope.service.DataScopeRuleService;
@@ -17,7 +17,7 @@ import java.util.Map;
  * @date 2026/2/9
  */
 @Service
-public class DataScopeRuleServiceImpl extends MppServiceImpl<DataScopeRuleMapper, DataScopeRule>
+public class DataScopeRuleServiceImpl extends ServiceImpl<DataScopeRuleMapper, DataScopeRule>
         implements DataScopeRuleService {
 
     /**

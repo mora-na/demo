@@ -20,11 +20,10 @@ import java.util.stream.Collectors;
 @ConditionalOnProperty(prefix = "security.permission", name = "source", havingValue = "db", matchIfMissing = true)
 public class DbPermissionService implements PermissionService {
 
+    private static final String PERMISSION_KEY_PREFIX = "perm:user:";
     private final PermissionMapper permissionMapper;
     private final PermissionProperties properties;
     private final RedisTemplate<String, Object> redisTemplate;
-
-    private static final String PERMISSION_KEY_PREFIX = "perm:user:";
 
     /**
      * 构造函数，注入权限 Mapper 与缓存配置。

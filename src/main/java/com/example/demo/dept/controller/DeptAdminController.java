@@ -59,7 +59,7 @@ public class DeptAdminController extends BaseController {
     public CommonResult<DeptVO> detail(@PathVariable Long id) {
         Dept dept = deptService.getById(id);
         if (dept == null) {
-            return error(404, "dept not found");
+            return error(404, i18n("dept.not.found"));
         }
         return success(toVO(dept));
     }
@@ -76,10 +76,10 @@ public class DeptAdminController extends BaseController {
     @RequirePermission("dept:create")
     public CommonResult<DeptVO> create(@Valid @RequestBody DeptCreateRequest request) {
         if (existsCode(request.getCode(), null)) {
-            return error(400, "dept code already exists");
+            return error(400, i18n("dept.code.exists"));
         }
         if (request.getParentId() != null && deptService.getById(request.getParentId()) == null) {
-            return error(400, "parent dept not found");
+            return error(400, i18n("dept.parent.not.found"));
         }
         Dept dept = new Dept();
         dept.setName(request.getName());
@@ -106,17 +106,17 @@ public class DeptAdminController extends BaseController {
     public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody DeptUpdateRequest request) {
         Dept existing = deptService.getById(id);
         if (existing == null) {
-            return error(404, "dept not found");
+            return error(404, i18n("dept.not.found"));
         }
         if (existsCode(request.getCode(), id)) {
-            return error(400, "dept code already exists");
+            return error(400, i18n("dept.code.exists"));
         }
         if (request.getParentId() != null) {
             if (id.equals(request.getParentId())) {
-                return error(400, "parent dept cannot be self");
+                return error(400, i18n("dept.parent.cannot.self"));
             }
             if (deptService.getById(request.getParentId()) == null) {
-                return error(400, "parent dept not found");
+                return error(400, i18n("dept.parent.not.found"));
             }
         }
         Dept dept = new Dept();
@@ -128,7 +128,7 @@ public class DeptAdminController extends BaseController {
         dept.setSort(request.getSort());
         dept.setRemark(request.getRemark());
         if (!deptService.updateById(dept)) {
-            return error(500, "update failed");
+            return error(500, i18n("common.update.failed"));
         }
         return success();
     }
@@ -147,14 +147,14 @@ public class DeptAdminController extends BaseController {
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody DeptStatusRequest request) {
         Dept existing = deptService.getById(id);
         if (existing == null) {
-            return error(404, "dept not found");
+            return error(404, i18n("dept.not.found"));
         }
         Integer status = request.getStatus();
         if (notValidStatus(status)) {
-            return error(400, "invalid status");
+            return error(400, i18n("common.status.invalid"));
         }
         if (!deptService.updateStatus(id, status)) {
-            return error(500, "update status failed");
+            return error(500, i18n("common.status.update.failed"));
         }
         return success();
     }

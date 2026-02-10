@@ -1,15 +1,23 @@
 package com.example.demo.auth.service;
 
-import cn.hutool.captcha.CaptchaUtil;
-import cn.hutool.captcha.ShearCaptcha;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.dto.CaptchaResponse;
 import com.example.demo.auth.store.CaptchaStore;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.UUID;
+import java.util.*;
+import java.util.List;
 
 /**
  * 验证码服务，生成图片验证码并进行验证。
@@ -22,9 +30,42 @@ import java.util.UUID;
 public class CaptchaService {
 
     private static final String IMAGE_PREFIX = "data:image/png;base64,";
+    private static final char[] CAPTCHA_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final int BASE_FONT_STYLE = Font.BOLD;
 
     private final AuthProperties authProperties;
     private final CaptchaStore captchaStore;
+    private volatile List<Font> embeddedFonts = Collections.emptyList();
+
+    @PostConstruct
+    public void initEmbeddedFonts() {
+        List<String> resources = authProperties.getCaptcha().getFontResources();
+        if (resources == null || resources.isEmpty()) {
+            return;
+        }
+        List<Font> loaded = new ArrayList<>();
+        for (String resource : resources) {
+            if (resource == null || resource.trim().isEmpty()) {
+                continue;
+            }
+            try (InputStream inputStream = openFontResource(resource)) {
+                if (inputStream == null) {
+                    continue;
+                }
+                Font base = Font.createFont(Font.TRUETYPE_FONT, inputStream);
+                loaded.add(base);
+                try {
+                    GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(base);
+                } catch (Exception ignore) {
+                }
+            } catch (Exception ignore) {
+            }
+        }
+        if (!loaded.isEmpty()) {
+            embeddedFonts = Collections.unmodifiableList(loaded);
+        }
+    }
 
     /**
      * 生成验证码并缓存验证码值。
@@ -33,7 +74,7 @@ public class CaptchaService {
      */
     public CaptchaResponse createCaptcha() {
         AuthProperties.Captcha config = authProperties.getCaptcha();
-        ShearCaptcha captcha = CaptchaUtil.createShearCaptcha(
+        Captcha captcha = createCaptchaImage(
                 config.getWidth(),
                 config.getHeight(),
                 config.getCodeLength(),
@@ -41,8 +82,8 @@ public class CaptchaService {
         );
         String captchaId = UUID.randomUUID().toString();
         long expireAt = Instant.now().getEpochSecond() + config.getExpireSeconds();
-        captchaStore.save(captchaId, captcha.getCode(), expireAt);
-        String imageBase64 = IMAGE_PREFIX + captcha.getImageBase64();
+        captchaStore.save(captchaId, captcha.code, expireAt);
+        String imageBase64 = IMAGE_PREFIX + captcha.base64;
         return new CaptchaResponse(captchaId, imageBase64, config.getExpireSeconds());
     }
 
@@ -55,5 +96,148 @@ public class CaptchaService {
      */
     public boolean verify(String captchaId, String captchaCode) {
         return captchaStore.verifyAndRemove(captchaId, captchaCode);
+    }
+
+    private Captcha createCaptchaImage(int width, int height, int codeLength, int noiseLines) {
+        String code = randomCode(codeLength);
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, width, height);
+
+            drawNoiseLines(g, width, height, Math.max(0, noiseLines));
+            drawNoiseDots(g, width, height, Math.max(20, (width * height) / 150));
+            drawChars(g, code, width, height);
+        } finally {
+            g.dispose();
+        }
+        return new Captcha(code, toBase64Png(image));
+    }
+
+    private void drawNoiseLines(Graphics2D g, int width, int height, int count) {
+        for (int i = 0; i < count; i++) {
+            g.setColor(randomColor(120, 200));
+            int x1 = RANDOM.nextInt(width);
+            int y1 = RANDOM.nextInt(height);
+            int x2 = RANDOM.nextInt(width);
+            int y2 = RANDOM.nextInt(height);
+            g.drawLine(x1, y1, x2, y2);
+        }
+    }
+
+    private void drawChars(Graphics2D g, String code, int width, int height) {
+        int fontSize = Math.max(18, height - 10);
+        Font baseFont = resolveFont(fontSize);
+        g.setFont(baseFont);
+        FontMetrics metrics = g.getFontMetrics(baseFont);
+        int charCount = code.length();
+        int gap = width / (charCount + 1);
+        int baseY = (height - metrics.getHeight()) / 2 + metrics.getAscent();
+        AffineTransform original = g.getTransform();
+        for (int i = 0; i < charCount; i++) {
+            char ch = code.charAt(i);
+            Font font = resolveFont(fontSize);
+            g.setFont(font);
+            g.setColor(randomColor(30, 160));
+            int x = gap * (i + 1) - metrics.charWidth(ch) / 2;
+            double centerX = x + metrics.charWidth(ch) / 2.0;
+            double centerY = baseY - metrics.getAscent() / 2.0;
+            double angle = randomRange(-0.35, 0.35);
+            double shearX = randomRange(-0.12, 0.12);
+            double shearY = randomRange(-0.08, 0.08);
+            AffineTransform transform = new AffineTransform(original);
+            transform.translate(centerX, centerY);
+            transform.rotate(angle);
+            transform.shear(shearX, shearY);
+            transform.translate(-centerX, -centerY);
+            g.setTransform(transform);
+            g.drawString(String.valueOf(ch), x, baseY);
+        }
+        g.setTransform(original);
+    }
+
+    private String randomCode(int length) {
+        if (length <= 0) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(CAPTCHA_CHARS[RANDOM.nextInt(CAPTCHA_CHARS.length)]);
+        }
+        return sb.toString();
+    }
+
+    private Color randomColor(int min, int max) {
+        int range = Math.max(0, max - min);
+        int r = min + RANDOM.nextInt(range + 1);
+        int g = min + RANDOM.nextInt(range + 1);
+        int b = min + RANDOM.nextInt(range + 1);
+        return new Color(r, g, b);
+    }
+
+    private void drawNoiseDots(Graphics2D g, int width, int height, int count) {
+        for (int i = 0; i < count; i++) {
+            g.setColor(randomColor(120, 200));
+            int x = RANDOM.nextInt(width);
+            int y = RANDOM.nextInt(height);
+            int size = 1 + RANDOM.nextInt(2);
+            g.fillRect(x, y, size, size);
+        }
+    }
+
+    private String toBase64Png(BufferedImage image) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            ImageIO.write(image, "png", out);
+            return Base64.getEncoder().encodeToString(out.toByteArray());
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to render captcha", e);
+        }
+    }
+
+    private Font resolveFont(int fontSize) {
+        Font base = pickEmbeddedFont();
+        if (base != null) {
+            return base.deriveFont(BASE_FONT_STYLE, (float) fontSize);
+        }
+        return new Font("SansSerif", BASE_FONT_STYLE, fontSize);
+    }
+
+    private Font pickEmbeddedFont() {
+        List<Font> fonts = embeddedFonts;
+        if (fonts == null || fonts.isEmpty()) {
+            return null;
+        }
+        return fonts.get(RANDOM.nextInt(fonts.size()));
+    }
+
+    private double randomRange(double min, double max) {
+        return min + (max - min) * RANDOM.nextDouble();
+    }
+
+    private InputStream openFontResource(String resource) throws Exception {
+        String path = resource.trim();
+        if (path.startsWith("classpath:")) {
+            path = path.substring("classpath:".length());
+        }
+        while (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        ClassPathResource classPathResource = new ClassPathResource(path);
+        if (!classPathResource.exists()) {
+            return null;
+        }
+        return classPathResource.getInputStream();
+    }
+
+    private static class Captcha {
+        private final String code;
+        private final String base64;
+
+        private Captcha(String code, String base64) {
+            this.code = code;
+            this.base64 = base64;
+        }
     }
 }

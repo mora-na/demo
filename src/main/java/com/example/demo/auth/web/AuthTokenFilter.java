@@ -1,16 +1,17 @@
 package com.example.demo.auth.web;
 
-import com.alibaba.fastjson2.JSON;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.auth.service.TokenService;
 import com.example.demo.auth.support.AuthTokenResolver;
+import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.datascope.service.DataScopeResolver;
 import com.example.demo.user.entity.User;
 import com.example.demo.user.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.Ordered;
@@ -36,11 +37,14 @@ import java.io.IOException;
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class AuthTokenFilter extends OncePerRequestFilter {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private final AuthProperties authProperties;
     private final CommonExcludePathsProperties commonExcludePaths;
     private final TokenService tokenService;
     private final UserService userService;
     private final DataScopeResolver dataScopeResolver;
+    private final I18nService i18nService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     /**
@@ -81,25 +85,25 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String token = AuthTokenResolver.resolve(request);
         if (StringUtils.isBlank(token)) {
-            writeUnauthorized(response, "token is missing");
+            writeUnauthorized(response, i18nService.getMessage(request, "auth.token.missing"));
             return;
         }
         AuthUser user = tokenService.verifyToken(token);
         if (user == null) {
-            writeUnauthorized(response, "token is invalid or expired");
+            writeUnauthorized(response, i18nService.getMessage(request, "auth.token.invalid"));
             return;
         }
         if (user.getId() == null) {
-            writeUnauthorized(response, "user is invalid");
+            writeUnauthorized(response, i18nService.getMessage(request, "auth.user.invalid"));
             return;
         }
         User dbUser = userService.getById(user.getId());
         if (dbUser == null) {
-            writeUnauthorized(response, "user not found");
+            writeUnauthorized(response, i18nService.getMessage(request, "auth.user.not.found"));
             return;
         }
         if (dbUser.getStatus() != null && dbUser.getStatus().equals(User.STATUS_DISABLED)) {
-            writeForbidden(response, "user is disabled");
+            writeForbidden(response, i18nService.getMessage(request, "auth.user.disabled"));
             return;
         }
         user.setUserName(dbUser.getUserName());
@@ -127,7 +131,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json;charset=UTF-8");
         CommonResult<Object> result = CommonResult.error(HttpServletResponse.SC_UNAUTHORIZED, message);
-        response.getWriter().write(JSON.toJSONString(result));
+        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
     }
 
     /**
@@ -141,6 +145,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json;charset=UTF-8");
         CommonResult<Object> result = CommonResult.error(HttpServletResponse.SC_FORBIDDEN, message);
-        response.getWriter().write(JSON.toJSONString(result));
+        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
     }
 }

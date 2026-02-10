@@ -1,6 +1,7 @@
 package com.example.demo.auth.service;
 
 import com.example.demo.auth.config.AuthProperties;
+import com.example.demo.common.tool.GmCryptoTool;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,7 +16,7 @@ import java.util.Base64;
 import java.util.regex.Pattern;
 
 /**
- * 密码处理服务，支持 plain、md5、bcrypt 模式。
+ * 密码处理服务，支持 plain、md5、bcrypt、sm3 模式。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
@@ -45,11 +46,14 @@ public class PasswordService {
         if ("md5".equals(mode)) {
             return md5(rawPassword).equalsIgnoreCase(encodedPassword);
         }
+        if ("sm3".equals(mode)) {
+            return sm3(rawPassword).equalsIgnoreCase(encodedPassword);
+        }
         return rawPassword.equals(encodedPassword);
     }
 
     /**
-     * 解密传输中的密码（支持 plain/aes-gcm/base64）。
+     * 解密传输中的密码（支持 plain/aes-gcm/base64/sm2）。
      *
      * @param cipherText 传输中的密码
      * @return 解密后的明文密码，解密失败返回 null
@@ -72,6 +76,9 @@ public class PasswordService {
         }
         if ("aes".equals(mode) || "aes-gcm".equals(mode)) {
             return decryptAesGcm(cipherText, authProperties.getPassword().getTransportKey());
+        }
+        if ("sm2".equals(mode)) {
+            return decryptSm2(cipherText, authProperties.getPassword().getTransportSm2PrivateKey());
         }
         return cipherText;
     }
@@ -140,6 +147,9 @@ public class PasswordService {
         if ("md5".equals(mode)) {
             return md5(rawPassword);
         }
+        if ("sm3".equals(mode)) {
+            return sm3(rawPassword);
+        }
         return rawPassword;
     }
 
@@ -153,6 +163,18 @@ public class PasswordService {
         String salt = authProperties.getPassword().getSalt();
         String value = (salt == null ? "" : salt) + rawPassword;
         return DigestUtils.md5DigestAsHex(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * 计算带盐的 SM3 哈希值。
+     *
+     * @param rawPassword 原始密码
+     * @return SM3 哈希字符串
+     */
+    private String sm3(String rawPassword) {
+        String salt = authProperties.getPassword().getSalt();
+        String value = (salt == null ? "" : salt) + rawPassword;
+        return GmCryptoTool.sm3Hex(value);
     }
 
     /**
@@ -187,6 +209,17 @@ public class PasswordService {
             cipher.init(Cipher.DECRYPT_MODE, keySpec, spec);
             byte[] plain = cipher.doFinal(encrypted);
             return new String(plain, StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private String decryptSm2(String cipherText, String base64PrivateKey) {
+        if (StringUtils.isBlank(base64PrivateKey)) {
+            return null;
+        }
+        try {
+            return GmCryptoTool.sm2DecryptBase64(cipherText, base64PrivateKey);
         } catch (Exception ex) {
             return null;
         }

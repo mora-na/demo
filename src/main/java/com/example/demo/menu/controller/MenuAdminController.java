@@ -59,7 +59,7 @@ public class MenuAdminController extends BaseController {
     public CommonResult<MenuVO> detail(@PathVariable Long id) {
         Menu menu = menuService.getById(id);
         if (menu == null) {
-            return error(404, "menu not found");
+            return error(404, i18n("menu.not.found"));
         }
         return success(toVO(menu));
     }
@@ -76,10 +76,10 @@ public class MenuAdminController extends BaseController {
     @RequirePermission("menu:create")
     public CommonResult<MenuVO> create(@Valid @RequestBody MenuCreateRequest request) {
         if (existsCode(request.getCode(), null)) {
-            return error(400, "menu code already exists");
+            return error(400, i18n("menu.code.exists"));
         }
         if (request.getParentId() != null && menuService.getById(request.getParentId()) == null) {
-            return error(400, "parent menu not found");
+            return error(400, i18n("menu.parent.not.found"));
         }
         Menu menu = new Menu();
         menu.setName(request.getName());
@@ -109,17 +109,17 @@ public class MenuAdminController extends BaseController {
     public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody MenuUpdateRequest request) {
         Menu existing = menuService.getById(id);
         if (existing == null) {
-            return error(404, "menu not found");
+            return error(404, i18n("menu.not.found"));
         }
         if (existsCode(request.getCode(), id)) {
-            return error(400, "menu code already exists");
+            return error(400, i18n("menu.code.exists"));
         }
         if (request.getParentId() != null) {
             if (id.equals(request.getParentId())) {
-                return error(400, "parent menu cannot be self");
+                return error(400, i18n("menu.parent.cannot.self"));
             }
             if (menuService.getById(request.getParentId()) == null) {
-                return error(400, "parent menu not found");
+                return error(400, i18n("menu.parent.not.found"));
             }
         }
         Menu menu = new Menu();
@@ -134,7 +134,7 @@ public class MenuAdminController extends BaseController {
         menu.setSort(request.getSort());
         menu.setRemark(request.getRemark());
         if (!menuService.updateById(menu)) {
-            return error(500, "update failed");
+            return error(500, i18n("common.update.failed"));
         }
         return success();
     }
@@ -153,14 +153,14 @@ public class MenuAdminController extends BaseController {
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody MenuStatusRequest request) {
         Menu existing = menuService.getById(id);
         if (existing == null) {
-            return error(404, "menu not found");
+            return error(404, i18n("menu.not.found"));
         }
         Integer status = request.getStatus();
         if (notValidStatus(status)) {
-            return error(400, "invalid status");
+            return error(400, i18n("common.status.invalid"));
         }
         if (!menuService.updateStatus(id, status)) {
-            return error(500, "update status failed");
+            return error(500, i18n("common.status.update.failed"));
         }
         return success();
     }

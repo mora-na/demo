@@ -1,6 +1,6 @@
 package com.example.demo.common.tool;
 
-import com.example.demo.common.annotation.ExcelColumn;
+import com.example.demo.common.annotation.Excel;
 import com.example.demo.common.exception.ExcelProcessException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -458,7 +458,7 @@ public final class ExcelTool {
     }
 
     /**
-     * 解析实体字段上的 ExcelColumn 注解。
+     * 解析实体字段上的 Excel 注解。
      *
      * @param type 实体类型
      * @return 字段元数据列表
@@ -467,9 +467,10 @@ public final class ExcelTool {
      */
     private static List<FieldMeta> resolveFieldMetas(Class<?> type) {
         List<FieldMeta> metas = new ArrayList<>();
+        int index = 0;
         for (java.lang.reflect.Field field : collectFields(type)) {
-            ExcelColumn annotation = field.getAnnotation(ExcelColumn.class);
-            if (annotation != null && !annotation.exit()) {
+            Excel annotation = field.getAnnotation(Excel.class);
+            if (annotation == null) {
                 continue;
             }
             if (Modifier.isStatic(field.getModifiers())) {
@@ -478,18 +479,44 @@ public final class ExcelTool {
             if ("serialVersionUID".equals(field.getName())) {
                 continue;
             }
-            String headerName = annotation != null && StringUtils.isNotBlank(annotation.headerName()) ? annotation.headerName().trim() : field.getName();
+            String headerName = resolveHeaderName(annotation, field.getName());
             Map<String, String> exportMapping = parseMapping(annotation);
-            FieldMeta meta = new FieldMeta(field, headerName, exportMapping);
+            FieldMeta meta = new FieldMeta(field, headerName, exportMapping, annotation.sort(), annotation.sort() != Integer.MIN_VALUE, index);
             if (metas.stream().anyMatch(m -> m.getHeaderName().equalsIgnoreCase(headerName))) {
                 throw new ExcelProcessException("表头重复: " + headerName);
             }
             metas.add(meta);
+            index++;
         }
+        metas.sort((a, b) -> {
+            if (a.isOrdered() != b.isOrdered()) {
+                return a.isOrdered() ? -1 : 1;
+            }
+            if (a.isOrdered()) {
+                int order = Integer.compare(a.getOrder(), b.getOrder());
+                return order != 0 ? order : Integer.compare(a.getIndex(), b.getIndex());
+            }
+            return Integer.compare(a.getIndex(), b.getIndex());
+        });
         if (metas.isEmpty()) {
             throw new ExcelProcessException("实体类没有可导入导出的字段");
         }
         return metas;
+    }
+
+    private static String resolveHeaderName(Excel annotation, String fallback) {
+        if (annotation == null) {
+            return fallback;
+        }
+        String value = annotation.value();
+        if (StringUtils.isNotBlank(value)) {
+            return value.trim();
+        }
+        String header = annotation.header();
+        if (StringUtils.isNotBlank(header)) {
+            return header.trim();
+        }
+        return fallback;
     }
 
     /**
@@ -1007,14 +1034,14 @@ public final class ExcelTool {
     }
 
     /**
-     * 解析 ExcelColumn.mapping 规则为映射表。
+     * 解析 Excel.mapping 规则为映射表。
      *
-     * @param annotation ExcelColumn 注解
+     * @param annotation Excel 注解
      * @return 映射表
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private static Map<String, String> parseMapping(ExcelColumn annotation) {
+    private static Map<String, String> parseMapping(Excel annotation) {
         Map<String, String> mapping = new LinkedHashMap<>();
         if (annotation == null || annotation.mapping() == null) {
             return mapping;
@@ -1048,6 +1075,12 @@ public final class ExcelTool {
         private final java.lang.reflect.Field field;
         @Getter
         private final String headerName;
+        @Getter
+        private final int order;
+        @Getter
+        private final boolean ordered;
+        @Getter
+        private final int index;
         private final Map<String, String> exportMapping;
         private final Map<String, String> importMapping;
 
@@ -1060,9 +1093,13 @@ public final class ExcelTool {
          * @author GPT-5.2-codex(high)
          * @date 2026/2/9
          */
-        FieldMeta(java.lang.reflect.Field field, String headerName, Map<String, String> exportMapping) {
+        FieldMeta(java.lang.reflect.Field field, String headerName, Map<String, String> exportMapping,
+                  int order, boolean ordered, int index) {
             this.field = field;
             this.headerName = headerName;
+            this.order = order;
+            this.ordered = ordered;
+            this.index = index;
             this.exportMapping = exportMapping;
             this.importMapping = exportMapping.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey, (a, b) -> a, LinkedHashMap::new));
             this.field.setAccessible(true);

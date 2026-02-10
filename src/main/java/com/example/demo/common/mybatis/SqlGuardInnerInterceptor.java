@@ -31,8 +31,8 @@ public class SqlGuardInnerInterceptor implements InnerInterceptor {
     /**
      * 在 SQL 预编译前执行防护判断。
      *
-     * @param statementHandler StatementHandler
-     * @param connection       数据库连接
+     * @param statementHandler   StatementHandler
+     * @param connection         数据库连接
      * @param transactionTimeout 事务超时（秒）
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9

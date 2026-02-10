@@ -21,11 +21,10 @@ import java.util.Map;
 @ConditionalOnProperty(prefix = "security.data-scope", name = "source", havingValue = "db", matchIfMissing = true)
 public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
 
+    private static final String DATA_SCOPE_RULE_KEY = "data-scope:rules";
     private final ObjectProvider<DataScopeRuleService> dataScopeRuleServiceProvider;
     private final DataScopeProperties properties;
     private final RedisTemplate<String, Object> redisTemplate;
-
-    private static final String DATA_SCOPE_RULE_KEY = "data-scope:rules";
 
     /**
      * 构造函数，注入规则服务提供者与缓存配置。

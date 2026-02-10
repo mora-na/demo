@@ -1,6 +1,6 @@
 package com.example.demo.permission.service.impl;
 
-import com.example.demo.common.mybatis.MppServiceImpl;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.permission.entity.RolePermission;
 import com.example.demo.permission.mapper.RolePermissionMapper;
 import com.example.demo.permission.service.RolePermissionService;
@@ -13,5 +13,5 @@ import org.springframework.stereotype.Service;
  * @date 2026/2/9
  */
 @Service
-public class RolePermissionServiceImpl extends MppServiceImpl<RolePermissionMapper, RolePermission> implements RolePermissionService {
+public class RolePermissionServiceImpl extends ServiceImpl<RolePermissionMapper, RolePermission> implements RolePermissionService {
 }

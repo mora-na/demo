@@ -1,6 +1,6 @@
 package com.example.demo.datascope.mapper;
 
-import com.example.demo.common.mybatis.MppBaseMapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.demo.datascope.entity.DataScopeRule;
 import org.apache.ibatis.annotations.Select;
 
@@ -12,7 +12,7 @@ import java.util.List;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public interface DataScopeRuleMapper extends MppBaseMapper<DataScopeRule> {
+public interface DataScopeRuleMapper extends BaseMapper<DataScopeRule> {
 
     /**
      * 查询所有启用的数据范围规则。

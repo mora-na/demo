@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.example.demo.common.annotation.MppMultiField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,16 +31,14 @@ public class RoleMenu implements Serializable {
     private Long id;
 
     /**
-     * 角色 ID，联合字段之一。
+     * 角色 ID。
      */
-    @MppMultiField
     @TableField("role_id")
     private Long roleId;
 
     /**
-     * 菜单 ID，联合字段之一。
+     * 菜单 ID。
      */
-    @MppMultiField
     @TableField("menu_id")
     private Long menuId;
 }

@@ -1,8 +1,8 @@
 package com.example.demo.user.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.auth.service.PasswordService;
-import com.example.demo.common.mybatis.MppServiceImpl;
 import com.example.demo.permission.entity.UserRole;
 import com.example.demo.permission.service.UserRoleService;
 import com.example.demo.user.converter.UserConverter;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl extends MppServiceImpl<UserMapper, User> implements UserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     private final UserConverter userConverter;
     private final PasswordService passwordService;

@@ -1,6 +1,6 @@
 package com.example.demo.common.web;
 
-import com.example.demo.user.dto.UserVO;
+import com.example.demo.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -16,7 +16,7 @@ class BaseControllerTest {
         TestController controller = new TestController();
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        controller.doExport(response, Collections.singletonList(new UserVO()), "report");
+        controller.doExport(response, Collections.singletonList(new User()), "report");
 
         String header = response.getHeader("Content-Disposition");
         assertNotNull(header);
@@ -26,8 +26,8 @@ class BaseControllerTest {
     }
 
     private static class TestController extends BaseController {
-        void doExport(MockHttpServletResponse response, java.util.List<UserVO> data, String name) {
-            exportExcel(response, data, UserVO.class, name);
+        void doExport(MockHttpServletResponse response, java.util.List<User> data, String name) {
+            exportExcel(response, data, User.class, name);
         }
     }
 }

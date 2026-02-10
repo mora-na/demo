@@ -1,7 +1,7 @@
 package com.example.demo.menu.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.example.demo.common.mybatis.MppServiceImpl;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.menu.entity.RoleMenu;
 import com.example.demo.menu.mapper.RoleMenuMapper;
 import com.example.demo.menu.service.RoleMenuService;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * @date 2026/2/9
  */
 @Service
-public class RoleMenuServiceImpl extends MppServiceImpl<RoleMenuMapper, RoleMenu> implements RoleMenuService {
+public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenu> implements RoleMenuService {
 
     /**
      * 为角色重置并分配菜单集合。

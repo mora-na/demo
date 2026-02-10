@@ -1,5 +1,6 @@
 package com.example.demo.common.web.filter;
 
+import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.common.web.limit.RateLimitProperties;
 import org.junit.jupiter.api.Test;
@@ -31,8 +32,11 @@ class RateLimitFilterTest {
 
         StringRedisTemplate redisTemplate = mockStringRedisTemplate();
         CommonExcludePathsProperties commonExcludePaths = new CommonExcludePathsProperties();
+        I18nService i18nService = mock(I18nService.class);
+        when(i18nService.getMessage(any(javax.servlet.http.HttpServletRequest.class), anyString()))
+                .thenReturn("rate limit exceeded");
 
-        RateLimitFilter filter = new RateLimitFilter(properties, commonExcludePaths, redisTemplate);
+        RateLimitFilter filter = new RateLimitFilter(properties, commonExcludePaths, redisTemplate, i18nService);
         AtomicInteger chainCount = new AtomicInteger();
         FilterChain chain = (req, res) -> {
             chainCount.incrementAndGet();

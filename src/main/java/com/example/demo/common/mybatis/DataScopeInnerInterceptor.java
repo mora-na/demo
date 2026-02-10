@@ -39,7 +39,7 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
     /**
      * 构建数据权限拦截器。
      *
-     * @param properties  数据范围配置
+     * @param properties   数据范围配置
      * @param ruleProvider 数据范围规则提供者
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
@@ -52,8 +52,8 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
     /**
      * 在 SQL 预编译前重写语句，注入数据权限过滤条件。
      *
-     * @param statementHandler StatementHandler
-     * @param connection       数据库连接
+     * @param statementHandler   StatementHandler
+     * @param connection         数据库连接
      * @param transactionTimeout 事务超时（秒）
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9

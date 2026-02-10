@@ -4,8 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.example.demo.common.annotation.ExcelColumn;
-import com.example.demo.common.annotation.MppMultiField;
+import com.example.demo.common.annotation.Excel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,7 +29,6 @@ public class User implements Serializable {
     /**
      * 主键ID
      */
-    @ExcelColumn(exit = false)
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
@@ -38,64 +36,60 @@ public class User implements Serializable {
      * 用户名（唯一）
      */
     @TableField("user_name")
-    @MppMultiField
-    @ExcelColumn(headerName = "用户名")
+    @Excel(value = "用户名", sort = 1)
     private String userName;
 
     /**
      * 昵称
      */
     @TableField("nick_name")
-    @MppMultiField
-    @ExcelColumn(headerName = "昵称")
+    @Excel(value = "昵称", sort = 2)
     private String nickName;
 
     /**
      * 登录密码（加密存储）
      */
     @TableField("password")
-    @ExcelColumn(exit = false)
     private String password;
 
     /**
      * 状态：1-启用；0-禁用
      */
     @TableField("status")
-    @ExcelColumn(headerName = "状态", mapping = {"0:禁用", "1:启用"})
+    @Excel(header = "状态", mapping = {"0:禁用", "1:启用"}, sort = 3)
     private Integer status;
 
     /**
      * 部门ID（组织归属）
      */
     @TableField("dept_id")
-    @ExcelColumn(headerName = "部门ID")
+    @Excel("部门ID")
     private Long deptId;
 
     /**
      * 数据范围类型：ALL全量；SELF仅本人；CUSTOM自定义；NONE无数据
      */
     @TableField("data_scope_type")
-    @ExcelColumn(exit = false)
     private String dataScopeType;
 
     /**
      * 数据范围值，CUSTOM时存储自定义范围内容（如ID列表）
      */
     @TableField("data_scope_value")
-    @ExcelColumn(exit = false)
     private String dataScopeValue;
 
     /**
      * 性别
      */
     @TableField("sex")
-    @ExcelColumn(headerName = "性别", mapping = {"0:女", "1:男"})
+    @Excel(header = "性别", mapping = {"0:女", "1:男"}, sort = 4)
     private String sex;
 
     /**
      * 备注/测试字段
      */
     @TableField("tst")
+    @Excel(header = "备注")
     private String tst;
 
 }

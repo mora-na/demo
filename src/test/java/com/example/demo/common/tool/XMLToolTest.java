@@ -4,13 +4,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class XStreamToolTest {
+class XMLToolTest {
 
     @Test
     void toXmlAndXmlToBean_roundTrip() {
         Person person = new Person("alice", 30);
-        String xml = XStreamTool.toXML(person);
-        Person parsed = XStreamTool.xmlToBean(xml, Person.class);
+        String xml = XMLTool.toXML(person);
+        Person parsed = XMLTool.xmlToBean(xml, Person.class);
 
         assertEquals("alice", parsed.name);
         assertEquals(30, parsed.age);
@@ -18,14 +18,14 @@ class XStreamToolTest {
 
     @Test
     void jsonToXml_buildsUppercaseTags() {
-        String xml = XStreamTool.jsonToXML("{\"name\":\"bob\",\"age\":20}");
+        String xml = XMLTool.jsonToXML("{\"name\":\"bob\",\"age\":20}");
         assertTrue(xml.contains("<NAME>bob</NAME>"));
         assertTrue(xml.contains("<AGE>20</AGE>"));
     }
 
     @Test
     void jsonToXml_rejectsBlankInput() {
-        assertThrows(IllegalArgumentException.class, () -> XStreamTool.jsonToXML(""));
+        assertThrows(IllegalArgumentException.class, () -> XMLTool.jsonToXML(""));
     }
 
     private static class Person {

@@ -77,7 +77,7 @@ public class RoleAdminController extends BaseController {
     public CommonResult<RoleVO> detail(@PathVariable Long id) {
         Role role = roleService.getById(id);
         if (role == null) {
-            return error(404, "role not found");
+            return error(404, i18n("role.not.found"));
         }
         List<Long> permissionIds = rolePermissionService.list(Wrappers.lambdaQuery(RolePermission.class)
                         .eq(RolePermission::getRoleId, id))
@@ -99,7 +99,7 @@ public class RoleAdminController extends BaseController {
     @RequirePermission("role:create")
     public CommonResult<RoleVO> create(@Valid @RequestBody RoleCreateRequest request) {
         if (existsCode(request.getCode(), null)) {
-            return error(400, "role code already exists");
+            return error(400, i18n("role.code.exists"));
         }
         Role role = new Role();
         role.setCode(request.getCode());
@@ -125,10 +125,10 @@ public class RoleAdminController extends BaseController {
     public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody RoleUpdateRequest request) {
         Role existing = roleService.getById(id);
         if (existing == null) {
-            return error(404, "role not found");
+            return error(404, i18n("role.not.found"));
         }
         if (existsCode(request.getCode(), id)) {
-            return error(400, "role code already exists");
+            return error(400, i18n("role.code.exists"));
         }
         Role role = new Role();
         role.setId(id);
@@ -137,7 +137,7 @@ public class RoleAdminController extends BaseController {
         role.setDataScopeType(request.getDataScopeType());
         role.setDataScopeValue(request.getDataScopeValue());
         if (!roleService.updateById(role)) {
-            return error(500, "update failed");
+            return error(500, i18n("common.update.failed"));
         }
         return success();
     }
@@ -156,14 +156,14 @@ public class RoleAdminController extends BaseController {
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody RoleStatusRequest request) {
         Role existing = roleService.getById(id);
         if (existing == null) {
-            return error(404, "role not found");
+            return error(404, i18n("role.not.found"));
         }
         Integer status = request.getStatus();
         if (!isValidStatus(status)) {
-            return error(400, "invalid status");
+            return error(400, i18n("common.status.invalid"));
         }
         if (!roleService.updateStatus(id, status)) {
-            return error(500, "update status failed");
+            return error(500, i18n("common.status.update.failed"));
         }
         return success();
     }
@@ -182,17 +182,17 @@ public class RoleAdminController extends BaseController {
     public CommonResult<Void> assignPermissions(@PathVariable Long id, @Valid @RequestBody RolePermissionAssignRequest request) {
         Role existing = roleService.getById(id);
         if (existing == null) {
-            return error(404, "role not found");
+            return error(404, i18n("role.not.found"));
         }
         List<Long> permissionIds = request.getPermissionIds();
         if (permissionIds != null && !permissionIds.isEmpty()) {
             List<Permission> permissions = permissionService.listByIds(permissionIds);
             if (permissions.size() != permissionIds.stream().filter(pid -> pid != null).distinct().count()) {
-                return error(400, "permission not found");
+                return error(400, i18n("permission.not.found"));
             }
         }
         if (!roleService.assignPermissions(id, permissionIds)) {
-            return error(500, "assign permissions failed");
+            return error(500, i18n("role.permissions.assign.failed"));
         }
         return success();
     }
@@ -211,17 +211,17 @@ public class RoleAdminController extends BaseController {
     public CommonResult<Void> assignMenus(@PathVariable Long id, @Valid @RequestBody RoleMenuAssignRequest request) {
         Role existing = roleService.getById(id);
         if (existing == null) {
-            return error(404, "role not found");
+            return error(404, i18n("role.not.found"));
         }
         List<Long> menuIds = request.getMenuIds();
         if (menuIds != null && !menuIds.isEmpty()) {
             List<Menu> menus = menuService.listByIds(menuIds);
             if (menus.size() != menuIds.stream().filter(mid -> mid != null).distinct().count()) {
-                return error(400, "menu not found");
+                return error(400, i18n("menu.not.found"));
             }
         }
         if (!roleMenuService.assignMenus(id, menuIds)) {
-            return error(500, "assign menus failed");
+            return error(500, i18n("role.menus.assign.failed"));
         }
         return success();
     }

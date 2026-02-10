@@ -8,8 +8,6 @@ jasypt:
 
 # 服务器配置
 server:
-  # HTTP 监听端口
-  port: 8080
   # Servlet 相关配置
   servlet:
     # 应用上下文路径
@@ -22,10 +20,9 @@ spring:
     # 应用名称（用于注册、日志等）
     name: demo
 
-  # Profile 环境配置
+  # 默认使用 dev 配置，可通过环境变量覆盖
   profiles:
-    # 当前启用的环境名称
-    active: default
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 
   # 控制台输出配置
   output:
@@ -42,204 +39,6 @@ spring:
       max-file-size: 120MB
       # 单请求最大大小
       max-request-size: 120MB
-
-  # Redis 连接配置
-  redis:
-    # Redis 主机地址
-    host: localhost
-    # Redis 端口
-    port: 6379
-
-  # 数据源配置
-  datasource:
-    # Druid 连接池通用配置
-    druid:
-      # Druid 监控页面配置
-      stat-view-servlet:
-        # 是否启用监控页面
-        enabled: true
-        # 监控页面 URL 匹配
-        url-pattern: /druid/*
-        # 监控页面登录用户名 admin
-        login-username: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
-        # 监控页面登录密码 admin
-        login-password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
-      # Web 统计过滤器配置
-      web-stat-filter:
-        # 是否启用 Web 统计
-        enabled: true
-        # Web 统计过滤 URL 匹配
-        url-pattern: /*
-        # 过滤器排除资源
-        exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
-    # 动态数据源配置
-    dynamic:
-      # 动态数据源下 Druid 配置
-      druid:
-        # Wall 防火墙配置
-        wall:
-          # 因为camunda框架的sql有where 1=1
-          # 是否拦截 where 条件恒真
-          select-where-alway-true-check: false
-          # 是否允许 AND 条件恒真
-          condition-and-alway-true-allow: true
-      # 默认数据源名称
-      primary: master
-      # 严格匹配模式（true: 未匹配直接报错）
-      strict: false
-      # 数据源集合
-      datasource:
-        # 主库配置
-        master:
-          # JDBC 连接地址
-          url: jdbc:postgresql://localhost:5432/test?currentSchema=test
-          # 数据库用户名
-          username: angelabeini
-          # 数据库密码 admin
-          password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
-          # JDBC 驱动类
-          driver-class-name: org.postgresql.Driver
-          # 连接池实现类
-          type: com.alibaba.druid.pool.DruidDataSource
-          # Druid 连接池细项
-          druid:
-            # 初始化连接数
-            initial-size: 1
-            # 最小空闲连接数
-            min-idle: 1
-            # 最大活跃连接数
-            max-active: 3
-            # 获取连接最大等待时间（ms）
-            max-wait: 60000
-            # 连接检测间隔（ms）
-            time-between-eviction-runs-millis: 60000
-            # 连接最小空闲时间（ms）
-            min-evictable-idle-time-millis: 300000
-            # 连接校验 SQL
-            validation-query: SELECT 1
-            # 空闲时检测连接
-            test-while-idle: true
-            # 获取连接时检测
-            test-on-borrow: false
-            # 归还连接时检测
-            test-on-return: false
-            # 是否缓存预编译语句
-            pool-prepared-statements: true
-            # 每连接最大缓存 PS 数
-            max-pool-prepared-statement-per-connection-size: 20
-            # 启用过滤器
-            filters: stat,wall,slf4j
-            # 连接属性
-            connection-properties: >
-              druid.stat.mergeSql=true;
-              druid.stat.slowSqlMillis=5000;
-              wall.config.multiStatementAllow=true;
-              wall.config.noneBaseStatementAllow=true;
-              removeAbandoned=true;
-              removeAbandonedTimeout=180;
-              logAbandoned=false;
-              keepAlive=true;
-              maxEvictableIdleTimeMillis=900000
-#        slave:
-#          # JDBC 连接地址
-#          url: jdbc:postgresql://localhost:5432/test?currentSchema=test
-#          # 数据库用户名
-#          username: panpan
-#          # 数据库密码
-#          password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
-#          # JDBC 驱动类
-#          driver-class-name: org.postgresql.Driver
-#          # 连接池实现类
-#          type: com.alibaba.druid.pool.DruidDataSource
-#          # Druid 连接池细项
-#          druid:
-#            # 初始化连接数
-#            initial-size: 3
-#            # 最小空闲连接数
-#            min-idle: 3
-#            # 最大活跃连接数
-#            max-active: 20
-#            # 获取连接最大等待时间（ms）
-#            max-wait: 60000
-#            # 连接检测间隔（ms）
-#            time-between-eviction-runs-millis: 60000
-#            # 连接最小空闲时间（ms）
-#            min-evictable-idle-time-millis: 300000
-#            # 连接校验 SQL
-#            validation-query: SELECT 1
-#            # 空闲时检测连接
-#            test-while-idle: true
-#            # 获取连接时检测
-#            test-on-borrow: false
-#            # 归还连接时检测
-#            test-on-return: false
-#            # 是否缓存预编译语句
-#            pool-prepared-statements: true
-#            # 每连接最大缓存 PS 数
-#            max-pool-prepared-statement-per-connection-size: 20
-#            # 启用过滤器
-#            filters: stat,wall,slf4j
-#            # 连接属性
-#            connection-properties: >
-#              druid.stat.mergeSql=true;
-#              druid.stat.slowSqlMillis=5000;
-#              wall.config.multiStatementAllow=true;
-#              wall.config.noneBaseStatementAllow=true;
-#              removeAbandoned=true;
-#              removeAbandonedTimeout=180;
-#              logAbandoned=false;
-#              keepAlive=true;
-#              maxEvictableIdleTimeMillis=900000
-#        demo:
-#          # JDBC 连接地址
-#          url: jdbc:postgresql://localhost:5432/demo?currentSchema=demo
-#          # 数据库用户名
-#          username: panpan
-#          # 数据库密码（加密）
-#          password: ENC(2DhRoldBv8wA3EH5Vke29w==)
-#          # JDBC 驱动类
-#          driver-class-name: org.postgresql.Driver
-#          # 连接池实现类
-#          type: com.alibaba.druid.pool.DruidDataSource
-#          # Druid 连接池细项
-#          druid:
-#            # 初始化连接数
-#            initial-size: 3
-#            # 最小空闲连接数
-#            min-idle: 3
-#            # 最大活跃连接数
-#            max-active: 20
-#            # 获取连接最大等待时间（ms）
-#            max-wait: 60000
-#            # 连接检测间隔（ms）
-#            time-between-eviction-runs-millis: 60000
-#            # 连接最小空闲时间（ms）
-#            min-evictable-idle-time-millis: 300000
-#            # 连接校验 SQL
-#            validation-query: SELECT 1
-#            # 空闲时检测连接
-#            test-while-idle: true
-#            # 获取连接时检测
-#            test-on-borrow: false
-#            # 归还连接时检测
-#            test-on-return: false
-#            # 是否缓存预编译语句
-#            pool-prepared-statements: true
-#            # 每连接最大缓存 PS 数
-#            max-pool-prepared-statement-per-connection-size: 20
-#            # 启用过滤器
-#            filters: stat,wall,slf4j
-#            # 连接属性
-#            connection-properties: >
-#              druid.stat.mergeSql=true;
-#              druid.stat.slowSqlMillis=5000;
-#              wall.config.multiStatementAllow=true;
-#              wall.config.noneBaseStatementAllow=true;
-#              removeAbandoned=true;
-#              removeAbandonedTimeout=180;
-#              logAbandoned=false;
-#              keepAlive=true;
-#              maxEvictableIdleTimeMillis=900000
 
 # MyBatis-Plus 配置
 mybatis-plus:
@@ -273,61 +72,8 @@ excel:
     # 是否压缩临时文件
     compress-temp-files: true
 
-# Camunda 流程引擎配置
-camunda:
-  # 是否启用Camunda，关闭后不加载Camunda框架
-  enabled: false
-  # Camunda BPM 配置
-  bpm:
-    # 是否启用 BPM 引擎
-    enabled: ${camunda.enabled:true}
-    # Webapp 配置
-    webapp:
-      # 是否启用 Camunda Webapp
-      enabled: ${camunda.enabled:true}
-    # REST 接口配置
-    rest:
-      # 是否启用 Camunda REST
-      enabled: ${camunda.enabled:true}
-    # 管理后台登录账号
-    admin-user:
-      # 管理员账号
-      id: admin
-      # 管理员密码 admin
-      password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
-      # 管理员名称 admin
-      first-name: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
-
-    # 自动部署resources/bpmn下的流程文件
-    auto-deployment-enabled: true
-
-    # 数据库表结构策略
-    # true: 自动创建表（开发环境）
-    # false: 不自动创建（生产环境，用SQL脚本初始化）
-    database:
-      # 是否自动更新表结构
-      schema-update: true
-    #      type: mysql
-
-    # 历史数据记录级别
-    # none/activity/audit/full，推荐audit
-    history-level: audit
-
-    # Job执行器（异步任务、定时器等）
-    job-execution:
-      # 是否启用 Job 执行器
-      enabled: true
-      # 核心线程数
-      core-pool-size: 3
-      # 最大线程数
-      max-pool-size: 10
-
 # 日志配置
 logging:
-  # 日志文件配置
-  file:
-    # 日志文件路径
-    name: logs/demo.log
   # 日志编码配置
   charset:
     # 控制台编码
@@ -340,18 +86,6 @@ logging:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %X{traceId} %cyan([%thread]) %magenta(%logger{36} - %msg%n)'
     # 文件日志格式
     file: '%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %X{traceId} %cyan([%thread]) %magenta(%logger{36} - %msg%n)'
-  # 日志级别配置
-  level:
-    # 根日志级别
-    root: info
-    # 业务包日志级别
-    com: debug
-    # 兼容包日志级别
-    cn.com: debug
-    # Spring 核心日志级别
-    org.springframework: warn
-    # Spring Web 日志级别
-    org.springframework.web: warn
   # Logback 滚动策略
   logback:
     # 滚动策略配置
@@ -363,72 +97,6 @@ logging:
       # 日志总大小上限
       total-size-cap: 1GB
 
-# 用户自定义配置
-user:
-  # 用户配置集合
-  config:
-    # 示例姓名
-    name: zhangsan
-    # 示例年龄
-    age: 18
-    # 示例角色列表
-    roles:
-      - admin # 角色：admin
-      - user  # 角色：user
-    # 示例扩展配置
-    settings:
-      # 主题配置
-      theme: dark
-      # 通知开关
-      notify: true
-
-# 认证配置
-auth:
-  # JWT 配置
-  jwt:
-    # JWT 密钥
-    secret: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
-    # Token 有效期（秒）
-    ttl-seconds: 7200
-  # 验证码配置
-  captcha:
-    # 图片宽度
-    width: 120
-    # 图片高度
-    height: 40
-    # 验证码长度
-    code-length: 4
-    # 干扰线宽度
-    thickness: 2
-    # 验证码有效期（秒）
-    expire-seconds: 120
-  # 密码策略配置
-  password:
-    # 密码处理模式
-    mode: bcrypt
-    # 密码盐
-    salt: "4a97HT87*7&s649c-49f3-./9nTsdn^5$1becc50a*7!4e4"
-    # 默认密码（支持使用环境变量覆盖）
-    default-password: ${AUTH_DEFAULT_PASSWORD:ENC(hf7z4h+P3Ranjc8Ana8ZQg==)}
-    # 登录密码传输模式：plain/base64/aes-gcm
-    transport-mode: aes-gcm
-    # AES-GCM Base64 密钥（建议使用环境变量覆盖）
-    transport-key: ${AUTH_PASSWORD_TRANSPORT_KEY:ENC(hf7z4h+P3Ranjc8Ana8ZQg==)}
-    # 强密码校验开关
-    strong-check-enabled: true
-    # 强密码最小长度（pattern为空时生效）
-    strong-min-length: 8
-    # 强密码校验正则（为空则使用默认组合校验）
-    strong-pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\\\d)(?=.*[^A-Za-z\\\\d]).{8,}$"
-  # 认证过滤器配置
-  filter:
-    # 是否启用认证过滤器
-    enabled: true
-    # 认证过滤排除路径（会与 security.common.exclude-paths 合并）
-    exclude-paths:
-      - /auth/** # 排除认证接口
-      - /error # 排除错误接口
-
 # 安全与权限配置
 security:
   # 公共排除路径配置
@@ -436,14 +104,12 @@ security:
     # 公共排除路径列表
     exclude-paths:
       - /druid/** # 排除 Druid 监控
-      - /camunda/** # 排除 Camunda Web
-      - /engine-rest/** # 排除 Camunda REST
   # XSS 防护配置
   xss:
     # 是否启用 XSS 防护
     enabled: true
     # XSS 额外排除路径（会与 security.common.exclude-paths 合并）
-    exclude-paths: []
+    exclude-paths: [ ]
   # SQL 审计与防护配置
   sql-guard:
     # 是否启用 SQL 防护
@@ -465,7 +131,7 @@ security:
     # 限流 Key 是否包含路径
     include-path: true
     # 限流额外排除路径（会与 security.common.exclude-paths 合并）
-    exclude-paths: []
+    exclude-paths: [ ]
   # 重复提交防护配置
   duplicate-submit:
     # 是否启用重复提交防护
@@ -489,7 +155,7 @@ security:
       - PATCH # 方法：PATCH
       - DELETE # 方法：DELETE
     # 重复提交额外排除路径（会与 security.common.exclude-paths 合并）
-    exclude-paths: []
+    exclude-paths: [ ]
   # 权限配置
   permission:
     # 是否启用权限校验

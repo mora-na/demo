@@ -29,8 +29,8 @@ public class XssRequestBodyAdvice extends RequestBodyAdviceAdapter {
     /**
      * 构造函数，注入 XSS 配置与公共排除路径。
      *
-     * @param properties          XSS 配置
-     * @param commonExcludePaths  公共排除路径配置
+     * @param properties         XSS 配置
+     * @param commonExcludePaths 公共排除路径配置
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */

@@ -1,36 +1,32 @@
 package com.example.demo.common.tool;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.xml.StaxDriver;
-import com.thoughtworks.xstream.io.xml.XmlFriendlyNameCoder;
-import com.thoughtworks.xstream.security.NoTypePermission;
-import com.thoughtworks.xstream.security.NullPermission;
-import com.thoughtworks.xstream.security.PrimitiveTypePermission;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * XStream XML/JSON 转换工具，使用包白名单并复用线程内实例兼顾安全与性能。
+ * XML/JSON 转换工具，基于 Jackson XmlMapper 实现。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public final class XStreamTool {
+public final class XMLTool {
 
-    private static final ThreadLocal<XStream> XSTREAM_CACHE = new ThreadLocal<>();
-    private static final ThreadLocal<Set<Class<?>>> PROCESSED_TYPES =
-            ThreadLocal.withInitial(HashSet::new);
-    private static final String[] ALLOWED_PACKAGE_WILDCARDS = {
-            "com.example.demo.**",
-            "java.lang.**",
-            "java.util.**"
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final XmlMapper XML_MAPPER = new XmlMapper();
+    private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<Map<String, Object>>() {
     };
 
-    private XStreamTool() {
+    static {
+        XML_MAPPER.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+    }
+
+    private XMLTool() {
     }
 
     /**
@@ -57,9 +53,11 @@ public final class XStreamTool {
         if (xml == null || xml.trim().isEmpty()) {
             throw new IllegalArgumentException("xml content is blank");
         }
-        XStream xstream = prepareXStream(clazz);
-        Object o = xstream.fromXML(xml);
-        return clazz.cast(o);
+        try {
+            return XML_MAPPER.readValue(xml, clazz);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("xml parse failed", e);
+        }
     }
 
     /**
@@ -72,9 +70,11 @@ public final class XStreamTool {
         if (obj == null) {
             throw new IllegalArgumentException("object to serialize cannot be null");
         }
-        Class<?> clazz = obj.getClass();
-        XStream xstream = prepareXStream(clazz);
-        return xstream.toXML(obj);
+        try {
+            return XML_MAPPER.writeValueAsString(obj);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("xml serialize failed", e);
+        }
     }
 
     /**
@@ -89,7 +89,10 @@ public final class XStreamTool {
         }
 
         try {
-            JSONObject jsonObject = JSON.parseObject(json);
+            Map<String, Object> jsonObject = OBJECT_MAPPER.readValue(json, MAP_TYPE);
+            if (jsonObject == null || jsonObject.isEmpty()) {
+                return "";
+            }
             Set<Map.Entry<String, Object>> entrySet = jsonObject.entrySet();
             StringBuilder xmlBuilder = new StringBuilder(entrySet.size() * 32);
             for (Map.Entry<String, Object> entry : entrySet) {
@@ -103,37 +106,6 @@ public final class XStreamTool {
         } catch (Exception e) {
             throw new RuntimeException("JSON转换为XML失败: " + e.getMessage(), e);
         }
-    }
-
-    /**
-     * 获取配置好的 XStream 实例，并按传入类型补充注解与类加载器；线程内复用实例避免重复构建。
-     */
-    private static XStream prepareXStream(Class<?> boundType) {
-        XStream xstream = XSTREAM_CACHE.get();
-        if (xstream == null) {
-            xstream = createXStream();
-            XSTREAM_CACHE.set(xstream);
-            PROCESSED_TYPES.set(new HashSet<>());
-        }
-        Set<Class<?>> processed = PROCESSED_TYPES.get();
-        if (!processed.contains(boundType)) {
-            xstream.processAnnotations(boundType);
-            processed.add(boundType);
-        }
-        xstream.setClassLoader(boundType.getClassLoader());
-        return xstream;
-    }
-
-    private static XStream createXStream() {
-        XStream xstream = new XStream(new StaxDriver(new XmlFriendlyNameCoder("_-", "_")));
-        // 新版安全配置：默认拒绝所有类型，仅白名单包和基础类型允许
-        xstream.addPermission(NoTypePermission.NONE);
-        xstream.addPermission(NullPermission.NULL);
-        xstream.addPermission(PrimitiveTypePermission.PRIMITIVES);
-        xstream.allowTypesByWildcard(ALLOWED_PACKAGE_WILDCARDS);
-        xstream.autodetectAnnotations(true);
-        xstream.ignoreUnknownElements();
-        return xstream;
     }
 
     private static String escapeXmlValue(Object value) {

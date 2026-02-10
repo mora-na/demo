@@ -52,6 +52,7 @@ public class AuthProperties {
         private int codeLength = 4;
         private int thickness = 2;
         private int expireSeconds = 120;
+        private List<String> fontResources = new ArrayList<>();
         private int maxEntries = 10000;
         private int cleanupIntervalSeconds = 60;
     }
@@ -69,6 +70,8 @@ public class AuthProperties {
         private String defaultPassword = "";
         private String transportMode = "plain";
         private String transportKey = "";
+        private String transportSm2PrivateKey = "";
+        private String transportSm2PublicKey = "";
         private boolean strongCheckEnabled = false;
         private int strongMinLength = 8;
         private String strongPattern = "";

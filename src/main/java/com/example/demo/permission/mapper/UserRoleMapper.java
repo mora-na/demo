@@ -1,6 +1,6 @@
 package com.example.demo.permission.mapper;
 
-import com.example.demo.common.mybatis.MppBaseMapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.demo.permission.entity.UserRole;
 
 /**
@@ -9,5 +9,5 @@ import com.example.demo.permission.entity.UserRole;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public interface UserRoleMapper extends MppBaseMapper<UserRole> {
+public interface UserRoleMapper extends BaseMapper<UserRole> {
 }

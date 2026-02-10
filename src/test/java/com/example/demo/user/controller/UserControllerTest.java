@@ -3,9 +3,10 @@ package com.example.demo.user.controller;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.service.TokenService;
 import com.example.demo.auth.web.AuthTokenFilter;
+import com.example.demo.common.i18n.I18nConfig;
+import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.tool.ExcelTool;
 import com.example.demo.common.web.CommonExcludePathsProperties;
-import com.example.demo.common.web.FastJsonWebMvcConfig;
 import com.example.demo.common.web.filter.DuplicateSubmitFilter;
 import com.example.demo.common.web.filter.RateLimitFilter;
 import com.example.demo.common.web.filter.XssFilter;
@@ -59,7 +60,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UserController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import({DuplicateSubmitProperties.class, RateLimitProperties.class, PermissionProperties.class, XssProperties.class, CommonExcludePathsProperties.class, FastJsonWebMvcConfig.class})
+@Import({DuplicateSubmitProperties.class, RateLimitProperties.class, PermissionProperties.class, XssProperties.class, CommonExcludePathsProperties.class, I18nConfig.class, I18nService.class})
 @TestPropertySource(properties = "security.permission.enabled=false")
 class UserControllerTest {
 
@@ -231,30 +232,31 @@ class UserControllerTest {
 
     @Test
     void importExcel_returnsSuccess() throws Exception {
-        UserVO view = new UserVO();
-        view.setId(1L);
-        view.setUserName("alice");
-        view.setNickName("Ali");
-        view.setSex("F");
-        view.setTst("note");
-        view.setOrderVOS(Collections.<OrderVO>emptyList());
-        ByteArrayOutputStream outputStream = ExcelTool.exportToStream(Collections.singletonList(view), UserVO.class);
+        User user = new User();
+        user.setId(1L);
+        user.setUserName("alice");
+        user.setNickName("Ali");
+        user.setSex("1");
+        user.setTst("note");
+        ByteArrayOutputStream outputStream = ExcelTool.exportToStream(Collections.singletonList(user), User.class);
         MockMultipartFile file = new MockMultipartFile("file", "users.xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", outputStream.toByteArray());
 
         when(userConverter.toEntityList(anyList())).thenReturn(Collections.singletonList(new User()));
-        when(userService.saveOrUpdateBatchByMultiField(anyList())).thenReturn(true);
+        when(userService.saveOrUpdateBatch(anyList())).thenReturn(true);
 
-        mockMvc.perform(multipart("/hello/import").file(file))
+        mockMvc.perform(multipart("/hello/import").file(file)
+                        .header("Accept-Language", "zh-CN"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("\u5bfc\u5165\u6210\u529f\uff01"));
+                .andExpect(jsonPath("$.message").value("\u5bfc\u5165\u6210\u529f"));
     }
 
     @Test
     void getKeyValue_rejectsBlankKey() throws Exception {
-        mockMvc.perform(get("/hello/getKeyValue"))
+        mockMvc.perform(get("/hello/getKeyValue")
+                        .header("Accept-Language", "zh-CN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(500))
-                .andExpect(jsonPath("$.message").value("key is empty"));
+                .andExpect(jsonPath("$.message").value("\u914d\u7f6e\u9879\u952e\u4e3a\u7a7a"));
     }
 }

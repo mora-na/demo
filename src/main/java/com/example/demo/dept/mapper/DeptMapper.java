@@ -1,6 +1,6 @@
 package com.example.demo.dept.mapper;
 
-import com.example.demo.common.mybatis.MppBaseMapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.demo.dept.entity.Dept;
 
 /**
@@ -9,5 +9,5 @@ import com.example.demo.dept.entity.Dept;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public interface DeptMapper extends MppBaseMapper<Dept> {
+public interface DeptMapper extends BaseMapper<Dept> {
 }

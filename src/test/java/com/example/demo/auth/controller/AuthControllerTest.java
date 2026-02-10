@@ -8,8 +8,9 @@ import com.example.demo.auth.service.CaptchaService;
 import com.example.demo.auth.service.PasswordService;
 import com.example.demo.auth.service.TokenService;
 import com.example.demo.auth.web.AuthTokenFilter;
+import com.example.demo.common.i18n.I18nConfig;
+import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.web.CommonExcludePathsProperties;
-import com.example.demo.common.web.FastJsonWebMvcConfig;
 import com.example.demo.common.web.filter.DuplicateSubmitFilter;
 import com.example.demo.common.web.filter.RateLimitFilter;
 import com.example.demo.common.web.filter.XssFilter;
@@ -51,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import({DuplicateSubmitProperties.class, RateLimitProperties.class, PermissionProperties.class, XssProperties.class, CommonExcludePathsProperties.class, FastJsonWebMvcConfig.class})
+@Import({DuplicateSubmitProperties.class, RateLimitProperties.class, PermissionProperties.class, XssProperties.class, CommonExcludePathsProperties.class, I18nConfig.class, I18nService.class})
 @TestPropertySource(properties = "security.permission.enabled=false")
 class AuthControllerTest {
 
@@ -169,10 +170,11 @@ class AuthControllerTest {
     void login_rejectsMissingBody() throws Exception {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("null"))
+                        .content("null")
+                        .header("Accept-Language", "zh-CN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("request body is empty"));
+                .andExpect(jsonPath("$.message").value("\u8bf7\u6c42\u4f53\u4e3a\u7a7a"));
     }
 
     @Test
@@ -181,27 +183,30 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"userName\":\"alice\",\"password\":\"pw\",\"captchaId\":\"cid\",\"captchaCode\":\"code\"}"))
+                        .content("{\"userName\":\"alice\",\"password\":\"pw\",\"captchaId\":\"cid\",\"captchaCode\":\"code\"}")
+                        .header("Accept-Language", "zh-CN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(401))
-                .andExpect(jsonPath("$.message").value("captcha is invalid"));
+                .andExpect(jsonPath("$.message").value("\u9a8c\u8bc1\u7801\u9519\u8bef"));
     }
 
     @Test
     void logout_usesHeaderToken() throws Exception {
         mockMvc.perform(post("/auth/logout")
-                        .header("Authorization", "Bearer token"))
+                        .header("Authorization", "Bearer token")
+                        .header("Accept-Language", "zh-CN"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("logout success"));
+                .andExpect(jsonPath("$.message").value("\u9000\u51fa\u6210\u529f"));
 
         verify(tokenService).revoke("token");
     }
 
     @Test
     void logout_rejectsMissingToken() throws Exception {
-        mockMvc.perform(post("/auth/logout"))
+        mockMvc.perform(post("/auth/logout")
+                        .header("Accept-Language", "zh-CN"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("token is empty"));
+                .andExpect(jsonPath("$.message").value("\u4ee4\u724c\u4e3a\u7a7a"));
     }
 }

@@ -3,8 +3,9 @@ package com.example.demo.dept.controller;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.service.TokenService;
 import com.example.demo.auth.web.AuthTokenFilter;
+import com.example.demo.common.i18n.I18nConfig;
+import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.web.CommonExcludePathsProperties;
-import com.example.demo.common.web.FastJsonWebMvcConfig;
 import com.example.demo.common.web.filter.DuplicateSubmitFilter;
 import com.example.demo.common.web.filter.RateLimitFilter;
 import com.example.demo.common.web.filter.XssFilter;
@@ -50,7 +51,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(DeptAdminController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import({DuplicateSubmitProperties.class, RateLimitProperties.class, PermissionProperties.class, XssProperties.class, CommonExcludePathsProperties.class, FastJsonWebMvcConfig.class})
+@Import({DuplicateSubmitProperties.class, RateLimitProperties.class, PermissionProperties.class, XssProperties.class, CommonExcludePathsProperties.class, I18nConfig.class, I18nService.class})
 @TestPropertySource(properties = "security.permission.enabled=false")
 class DeptAdminControllerTest {
 

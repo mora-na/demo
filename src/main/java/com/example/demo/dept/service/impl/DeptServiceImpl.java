@@ -1,6 +1,6 @@
 package com.example.demo.dept.service.impl;
 
-import com.example.demo.common.mybatis.MppServiceImpl;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.dept.entity.Dept;
 import com.example.demo.dept.mapper.DeptMapper;
 import com.example.demo.dept.service.DeptService;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
  * @date 2026/2/9
  */
 @Service
-public class DeptServiceImpl extends MppServiceImpl<DeptMapper, Dept> implements DeptService {
+public class DeptServiceImpl extends ServiceImpl<DeptMapper, Dept> implements DeptService {
 
     /**
      * 更新部门启用状态。

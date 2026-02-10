@@ -56,31 +56,32 @@ public class AuthController extends BaseController {
     @PostMapping("/login")
     public CommonResult<LoginResponse> login(@RequestBody(required = false) LoginRequest request,
                                              HttpServletResponse response) {
+        final String credentialError = i18n("auth.login.credential.error");
         if (request == null) {
-            return error(400, "request body is empty");
+            return error(400, i18n("auth.login.request.empty"));
         }
         if (StringUtils.isBlank(request.getUserName()) || StringUtils.isBlank(request.getPassword())) {
-            return error(400, "username or password is empty");
+            return error(401, credentialError);
         }
         if (StringUtils.isBlank(request.getCaptchaId()) || StringUtils.isBlank(request.getCaptchaCode())) {
-            return error(400, "captcha is empty");
+            return error(400, i18n("auth.login.captcha.empty"));
         }
         if (!captchaService.verify(request.getCaptchaId(), request.getCaptchaCode())) {
-            return error(401, "captcha is invalid");
+            return error(401, i18n("auth.login.captcha.invalid"));
         }
         User user = userService.getByUserName(request.getUserName());
         if (user == null) {
-            return error(401, "user not found");
+            return error(401, credentialError);
         }
         if (user.getStatus() != null && user.getStatus().equals(User.STATUS_DISABLED)) {
-            return error(403, "user is disabled");
+            return error(401, credentialError);
         }
         String rawPassword = passwordService.decodeTransportPassword(request.getPassword());
         if (StringUtils.isBlank(rawPassword)) {
-            return error(400, "password is invalid");
+            return error(401, credentialError);
         }
         if (!passwordService.matches(rawPassword, user.getPassword())) {
-            return error(401, "password is incorrect");
+            return error(401, credentialError);
         }
         AuthUser authUser = new AuthUser();
         authUser.setId(user.getId());
@@ -109,9 +110,9 @@ public class AuthController extends BaseController {
             token = body.getToken();
         }
         if (StringUtils.isBlank(token)) {
-            return error(400, "token is empty");
+            return error(400, i18n("auth.logout.token.empty"));
         }
         tokenService.revoke(token);
-        return success("logout success");
+        return success(i18n("auth.logout.success"));
     }
 }

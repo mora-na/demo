@@ -37,20 +37,20 @@ public class UserAdminController extends BaseController {
     @RequirePermission("user:create")
     public CommonResult<UserVO> create(@Valid @RequestBody UserCreateRequest request) {
         if (userService.getByUserName(request.getUserName()) != null) {
-            return error(400, "username already exists");
+            return error(400, i18n("user.username.exists"));
         }
         if (request.getDeptId() != null && deptService.getById(request.getDeptId()) == null) {
-            return error(400, "dept not found");
+            return error(400, i18n("dept.not.found"));
         }
         String rawPassword = passwordService.resolveRawPassword(request.getPassword());
         if (StringUtils.isBlank(rawPassword)) {
-            return error(400, "password is empty");
+            return error(400, i18n("user.password.empty"));
         }
         if (rawPassword.length() < 6) {
-            return error(400, "password length is invalid");
+            return error(400, i18n("user.password.length.invalid"));
         }
         if (!passwordService.isStrongPassword(rawPassword)) {
-            return error(400, "password is too weak");
+            return error(400, i18n("user.password.weak"));
         }
         request.setPassword(rawPassword);
         User created = userService.createUser(request);
@@ -62,19 +62,19 @@ public class UserAdminController extends BaseController {
     public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest request) {
         User existing = userService.getById(id);
         if (existing == null) {
-            return error(404, "user not found");
+            return error(404, i18n("user.not.found"));
         }
         if (StringUtils.isNotBlank(request.getUserName())) {
             User sameName = userService.getByUserName(request.getUserName());
             if (sameName != null && !sameName.getId().equals(id)) {
-                return error(400, "username already exists");
+                return error(400, i18n("user.username.exists"));
             }
         }
         if (request.getDeptId() != null && deptService.getById(request.getDeptId()) == null) {
-            return error(400, "dept not found");
+            return error(400, i18n("dept.not.found"));
         }
         if (!userService.updateUser(id, request)) {
-            return error(500, "update failed");
+            return error(500, i18n("common.update.failed"));
         }
         return success();
     }
@@ -83,14 +83,14 @@ public class UserAdminController extends BaseController {
     @RequirePermission("user:disable")
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody UserStatusRequest request) {
         if (userService.getById(id) == null) {
-            return error(404, "user not found");
+            return error(404, i18n("user.not.found"));
         }
         Integer status = request.getStatus();
         if (status == null || (status != User.STATUS_ENABLED && status != User.STATUS_DISABLED)) {
-            return error(400, "invalid status");
+            return error(400, i18n("common.status.invalid"));
         }
         if (!userService.updateStatus(id, status)) {
-            return error(500, "update status failed");
+            return error(500, i18n("common.status.update.failed"));
         }
         return success();
     }
@@ -99,20 +99,20 @@ public class UserAdminController extends BaseController {
     @RequirePermission("user:password:reset")
     public CommonResult<Void> resetPassword(@PathVariable Long id, @Valid @RequestBody UserResetPasswordRequest request) {
         if (userService.getById(id) == null) {
-            return error(404, "user not found");
+            return error(404, i18n("user.not.found"));
         }
         String rawPassword = passwordService.decodeTransportPassword(request.getNewPassword());
         if (StringUtils.isBlank(rawPassword)) {
-            return error(400, "password is invalid");
+            return error(400, i18n("user.password.invalid"));
         }
         if (rawPassword.length() < 6) {
-            return error(400, "password length is invalid");
+            return error(400, i18n("user.password.length.invalid"));
         }
         if (!passwordService.isStrongPassword(rawPassword)) {
-            return error(400, "password is too weak");
+            return error(400, i18n("user.password.weak"));
         }
         if (!userService.resetPassword(id, rawPassword)) {
-            return error(500, "reset password failed");
+            return error(500, i18n("user.password.reset.failed"));
         }
         return success();
     }
@@ -121,10 +121,10 @@ public class UserAdminController extends BaseController {
     @RequirePermission("user:role:assign")
     public CommonResult<Void> assignRoles(@PathVariable Long id, @Valid @RequestBody UserRoleAssignRequest request) {
         if (userService.getById(id) == null) {
-            return error(404, "user not found");
+            return error(404, i18n("user.not.found"));
         }
         if (!userService.assignRoles(id, request.getRoleIds())) {
-            return error(500, "assign roles failed");
+            return error(500, i18n("user.roles.assign.failed"));
         }
         return success();
     }
@@ -133,10 +133,10 @@ public class UserAdminController extends BaseController {
     @RequirePermission("user:data-scope:set")
     public CommonResult<Void> updateDataScope(@PathVariable Long id, @Valid @RequestBody UserDataScopeRequest request) {
         if (userService.getById(id) == null) {
-            return error(404, "user not found");
+            return error(404, i18n("user.not.found"));
         }
         if (!userService.updateDataScope(id, request.getDataScopeType(), request.getDataScopeValue())) {
-            return error(500, "update data scope failed");
+            return error(500, i18n("user.data.scope.update.failed"));
         }
         return success();
     }

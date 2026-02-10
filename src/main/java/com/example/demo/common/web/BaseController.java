@@ -2,6 +2,7 @@ package com.example.demo.common.web;
 
 
 import com.example.demo.common.exception.ExcelProcessException;
+import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.model.PageParam;
 import com.example.demo.common.model.PageResult;
@@ -30,6 +31,9 @@ import java.util.stream.Collectors;
  * @date 2026/2/9
  */
 public abstract class BaseController {
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private I18nService i18nService;
 
     /**
      * 启动分页上下文，读取请求参数并设置默认/上限值。
@@ -126,7 +130,7 @@ public abstract class BaseController {
      * @date 2026/2/9
      */
     protected <T> CommonResult<T> success() {
-        return CommonResult.success();
+        return CommonResult.success(i18n("common.success"));
     }
 
     /**
@@ -139,7 +143,7 @@ public abstract class BaseController {
      * @date 2026/2/9
      */
     protected <T> CommonResult<T> success(T data) {
-        return CommonResult.success(data);
+        return CommonResult.success(i18n("common.success"), data);
     }
 
     /**
@@ -178,7 +182,7 @@ public abstract class BaseController {
      * @date 2026/2/9
      */
     protected <T> CommonResult<T> error() {
-        return CommonResult.error();
+        return CommonResult.error(i18n("common.error"));
     }
 
     /**
@@ -221,6 +225,10 @@ public abstract class BaseController {
      */
     protected <T> CommonResult<T> error(int code, String message, T data) {
         return CommonResult.error(code, message, data);
+    }
+
+    protected String i18n(String key, Object... args) {
+        return i18nService == null ? key : i18nService.getMessage(key, args);
     }
 
     /**

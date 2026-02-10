@@ -1,6 +1,6 @@
 package com.example.demo.user.service;
 
-import com.example.demo.common.mybatis.IMppService;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.user.dto.UserCreateRequest;
 import com.example.demo.user.dto.UserQuery;
 import com.example.demo.user.dto.UserUpdateRequest;
@@ -14,7 +14,7 @@ import java.util.List;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public interface UserService extends IMppService<User> {
+public interface UserService extends IService<User> {
 
     List<User> selectUsers(UserQuery query);
 

@@ -1,6 +1,6 @@
 package com.example.demo.permission.mapper;
 
-import com.example.demo.common.mybatis.MppBaseMapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.demo.permission.entity.Permission;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -13,7 +13,7 @@ import java.util.List;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public interface PermissionMapper extends MppBaseMapper<Permission> {
+public interface PermissionMapper extends BaseMapper<Permission> {
 
     /**
      * 根据用户 ID 查询其已启用角色的权限编码集合。

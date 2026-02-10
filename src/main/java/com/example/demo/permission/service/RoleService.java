@@ -1,6 +1,6 @@
 package com.example.demo.permission.service;
 
-import com.example.demo.common.mybatis.IMppService;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.permission.entity.Role;
 
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.List;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public interface RoleService extends IMppService<Role> {
+public interface RoleService extends IService<Role> {
 
     /**
      * 为角色分配权限集合。

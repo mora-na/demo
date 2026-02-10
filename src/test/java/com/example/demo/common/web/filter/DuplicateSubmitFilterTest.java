@@ -1,5 +1,6 @@
 package com.example.demo.common.web.filter;
 
+import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.common.web.limit.DuplicateSubmitProperties;
 import org.junit.jupiter.api.Test;
@@ -29,8 +30,11 @@ class DuplicateSubmitFilterTest {
         properties.setIntervalMillis(1_000);
         StringRedisTemplate redisTemplate = mockStringRedisTemplate();
         CommonExcludePathsProperties commonExcludePaths = new CommonExcludePathsProperties();
+        I18nService i18nService = mock(I18nService.class);
+        when(i18nService.getMessage(any(javax.servlet.http.HttpServletRequest.class), anyString()))
+                .thenReturn("duplicate submission detected");
 
-        DuplicateSubmitFilter filter = new DuplicateSubmitFilter(properties, commonExcludePaths, redisTemplate);
+        DuplicateSubmitFilter filter = new DuplicateSubmitFilter(properties, commonExcludePaths, redisTemplate, i18nService);
         AtomicInteger chainCount = new AtomicInteger();
         FilterChain chain = (req, res) -> {
             chainCount.incrementAndGet();

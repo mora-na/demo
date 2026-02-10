@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.example.demo.common.annotation.MppMultiField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -35,22 +34,20 @@ public class UserRole implements Serializable {
     private Long id;
 
     /**
-     * 用户 ID，联合字段之一。
+     * 用户 ID。
      *
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    @MppMultiField
     @TableField("user_id")
     private Long userId;
 
     /**
-     * 角色 ID，联合字段之一。
+     * 角色 ID。
      *
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    @MppMultiField
     @TableField("role_id")
     private Long roleId;
 }

@@ -1,11 +1,12 @@
 package com.example.demo.common.web.filter;
 
-import com.alibaba.fastjson2.JSON;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.common.web.limit.RateLimitProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -32,10 +33,13 @@ import java.util.Locale;
 @Order(Ordered.HIGHEST_PRECEDENCE + 5)
 public class RateLimitFilter extends OncePerRequestFilter {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private final RateLimitProperties properties;
     private final CommonExcludePathsProperties commonExcludePaths;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final StringRedisTemplate stringRedisTemplate;
+    private final I18nService i18nService;
 
     /**
      * 构造函数，注入限流配置与 Redis 模板。
@@ -48,10 +52,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
      */
     public RateLimitFilter(RateLimitProperties properties,
                            CommonExcludePathsProperties commonExcludePaths,
-                           StringRedisTemplate stringRedisTemplate) {
+                           StringRedisTemplate stringRedisTemplate,
+                           I18nService i18nService) {
         this.properties = properties;
         this.commonExcludePaths = commonExcludePaths;
         this.stringRedisTemplate = stringRedisTemplate;
+        this.i18nService = i18nService;
     }
 
     /**
@@ -103,7 +109,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String key = buildKey(request);
         boolean allowed = tryAcquire(key, windowMillis, maxRequests);
         if (!allowed) {
-            writeRateLimited(response);
+            writeRateLimited(request, response);
             return;
         }
         filterChain.doFilter(request, response);
@@ -112,9 +118,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
     /**
      * 尝试获取限流许可，使用计数器控制窗口内请求量。
      *
-     * @param key         限流 Key
+     * @param key          限流 Key
      * @param windowMillis 时间窗口（毫秒）
-     * @param maxRequests 最大请求数
+     * @param maxRequests  最大请求数
      * @return true 表示允许
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
@@ -206,10 +212,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private void writeRateLimited(HttpServletResponse response) throws IOException {
+    private void writeRateLimited(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setStatus(429);
         response.setContentType("application/json;charset=UTF-8");
-        CommonResult<Object> result = CommonResult.error(429, "rate limit exceeded");
-        response.getWriter().write(JSON.toJSONString(result));
+        String message = i18nService.getMessage(request, "common.rate.limit.exceeded");
+        CommonResult<Object> result = CommonResult.error(429, message);
+        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
     }
 }

@@ -1,10 +1,11 @@
 package com.example.demo.common.web.permission;
 
-import com.alibaba.fastjson2.JSON;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
@@ -26,26 +27,31 @@ import java.util.stream.Collectors;
 @Component
 public class PermissionInterceptor implements HandlerInterceptor {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private final PermissionProperties properties;
     private final PermissionService permissionService;
     private final CommonExcludePathsProperties commonExcludePaths;
+    private final I18nService i18nService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     /**
      * 构造函数，注入权限配置、服务与公共排除路径。
      *
-     * @param properties          权限配置
-     * @param permissionService   权限服务
-     * @param commonExcludePaths  公共排除路径配置
+     * @param properties         权限配置
+     * @param permissionService  权限服务
+     * @param commonExcludePaths 公共排除路径配置
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     public PermissionInterceptor(PermissionProperties properties,
                                  PermissionService permissionService,
-                                 CommonExcludePathsProperties commonExcludePaths) {
+                                 CommonExcludePathsProperties commonExcludePaths,
+                                 I18nService i18nService) {
         this.properties = properties;
         this.permissionService = permissionService;
         this.commonExcludePaths = commonExcludePaths;
+        this.i18nService = i18nService;
     }
 
     /**
@@ -77,7 +83,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
         boolean loginRequired = login != null || permission != null || properties.isRequireLoginByDefault();
         AuthUser user = AuthContext.get();
         if (loginRequired && user == null) {
-            writeUnauthorized(response, "authentication required");
+            writeUnauthorized(response, i18nService.getMessage(request, "auth.permission.required"));
             return false;
         }
         if (permission == null) {
@@ -96,7 +102,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
             allowed = permissionService.hasAllPermissions(user, required);
         }
         if (!allowed) {
-            writeForbidden(response, "permission denied");
+            writeForbidden(response, i18nService.getMessage(request, "auth.permission.denied"));
             return false;
         }
         return true;
@@ -176,7 +182,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json;charset=UTF-8");
         CommonResult<Object> result = CommonResult.error(HttpServletResponse.SC_UNAUTHORIZED, message);
-        response.getWriter().write(JSON.toJSONString(result));
+        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
     }
 
     /**
@@ -192,6 +198,6 @@ public class PermissionInterceptor implements HandlerInterceptor {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json;charset=UTF-8");
         CommonResult<Object> result = CommonResult.error(HttpServletResponse.SC_FORBIDDEN, message);
-        response.getWriter().write(JSON.toJSONString(result));
+        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
     }
 }
