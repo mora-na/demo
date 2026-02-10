@@ -21,7 +21,7 @@ public final class AuthTokenResolver {
     }
 
     /**
-     * 解析请求中的访问令牌，优先级：Authorization > X-Auth-Token > token 参数。
+     * 解析请求中的访问令牌，优先级：Authorization > X-Auth-Token。
      *
      * @param request HTTP 请求
      * @return 解析到的令牌字符串，未找到返回 null
@@ -41,6 +41,6 @@ public final class AuthTokenResolver {
         if (StringUtils.isNotBlank(token)) {
             return token;
         }
-        return request.getParameter("token");
+        return null;
     }
 }

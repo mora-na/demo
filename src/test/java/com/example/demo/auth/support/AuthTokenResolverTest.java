@@ -23,14 +23,14 @@ class AuthTokenResolverTest {
     }
 
     @Test
-    void resolve_fallsBackToHeaderThenParameter() {
+    void resolve_fallsBackToHeaderOnly() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("X-Auth-Token", "header-token");
         assertEquals("header-token", AuthTokenResolver.resolve(request));
 
         MockHttpServletRequest requestWithParam = new MockHttpServletRequest();
         requestWithParam.setParameter("token", "param-token");
-        assertEquals("param-token", AuthTokenResolver.resolve(requestWithParam));
+        assertNull(AuthTokenResolver.resolve(requestWithParam));
     }
 
     @Test
