@@ -69,8 +69,12 @@ public class DataScopeResolver {
         if (roles == null || roles.isEmpty()) {
             return fallbackToUser(user, fallback);
         }
-        String bestType = null;
-        int bestPriority = -1;
+        boolean hasAll = false;
+        boolean hasSelf = false;
+        boolean hasNone = false;
+        boolean hasDept = false;
+        boolean hasDeptAndChild = false;
+        boolean hasCustomDept = false;
         Set<Long> customDeptIds = new LinkedHashSet<>();
         for (Role role : roles) {
             if (role == null) {
@@ -84,50 +88,44 @@ public class DataScopeResolver {
             if (type == null) {
                 continue;
             }
-            int priority = priorityOf(type);
-            if (priority > bestPriority) {
-                bestPriority = priority;
-                bestType = type;
-            }
-            if (DataScopeType.CUSTOM_DEPT.equals(type) || DataScopeType.CUSTOM.equals(type)) {
+            if (DataScopeType.ALL.equals(type)) {
+                hasAll = true;
+            } else if (DataScopeType.SELF.equals(type)) {
+                hasSelf = true;
+            } else if (DataScopeType.NONE.equals(type)) {
+                hasNone = true;
+            } else if (DataScopeType.DEPT.equals(type)) {
+                hasDept = true;
+            } else if (DataScopeType.DEPT_AND_CHILD.equals(type)) {
+                hasDeptAndChild = true;
+            } else if (DataScopeType.CUSTOM_DEPT.equals(type) || DataScopeType.CUSTOM.equals(type)) {
+                hasCustomDept = true;
                 customDeptIds.addAll(parseDeptIds(role.getDataScopeValue()));
             }
         }
-        if (bestType == null) {
-            return fallbackToUser(user, fallback);
+        if (hasAll) {
+            return new DataScopeResult(DataScopeType.ALL, null);
         }
-        if (DataScopeType.ALL.equals(bestType)) {
-            return new DataScopeResult(bestType, null);
+        LinkedHashSet<Long> deptIds = new LinkedHashSet<>();
+        if (hasDeptAndChild && user.getDeptId() != null) {
+            deptIds.addAll(resolveDeptTreeIds(user.getDeptId()));
         }
-        if (DataScopeType.SELF.equals(bestType)) {
-            return new DataScopeResult(bestType, null);
+        if (hasDept && user.getDeptId() != null) {
+            deptIds.add(user.getDeptId());
         }
-        if (DataScopeType.DEPT.equals(bestType)) {
-            if (user.getDeptId() == null) {
-                return new DataScopeResult(DataScopeType.NONE, null);
-            }
-            return new DataScopeResult(bestType, user.getDeptId().toString());
+        if (hasCustomDept) {
+            deptIds.addAll(customDeptIds);
         }
-        if (DataScopeType.DEPT_AND_CHILD.equals(bestType)) {
-            if (user.getDeptId() == null) {
-                return new DataScopeResult(DataScopeType.NONE, null);
-            }
-            List<Long> deptIds = resolveDeptTreeIds(user.getDeptId());
-            if (deptIds.isEmpty()) {
-                return new DataScopeResult(DataScopeType.NONE, null);
-            }
-            return new DataScopeResult(bestType, joinIds(deptIds));
+        if (!deptIds.isEmpty()) {
+            return new DataScopeResult(DataScopeType.CUSTOM_DEPT, joinIds(deptIds));
         }
-        if (DataScopeType.CUSTOM_DEPT.equals(bestType) || DataScopeType.CUSTOM.equals(bestType)) {
-            if (customDeptIds.isEmpty()) {
-                return new DataScopeResult(DataScopeType.NONE, null);
-            }
-            return new DataScopeResult(DataScopeType.CUSTOM_DEPT, joinIds(customDeptIds));
+        if (hasSelf) {
+            return new DataScopeResult(DataScopeType.SELF, null);
         }
-        if (DataScopeType.NONE.equals(bestType)) {
-            return new DataScopeResult(bestType, null);
+        if (hasNone || hasDept || hasDeptAndChild || hasCustomDept) {
+            return new DataScopeResult(DataScopeType.NONE, null);
         }
-        return new DataScopeResult(normalizeType(bestType, fallback), null);
+        return fallbackToUser(user, fallback);
     }
 
     private DataScopeResult fallbackToUser(User user, String fallback) {
@@ -205,28 +203,6 @@ public class DataScopeResolver {
 
     private String joinIds(Collection<Long> ids) {
         return ids.stream().map(String::valueOf).collect(Collectors.joining(","));
-    }
-
-    private int priorityOf(String type) {
-        if (DataScopeType.ALL.equals(type)) {
-            return 6;
-        }
-        if (DataScopeType.DEPT_AND_CHILD.equals(type)) {
-            return 5;
-        }
-        if (DataScopeType.DEPT.equals(type)) {
-            return 4;
-        }
-        if (DataScopeType.CUSTOM_DEPT.equals(type) || DataScopeType.CUSTOM.equals(type)) {
-            return 3;
-        }
-        if (DataScopeType.SELF.equals(type)) {
-            return 2;
-        }
-        if (DataScopeType.NONE.equals(type)) {
-            return 1;
-        }
-        return 0;
     }
 
     private String normalizeType(String value, String fallback) {
