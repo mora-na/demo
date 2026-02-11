@@ -1,7 +1,6 @@
 package com.example.demo.common.cache;
 
 import com.example.demo.common.cache.mapper.CacheMapper;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
@@ -70,24 +69,17 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
             return false;
         }
         CacheEntry entry = buildEntry(key, value, computeExpireAt(ttl));
-        try {
-            cacheMapper.insert(entry);
+        int inserted = cacheMapper.insertIgnore(entry);
+        if (inserted > 0) {
             enforceMaxRows();
             return true;
-        } catch (DuplicateKeyException ex) {
-            CacheEntry existing = cacheMapper.selectForUpdate(key);
-            if (existing == null) {
-                cacheMapper.insert(entry);
-                enforceMaxRows();
-                return true;
-            }
-            if (isExpired(existing)) {
-                cacheMapper.updateById(entry);
-                enforceMaxRows();
-                return true;
-            }
-            return false;
         }
+        int updated = cacheMapper.updateIfExpired(entry, System.currentTimeMillis());
+        if (updated > 0) {
+            enforceMaxRows();
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -109,29 +101,31 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
             cacheMapper.deleteById(key);
         }
         CacheEntry entry = buildEntry(key, 1L, null);
-        try {
-            cacheMapper.insert(entry);
+        int inserted = cacheMapper.insertIgnore(entry);
+        if (inserted > 0) {
             enforceMaxRows();
             return 1L;
-        } catch (DuplicateKeyException ex) {
-            CacheEntry locked = cacheMapper.selectForUpdate(key);
-            if (locked == null) {
-                cacheMapper.insert(entry);
-                enforceMaxRows();
-                return 1L;
-            }
-            if (isExpired(locked)) {
-                cacheMapper.updateById(entry);
-                enforceMaxRows();
-                return 1L;
-            }
-            Object value = serializer.deserialize(locked.getCacheValue(), locked.getValueClass());
-            long next = parseLong(value) + 1;
-            locked.setCacheValue(serializer.serialize(next));
-            locked.setValueClass(Long.class.getName());
-            cacheMapper.updateById(locked);
-            return next;
         }
+        CacheEntry locked = cacheMapper.selectForUpdate(key);
+        if (locked == null) {
+            int retryInserted = cacheMapper.insertIgnore(entry);
+            if (retryInserted > 0) {
+                enforceMaxRows();
+                return 1L;
+            }
+            return 1L;
+        }
+        if (isExpired(locked)) {
+            cacheMapper.updateById(entry);
+            enforceMaxRows();
+            return 1L;
+        }
+        Object value = serializer.deserialize(locked.getCacheValue(), locked.getValueClass());
+        long next = parseLong(value) + 1;
+        locked.setCacheValue(serializer.serialize(next));
+        locked.setValueClass(Long.class.getName());
+        cacheMapper.updateById(locked);
+        return next;
     }
 
     @Override
@@ -203,10 +197,8 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
     }
 
     private void upsert(CacheEntry entry) {
-        CacheEntry existing = cacheMapper.selectById(entry.getCacheKey());
-        if (existing == null) {
-            cacheMapper.insert(entry);
-        } else {
+        int inserted = cacheMapper.insertIgnore(entry);
+        if (inserted == 0) {
             cacheMapper.updateById(entry);
         }
     }

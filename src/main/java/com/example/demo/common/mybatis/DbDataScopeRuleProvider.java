@@ -24,23 +24,23 @@ public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
     private static final String DATA_SCOPE_RULE_KEY = "data-scope:rules";
     private final ObjectProvider<DataScopeRuleService> dataScopeRuleServiceProvider;
     private final DataScopeProperties properties;
-    private final CacheTool cacheTool;
+    private final ObjectProvider<CacheTool> cacheToolProvider;
 
     /**
      * 构造函数，注入规则服务提供者与缓存配置。
      *
      * @param dataScopeRuleServiceProvider 规则服务提供者
      * @param properties                   数据范围配置
-     * @param cacheTool                    缓存工具
+     * @param cacheToolProvider            缓存工具提供者
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     public DbDataScopeRuleProvider(ObjectProvider<DataScopeRuleService> dataScopeRuleServiceProvider,
                                    DataScopeProperties properties,
-                                   CacheTool cacheTool) {
+                                   ObjectProvider<CacheTool> cacheToolProvider) {
         this.dataScopeRuleServiceProvider = dataScopeRuleServiceProvider;
         this.properties = properties;
-        this.cacheTool = cacheTool;
+        this.cacheToolProvider = cacheToolProvider;
     }
 
     /**
@@ -56,12 +56,15 @@ public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
         if (ttlSeconds <= 0) {
             return safeMap(fetchRules());
         }
-        Map<String, String> cached = readCache();
+        CacheTool cacheTool = cacheToolProvider.getIfAvailable();
+        Map<String, String> cached = readCache(cacheTool);
         if (cached != null) {
             return cached;
         }
         Map<String, String> fresh = safeMap(fetchRules());
-        cacheTool.set(DATA_SCOPE_RULE_KEY, fresh, Duration.ofSeconds(ttlSeconds));
+        if (cacheTool != null) {
+            cacheTool.set(DATA_SCOPE_RULE_KEY, fresh, Duration.ofSeconds(ttlSeconds));
+        }
         return fresh;
     }
 
@@ -103,7 +106,10 @@ public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
      * @date 2026/2/9
      */
     @SuppressWarnings("unchecked")
-    private Map<String, String> readCache() {
+    private Map<String, String> readCache(CacheTool cacheTool) {
+        if (cacheTool == null) {
+            return null;
+        }
         Object value = cacheTool.get(DATA_SCOPE_RULE_KEY);
         if (value == null) {
             return null;
