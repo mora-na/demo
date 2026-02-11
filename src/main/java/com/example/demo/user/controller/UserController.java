@@ -7,7 +7,6 @@ import com.example.demo.common.model.PageResult;
 import com.example.demo.common.tool.ExcelTool;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
-import com.example.demo.user.config.UserConfig;
 import com.example.demo.user.converter.UserConverter;
 import com.example.demo.user.dto.UserQuery;
 import com.example.demo.user.dto.UserVO;
@@ -16,7 +15,6 @@ import com.example.demo.user.service.UserService;
 import com.example.demo.user.service.UserViewService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -39,7 +37,6 @@ public class UserController extends BaseController {
     private final UserService userService;
     private final UserViewService userViewService;
     private final UserConverter userConverter;
-    private final UserConfig userConfig;
 
     @RequestMapping("/selectUsers1")
     @RequirePermission("user:query")
@@ -74,18 +71,6 @@ public class UserController extends BaseController {
         List<User> users = userService.selectUsers(query);
         PageResult<User> pageResult = getPageResult(users);
         return new PageResult<>(pageResult.getTotal(), userViewService.toViewList(pageResult.getData()), pageResult.getPageNum(), pageResult.getPageSize());
-    }
-
-    @GetMapping("/getKeyValue")
-    @RequirePermission("user:config:read")
-    public CommonResult<Object> getKeyValue(String key) {
-        log.info("Received request to getKeyValue,key:[{}]", key);
-        if (StringUtils.isBlank(key)) {
-            return error(i18n("user.config.key.empty"));
-        }
-        Object value = userConfig.getConfig() == null ? null : userConfig.getConfig().get(key);
-        log.info("key:[{}],value:[{}]", key, value);
-        return success(value);
     }
 
     @GetMapping("/export")

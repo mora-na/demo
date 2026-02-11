@@ -22,25 +22,6 @@ logging:
     # Spring Web 日志级别
     org.springframework.web: warn
 
-# 用户自定义配置
-user:
-  # 用户配置集合
-  config:
-    # 示例姓名
-    name: zhangsan
-    # 示例年龄
-    age: 18
-    # 示例角色列表
-    roles:
-      - admin # 角色：admin
-      - user  # 角色：user
-    # 示例扩展配置
-    settings:
-      # 主题配置
-      theme: dark
-      # 通知开关
-      notify: true
-
 # 认证配置
 auth:
   # JWT 配置
@@ -148,7 +129,7 @@ spring:
           # JDBC 连接地址
           url: jdbc:postgresql://localhost:5432/test?currentSchema=test
           # 数据库用户名
-          username: angelabeini
+          username: panpan
           # 数据库密码 admin
           password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
           # JDBC 驱动类

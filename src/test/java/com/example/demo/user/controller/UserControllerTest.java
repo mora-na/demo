@@ -26,7 +26,6 @@ import com.example.demo.permission.mapper.PermissionMapper;
 import com.example.demo.permission.mapper.RoleMapper;
 import com.example.demo.permission.mapper.RolePermissionMapper;
 import com.example.demo.permission.mapper.UserRoleMapper;
-import com.example.demo.user.config.UserConfig;
 import com.example.demo.user.converter.UserConverter;
 import com.example.demo.user.dto.UserQuery;
 import com.example.demo.user.dto.UserVO;
@@ -49,8 +48,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -75,9 +72,6 @@ class UserControllerTest {
 
     @MockBean
     private UserConverter userConverter;
-
-    @MockBean
-    private UserConfig userConfig;
 
     @MockBean
     private AuthProperties authProperties;
@@ -193,18 +187,6 @@ class UserControllerTest {
         mockMvc.perform(get("/hello/selectUsers5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].userName").value("alice"));
-    }
-
-    @Test
-    void getKeyValue_returnsConfigValue() throws Exception {
-        Map<String, Object> config = new HashMap<>();
-        config.put("theme", "light");
-        when(userConfig.getConfig()).thenReturn(config);
-
-        mockMvc.perform(get("/hello/getKeyValue").param("key", "theme"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data").value("light"));
     }
 
     @Test
