@@ -40,14 +40,13 @@ public class PasswordService {
             return false;
         }
         String mode = normalizeMode(authProperties.getPassword().getMode());
-        if ("bcrypt".equals(mode)) {
-            return bcryptPasswordEncoder.matches(rawPassword, encodedPassword);
-        }
-        if ("md5".equals(mode)) {
-            return md5(rawPassword).equalsIgnoreCase(encodedPassword);
-        }
-        if ("sm3".equals(mode)) {
-            return sm3(rawPassword).equalsIgnoreCase(encodedPassword);
+        switch (mode) {
+            case "bcrypt":
+                return bcryptPasswordEncoder.matches(rawPassword, encodedPassword);
+            case "md5":
+                return md5(rawPassword).equalsIgnoreCase(encodedPassword);
+            case "sm3":
+                return sm3(rawPassword).equalsIgnoreCase(encodedPassword);
         }
         return rawPassword.equals(encodedPassword);
     }
@@ -63,22 +62,21 @@ public class PasswordService {
             return null;
         }
         String mode = normalizeTransportMode(authProperties.getPassword().getTransportMode());
-        if ("plain".equals(mode)) {
-            return cipherText;
-        }
-        if ("base64".equals(mode)) {
-            try {
-                byte[] decoded = Base64.getDecoder().decode(cipherText);
-                return new String(decoded, StandardCharsets.UTF_8);
-            } catch (IllegalArgumentException ex) {
-                return null;
-            }
-        }
-        if ("aes".equals(mode) || "aes-gcm".equals(mode)) {
-            return decryptAesGcm(cipherText, authProperties.getPassword().getTransportKey());
-        }
-        if ("sm2".equals(mode)) {
-            return decryptSm2(cipherText, authProperties.getPassword().getTransportSm2PrivateKey());
+        switch (mode) {
+            case "plain":
+                return cipherText;
+            case "base64":
+                try {
+                    byte[] decoded = Base64.getDecoder().decode(cipherText);
+                    return new String(decoded, StandardCharsets.UTF_8);
+                } catch (IllegalArgumentException ex) {
+                    return null;
+                }
+            case "aes":
+            case "aes-gcm":
+                return decryptAesGcm(cipherText, authProperties.getPassword().getTransportKey());
+            case "sm2":
+                return decryptSm2(cipherText, authProperties.getPassword().getTransportSm2PrivateKey());
         }
         return cipherText;
     }
@@ -141,14 +139,13 @@ public class PasswordService {
             return null;
         }
         String mode = normalizeMode(authProperties.getPassword().getMode());
-        if ("bcrypt".equals(mode)) {
-            return bcryptPasswordEncoder.encode(rawPassword);
-        }
-        if ("md5".equals(mode)) {
-            return md5(rawPassword);
-        }
-        if ("sm3".equals(mode)) {
-            return sm3(rawPassword);
+        switch (mode) {
+            case "bcrypt":
+                return bcryptPasswordEncoder.encode(rawPassword);
+            case "md5":
+                return md5(rawPassword);
+            case "sm3":
+                return sm3(rawPassword);
         }
         return rawPassword;
     }

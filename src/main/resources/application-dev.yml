@@ -58,14 +58,14 @@ auth:
     salt: "4a97HT87*7&s649c-49f3-./9nTsdn^5$1becc50a*7!4e4"
     # 默认密码（支持使用环境变量覆盖）
     default-password: ${AUTH_DEFAULT_PASSWORD:ENC(hf7z4h+P3Ranjc8Ana8ZQg==)}
-    # 登录密码传输模式：plain/base64/aes-gcm/sm2
-    transport-mode: plain
+    # 登录密码传输模式(前后端接口)：plain/base64/aes-gcm/sm2
+    transport-mode: sm2
     # AES-GCM Base64 密钥（建议使用环境变量覆盖）
     transport-key: ${AUTH_PASSWORD_TRANSPORT_KEY:ENC(hf7z4h+P3Ranjc8Ana8ZQg==)}
     # SM2 私钥（Base64 PKCS8，transport-mode=sm2）
-    transport-sm2-private-key: ${AUTH_PASSWORD_TRANSPORT_SM2_PRIVATE_KEY:}
+    transport-sm2-private-key: ${AUTH_PASSWORD_TRANSPORT_SM2_PRIVATE_KEY:MIGHAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBG0wawIBAQQgEhmrsLBHrOHhxkRBmLM864SidDpb904x/YNHRfuuxl2hRANCAAQENOaxpHWlFIVreHZMxLEvoKp9js5DOIMpIXQis6YOxzZJoaPd3XIqZaqjmnIa0+kUkFqVgthwFEKGxPjG8FpA}
     # SM2 公钥（Base64 X.509，提供前端加密使用）
-    transport-sm2-public-key: ${AUTH_PASSWORD_TRANSPORT_SM2_PUBLIC_KEY:}
+    transport-sm2-public-key: ${AUTH_PASSWORD_TRANSPORT_SM2_PUBLIC_KEY:MFkwEwYHKoZIzj0CAQYIKoEcz1UBgi0DQgAEBDTmsaR1pRSFa3h2TMSxL6CqfY7OQziDKSF0IrOmDsc2SaGj3d1yKmWqo5pyGtPpFJBalYLYcBRChsT4xvBaQA==}
     # 强密码校验开关
     strong-check-enabled: true
     # 强密码最小长度（pattern为空时生效）
