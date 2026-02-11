@@ -13,18 +13,19 @@
       </div>
       <div class="home-actions">
         <el-button type="primary" size="large">进入仪表盘</el-button>
-        <el-button text type="primary" @click="handleLogout">退出登录</el-button>
+        <el-button text type="primary" :loading="loggingOut" @click="handleLogout">退出登录</el-button>
       </div>
     </section>
 
     <section class="nav-grid">
-      <el-card v-for="item in navItems" :key="item.title" class="nav-card" shadow="hover">
-        <div class="nav-meta">{{ item.tag }}</div>
-        <h3>{{ item.title }}</h3>
-        <p>{{ item.desc }}</p>
+      <el-empty v-if="!menuItems.length" description="暂无可访问菜单" />
+      <el-card v-for="menu in menuItems" v-else :key="menu.id" class="nav-card" shadow="hover">
+        <div class="nav-meta">{{ menu.code || "菜单" }}</div>
+        <h3>{{ menu.name }}</h3>
+        <p>{{ menuDescription(menu) }}</p>
         <div class="nav-actions">
           <el-button type="primary" link>进入</el-button>
-          <span class="nav-hint">{{ item.hint }}</span>
+          <span class="nav-hint">{{ menuHint(menu) }}</span>
         </div>
       </el-card>
     </section>
@@ -36,60 +37,104 @@
         <div class="meta-note">已同步至本地存储。</div>
       </el-card>
       <el-card class="meta-card" shadow="never">
+        <div class="meta-title">角色信息</div>
+        <div class="meta-value">{{ roleSummary }}</div>
+        <div class="meta-note">来自当前用户角色配置。</div>
+      </el-card>
+      <el-card class="meta-card" shadow="never">
+        <div class="meta-title">权限数量</div>
+        <div class="meta-value">{{ permissionSummary }}</div>
+        <div class="meta-note">包含角色权限与菜单权限。</div>
+      </el-card>
+      <el-card class="meta-card" shadow="never">
         <div class="meta-title">会话令牌</div>
         <div class="meta-token">{{ authStore.token }}</div>
         <div class="meta-note">用于调用后端受保护接口。</div>
-      </el-card>
-      <el-card class="meta-card" shadow="never">
-        <div class="meta-title">安全策略</div>
-        <div class="meta-value">验证码 + 传输加密</div>
-        <div class="meta-note">与服务端配置一致。</div>
       </el-card>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
-import {computed} from "vue";
+import {computed, onMounted, ref} from "vue";
+import {ElMessage} from "element-plus";
+import {logout} from "../api/auth";
 import {useAuthStore} from "../stores/auth";
 
 defineProps<{transportMode: string}>();
 const emit = defineEmits<{(e: "logout"): void}>();
 
 const authStore = useAuthStore();
-const displayName = computed(() => authStore.userName || "用户");
+const displayName = computed(
+  () => authStore.profile?.nickName || authStore.profile?.userName || authStore.userName || "用户"
+);
+const loggingOut = ref(false);
+const loadingProfile = ref(false);
 
-const navItems = [
-  {
-    title: "用户与权限",
-    desc: "管理账号、角色分配与权限策略。",
-    tag: "核心模块",
-    hint: "权限策略"
-  },
-  {
-    title: "系统设置",
-    desc: "配置验证码、密钥与安全策略。",
-    tag: "配置中心",
-    hint: "安全策略"
-  },
-  {
-    title: "接口监控",
-    desc: "查看接口运行状态与调用日志。",
-    tag: "可观测性",
-    hint: "接口日志"
-  },
-  {
-    title: "数据看板",
-    desc: "追踪关键指标与告警状态。",
-    tag: "洞察",
-    hint: "指标趋势"
-  }
-];
+const menuItems = computed(() => authStore.menus || []);
+const roleSummary = computed(() => (authStore.roles.length ? authStore.roles.join(" / ") : "未分配"));
+const permissionSummary = computed(() => `${authStore.permissions.length} 项`);
 
-function handleLogout() {
-  authStore.clearSession();
-  emit("logout");
+function getErrorMessage(error: unknown, fallback: string): string {
+  const err = error as {response?: {data?: {message?: string}}; message?: string};
+  return err?.response?.data?.message || err?.message || fallback;
 }
+
+function menuDescription(menu: {remark?: string; path?: string; permission?: string}) {
+  return menu.remark || menu.path || menu.permission || "未配置描述";
+}
+
+function menuHint(menu: {children?: unknown[]}) {
+  const total = menu.children?.length || 0;
+  return total ? `${total} 个子菜单` : "无子菜单";
+}
+
+async function loadProfile() {
+  if (loadingProfile.value) {
+    return;
+  }
+  if (authStore.profileLoaded) {
+    return;
+  }
+  loadingProfile.value = true;
+  try {
+    const result = await authStore.loadProfile();
+    if (!result.ok) {
+      ElMessage.warning(result.message || "用户信息加载失败");
+    }
+  } finally {
+    loadingProfile.value = false;
+  }
+}
+
+async function handleLogout() {
+  if (loggingOut.value) {
+    return;
+  }
+  const token = authStore.token;
+  if (!token) {
+    authStore.clearSession();
+    emit("logout");
+    return;
+  }
+  loggingOut.value = true;
+  try {
+    const result = await logout(token);
+    if (result?.code === 200) {
+      ElMessage.success(result?.message || "已退出登录");
+      authStore.clearSession();
+      emit("logout");
+    } else {
+      ElMessage.error(result?.message || "退出登录失败");
+    }
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, "退出登录失败"));
+  } finally {
+    loggingOut.value = false;
+  }
+}
+
+onMounted(loadProfile);
 </script>
 
 <style scoped>
@@ -141,6 +186,10 @@ function handleLogout() {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
+}
+
+.nav-grid :deep(.el-empty) {
+  grid-column: 1 / -1;
 }
 
 .nav-card {

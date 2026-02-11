@@ -17,6 +17,40 @@ export interface LoginData {
   token: string;
 }
 
+export interface UserProfileInfo {
+  id: number;
+  userName: string;
+  nickName: string;
+  deptId: number | null;
+  dataScopeType: string;
+  dataScopeValue: string;
+}
+
+export interface MenuTree {
+  id: number;
+  name: string;
+  code: string;
+  parentId: number | null;
+  path: string;
+  component: string;
+  permission: string;
+  status: number;
+  sort: number;
+  remark: string;
+  children?: MenuTree[];
+}
+
+export interface UserProfileResponse {
+  user: UserProfileInfo;
+  roles: string[];
+  permissions: string[];
+  menus: MenuTree[];
+}
+
+export interface LogoutPayload {
+  token?: string;
+}
+
 export interface ApiResponse<T> {
   code: number;
   message?: string;
@@ -36,5 +70,16 @@ export async function login(payload: LoginPayload): Promise<ApiResponse<LoginDat
     captchaId: payload.captchaId,
     captchaCode: payload.captchaCode
   });
+  return response.data;
+}
+
+export async function logout(token?: string): Promise<ApiResponse<void>> {
+  const headers = token ? {Authorization: `Bearer ${token}`} : undefined;
+  const response = await api.post<ApiResponse<void>>("/auth/logout", {token}, {headers});
+  return response.data;
+}
+
+export async function fetchProfile(): Promise<ApiResponse<UserProfileResponse>> {
+  const response = await api.get<ApiResponse<UserProfileResponse>>("/auth/profile");
   return response.data;
 }

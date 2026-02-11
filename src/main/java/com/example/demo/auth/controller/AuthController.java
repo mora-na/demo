@@ -1,17 +1,13 @@
 package com.example.demo.auth.controller;
 
-import com.example.demo.auth.dto.CaptchaResponse;
-import com.example.demo.auth.dto.LoginRequest;
-import com.example.demo.auth.dto.LoginResponse;
-import com.example.demo.auth.dto.LogoutRequest;
+import com.example.demo.auth.dto.*;
+import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
-import com.example.demo.auth.service.CaptchaService;
-import com.example.demo.auth.service.LoginAttemptService;
-import com.example.demo.auth.service.PasswordService;
-import com.example.demo.auth.service.TokenService;
+import com.example.demo.auth.service.*;
 import com.example.demo.auth.support.AuthTokenResolver;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
+import com.example.demo.common.web.permission.RequireLogin;
 import com.example.demo.user.entity.User;
 import com.example.demo.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +33,7 @@ public class AuthController extends BaseController {
     private final PasswordService passwordService;
     private final UserService userService;
     private final LoginAttemptService loginAttemptService;
+    private final UserProfileService userProfileService;
 
     /**
      * 生成验证码并返回验证码 ID 与图片数据。
@@ -126,5 +123,16 @@ public class AuthController extends BaseController {
         }
         tokenService.revoke(token);
         return success(i18n("auth.logout.success"));
+    }
+
+    /**
+     * 获取当前登录用户画像信息。
+     *
+     * @return 用户画像信息
+     */
+    @GetMapping("/profile")
+    @RequireLogin
+    public CommonResult<UserProfileResponse> profile() {
+        return success(userProfileService.buildProfile(AuthContext.get()));
     }
 }

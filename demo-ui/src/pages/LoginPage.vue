@@ -160,6 +160,10 @@ async function handleSubmit() {
     const result = await login({...form});
     if (result?.code === 200 && result.data?.token) {
       authStore.setSession(result.data.token, form.userName);
+      const profileResult = await authStore.loadProfile(true);
+      if (!profileResult.ok) {
+        ElMessage.warning(profileResult.message || "用户信息加载失败");
+      }
       ElMessage.success(`欢迎，${form.userName}！`);
       form.password = "";
       form.captchaCode = "";
