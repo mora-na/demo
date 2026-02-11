@@ -5,6 +5,7 @@ import com.example.demo.auth.dto.CaptchaResponse;
 import com.example.demo.auth.dto.LoginResponse;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.auth.service.CaptchaService;
+import com.example.demo.auth.service.LoginAttemptService;
 import com.example.demo.auth.service.PasswordService;
 import com.example.demo.auth.service.TokenService;
 import com.example.demo.auth.web.AuthTokenFilter;
@@ -73,6 +74,9 @@ class AuthControllerTest {
 
     @MockBean
     private AuthProperties authProperties;
+
+    @MockBean
+    private LoginAttemptService loginAttemptService;
 
     @MockBean
     private PermissionService permissionService;

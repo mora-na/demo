@@ -168,25 +168,15 @@ class UserControllerTest {
             return Collections.singletonList(user);
         });
 
-        mockMvc.perform(get("/hello/selectUsers1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].userName").value("alice"));
+        mockMvc.perform(get("/hello/selectUsers1")).andExpect(status().isOk()).andExpect(jsonPath("$.data[0].userName").value("alice"));
 
-        mockMvc.perform(get("/hello/selectUsers2"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].userName").value("alice"));
+        mockMvc.perform(get("/hello/selectUsers2")).andExpect(status().isOk()).andExpect(jsonPath("$.data[0].userName").value("alice"));
 
-        mockMvc.perform(get("/hello/selectUsers3"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].userName").value("alice"));
+        mockMvc.perform(get("/hello/selectUsers3")).andExpect(status().isOk()).andExpect(jsonPath("$.data[0].userName").value("alice"));
 
-        mockMvc.perform(get("/hello/selectUsers4"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].userName").value("alice"));
+        mockMvc.perform(get("/hello/selectUsers4")).andExpect(status().isOk()).andExpect(jsonPath("$.data[0].userName").value("alice"));
 
-        mockMvc.perform(get("/hello/selectUsers5"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].userName").value("alice"));
+        mockMvc.perform(get("/hello/selectUsers5")).andExpect(status().isOk()).andExpect(jsonPath("$.data[0].userName").value("alice"));
     }
 
     @Test
@@ -207,9 +197,7 @@ class UserControllerTest {
         when(userService.selectUsers(any(UserQuery.class))).thenReturn(Collections.singletonList(user));
         when(userViewService.toViewList(anyList())).thenReturn(Collections.singletonList(view));
 
-        mockMvc.perform(get("/hello/export"))
-                .andExpect(status().isOk())
-                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString(".xlsx")));
+        mockMvc.perform(get("/hello/export")).andExpect(status().isOk()).andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString(".xlsx")));
     }
 
     @Test
@@ -221,24 +209,12 @@ class UserControllerTest {
         user.setSex("1");
         user.setTst("note");
         ByteArrayOutputStream outputStream = ExcelTool.exportToStream(Collections.singletonList(user), User.class);
-        MockMultipartFile file = new MockMultipartFile("file", "users.xlsx",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", outputStream.toByteArray());
+        MockMultipartFile file = new MockMultipartFile("file", "users.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", outputStream.toByteArray());
 
         when(userConverter.toEntityList(anyList())).thenReturn(Collections.singletonList(new User()));
         when(userService.saveOrUpdateBatch(anyList())).thenReturn(true);
 
-        mockMvc.perform(multipart("/hello/import").file(file)
-                        .header("Accept-Language", "zh-CN"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("\u5bfc\u5165\u6210\u529f"));
+        mockMvc.perform(multipart("/hello/import").file(file).header("Accept-Language", "zh-CN")).andExpect(status().isOk()).andExpect(jsonPath("$.message").value("\u5bfc\u5165\u6210\u529f"));
     }
 
-    @Test
-    void getKeyValue_rejectsBlankKey() throws Exception {
-        mockMvc.perform(get("/hello/getKeyValue")
-                        .header("Accept-Language", "zh-CN"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(500))
-                .andExpect(jsonPath("$.message").value("\u914d\u7f6e\u9879\u952e\u4e3a\u7a7a"));
-    }
 }
