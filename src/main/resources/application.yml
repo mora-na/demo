@@ -50,8 +50,11 @@ mybatis-plus:
     lazy-loading-enabled: true
     # 是否启用激进懒加载
     aggressive-lazy-loading: false
-    # SQL 日志实现类
-    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+# SQL 日志配置
+sql-log:
+  # 是否打印 SQL（关闭后禁用 MyBatis SQL 日志）
+  enabled: false
 
 # Excel 导出性能配置
 excel:
@@ -64,9 +67,9 @@ excel:
     # 是否启用共享字符串表
     use-shared-strings: false
     # 是否启用列宽自动计算
-    auto-size: false
+    auto-size: true
     # 自动列宽允许的最大行数
-    auto-size-max-rows: 2000
+    auto-size-max-rows: 30
     # 分页时是否执行 count 查询
     count-enabled: false
     # 是否压缩临时文件
@@ -91,7 +94,7 @@ logging:
     # 滚动策略配置
     rollingpolicy:
       # 日志文件命名模式
-      file-name-pattern: 'logs/demo.log%d{yyyy-MM-dd}.log'
+      file-name-pattern: 'logs/${spring.application.name}%d{yyyy-MM-dd}.log'
       # 保留历史天数
       max-history: 30
       # 日志总大小上限

@@ -8,19 +8,28 @@ logging:
   # 日志文件配置
   file:
     # 日志文件路径
-    name: logs/demo.log
+    name: logs/${spring.application.name}.log
   # 日志级别配置
   level:
-    # 根日志级别
+    # 根日志级别（未命中包名规则时使用）
     root: info
-    # 业务包日志级别
+    # 业务包通用级别（覆盖 root，便于开发调试）
     com: debug
-    # 兼容包日志级别
+    # 兼容历史包名前缀（避免漏日志）
     cn.com: debug
-    # Spring 核心日志级别
+    # Spring 核心日志级别（建议 warn 以减少噪音）
     org.springframework: warn
-    # Spring Web 日志级别
+    # Spring Web 日志级别（请求链路相关）
     org.springframework.web: warn
+    # 动态数据源切换日志（如 DynamicRoutingDataSource）
+    com.baomidou.dynamic.datasource: debug
+    # Druid 连接池内部日志（如 PreparedStatementPool）
+    com.alibaba.druid: debug
+
+# SQL 日志配置
+sql-log:
+  # 是否打印 SQL
+  enabled: true
 
 # 认证配置
 auth:

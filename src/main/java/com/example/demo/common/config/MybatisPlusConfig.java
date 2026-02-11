@@ -1,7 +1,10 @@
 package com.example.demo.common.config;
 
+import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.example.demo.common.mybatis.*;
+import org.apache.ibatis.logging.nologging.NoLoggingImpl;
+import org.apache.ibatis.logging.slf4j.Slf4jImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -36,5 +39,24 @@ public class MybatisPlusConfig {
             interceptor.addInnerInterceptor(new DataScopeInnerInterceptor(dataScopeProperties, dataScopeRuleProvider));
         }
         return interceptor;
+    }
+
+    /**
+     * 根据配置开关控制 MyBatis SQL 日志输出。
+     *
+     * @param sqlLogProperties SQL 日志配置
+     * @return 配置自定义器
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/11
+     */
+    @Bean
+    public ConfigurationCustomizer mybatisConfigurationCustomizer(SqlLogProperties sqlLogProperties) {
+        return configuration -> {
+            if (sqlLogProperties.isEnabled()) {
+                configuration.setLogImpl(Slf4jImpl.class);
+            } else {
+                configuration.setLogImpl(NoLoggingImpl.class);
+            }
+        };
     }
 }
