@@ -1,12 +1,12 @@
 <template>
-  <div class="page">
+  <div class="page" :class="{ 'page--home': currentView === 'home' }">
     <div class="halo"></div>
     <LoginPage
       v-if="currentView === 'login'"
       :transport-mode="transportMode"
       @login-success="handleLoginSuccess"
     />
-    <HomePage v-else :transport-mode="transportMode" @logout="handleLogout" />
+    <HomePage v-else @logout="handleLogout" />
   </div>
 </template>
 
@@ -40,6 +40,13 @@ function handleLogout() {
   overflow: hidden;
 }
 
+.page--home {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding-top: 0;
+  padding-bottom: 24px;
+}
+
 .page::before,
 .page::after {
   content: "";
@@ -52,7 +59,7 @@ function handleLogout() {
 .page::before {
   width: 420px;
   height: 420px;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 107, 74, 0.55), rgba(255, 107, 74, 0));
+  background: radial-gradient(circle at 30% 30%, rgba(43, 124, 255, 0.5), rgba(43, 124, 255, 0));
   top: -140px;
   left: -160px;
 }
@@ -73,8 +80,8 @@ function handleLogout() {
   background: conic-gradient(
     from 90deg,
     rgba(255, 255, 255, 0.4),
-    rgba(255, 107, 74, 0.18),
-    rgba(43, 124, 255, 0.2),
+    rgba(25, 183, 255, 0.18),
+    rgba(43, 124, 255, 0.22),
     rgba(255, 255, 255, 0.4)
   );
   opacity: 0.35;

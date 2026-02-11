@@ -347,7 +347,7 @@ onMounted(loadCaptcha);
 .login-submit {
   width: 100%;
   margin-top: 8px;
-  box-shadow: 0 12px 24px rgba(255, 107, 74, 0.28);
+  box-shadow: 0 12px 24px rgba(43, 124, 255, 0.28);
   position: relative;
   overflow: hidden;
   transition: transform 0.18s ease, box-shadow 0.2s ease;
@@ -364,7 +364,7 @@ onMounted(loadCaptcha);
 
 .login-submit.is-loading {
   transform: translateY(1px);
-  box-shadow: 0 10px 18px rgba(255, 107, 74, 0.24);
+  box-shadow: 0 10px 18px rgba(43, 124, 255, 0.24);
 }
 
 .login-submit.is-loading::after {
