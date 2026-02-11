@@ -47,9 +47,6 @@
               <h2>欢迎回来</h2>
               <p>请验证身份后继续。</p>
             </div>
-            <el-button text type="primary" @click="loadCaptcha" :disabled="loading">
-              刷新验证码
-            </el-button>
           </div>
         </template>
 
@@ -95,6 +92,7 @@
             size="large"
             native-type="submit"
             :loading="loading"
+            :class="{ 'is-loading': loading }"
             @click="handleSubmit"
           >
             登录
@@ -150,6 +148,9 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 async function handleSubmit() {
+  if (loading.value) {
+    return;
+  }
   if (!form.userName || !form.password || !form.captchaCode) {
     ElMessage.warning("请填写所有字段。");
     return;
@@ -165,11 +166,9 @@ async function handleSubmit() {
         ElMessage.warning(profileResult.message || "用户信息加载失败");
       }
       ElMessage.success(`欢迎，${form.userName}！`);
+      emit("login-success");
       form.password = "";
       form.captchaCode = "";
-      setTimeout(() => {
-        emit("login-success");
-      }, 900);
     } else {
       ElMessage.error(result?.message || "登录失败");
       form.captchaCode = "";
@@ -349,6 +348,41 @@ onMounted(loadCaptcha);
   width: 100%;
   margin-top: 8px;
   box-shadow: 0 12px 24px rgba(255, 107, 74, 0.28);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.2s ease;
+}
+
+.login-submit::after {
+  content: "";
+  position: absolute;
+  inset: -40% -20%;
+  background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
+  opacity: 0;
+  transform: translateX(-60%);
+}
+
+.login-submit.is-loading {
+  transform: translateY(1px);
+  box-shadow: 0 10px 18px rgba(255, 107, 74, 0.24);
+}
+
+.login-submit.is-loading::after {
+  opacity: 1;
+  animation: login-shimmer 1.1s linear infinite;
+}
+
+.login-submit:active {
+  transform: translateY(2px) scale(0.99);
+}
+
+@keyframes login-shimmer {
+  0% {
+    transform: translateX(-60%);
+  }
+  100% {
+    transform: translateX(60%);
+  }
 }
 
 .helper {
