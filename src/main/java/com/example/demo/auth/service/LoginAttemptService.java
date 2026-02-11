@@ -1,9 +1,9 @@
 package com.example.demo.auth.service;
 
 import com.example.demo.auth.config.AuthProperties;
+import com.example.demo.common.cache.CacheTool;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
@@ -12,7 +12,7 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Login failure limiter backed by Redis counters.
+ * 登录失败限制，基于缓存计数器。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
@@ -24,7 +24,7 @@ public class LoginAttemptService {
     private static final String FAIL_KEY_PREFIX = "auth:login:fail:";
     private static final String LOCK_KEY_PREFIX = "auth:login:lock:";
 
-    private final StringRedisTemplate stringRedisTemplate;
+    private final CacheTool cacheTool;
     private final AuthProperties authProperties;
 
     /**
@@ -52,7 +52,7 @@ public class LoginAttemptService {
         if (identity == null) {
             return false;
         }
-        return stringRedisTemplate.hasKey(buildLockKey(identity));
+        return cacheTool.hasKey(buildLockKey(identity));
     }
 
     /**
@@ -80,7 +80,7 @@ public class LoginAttemptService {
         if (identity == null) {
             return 0;
         }
-        long remaining = stringRedisTemplate.getExpire(buildLockKey(identity), TimeUnit.SECONDS);
+        long remaining = cacheTool.getExpire(buildLockKey(identity), TimeUnit.SECONDS);
         if (remaining > 0) {
             return remaining;
         }
@@ -116,24 +116,24 @@ public class LoginAttemptService {
         int lockSeconds = Math.max(1, limit.getLockSeconds());
         int windowSeconds = Math.max(1, limit.getWindowSeconds());
         String lockKey = buildLockKey(identity);
-        if (stringRedisTemplate.hasKey(lockKey)) {
+        if (cacheTool.hasKey(lockKey)) {
             return;
         }
         String failKey = buildFailKey(identity);
         Duration ttl = Duration.ofSeconds(windowSeconds);
-        Boolean created = stringRedisTemplate.opsForValue().setIfAbsent(failKey, "1", ttl);
+        Boolean created = cacheTool.setIfAbsent(failKey, "1", ttl);
         long count = 1;
         if (!Boolean.TRUE.equals(created)) {
-            Long updated = stringRedisTemplate.opsForValue().increment(failKey);
+            Long updated = cacheTool.increment(failKey);
             count = updated == null ? 0 : updated;
         }
         if (count >= maxErrors) {
-            stringRedisTemplate.opsForValue().set(lockKey, "1", Duration.ofSeconds(lockSeconds));
-            stringRedisTemplate.delete(failKey);
+            cacheTool.set(lockKey, "1", Duration.ofSeconds(lockSeconds));
+            cacheTool.delete(failKey);
             return;
         }
         // Sliding window: refresh TTL on each failure.
-        stringRedisTemplate.expire(failKey, windowSeconds, TimeUnit.SECONDS);
+        cacheTool.expire(failKey, windowSeconds, TimeUnit.SECONDS);
     }
 
     /**
@@ -159,8 +159,8 @@ public class LoginAttemptService {
         if (identity == null) {
             return;
         }
-        stringRedisTemplate.delete(buildFailKey(identity));
-        stringRedisTemplate.delete(buildLockKey(identity));
+        cacheTool.delete(buildFailKey(identity));
+        cacheTool.delete(buildLockKey(identity));
     }
 
     private boolean isDisabled() {

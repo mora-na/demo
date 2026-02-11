@@ -389,3 +389,13 @@ CREATE TABLE IF NOT EXISTS sys_order
     user_id
 )
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单表';
+
+CREATE TABLE IF NOT EXISTS sys_cache
+(
+    cache_key VARCHAR(255) NOT NULL COMMENT '缓存键',
+    cache_value LONGTEXT COMMENT '缓存内容（JSON）',
+    value_class VARCHAR(255) COMMENT '值类型名称',
+    expire_at BIGINT COMMENT '过期时间（毫秒时间戳）',
+    PRIMARY KEY (cache_key),
+    KEY idx_sys_cache_expire_at (expire_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='缓存表';

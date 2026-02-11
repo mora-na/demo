@@ -1,17 +1,17 @@
 package com.example.demo.auth.store;
 
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.common.cache.CacheTool;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
 
 /**
- * 令牌存储，基于 Redis 保存令牌与用户信息。
+ * 令牌存储，基于缓存工具。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
@@ -21,15 +21,15 @@ public class TokenStore {
 
     private static final String TOKEN_KEY_PREFIX = "auth:token:";
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final CacheTool cacheTool;
 
     /**
-     * 构造函数，注入 Redis 模板。
+     * 构造函数，注入缓存工具。
      *
-     * @param redisTemplate Redis 模板
+     * @param cacheTool 缓存工具
      */
-    public TokenStore(RedisTemplate<String, Object> redisTemplate) {
-        this.redisTemplate = redisTemplate;
+    public TokenStore(CacheTool cacheTool) {
+        this.cacheTool = cacheTool;
     }
 
     /**
@@ -47,8 +47,7 @@ public class TokenStore {
         if (ttlSeconds <= 0) {
             return;
         }
-        redisTemplate.opsForValue()
-                .set(buildKey(token), new TokenRecord(user, expireAtSeconds), Duration.ofSeconds(ttlSeconds));
+        cacheTool.set(buildKey(token), new TokenRecord(user, expireAtSeconds), Duration.ofSeconds(ttlSeconds));
     }
 
     /**
@@ -61,7 +60,7 @@ public class TokenStore {
         if (token == null) {
             return null;
         }
-        Object value = redisTemplate.opsForValue().get(buildKey(token));
+        Object value = cacheTool.get(buildKey(token));
         if (!(value instanceof TokenRecord)) {
             return null;
         }
@@ -71,7 +70,7 @@ public class TokenStore {
         }
         long now = Instant.now().getEpochSecond();
         if (record.getExpireAtSeconds() < now) {
-            redisTemplate.delete(buildKey(token));
+            cacheTool.delete(buildKey(token));
             return null;
         }
         return record;
@@ -84,15 +83,15 @@ public class TokenStore {
      */
     public void revoke(String token) {
         if (token != null) {
-            redisTemplate.delete(buildKey(token));
+            cacheTool.delete(buildKey(token));
         }
     }
 
     /**
-     * 构建 Redis Key。
+     * 构建缓存 Key。
      *
      * @param token 令牌字符串
-     * @return Redis Key
+     * @return 缓存 Key
      */
     private String buildKey(String token) {
         return TOKEN_KEY_PREFIX + token;

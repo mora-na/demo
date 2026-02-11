@@ -190,3 +190,17 @@ COMMENT ON TABLE sys_order IS '订单表';
 COMMENT ON COLUMN sys_order.id IS '订单ID（外部传入，非自增）';
 COMMENT ON COLUMN sys_order.user_id IS '用户ID';
 COMMENT ON COLUMN sys_order.amount IS '订单金额';
+
+CREATE TABLE IF NOT EXISTS sys_cache
+(
+    cache_key   VARCHAR(255) PRIMARY KEY,
+    cache_value TEXT,
+    value_class VARCHAR(255),
+    expire_at   BIGINT
+);
+CREATE INDEX IF NOT EXISTS idx_sys_cache_expire_at ON sys_cache (expire_at);
+COMMENT ON TABLE sys_cache IS '缓存表';
+COMMENT ON COLUMN sys_cache.cache_key IS '缓存键';
+COMMENT ON COLUMN sys_cache.cache_value IS '缓存内容（JSON）';
+COMMENT ON COLUMN sys_cache.value_class IS '值类型名称';
+COMMENT ON COLUMN sys_cache.expire_at IS '过期时间（毫秒时间戳）';

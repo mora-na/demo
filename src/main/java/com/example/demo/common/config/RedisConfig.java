@@ -1,5 +1,6 @@
 package com.example.demo.common.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -14,6 +15,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * @date 2026/2/9
  */
 @Configuration
+@ConditionalOnProperty(prefix = "cache", name = "location", havingValue = "redis", matchIfMissing = true)
 public class RedisConfig {
 
     /**

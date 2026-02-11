@@ -145,7 +145,7 @@ spring:
           # JDBC 连接地址
           url: jdbc:postgresql://localhost:5432/test?currentSchema=test
           # 数据库用户名
-          username: panpan
+          username: angelabeini
           # 数据库密码 admin
           password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
           # JDBC 驱动类

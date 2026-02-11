@@ -1,9 +1,9 @@
 package com.example.demo.common.web.permission;
 
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.common.cache.CacheTool;
 import com.example.demo.permission.mapper.PermissionMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 基于数据库的权限服务实现，支持 Redis 缓存加速。
+ * 基于数据库的权限服务实现，支持缓存。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
@@ -23,23 +23,23 @@ public class DbPermissionService implements PermissionService {
     private static final String PERMISSION_KEY_PREFIX = "perm:user:";
     private final PermissionMapper permissionMapper;
     private final PermissionProperties properties;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final CacheTool cacheTool;
 
     /**
      * 构造函数，注入权限 Mapper 与缓存配置。
      *
      * @param permissionMapper 权限 Mapper
      * @param properties       权限配置
-     * @param redisTemplate    Redis 模板
+     * @param cacheTool        缓存工具
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     public DbPermissionService(PermissionMapper permissionMapper,
                                PermissionProperties properties,
-                               RedisTemplate<String, Object> redisTemplate) {
+                               CacheTool cacheTool) {
         this.permissionMapper = permissionMapper;
         this.properties = properties;
-        this.redisTemplate = redisTemplate;
+        this.cacheTool = cacheTool;
     }
 
     /**
@@ -142,7 +142,7 @@ public class DbPermissionService implements PermissionService {
             return cached;
         }
         Set<String> fresh = queryPermissions(user.getId());
-        redisTemplate.opsForValue().set(key, fresh, Duration.ofSeconds(ttlSeconds));
+        cacheTool.set(key, fresh, Duration.ofSeconds(ttlSeconds));
         return fresh;
     }
 
@@ -167,14 +167,14 @@ public class DbPermissionService implements PermissionService {
     /**
      * 读取缓存中的权限集合。
      *
-     * @param key Redis Key
+     * @param key 缓存 Key
      * @return 权限集合，未命中返回 null
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     @SuppressWarnings("unchecked")
     private Set<String> readCachedPermissions(String key) {
-        Object value = redisTemplate.opsForValue().get(key);
+        Object value = cacheTool.get(key);
         if (value == null) {
             return null;
         }

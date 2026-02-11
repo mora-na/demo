@@ -2,6 +2,7 @@ package com.example.demo.common.web.filter;
 
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.common.cache.CacheTool;
 import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
@@ -9,7 +10,6 @@ import com.example.demo.common.web.limit.DuplicateSubmitProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.DigestUtils;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * 重复提交过滤器，基于 Redis 限制短时间内的重复请求。
+ * 重复提交过滤器，基于缓存工具。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
@@ -39,25 +39,25 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
     private final DuplicateSubmitProperties properties;
     private final CommonExcludePathsProperties commonExcludePaths;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-    private final StringRedisTemplate stringRedisTemplate;
+    private final CacheTool cacheTool;
     private final I18nService i18nService;
 
     /**
-     * 构造函数，注入重复提交配置与 Redis 模板。
+     * 构造函数，注入重复提交配置与缓存工具。
      *
-     * @param properties          重复提交配置
-     * @param commonExcludePaths  公共排除路径配置
-     * @param stringRedisTemplate Redis 模板
+     * @param properties         重复提交配置
+     * @param commonExcludePaths 公共排除路径配置
+     * @param cacheTool          缓存工具
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     public DuplicateSubmitFilter(DuplicateSubmitProperties properties,
                                  CommonExcludePathsProperties commonExcludePaths,
-                                 StringRedisTemplate stringRedisTemplate,
+                                 CacheTool cacheTool,
                                  I18nService i18nService) {
         this.properties = properties;
         this.commonExcludePaths = commonExcludePaths;
-        this.stringRedisTemplate = stringRedisTemplate;
+        this.cacheTool = cacheTool;
         this.i18nService = i18nService;
     }
 
@@ -137,7 +137,7 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
         if (key == null) {
             return false;
         }
-        Boolean created = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", Duration.ofMillis(interval));
+        Boolean created = cacheTool.setIfAbsent(key, "1", Duration.ofMillis(interval));
         return Boolean.FALSE.equals(created);
     }
 

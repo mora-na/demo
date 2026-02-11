@@ -1,9 +1,9 @@
 package com.example.demo.common.mybatis;
 
+import com.example.demo.common.cache.CacheTool;
 import com.example.demo.datascope.service.DataScopeRuleService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 基于数据库的数据范围规则提供者，支持 Redis 缓存。
+ * 基于数据库的数据范围规则提供者，支持缓存。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
@@ -24,23 +24,23 @@ public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
     private static final String DATA_SCOPE_RULE_KEY = "data-scope:rules";
     private final ObjectProvider<DataScopeRuleService> dataScopeRuleServiceProvider;
     private final DataScopeProperties properties;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final CacheTool cacheTool;
 
     /**
      * 构造函数，注入规则服务提供者与缓存配置。
      *
      * @param dataScopeRuleServiceProvider 规则服务提供者
      * @param properties                   数据范围配置
-     * @param redisTemplate                Redis 模板
+     * @param cacheTool                    缓存工具
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     public DbDataScopeRuleProvider(ObjectProvider<DataScopeRuleService> dataScopeRuleServiceProvider,
                                    DataScopeProperties properties,
-                                   RedisTemplate<String, Object> redisTemplate) {
+                                   CacheTool cacheTool) {
         this.dataScopeRuleServiceProvider = dataScopeRuleServiceProvider;
         this.properties = properties;
-        this.redisTemplate = redisTemplate;
+        this.cacheTool = cacheTool;
     }
 
     /**
@@ -61,7 +61,7 @@ public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
             return cached;
         }
         Map<String, String> fresh = safeMap(fetchRules());
-        redisTemplate.opsForValue().set(DATA_SCOPE_RULE_KEY, fresh, Duration.ofSeconds(ttlSeconds));
+        cacheTool.set(DATA_SCOPE_RULE_KEY, fresh, Duration.ofSeconds(ttlSeconds));
         return fresh;
     }
 
@@ -104,7 +104,7 @@ public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
      */
     @SuppressWarnings("unchecked")
     private Map<String, String> readCache() {
-        Object value = redisTemplate.opsForValue().get(DATA_SCOPE_RULE_KEY);
+        Object value = cacheTool.get(DATA_SCOPE_RULE_KEY);
         if (value == null) {
             return null;
         }

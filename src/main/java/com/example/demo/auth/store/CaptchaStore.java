@@ -1,13 +1,13 @@
 package com.example.demo.auth.store;
 
-import org.springframework.data.redis.core.StringRedisTemplate;
+import com.example.demo.common.cache.CacheTool;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
 
 /**
- * 验证码存储，基于 Redis 保存验证码与过期时间。
+ * 验证码存储，基于缓存工具。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
@@ -17,15 +17,15 @@ public class CaptchaStore {
 
     private static final String CAPTCHA_KEY_PREFIX = "auth:captcha:";
 
-    private final StringRedisTemplate stringRedisTemplate;
+    private final CacheTool cacheTool;
 
     /**
-     * 构造函数，注入 Redis 模板。
+     * 构造函数，注入缓存工具。
      *
-     * @param stringRedisTemplate Redis 模板
+     * @param cacheTool 缓存工具
      */
-    public CaptchaStore(StringRedisTemplate stringRedisTemplate) {
-        this.stringRedisTemplate = stringRedisTemplate;
+    public CaptchaStore(CacheTool cacheTool) {
+        this.cacheTool = cacheTool;
     }
 
     /**
@@ -40,8 +40,7 @@ public class CaptchaStore {
             return;
         }
         long ttlSeconds = Math.max(1, expireAtSeconds - Instant.now().getEpochSecond());
-        stringRedisTemplate.opsForValue()
-                .set(buildKey(captchaId), code, Duration.ofSeconds(ttlSeconds));
+        cacheTool.set(buildKey(captchaId), code, Duration.ofSeconds(ttlSeconds));
     }
 
     /**
@@ -59,19 +58,19 @@ public class CaptchaStore {
             return false;
         }
         String key = buildKey(captchaId);
-        String stored = stringRedisTemplate.opsForValue().get(key);
+        String stored = cacheTool.get(key, String.class);
         if (stored == null) {
             return false;
         }
-        stringRedisTemplate.delete(key);
+        cacheTool.delete(key);
         return stored.equalsIgnoreCase(code);
     }
 
     /**
-     * 构建 Redis Key。
+     * 构建缓存 Key。
      *
      * @param captchaId 验证码 ID
-     * @return Redis Key
+     * @return 缓存 Key
      */
     private String buildKey(String captchaId) {
         return CAPTCHA_KEY_PREFIX + captchaId;
