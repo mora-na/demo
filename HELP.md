@@ -1,59 +1,78 @@
 # 项目帮助（中文）
 
-## 项目概览
+本文档聚焦“配置与运维细节”，与 `README.md`（快速上手与整体介绍）互补。
 
-本项目为 Spring Boot 后端示例系统，内置认证、权限、数据范围控制、组织部门与菜单权限等能力，并提供若干安全防护与通用功能。
+## 认证与登录
 
-## 特色功能
-
-- 认证与鉴权：JWT 认证、验证码登录、权限拦截（角色/权限/菜单）。
-- 密码安全：传输层可用 AES-GCM 密文，持久化使用 bcrypt（不可逆）。
-- 组织与权限模型：用户-部门-角色-权限-菜单全链路模型。
-- 数据范围控制：按角色配置可见范围（ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE）。
-- 防护能力：SQL 防护、XSS 过滤、限流、重复提交防护。
-- Excel 导入导出：用户数据批量导入导出示例。
-- 可选配置加密：支持 `ENC(...)` 配置密文（Jasypt SM4）。
-
-## 特色配置（关键项）
-
-- 认证与密码
+- 令牌使用：仅支持 `Authorization: Bearer <token>` 或 `X-Auth-Token`。
+- JWT 配置：
     - `auth.jwt.secret` / `auth.jwt.ttl-seconds`
-    - `auth.password.mode`（默认 `bcrypt`）
-    - `auth.password.transport-mode`（`plain`/`base64`/`aes-gcm`）
+- 密码策略：
+    - `auth.password.mode`（plain/md5/bcrypt/sm3）
+    - `auth.password.transport-mode`（plain/base64/aes-gcm/sm2）
     - `auth.password.transport-key`（AES-GCM Base64 密钥）
-    - `auth.password.default-password`（默认密码）
-    - `auth.password.strong-check-enabled`（强密码校验开关）
-    - `auth.password.strong-min-length` / `auth.password.strong-pattern`
+    - `auth.password.strong-check-enabled`
+- 登录失败限制（滑动窗口）：
+    - `auth.login-limit.enabled`
+    - `auth.login-limit.max-errors`
+    - `auth.login-limit.window-seconds`（统计窗口）
+    - `auth.login-limit.lock-seconds`（锁定时长）
+    - `auth.login-limit.key-mode`（user/ip/ip-user）
+  说明：每次失败刷新窗口 TTL，达到阈值后锁定。
 
-- 权限与菜单
-    - 角色/权限/菜单数据表见 `SQL/mysql.sql`、`SQL/postgresql.sql`
-    - 菜单权限通过 `sys_menu.permission` 汇入权限判断
+## 验证码
 
-- 数据范围
-    - `security.data-scope.enabled` / `security.data-scope.default-type`
-    - `sys_data_scope_rule` 定义“表 → 数据范围字段”映射
+- 生成与校验基于 Redis。
+- 主要配置：
+    - `auth.captcha.width` / `auth.captcha.height`
+    - `auth.captcha.code-length`
+    - `auth.captcha.thickness`
+    - `auth.captcha.rotate-min` / `auth.captcha.rotate-max`
+    - `auth.captcha.shear-x-min` / `auth.captcha.shear-x-max`
+    - `auth.captcha.shear-y-min` / `auth.captcha.shear-y-max`
+    - `auth.captcha.font-resources`
+    - `auth.captcha.expire-seconds`
 
-- 防护配置
-    - `security.sql-guard.*`
-    - `security.xss.*`
-    - `security.rate-limit.*`
-    - `security.duplicate-submit.*`
+## 权限与菜单
 
-- 连接与监控
-    - Druid 监控登录配置：`spring.datasource.druid.stat-view-servlet.*`
-    - Jasypt 加解密器：`jasypt.encryptor.bean` / `jasypt.encryptor.password`
+- 权限校验由权限拦截器控制：`security.permission.*`
+- 菜单权限通过 `sys_menu.permission` 汇入权限判断。
 
-## 注意事项
+## 数据范围
 
-- 登录后只支持 `Authorization: Bearer <token>` 或 `X-Auth-Token`，不再支持 `?token=`。
-- `bcrypt` 为不可逆哈希，数据库内密码不可解密。
-- 生产环境务必替换默认密码、Druid 默认账号密码，并避免明文配置。
-- `auth.password.transport-mode=aes-gcm` 时必须提供 `auth.password.transport-key`。
-- 数据范围要生效，需在 `sys_data_scope_rule` 中配置目标表与字段（如 `dept_id`）。
+- 开关与默认范围：`security.data-scope.enabled` / `security.data-scope.default-type`
+- 表字段映射：`sys_data_scope_rule`（如映射 `dept_id`）
+
+## 安全防护
+
+- SQL 防护：`security.sql-guard.*`
+- XSS 过滤：`security.xss.*`
+- 限流：`security.rate-limit.*`
+- 重复提交：`security.duplicate-submit.*`
+- 排除路径会与 `security.common.exclude-paths` 合并。
+
+## 配置加密（Jasypt）
+
+- 使用 `ENC(...)` 包裹敏感配置。
+- 启动时通过 `JASYPT_ENCRYPTOR_PASSWORD` 提供加解密口令。
+
+## 运行与环境
+
+- 配置入口：`src/main/resources/application.yml` + `application-dev.yml`
+- 默认 profile：`dev`（可用 `SPRING_PROFILES_ACTIVE` 覆盖）
+- 数据库脚本：`sql/mysql.sql`、`sql/postgresql.sql`
+- Druid 监控：`spring.datasource.druid.stat-view-servlet.*`
+
+## 常见问题
+
+- 登录失败次数过多：检查 `auth.login-limit.*` 与 Redis 状态。
+- 验证码无效：确认 Redis 可用与验证码是否过期。
+- Token 无效/过期：检查 `auth.jwt.ttl-seconds` 与时钟偏差。
 
 ## 常用命令
 
 ```bash
 ./mvnw test
 ./mvnw spring-boot:run
+./mvnw -DskipTests package
 ```

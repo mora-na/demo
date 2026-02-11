@@ -1,60 +1,78 @@
 # Project Help (English)
 
-## Overview
+This document focuses on configuration and operations details, complementing `README_EN.md` (quick start and overview).
 
-This Spring Boot backend demo includes authentication, authorization, data-scope controls, organization departments, and
-menu permissions, plus several built-in security protections and utilities.
+## Authentication & Login
 
-## Key Features
-
-- Auth & authorization: JWT, captcha login, permission interception (roles/permissions/menus).
-- Password security: AES-GCM password transport, bcrypt storage (one-way).
-- Org & access model: user → dept → role → permission → menu.
-- Data scope: role-based visibility (ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE).
-- Security protections: SQL guard, XSS filter, rate limiting, duplicate-submit prevention.
-- Excel import/export for user data.
-- Optional encrypted configs via `ENC(...)` (Jasypt SM4).
-
-## Notable Configs
-
-- Auth & password
+- Token header: `Authorization: Bearer <token>` or `X-Auth-Token` only.
+- JWT:
     - `auth.jwt.secret` / `auth.jwt.ttl-seconds`
-    - `auth.password.mode` (default `bcrypt`)
-    - `auth.password.transport-mode` (`plain`/`base64`/`aes-gcm`)
+- Password policy:
+    - `auth.password.mode` (plain/md5/bcrypt/sm3)
+    - `auth.password.transport-mode` (plain/base64/aes-gcm/sm2)
     - `auth.password.transport-key` (AES-GCM Base64 key)
-    - `auth.password.default-password`
     - `auth.password.strong-check-enabled`
-    - `auth.password.strong-min-length` / `auth.password.strong-pattern`
+- Login failure limits (sliding window):
+    - `auth.login-limit.enabled`
+    - `auth.login-limit.max-errors`
+    - `auth.login-limit.window-seconds` (counting window)
+    - `auth.login-limit.lock-seconds` (lock duration)
+    - `auth.login-limit.key-mode` (user/ip/ip-user)
+  Note: the failure counter TTL is refreshed on each failure; lock kicks in when the threshold is reached.
 
-- Permissions & menus
-    - Schemas in `SQL/mysql.sql` and `SQL/postgresql.sql`
-    - Menu permissions from `sys_menu.permission` are included in permission checks
+## Captcha
 
-- Data scope
-    - `security.data-scope.enabled` / `security.data-scope.default-type`
-    - `sys_data_scope_rule` defines the table → column mapping for filtering
+- Captcha generation/verification is backed by Redis.
+- Key configs:
+    - `auth.captcha.width` / `auth.captcha.height`
+    - `auth.captcha.code-length`
+    - `auth.captcha.thickness`
+    - `auth.captcha.rotate-min` / `auth.captcha.rotate-max`
+    - `auth.captcha.shear-x-min` / `auth.captcha.shear-x-max`
+    - `auth.captcha.shear-y-min` / `auth.captcha.shear-y-max`
+    - `auth.captcha.font-resources`
+    - `auth.captcha.expire-seconds`
 
-- Protections
-    - `security.sql-guard.*`
-    - `security.xss.*`
-    - `security.rate-limit.*`
-    - `security.duplicate-submit.*`
+## Permissions & Menus
 
-- Connections & monitoring
-    - Druid monitor login: `spring.datasource.druid.stat-view-servlet.*`
-    - Jasypt encryptor: `jasypt.encryptor.bean` / `jasypt.encryptor.password`
+- Permission checks are controlled by `security.permission.*`.
+- Menu permissions are derived from `sys_menu.permission`.
 
-## Notes
+## Data Scope
 
-- Tokens are accepted via `Authorization: Bearer <token>` or `X-Auth-Token` only; `?token=` is not supported.
-- `bcrypt` is one-way; DB passwords cannot be decrypted.
-- Replace default passwords and avoid plaintext secrets in production.
-- If `auth.password.transport-mode=aes-gcm`, `auth.password.transport-key` is required.
-- Data scope filtering needs `sys_data_scope_rule` entries (e.g., map to `dept_id`).
+- Toggle and default scope: `security.data-scope.enabled` / `security.data-scope.default-type`
+- Table-to-column mapping: `sys_data_scope_rule` (e.g., map to `dept_id`).
+
+## Security Protections
+
+- SQL guard: `security.sql-guard.*`
+- XSS filter: `security.xss.*`
+- Rate limiting: `security.rate-limit.*`
+- Duplicate-submit protection: `security.duplicate-submit.*`
+- Exclude paths are merged with `security.common.exclude-paths`.
+
+## Encrypted Configs (Jasypt)
+
+- Wrap secrets with `ENC(...)`.
+- Provide the password via `JASYPT_ENCRYPTOR_PASSWORD` at startup.
+
+## Runtime & Environment
+
+- Main configs: `src/main/resources/application.yml` + `application-dev.yml`
+- Default profile: `dev` (override with `SPRING_PROFILES_ACTIVE`)
+- DB scripts: `sql/mysql.sql`, `sql/postgresql.sql`
+- Druid monitor: `spring.datasource.druid.stat-view-servlet.*`
+
+## Troubleshooting
+
+- Too many login failures: check `auth.login-limit.*` and Redis.
+- Invalid captcha: verify Redis and captcha expiration.
+- Invalid/expired token: check `auth.jwt.ttl-seconds` and system clock.
 
 ## Common Commands
 
 ```bash
 ./mvnw test
 ./mvnw spring-boot:run
+./mvnw -DskipTests package
 ```
