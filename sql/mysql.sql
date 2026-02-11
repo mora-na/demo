@@ -399,3 +399,112 @@ CREATE TABLE IF NOT EXISTS sys_cache
     PRIMARY KEY (cache_key),
     KEY idx_sys_cache_expire_at (expire_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='缓存表';
+
+-- 初始化基础数据（默认密码示例：Admin@1234 / Manager@1234 / User@1234）
+INSERT INTO sys_dept (id, name, code, parent_id, status, sort, remark) VALUES
+    (1, '总部', 'HQ', NULL, 1, 0, '根部门'),
+    (2, '研发中心', 'RD', 1, 1, 10, '产品研发'),
+    (3, '运营中心', 'OPS', 1, 1, 20, '运营支持')
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    parent_id = VALUES(parent_id),
+    status = VALUES(status),
+    sort = VALUES(sort),
+    remark = VALUES(remark);
+
+INSERT INTO sys_role (id, code, name, status, data_scope_type, data_scope_value) VALUES
+    (1, 'admin', '系统管理员', 1, 'ALL', NULL),
+    (2, 'manager', '部门主管', 1, 'DEPT_AND_CHILD', NULL),
+    (3, 'user', '普通用户', 1, 'SELF', NULL)
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    status = VALUES(status),
+    data_scope_type = VALUES(data_scope_type),
+    data_scope_value = VALUES(data_scope_value);
+
+INSERT INTO sys_permission (id, code, name, status) VALUES
+    (1, 'user:query', '用户查询', 1),
+    (2, 'user:create', '用户创建', 1),
+    (3, 'user:update', '用户更新', 1),
+    (4, 'user:disable', '用户停用', 1),
+    (5, 'user:password:reset', '重置密码', 1),
+    (6, 'user:role:assign', '分配角色', 1),
+    (7, 'user:data-scope:set', '设置数据范围', 1),
+    (8, 'user:export', '用户导出', 1),
+    (9, 'user:import', '用户导入', 1),
+    (10, 'role:query', '角色查询', 1),
+    (11, 'role:create', '角色创建', 1),
+    (12, 'role:update', '角色更新', 1),
+    (13, 'role:disable', '角色停用', 1),
+    (14, 'role:permission:assign', '分配权限', 1),
+    (15, 'role:menu:assign', '分配菜单', 1),
+    (16, 'permission:query', '权限查询', 1),
+    (17, 'permission:create', '权限创建', 1),
+    (18, 'permission:update', '权限更新', 1),
+    (19, 'permission:disable', '权限停用', 1),
+    (20, 'menu:query', '菜单查询', 1),
+    (21, 'menu:create', '菜单创建', 1),
+    (22, 'menu:update', '菜单更新', 1),
+    (23, 'menu:disable', '菜单停用', 1),
+    (24, 'dept:query', '部门查询', 1),
+    (25, 'dept:create', '部门创建', 1),
+    (26, 'dept:update', '部门更新', 1),
+    (27, 'dept:disable', '部门停用', 1)
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    status = VALUES(status);
+
+INSERT INTO sys_menu (id, name, code, parent_id, path, component, permission, status, sort, remark) VALUES
+    (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '系统管理根菜单'),
+    (110, '用户管理', 'user', 100, '/system/users', 'UserPage', 'user:query', 1, 10, '用户管理'),
+    (120, '角色管理', 'role', 100, '/system/roles', 'RolePage', 'role:query', 1, 20, '角色管理'),
+    (130, '菜单管理', 'menu', 100, '/system/menus', 'MenuPage', 'menu:query', 1, 30, '菜单管理'),
+    (140, '部门管理', 'dept', 100, '/system/depts', 'DeptPage', 'dept:query', 1, 40, '部门管理'),
+    (150, '权限管理', 'permission', 100, '/system/permissions', 'PermissionPage', 'permission:query', 1, 50, '权限管理')
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    parent_id = VALUES(parent_id),
+    path = VALUES(path),
+    component = VALUES(component),
+    permission = VALUES(permission),
+    status = VALUES(status),
+    sort = VALUES(sort),
+    remark = VALUES(remark);
+
+INSERT INTO sys_user (id, user_name, nick_name, password, status, dept_id, data_scope_type, data_scope_value, sex, tst) VALUES
+    (1, 'master', '超级管理员', '226b97d9a11e6a3c6a6cf70161b0aaba8a1d0314104590c601791f420a294c07', 1, 1, 'ALL', NULL, 'M', '内置账号'),
+    (2, 'manager', '部门主管', 'fa5f4af1c215d2aac1697ab7046a099665831a3a0079b85cf5017df67622c6bb', 1, 2, 'DEPT_AND_CHILD', NULL, 'M', '内置账号'),
+    (3, 'demo', '普通用户', 'dd43b8283d213a7f5814bc814d210a1cd9aeb06a383d275c05ff2c8700dbddb2', 1, 2, 'SELF', NULL, 'F', '内置账号')
+ON DUPLICATE KEY UPDATE
+    nick_name = VALUES(nick_name),
+    password = VALUES(password),
+    status = VALUES(status),
+    dept_id = VALUES(dept_id),
+    data_scope_type = VALUES(data_scope_type),
+    data_scope_value = VALUES(data_scope_value),
+    sex = VALUES(sex),
+    tst = VALUES(tst);
+
+INSERT INTO sys_user_role (user_id, role_id) VALUES
+    (1, 1),
+    (2, 2),
+    (3, 3)
+ON DUPLICATE KEY UPDATE
+    user_id = VALUES(user_id);
+
+INSERT INTO sys_role_permission (role_id, permission_id) VALUES
+    (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9),
+    (1, 10), (1, 11), (1, 12), (1, 13), (1, 14), (1, 15), (1, 16), (1, 17),
+    (1, 18), (1, 19), (1, 20), (1, 21), (1, 22), (1, 23), (1, 24), (1, 25),
+    (1, 26), (1, 27),
+    (2, 1), (2, 8), (2, 10), (2, 16), (2, 20), (2, 24),
+    (3, 1)
+ON DUPLICATE KEY UPDATE
+    role_id = VALUES(role_id);
+
+INSERT INTO sys_role_menu (role_id, menu_id) VALUES
+    (1, 100), (1, 110), (1, 120), (1, 130), (1, 140), (1, 150),
+    (2, 100), (2, 110), (2, 140),
+    (3, 100), (3, 110)
+ON DUPLICATE KEY UPDATE
+    role_id = VALUES(role_id);

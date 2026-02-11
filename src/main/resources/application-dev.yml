@@ -90,7 +90,8 @@ auth:
     enabled: true
     # 认证过滤排除路径（会与 security.common.exclude-paths 合并）
     exclude-paths:
-      - /auth/** # 排除认证接口
+      - /auth/captcha # 排除认证接口
+      - /auth/login
       - /error # 排除错误接口
 
 # 数据源与缓存配置

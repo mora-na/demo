@@ -35,6 +35,8 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
 
     private final DataScopeProperties properties;
     private final DataScopeRuleProvider ruleProvider;
+    // Guard against recursive rule loading that can exhaust the connection pool.
+    private static final ThreadLocal<Boolean> LOADING_RULES = new ThreadLocal<>();
 
     /**
      * 构建数据权限拦截器。
@@ -63,6 +65,9 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
         if (properties == null || !properties.isEnabled()) {
             return;
         }
+        if (Boolean.TRUE.equals(LOADING_RULES.get())) {
+            return;
+        }
         AuthUser user = AuthContext.get();
         if (user == null) {
             return;
@@ -79,7 +84,13 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
         if (DataScopeType.ALL.equals(dataScopeType)) {
             return;
         }
-        Map<String, String> tableColumnMap = ruleProvider == null ? null : ruleProvider.getTableColumnMap();
+        Map<String, String> tableColumnMap;
+        try {
+            LOADING_RULES.set(true);
+            tableColumnMap = ruleProvider == null ? null : ruleProvider.getTableColumnMap();
+        } finally {
+            LOADING_RULES.remove();
+        }
         if (tableColumnMap == null || tableColumnMap.isEmpty()) {
             return;
         }
