@@ -27,6 +27,8 @@ import java.util.Base64;
 public final class GmCryptoTool {
 
     private static final String PROVIDER = "BC";
+    private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+    private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
     static {
         if (Security.getProvider(PROVIDER) == null) {
@@ -47,13 +49,7 @@ public final class GmCryptoTool {
         if (value == null) {
             return null;
         }
-        try {
-            MessageDigest md = MessageDigest.getInstance("SM3", PROVIDER);
-            byte[] digest = md.digest(value.getBytes(StandardCharsets.UTF_8));
-            return Hex.toHexString(digest);
-        } catch (Exception e) {
-            throw new IllegalStateException("SM3 hash error", e);
-        }
+        return Hex.toHexString(sm3Digest(value.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**
@@ -66,10 +62,35 @@ public final class GmCryptoTool {
         if (data == null) {
             return null;
         }
+        return Hex.toHexString(sm3Digest(data));
+    }
+
+    /**
+     * 计算 SM3 哈希并返回字节数组。
+     *
+     * @param value 明文
+     * @return SM3 哈希字节
+     */
+    public static byte[] sm3Digest(String value) {
+        if (value == null) {
+            return null;
+        }
+        return sm3Digest(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * 计算 SM3 哈希并返回字节数组。
+     *
+     * @param data 原始字节
+     * @return SM3 哈希字节
+     */
+    public static byte[] sm3Digest(byte[] data) {
+        if (data == null) {
+            return null;
+        }
         try {
             MessageDigest md = MessageDigest.getInstance("SM3", PROVIDER);
-            byte[] digest = md.digest(data);
-            return Hex.toHexString(digest);
+            return md.digest(data);
         } catch (Exception e) {
             throw new IllegalStateException("SM3 hash error", e);
         }
@@ -93,7 +114,7 @@ public final class GmCryptoTool {
             SM2Engine engine = new SM2Engine(SM2Engine.Mode.C1C3C2);
             engine.init(true, new ParametersWithRandom(keyParameter, new SecureRandom()));
             byte[] cipher = engine.processBlock(input, 0, input.length);
-            return Base64.getEncoder().encodeToString(cipher);
+            return BASE64_ENCODER.encodeToString(cipher);
         } catch (Exception e) {
             throw new IllegalStateException("SM2 encryption error", e);
         }
@@ -111,7 +132,7 @@ public final class GmCryptoTool {
             return null;
         }
         try {
-            byte[] cipherBytes = Base64.getDecoder().decode(base64CipherText);
+            byte[] cipherBytes = BASE64_DECODER.decode(base64CipherText);
             PrivateKey privateKey = parseSm2PrivateKey(base64PrivateKey);
             AsymmetricKeyParameter keyParameter;
             try {
@@ -146,7 +167,7 @@ public final class GmCryptoTool {
 
     private static PublicKey parseSm2PublicKey(String base64PublicKey) {
         try {
-            byte[] keyBytes = Base64.getDecoder().decode(base64PublicKey);
+            byte[] keyBytes = BASE64_DECODER.decode(base64PublicKey);
             X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance("EC", PROVIDER);
             return keyFactory.generatePublic(spec);
@@ -157,7 +178,7 @@ public final class GmCryptoTool {
 
     private static PrivateKey parseSm2PrivateKey(String base64PrivateKey) {
         try {
-            byte[] keyBytes = Base64.getDecoder().decode(base64PrivateKey);
+            byte[] keyBytes = BASE64_DECODER.decode(base64PrivateKey);
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance("EC", PROVIDER);
             return keyFactory.generatePrivate(spec);
@@ -184,7 +205,7 @@ public final class GmCryptoTool {
             SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "SM4");
             cipher.init(Cipher.ENCRYPT_MODE, keySpec);
             byte[] cipherBytes = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(cipherBytes);
+            return BASE64_ENCODER.encodeToString(cipherBytes);
         } catch (Exception e) {
             throw new IllegalStateException("SM4 encryption error", e);
         }
@@ -236,7 +257,7 @@ public final class GmCryptoTool {
             SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "SM4");
             cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(ivBytes));
             byte[] cipherBytes = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(cipherBytes);
+            return BASE64_ENCODER.encodeToString(cipherBytes);
         } catch (Exception e) {
             throw new IllegalStateException("SM4 encryption error", e);
         }
@@ -287,7 +308,7 @@ public final class GmCryptoTool {
         ensureLength(keyBytes, 16, "ZUC-128 key");
         ensureLength(ivBytes, 16, "ZUC-128 IV");
         byte[] cipherBytes = zuc128Process(plainText.getBytes(StandardCharsets.UTF_8), keyBytes, ivBytes);
-        return Base64.getEncoder().encodeToString(cipherBytes);
+        return BASE64_ENCODER.encodeToString(cipherBytes);
     }
 
     /**
@@ -388,7 +409,7 @@ public final class GmCryptoTool {
                 cipher.updateAAD(aadBytes);
             }
             byte[] cipherBytes = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(cipherBytes);
+            return BASE64_ENCODER.encodeToString(cipherBytes);
         } catch (Exception e) {
             throw new IllegalStateException("SM4 GCM encryption error", e);
         }
@@ -448,7 +469,7 @@ public final class GmCryptoTool {
         ensureLength(keyBytes, 32, "ZUC-256 key");
         ensureLength(ivBytes, 25, "ZUC-256 IV");
         byte[] cipherBytes = zuc256Process(plainText.getBytes(StandardCharsets.UTF_8), keyBytes, ivBytes);
-        return Base64.getEncoder().encodeToString(cipherBytes);
+        return BASE64_ENCODER.encodeToString(cipherBytes);
     }
 
     /**
@@ -498,7 +519,7 @@ public final class GmCryptoTool {
 
     private static byte[] decodeBase64(String value, String label) {
         try {
-            return Base64.getDecoder().decode(value);
+            return BASE64_DECODER.decode(value);
         } catch (IllegalArgumentException e) {
             throw new IllegalStateException(label + " is not valid Base64", e);
         }
