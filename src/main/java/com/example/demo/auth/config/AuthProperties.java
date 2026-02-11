@@ -25,6 +25,8 @@ public class AuthProperties {
 
     private Password password = new Password();
 
+    private LoginLimit loginLimit = new LoginLimit();
+
     private Filter filter = new Filter();
 
     /**
@@ -51,6 +53,12 @@ public class AuthProperties {
         private int height = 40;
         private int codeLength = 4;
         private int thickness = 2;
+        private double rotateMin = 0;
+        private double rotateMax = 0;
+        private double shearXMin = 0;
+        private double shearXMax = 0;
+        private double shearYMin = 0;
+        private double shearYMax = 0;
         private int expireSeconds = 120;
         private List<String> fontResources = new ArrayList<>();
         private int maxEntries = 10000;
@@ -75,6 +83,21 @@ public class AuthProperties {
         private boolean strongCheckEnabled = false;
         private int strongMinLength = 8;
         private String strongPattern = "";
+    }
+
+    /**
+     * 登录失败限制配置，定义最大错误次数与锁定时长。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/9
+     */
+    @Data
+    public static class LoginLimit {
+        private boolean enabled = true;
+        private int maxErrors = 5;
+        private int lockSeconds = 900;
+        private int windowSeconds = 900;
+        private String keyMode = "user";
     }
 
     /**

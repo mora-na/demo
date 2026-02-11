@@ -41,18 +41,13 @@ auth:
     ttl-seconds: 7200
   # 验证码配置
   captcha:
-    # 图片宽度
-    width: 120
-    # 图片高度
-    height: 40
     # 验证码长度
     code-length: 4
-    # 干扰线宽度
-    thickness: 2
     # 内置字体资源（可配置多个以混用）
     font-resources:
-      # 常用字体示例: DejaVuSans.ttf, NotoSans-Regular.ttf, IndieFlower-Regular.ttf
+      # 字体示例: IndieFlower-Regular.ttf
       - classpath:front/IndieFlower-Regular.ttf
+      - classpath:front/PermanentMarker-Regular.ttf
     # 验证码有效期（秒）
     expire-seconds: 120
   # 密码策略配置
@@ -77,6 +72,18 @@ auth:
     strong-min-length: 8
     # 强密码校验正则（为空则使用默认组合校验）
     strong-pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d]).{8,}$"
+  # 登录失败限制配置
+  login-limit:
+    # 是否启用登录失败限制
+    enabled: true
+    # 允许的最大错误次数
+    max-errors: 5
+    # 失败统计窗口时长（秒）
+    window-seconds: 120
+    # 锁定时长（秒）
+    lock-seconds: 180
+    # Key 维度：user/ip/ip-user
+    key-mode: ip-user
   # 认证过滤器配置
   filter:
     # 是否启用认证过滤器

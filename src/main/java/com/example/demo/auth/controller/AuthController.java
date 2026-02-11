@@ -6,6 +6,7 @@ import com.example.demo.auth.dto.LoginResponse;
 import com.example.demo.auth.dto.LogoutRequest;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.auth.service.CaptchaService;
+import com.example.demo.auth.service.LoginAttemptService;
 import com.example.demo.auth.service.PasswordService;
 import com.example.demo.auth.service.TokenService;
 import com.example.demo.auth.support.AuthTokenResolver;
@@ -35,6 +36,7 @@ public class AuthController extends BaseController {
     private final TokenService tokenService;
     private final PasswordService passwordService;
     private final UserService userService;
+    private final LoginAttemptService loginAttemptService;
 
     /**
      * 生成验证码并返回验证码 ID 与图片数据。
@@ -55,6 +57,7 @@ public class AuthController extends BaseController {
      */
     @PostMapping("/login")
     public CommonResult<LoginResponse> login(@RequestBody(required = false) LoginRequest request,
+                                             HttpServletRequest httpRequest,
                                              HttpServletResponse response) {
         final String credentialError = i18n("auth.login.credential.error");
         if (request == null) {
@@ -62,6 +65,10 @@ public class AuthController extends BaseController {
         }
         if (StringUtils.isBlank(request.getUserName()) || StringUtils.isBlank(request.getPassword())) {
             return error(401, credentialError);
+        }
+        if (loginAttemptService.isLocked(request.getUserName(), httpRequest)) {
+            long remaining = loginAttemptService.getRemainingLockSeconds(request.getUserName(), httpRequest);
+            return error(429, i18n("auth.login.locked", remaining));
         }
         if (StringUtils.isBlank(request.getCaptchaId()) || StringUtils.isBlank(request.getCaptchaCode())) {
             return error(400, i18n("auth.login.captcha.empty"));
@@ -71,18 +78,23 @@ public class AuthController extends BaseController {
         }
         User user = userService.getByUserName(request.getUserName());
         if (user == null) {
+            loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             return error(401, credentialError);
         }
         if (user.getStatus() != null && user.getStatus().equals(User.STATUS_DISABLED)) {
+            loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             return error(401, credentialError);
         }
         String rawPassword = passwordService.decodeTransportPassword(request.getPassword());
         if (StringUtils.isBlank(rawPassword)) {
+            loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             return error(401, credentialError);
         }
         if (!passwordService.matches(rawPassword, user.getPassword())) {
+            loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             return error(401, credentialError);
         }
+        loginAttemptService.clearFailures(request.getUserName(), httpRequest);
         AuthUser authUser = new AuthUser();
         authUser.setId(user.getId());
         authUser.setUserName(user.getUserName());

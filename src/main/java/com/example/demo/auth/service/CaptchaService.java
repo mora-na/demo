@@ -144,9 +144,10 @@ public class CaptchaService {
             int x = gap * (i + 1) - metrics.charWidth(ch) / 2;
             double centerX = x + metrics.charWidth(ch) / 2.0;
             double centerY = baseY - metrics.getAscent() / 2.0;
-            double angle = randomRange(-0.35, 0.35);
-            double shearX = randomRange(-0.12, 0.12);
-            double shearY = randomRange(-0.08, 0.08);
+            AuthProperties.Captcha config = authProperties.getCaptcha();
+            double angle = randomRange(config.getRotateMin(), config.getRotateMax());
+            double shearX = randomRange(config.getShearXMin(), config.getShearXMax());
+            double shearY = randomRange(config.getShearYMin(), config.getShearYMax());
             AffineTransform transform = new AffineTransform(original);
             transform.translate(centerX, centerY);
             transform.rotate(angle);
@@ -213,7 +214,14 @@ public class CaptchaService {
     }
 
     private double randomRange(double min, double max) {
-        return min + (max - min) * RANDOM.nextDouble();
+        double low = min;
+        double high = max;
+        if (high < low) {
+            double tmp = low;
+            low = high;
+            high = tmp;
+        }
+        return low + (high - low) * RANDOM.nextDouble();
     }
 
     private InputStream openFontResource(String resource) throws Exception {
