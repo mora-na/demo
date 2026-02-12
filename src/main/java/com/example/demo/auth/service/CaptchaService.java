@@ -200,9 +200,9 @@ public class CaptchaService {
     private Font resolveFont(int fontSize) {
         Font base = pickEmbeddedFont();
         if (base != null) {
-            return base.deriveFont(BASE_FONT_STYLE, (float) fontSize);
+            return base.deriveFont(Font.BOLD, (float) fontSize);
         }
-        return new Font("SansSerif", BASE_FONT_STYLE, fontSize);
+        return new Font("SansSerif", Font.BOLD, fontSize);
     }
 
     private Font pickEmbeddedFont() {

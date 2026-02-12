@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -40,7 +41,7 @@ public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenu> i
             return true;
         }
         List<RoleMenu> relations = menuIds.stream()
-                .filter(id -> id != null)
+                .filter(Objects::nonNull)
                 .distinct()
                 .map(menuId -> new RoleMenu(null, roleId, menuId))
                 .collect(Collectors.toList());

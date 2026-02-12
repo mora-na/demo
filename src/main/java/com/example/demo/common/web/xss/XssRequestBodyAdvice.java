@@ -1,6 +1,7 @@
 package com.example.demo.common.web.xss;
 
 import com.example.demo.common.web.CommonExcludePathsProperties;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -51,8 +52,8 @@ public class XssRequestBodyAdvice extends RequestBodyAdviceAdapter {
      * @date 2026/2/9
      */
     @Override
-    public boolean supports(MethodParameter methodParameter, Type targetType,
-                            Class<? extends HttpMessageConverter<?>> converterType) {
+    public boolean supports(@NonNull MethodParameter methodParameter, @NonNull Type targetType,
+                            @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
         return true;
     }
 
@@ -69,8 +70,9 @@ public class XssRequestBodyAdvice extends RequestBodyAdviceAdapter {
      * @date 2026/2/9
      */
     @Override
-    public Object afterBodyRead(Object body, HttpInputMessage inputMessage, MethodParameter parameter,
-                                Type targetType, Class<? extends HttpMessageConverter<?>> converterType) {
+    @NonNull
+    public Object afterBodyRead(@NonNull Object body, @NonNull HttpInputMessage inputMessage, @NonNull MethodParameter parameter,
+                                @NonNull Type targetType, @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
         if (!properties.isEnabled()) {
             return body;
         }

@@ -8,21 +8,22 @@
     </div>
 
     <el-tabs v-model="activeTab" class="system-tabs" @tab-change="handleTabChange">
-      <el-tab-pane v-for="menu in menus" :key="menu.id" :label="menu.name" :name="String(menu.id)" />
+      <el-tab-pane v-for="menu in menus" :key="menu.id" :label="menu.name" :name="String(menu.id)"/>
     </el-tabs>
 
     <div class="system-body">
-      <UserManagement v-if="activeMenuCode === 'user'" />
-      <RoleManagement v-else-if="activeMenuCode === 'role'" />
-      <MenuManagement v-else-if="activeMenuCode === 'menu'" />
-      <DeptManagement v-else-if="activeMenuCode === 'dept'" />
-      <PermissionManagement v-else-if="activeMenuCode === 'permission'" />
+      <UserManagement v-if="activeMenuCode === 'user'"/>
+      <RoleManagement v-else-if="activeMenuCode === 'role'"/>
+      <MenuManagement v-else-if="activeMenuCode === 'menu'"/>
+      <DeptManagement v-else-if="activeMenuCode === 'dept'"/>
+      <PermissionManagement v-else-if="activeMenuCode === 'permission'"/>
+      <NoticeManagement v-else-if="activeMenuCode === 'notice'"/>
       <div v-else class="system-placeholder">请选择系统管理子菜单。</div>
     </div>
   </section>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import {computed, ref, watch} from "vue";
 import type {MenuTree} from "../../api/auth";
 import UserManagement from "./UserManagement.vue";
@@ -30,13 +31,14 @@ import RoleManagement from "./RoleManagement.vue";
 import MenuManagement from "./MenuManagement.vue";
 import DeptManagement from "./DeptManagement.vue";
 import PermissionManagement from "./PermissionManagement.vue";
+import NoticeManagement from "./NoticeManagement.vue";
 
 const props = defineProps<{
   menus: MenuTree[];
   activeMenuId: number | null;
 }>();
 
-const emit = defineEmits<{(e: "menu-change", id: number): void}>();
+const emit = defineEmits<{ (e: "menu-change", id: number): void }>();
 
 const activeTab = ref("");
 
@@ -74,9 +76,9 @@ function handleTabChange(name: string | number) {
 }
 
 watch(
-  () => [props.activeMenuId, props.menus],
-  () => syncTab(),
-  {immediate: true}
+    () => [props.activeMenuId, props.menus],
+    () => syncTab(),
+    {immediate: true}
 );
 </script>
 

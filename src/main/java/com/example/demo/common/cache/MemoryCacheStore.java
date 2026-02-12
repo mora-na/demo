@@ -1,8 +1,10 @@
 package com.example.demo.common.cache;
 
+import com.example.demo.notice.mapper.NoticeRecipientMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.time.Duration;
 import java.util.concurrent.Executors;
@@ -33,11 +35,11 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
         }
         long maxWeight = resolveMaxWeightBytes(memoryProperties);
         this.maximumWeightBytes = maxWeight > 0 ? maxWeight : 0;
-        Caffeine<String, CacheItem> builder = Caffeine.<String, CacheItem>newBuilder()
+        Caffeine<String, CacheItem> builder = Caffeine.newBuilder()
                 .expireAfter(new CacheItemExpiry());
         if (this.maximumWeightBytes > 0) {
             builder.maximumWeight(this.maximumWeightBytes)
-                    .weigher((String key, CacheItem item) -> estimateWeight(key, item));
+                    .weigher(this::estimateWeight);
         } else {
             builder.maximumSize(maxSize);
         }
@@ -192,17 +194,7 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
     }
 
     private long parseLong(Object value) {
-        if (value == null) {
-            return 0L;
-        }
-        if (value instanceof Number) {
-            return ((Number) value).longValue();
-        }
-        try {
-            return Long.parseLong(String.valueOf(value));
-        } catch (NumberFormatException ex) {
-            return 0L;
-        }
+        return NoticeRecipientMapper.toLong(value);
     }
 
     private int estimateWeight(String key, CacheItem item) {
@@ -267,6 +259,13 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
         }
     }
 
+    @Override
+    public void close() {
+        if (cleanupExecutor != null) {
+            cleanupExecutor.shutdownNow();
+        }
+    }
+
     private static final class CacheItem {
         private final Object value;
         private final Long expireAt;
@@ -285,17 +284,17 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
 
     private static final class CacheItemExpiry implements Expiry<String, CacheItem> {
         @Override
-        public long expireAfterCreate(String key, CacheItem value, long currentTime) {
+        public long expireAfterCreate(@NonNull String key, @NonNull CacheItem value, long currentTime) {
             return toExpireNanos(value, currentTime);
         }
 
         @Override
-        public long expireAfterUpdate(String key, CacheItem value, long currentTime, long currentDuration) {
+        public long expireAfterUpdate(@NonNull String key, @NonNull CacheItem value, long currentTime, long currentDuration) {
             return toExpireNanos(value, currentTime);
         }
 
         @Override
-        public long expireAfterRead(String key, CacheItem value, long currentTime, long currentDuration) {
+        public long expireAfterRead(@NonNull String key, @NonNull CacheItem value, long currentTime, long currentDuration) {
             return currentDuration;
         }
 
@@ -324,13 +323,6 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
             Thread thread = new Thread(runnable, namePrefix + "-" + index++);
             thread.setDaemon(true);
             return thread;
-        }
-    }
-
-    @Override
-    public void close() {
-        if (cleanupExecutor != null) {
-            cleanupExecutor.shutdownNow();
         }
     }
 }

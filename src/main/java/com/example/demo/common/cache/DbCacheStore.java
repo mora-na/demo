@@ -1,6 +1,8 @@
 package com.example.demo.common.cache;
 
 import com.example.demo.common.cache.mapper.CacheMapper;
+import com.example.demo.notice.mapper.NoticeRecipientMapper;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
@@ -217,9 +219,6 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
             return;
         }
         long overflow = count - maximumRows;
-        if (overflow <= 0) {
-            return;
-        }
         int limit = overflow > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) overflow;
         List<String> keys = cacheMapper.selectKeysForEviction(limit);
         if (keys == null || keys.isEmpty()) {
@@ -253,16 +252,13 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
     }
 
     private long parseLong(Object value) {
-        if (value == null) {
-            return 0L;
-        }
-        if (value instanceof Number) {
-            return ((Number) value).longValue();
-        }
-        try {
-            return Long.parseLong(String.valueOf(value));
-        } catch (NumberFormatException ex) {
-            return 0L;
+        return NoticeRecipientMapper.toLong(value);
+    }
+
+    @Override
+    public void close() {
+        if (cleanupExecutor != null) {
+            cleanupExecutor.shutdownNow();
         }
     }
 
@@ -275,17 +271,10 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
         }
 
         @Override
-        public Thread newThread(Runnable runnable) {
+        public Thread newThread(@NonNull Runnable runnable) {
             Thread thread = new Thread(runnable, namePrefix + "-" + index++);
             thread.setDaemon(true);
             return thread;
-        }
-    }
-
-    @Override
-    public void close() {
-        if (cleanupExecutor != null) {
-            cleanupExecutor.shutdownNow();
         }
     }
 }

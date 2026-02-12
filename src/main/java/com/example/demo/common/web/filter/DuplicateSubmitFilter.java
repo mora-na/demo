@@ -8,6 +8,7 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.common.web.limit.DuplicateSubmitProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -70,7 +71,7 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
      * @date 2026/2/9
      */
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         if (!properties.isEnabled()) {
             return true;
         }
@@ -105,9 +106,9 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
      * @date 2026/2/9
      */
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
         long interval = Math.max(1, properties.getIntervalMillis());
         if (isMultipart(request) && !hasIdempotencyKey(request)) {
             filterChain.doFilter(request, response);

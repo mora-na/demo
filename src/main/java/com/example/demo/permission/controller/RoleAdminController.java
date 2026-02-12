@@ -25,6 +25,7 @@ import javax.validation.Valid;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -105,7 +106,7 @@ public class RoleAdminController extends BaseController {
                         .eq(RoleMenu::getRoleId, id))
                 .stream()
                 .map(RoleMenu::getMenuId)
-                .filter(mid -> mid != null)
+                .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
         return success(menuIds);
@@ -211,7 +212,7 @@ public class RoleAdminController extends BaseController {
         List<Long> permissionIds = request.getPermissionIds();
         if (permissionIds != null && !permissionIds.isEmpty()) {
             List<Permission> permissions = permissionService.listByIds(permissionIds);
-            if (permissions.size() != permissionIds.stream().filter(pid -> pid != null).distinct().count()) {
+            if (permissions.size() != permissionIds.stream().filter(Objects::nonNull).distinct().count()) {
                 return error(400, i18n("permission.not.found"));
             }
         }
@@ -240,7 +241,7 @@ public class RoleAdminController extends BaseController {
         List<Long> menuIds = request.getMenuIds();
         if (menuIds != null && !menuIds.isEmpty()) {
             List<Menu> menus = menuService.listByIds(menuIds);
-            if (menus.size() != menuIds.stream().filter(mid -> mid != null).distinct().count()) {
+            if (menus.size() != menuIds.stream().filter(Objects::nonNull).distinct().count()) {
                 return error(400, i18n("menu.not.found"));
             }
         }

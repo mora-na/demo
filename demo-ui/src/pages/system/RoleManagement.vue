@@ -10,100 +10,100 @@
       </div>
     </div>
 
-    <el-table :data="roles" size="small" v-loading="loading" row-key="id">
-      <el-table-column prop="code" label="编码" min-width="140" />
-      <el-table-column prop="name" label="名称" min-width="140" />
-      <el-table-column prop="dataScopeType" label="数据范围" min-width="140" />
+    <el-table v-loading="loading" :data="roles" row-key="id" size="small">
+      <el-table-column label="编码" min-width="140" prop="code"/>
+      <el-table-column label="名称" min-width="140" prop="name"/>
+      <el-table-column label="数据范围" min-width="140" prop="dataScopeType"/>
       <el-table-column label="状态" width="100">
         <template #default="{row}">
           <el-switch
-            :model-value="row.status ?? 0"
-            :active-value="1"
-            :inactive-value="0"
-            @change="(value: number) => handleStatusChange(row, value)"
+              :active-value="1"
+              :inactive-value="0"
+              :model-value="row.status ?? 0"
+              @change="(value: number) => handleStatusChange(row, value)"
           />
         </template>
       </el-table-column>
       <el-table-column label="操作" width="240">
         <template #default="{row}">
-          <el-button text size="small" @click="openEdit(row)">编辑</el-button>
-          <el-button text size="small" @click="openPermissions(row)">分配权限</el-button>
-          <el-button text size="small" @click="openMenus(row)">分配菜单</el-button>
+          <el-button size="small" text @click="openEdit(row)">编辑</el-button>
+          <el-button size="small" text @click="openPermissions(row)">分配权限</el-button>
+          <el-button size="small" text @click="openMenus(row)">分配菜单</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="editorVisible" :title="editorTitle" width="520px" align-center>
+    <el-dialog v-model="editorVisible" :title="editorTitle" align-center width="520px">
       <el-form :model="form" label-position="top">
         <el-form-item label="角色编码">
-          <el-input v-model.trim="form.code" />
+          <el-input v-model.trim="form.code"/>
         </el-form-item>
         <el-form-item label="角色名称">
-          <el-input v-model.trim="form.name" />
+          <el-input v-model.trim="form.name"/>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="form.status" placeholder="请选择">
-            <el-option label="启用" :value="1" />
-            <el-option label="禁用" :value="0" />
+            <el-option :value="1" label="启用"/>
+            <el-option :value="0" label="禁用"/>
           </el-select>
         </el-form-item>
         <el-form-item label="数据范围类型">
           <el-select v-model="form.dataScopeType" placeholder="请选择">
-            <el-option label="全部" value="ALL" />
-            <el-option label="本部门" value="DEPT" />
-            <el-option label="部门及下级" value="DEPT_AND_CHILD" />
-            <el-option label="自定义" value="CUSTOM" />
-            <el-option label="自定义部门" value="CUSTOM_DEPT" />
-            <el-option label="仅本人" value="SELF" />
-            <el-option label="无权限" value="NONE" />
+            <el-option label="全部" value="ALL"/>
+            <el-option label="本部门" value="DEPT"/>
+            <el-option label="部门及下级" value="DEPT_AND_CHILD"/>
+            <el-option label="自定义" value="CUSTOM"/>
+            <el-option label="自定义部门" value="CUSTOM_DEPT"/>
+            <el-option label="仅本人" value="SELF"/>
+            <el-option label="无权限" value="NONE"/>
           </el-select>
         </el-form-item>
         <el-form-item label="数据范围值">
-          <el-input v-model.trim="form.dataScopeValue" placeholder="逗号分隔 ID" />
+          <el-input v-model.trim="form.dataScopeValue" placeholder="逗号分隔 ID"/>
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="editorVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="saveRole">保存</el-button>
+        <el-button :loading="saving" type="primary" @click="saveRole">保存</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="permissionVisible" title="分配权限" width="520px" align-center>
+    <el-dialog v-model="permissionVisible" align-center title="分配权限" width="520px">
       <el-form label-position="top">
         <el-form-item label="权限列表">
           <el-select v-model="selectedPermissionIds" multiple placeholder="请选择">
             <el-option
-              v-for="permission in permissions"
-              :key="permission.id"
-              :label="permission.name"
-              :value="permission.id"
+                v-for="permission in permissions"
+                :key="permission.id"
+                :label="permission.name"
+                :value="permission.id"
             />
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="permissionVisible = false">取消</el-button>
-        <el-button type="primary" :loading="assigning" @click="savePermissions">保存</el-button>
+        <el-button :loading="assigning" type="primary" @click="savePermissions">保存</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="menuVisible" title="分配菜单" width="520px" align-center>
+    <el-dialog v-model="menuVisible" align-center title="分配菜单" width="520px">
       <el-tree
-        ref="menuTreeRef"
-        :data="menuTree"
-        node-key="id"
-        show-checkbox
-        :props="{label: 'name', children: 'children'}"
+          ref="menuTreeRef"
+          :data="menuTree"
+          :props="{label: 'name', children: 'children'}"
+          node-key="id"
+          show-checkbox
       />
       <template #footer>
         <el-button @click="menuVisible = false">取消</el-button>
-        <el-button type="primary" :loading="assigningMenus" @click="saveMenus">保存</el-button>
+        <el-button :loading="assigningMenus" type="primary" @click="saveMenus">保存</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import {computed, nextTick, onMounted, reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
 import {
@@ -158,7 +158,7 @@ const form = reactive<RoleCreatePayload & RoleUpdatePayload>({
 const editorTitle = computed(() => (editorMode.value === "create" ? "新增角色" : "编辑角色"));
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  const err = error as {response?: {data?: {message?: string}}; message?: string};
+  const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err?.response?.data?.message || err?.message || fallback;
 }
 

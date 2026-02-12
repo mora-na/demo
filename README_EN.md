@@ -1,6 +1,7 @@
 # Demo Backend (Spring Boot)
 
-A Spring Boot backend demo with authentication, authorization, data-scope controls, organization/department modeling, and menu permissions, plus built-in security protections and utilities.
+A Spring Boot backend demo with authentication, authorization, data-scope controls, organization/department modeling,
+and menu permissions, plus built-in security protections and utilities.
 
 ## Highlights
 

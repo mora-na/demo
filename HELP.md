@@ -18,7 +18,7 @@
     - `auth.login-limit.window-seconds`（统计窗口）
     - `auth.login-limit.lock-seconds`（锁定时长）
     - `auth.login-limit.key-mode`（user/ip/ip-user）
-  说明：每次失败刷新窗口 TTL，达到阈值后锁定。
+      说明：每次失败刷新窗口 TTL，达到阈值后锁定。
 
 ## 验证码
 

@@ -18,7 +18,7 @@ This document focuses on configuration and operations details, complementing `RE
     - `auth.login-limit.window-seconds` (counting window)
     - `auth.login-limit.lock-seconds` (lock duration)
     - `auth.login-limit.key-mode` (user/ip/ip-user)
-  Note: the failure counter TTL is refreshed on each failure; lock kicks in when the threshold is reached.
+      Note: the failure counter TTL is refreshed on each failure; lock kicks in when the threshold is reached.
 
 ## Captcha
 

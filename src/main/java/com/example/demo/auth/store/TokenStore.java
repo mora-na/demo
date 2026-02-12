@@ -65,9 +65,6 @@ public class TokenStore {
             return null;
         }
         TokenRecord record = (TokenRecord) value;
-        if (record == null) {
-            return null;
-        }
         long now = Instant.now().getEpochSecond();
         if (record.getExpireAtSeconds() < now) {
             cacheTool.delete(buildKey(token));

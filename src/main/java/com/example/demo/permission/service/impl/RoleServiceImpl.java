@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -46,7 +47,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
             return true;
         }
         List<RolePermission> relations = permissionIds.stream()
-                .filter(id -> id != null)
+                .filter(Objects::nonNull)
                 .distinct()
                 .map(pid -> new RolePermission(null, roleId, pid))
                 .collect(Collectors.toList());

@@ -53,47 +53,47 @@
         <el-form class="login-form" label-position="top" @submit.prevent="handleSubmit">
           <el-form-item :label="t('login.form.username')">
             <el-input
-              v-model.trim="form.userName"
-              autocomplete="username"
-              :placeholder="t('login.form.usernamePlaceholder')"
-              :disabled="loading"
+                v-model.trim="form.userName"
+                :disabled="loading"
+                :placeholder="t('login.form.usernamePlaceholder')"
+                autocomplete="username"
             />
           </el-form-item>
 
           <el-form-item :label="t('login.form.password')">
             <el-input
-              v-model="form.password"
-              type="password"
-              show-password
-              autocomplete="current-password"
-              :placeholder="t('login.form.passwordPlaceholder')"
-              :disabled="loading"
+                v-model="form.password"
+                :disabled="loading"
+                :placeholder="t('login.form.passwordPlaceholder')"
+                autocomplete="current-password"
+                show-password
+                type="password"
             />
           </el-form-item>
 
           <div class="captcha-row">
-            <el-form-item class="captcha-field" :label="t('login.form.captcha')">
+            <el-form-item :label="t('login.form.captcha')" class="captcha-field">
               <el-input
-                v-model.trim="form.captchaCode"
-                autocomplete="off"
-                :placeholder="t('login.form.captchaPlaceholder')"
-                :disabled="loading"
+                  v-model.trim="form.captchaCode"
+                  :disabled="loading"
+                  :placeholder="t('login.form.captchaPlaceholder')"
+                  autocomplete="off"
               />
             </el-form-item>
-            <el-button class="captcha-button" @click="loadCaptcha" :disabled="loading">
-              <img v-if="captchaImage" :src="captchaImage" :alt="t('login.form.captcha')" />
+            <el-button :disabled="loading" class="captcha-button" @click="loadCaptcha">
+              <img v-if="captchaImage" :alt="t('login.form.captcha')" :src="captchaImage"/>
               <span v-else>{{ t("login.form.captchaLoading") }}</span>
             </el-button>
           </div>
 
           <el-button
-            class="login-submit"
-            type="primary"
-            size="large"
-            native-type="submit"
-            :loading="loading"
-            :class="{ 'is-loading': loading }"
-            @click="handleSubmit"
+              :class="{ 'is-loading': loading }"
+              :loading="loading"
+              class="login-submit"
+              native-type="submit"
+              size="large"
+              type="primary"
+              @click="handleSubmit"
           >
             {{ t("login.form.submit") }}
           </el-button>
@@ -107,15 +107,15 @@
   </main>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import {onMounted, reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {fetchCaptcha, login} from "../api/auth";
 import {useAuthStore} from "../stores/auth";
 
-defineProps<{transportMode: string}>();
-const emit = defineEmits<{(e: "login-success"): void}>();
+defineProps<{ transportMode: string }>();
+const emit = defineEmits<{ (e: "login-success"): void }>();
 
 const authStore = useAuthStore();
 const {t} = useI18n();
@@ -146,7 +146,7 @@ async function loadCaptcha() {
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  const err = error as {response?: {data?: {message?: string}}; message?: string};
+  const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err?.response?.data?.message || err?.message || fallback;
 }
 
@@ -399,10 +399,12 @@ onMounted(loadCaptcha);
   .shell {
     grid-template-columns: 1fr;
   }
+
   .hero {
     order: 2;
     padding: 0;
   }
+
   .panel {
     order: 1;
   }
@@ -412,9 +414,11 @@ onMounted(loadCaptcha);
   .panel {
     width: 100%;
   }
+
   .captcha-row {
     grid-template-columns: 1fr;
   }
+
   .captcha-button {
     height: 64px;
   }

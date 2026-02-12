@@ -1,5 +1,6 @@
 package com.example.demo.common.web.filter;
 
+import lombok.Getter;
 import org.springframework.util.StreamUtils;
 
 import javax.servlet.ReadListener;
@@ -19,8 +20,16 @@ import java.nio.charset.StandardCharsets;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
+@Getter
 public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
 
+    /**
+     * -- GETTER --
+     * 获取缓存的请求体字节数组。
+     *
+     * @return 请求体字节数组
+     *
+     */
     private final byte[] cachedBody;
 
     /**
@@ -34,17 +43,6 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
     public CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);
         this.cachedBody = StreamUtils.copyToByteArray(request.getInputStream());
-    }
-
-    /**
-     * 获取缓存的请求体字节数组。
-     *
-     * @return 请求体字节数组
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    public byte[] getCachedBody() {
-        return cachedBody;
     }
 
     /**

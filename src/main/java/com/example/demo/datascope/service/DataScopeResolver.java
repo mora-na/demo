@@ -10,6 +10,7 @@ import com.example.demo.permission.entity.UserRole;
 import com.example.demo.permission.service.RoleService;
 import com.example.demo.permission.service.UserRoleService;
 import com.example.demo.user.entity.User;
+import lombok.Getter;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -88,19 +89,27 @@ public class DataScopeResolver {
             if (type == null) {
                 continue;
             }
-            if (DataScopeType.ALL.equals(type)) {
-                hasAll = true;
-            } else if (DataScopeType.SELF.equals(type)) {
-                hasSelf = true;
-            } else if (DataScopeType.NONE.equals(type)) {
-                hasNone = true;
-            } else if (DataScopeType.DEPT.equals(type)) {
-                hasDept = true;
-            } else if (DataScopeType.DEPT_AND_CHILD.equals(type)) {
-                hasDeptAndChild = true;
-            } else if (DataScopeType.CUSTOM_DEPT.equals(type) || DataScopeType.CUSTOM.equals(type)) {
-                hasCustomDept = true;
-                customDeptIds.addAll(parseDeptIds(role.getDataScopeValue()));
+            switch (type) {
+                case DataScopeType.ALL:
+                    hasAll = true;
+                    break;
+                case DataScopeType.SELF:
+                    hasSelf = true;
+                    break;
+                case DataScopeType.NONE:
+                    hasNone = true;
+                    break;
+                case DataScopeType.DEPT:
+                    hasDept = true;
+                    break;
+                case DataScopeType.DEPT_AND_CHILD:
+                    hasDeptAndChild = true;
+                    break;
+                case DataScopeType.CUSTOM_DEPT:
+                case DataScopeType.CUSTOM:
+                    hasCustomDept = true;
+                    customDeptIds.addAll(parseDeptIds(role.getDataScopeValue()));
+                    break;
             }
         }
         if (hasAll) {
@@ -219,6 +228,7 @@ public class DataScopeResolver {
     /**
      * 数据范围解析结果。
      */
+    @Getter
     public static final class DataScopeResult {
         private final String type;
         private final String value;
@@ -228,12 +238,5 @@ public class DataScopeResolver {
             this.value = value;
         }
 
-        public String getType() {
-            return type;
-        }
-
-        public String getValue() {
-            return value;
-        }
     }
 }

@@ -3,6 +3,7 @@ package com.example.demo.common.mybatis;
 import com.baomidou.mybatisplus.extension.plugins.inner.InnerInterceptor;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
+import lombok.Getter;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.StringValue;
@@ -33,10 +34,10 @@ import java.util.*;
  */
 public class DataScopeInnerInterceptor implements InnerInterceptor {
 
-    private final DataScopeProperties properties;
-    private final DataScopeRuleProvider ruleProvider;
     // Guard against recursive rule loading that can exhaust the connection pool.
     private static final ThreadLocal<Boolean> LOADING_RULES = new ThreadLocal<>();
+    private final DataScopeProperties properties;
+    private final DataScopeRuleProvider ruleProvider;
 
     /**
      * 构建数据权限拦截器。
@@ -638,6 +639,7 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
      * @date 2026/2/9
      */
     private static final class TableRef {
+        @Getter
         private final String table;
         private final String qualifier;
         private final String column;
@@ -672,5 +674,6 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
             }
             return columnRef;
         }
+
     }
 }

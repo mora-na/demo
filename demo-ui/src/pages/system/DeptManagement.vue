@@ -10,73 +10,73 @@
       </div>
     </div>
 
-    <el-table :data="depts" size="small" v-loading="loading" row-key="id">
-      <el-table-column prop="name" label="名称" min-width="140" />
-      <el-table-column prop="code" label="编码" min-width="120" />
+    <el-table v-loading="loading" :data="depts" row-key="id" size="small">
+      <el-table-column label="名称" min-width="140" prop="name"/>
+      <el-table-column label="编码" min-width="120" prop="code"/>
       <el-table-column label="父级" min-width="120">
         <template #default="{row}">
           {{ parentName(row.parentId) }}
         </template>
       </el-table-column>
-      <el-table-column prop="sort" label="排序" width="80" />
+      <el-table-column label="排序" prop="sort" width="80"/>
       <el-table-column label="状态" width="100">
         <template #default="{row}">
           <el-switch
-            :model-value="row.status ?? 0"
-            :active-value="1"
-            :inactive-value="0"
-            @change="(value: number) => handleStatusChange(row, value)"
+              :active-value="1"
+              :inactive-value="0"
+              :model-value="row.status ?? 0"
+              @change="(value: number) => handleStatusChange(row, value)"
           />
         </template>
       </el-table-column>
       <el-table-column label="操作" width="140">
         <template #default="{row}">
-          <el-button text size="small" @click="openEdit(row)">编辑</el-button>
+          <el-button size="small" text @click="openEdit(row)">编辑</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="editorVisible" :title="editorTitle" width="520px" align-center>
+    <el-dialog v-model="editorVisible" :title="editorTitle" align-center width="520px">
       <el-form :model="form" label-position="top">
         <el-form-item label="名称">
-          <el-input v-model.trim="form.name" />
+          <el-input v-model.trim="form.name"/>
         </el-form-item>
         <el-form-item label="编码">
-          <el-input v-model.trim="form.code" />
+          <el-input v-model.trim="form.code"/>
         </el-form-item>
         <el-form-item label="父级部门">
           <el-tree-select
-            v-model="form.parentId"
-            :data="deptTree"
-            :render-after-expand="false"
-            clearable
-            check-strictly
-            placeholder="请选择"
-            :props="{label: 'name', value: 'id', children: 'children'}"
+              v-model="form.parentId"
+              :data="deptTree"
+              :props="{label: 'name', value: 'id', children: 'children'}"
+              :render-after-expand="false"
+              check-strictly
+              clearable
+              placeholder="请选择"
           />
         </el-form-item>
         <el-form-item label="排序">
-          <el-input-number v-model="form.sort" :min="0" />
+          <el-input-number v-model="form.sort" :min="0"/>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="form.status" placeholder="请选择">
-            <el-option label="启用" :value="1" />
-            <el-option label="禁用" :value="0" />
+            <el-option :value="1" label="启用"/>
+            <el-option :value="0" label="禁用"/>
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model.trim="form.remark" />
+          <el-input v-model.trim="form.remark"/>
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="editorVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="saveDept">保存</el-button>
+        <el-button :loading="saving" type="primary" @click="saveDept">保存</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import {computed, onMounted, reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
 import {buildTree, type TreeNode} from "../../utils/tree";
@@ -102,7 +102,7 @@ const form = reactive({
 const editorTitle = computed(() => (editorMode.value === "create" ? "新增部门" : "编辑部门"));
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  const err = error as {response?: {data?: {message?: string}}; message?: string};
+  const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err?.response?.data?.message || err?.message || fallback;
 }
 

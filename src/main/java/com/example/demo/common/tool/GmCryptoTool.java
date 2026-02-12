@@ -29,6 +29,7 @@ public final class GmCryptoTool {
     private static final String PROVIDER = "BC";
     private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
     private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
+    private static volatile Sm9Adapter sm9Adapter;
 
     static {
         if (Security.getProvider(PROVIDER) == null) {
@@ -333,17 +334,6 @@ public final class GmCryptoTool {
     }
 
     /**
-     * SM9 适配器接口，用于接入具体实现。
-     */
-    public interface Sm9Adapter {
-        String encryptBase64(String plainText, String base64PublicKey);
-
-        String decryptBase64(String base64CipherText, String base64PrivateKey);
-    }
-
-    private static volatile Sm9Adapter sm9Adapter;
-
-    /**
      * 注册 SM9 适配器实现。
      *
      * @param adapter 适配器实现
@@ -385,10 +375,10 @@ public final class GmCryptoTool {
     /**
      * 使用 SM4（GCM/NoPadding）加密并返回 Base64 密文。
      *
-     * @param plainText  明文
-     * @param base64Key  Base64 编码的 16 字节密钥
-     * @param base64Iv   Base64 编码的 IV（建议 12 字节）
-     * @param base64Aad  Base64 编码的 AAD（可为 null）
+     * @param plainText 明文
+     * @param base64Key Base64 编码的 16 字节密钥
+     * @param base64Iv  Base64 编码的 IV（建议 12 字节）
+     * @param base64Aad Base64 编码的 AAD（可为 null）
      * @return Base64 密文
      */
     public static String sm4EncryptGcmBase64(String plainText, String base64Key, String base64Iv, String base64Aad) {
@@ -535,5 +525,14 @@ public final class GmCryptoTool {
         if (data == null || data.length < expected) {
             throw new IllegalStateException(label + " length must be at least " + expected + " bytes");
         }
+    }
+
+    /**
+     * SM9 适配器接口，用于接入具体实现。
+     */
+    public interface Sm9Adapter {
+        String encryptBase64(String plainText, String base64PublicKey);
+
+        String decryptBase64(String base64CipherText, String base64PrivateKey);
     }
 }

@@ -1,19 +1,19 @@
 <template>
   <el-config-provider :locale="elementLocale">
-    <div class="page" :class="{ 'page--home': currentView === 'home' }">
+    <div :class="{ 'page--home': currentView === 'home' }" class="page">
       <div class="halo"></div>
       <LoginPage
-        v-if="currentView === 'login'"
-        :transport-mode="transportMode"
-        @login-success="handleLoginSuccess"
+          v-if="currentView === 'login'"
+          :transport-mode="transportMode"
+          @login-success="handleLoginSuccess"
       />
-      <HomePage v-else-if="currentView === 'home'" @logout="handleLogout" />
+      <HomePage v-else-if="currentView === 'home'" @logout="handleLogout"/>
       <div v-else class="boot">{{ t("app.checking") }}</div>
     </div>
   </el-config-provider>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import {computed, onMounted, ref} from "vue";
 import {useI18n} from "vue-i18n";
 import enUS from "element-plus/es/locale/lang/en";
@@ -102,11 +102,11 @@ onMounted(async () => {
   height: 900px;
   border-radius: 50%;
   background: conic-gradient(
-    from 90deg,
-    rgba(255, 255, 255, 0.4),
-    rgba(25, 183, 255, 0.18),
-    rgba(43, 124, 255, 0.22),
-    rgba(255, 255, 255, 0.4)
+      from 90deg,
+      rgba(255, 255, 255, 0.4),
+      rgba(25, 183, 255, 0.18),
+      rgba(43, 124, 255, 0.22),
+      rgba(255, 255, 255, 0.4)
   );
   opacity: 0.35;
   transform: translateY(-20%) rotate(-10deg);

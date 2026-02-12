@@ -1,0 +1,66 @@
+package com.example.demo.notice.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
+/**
+ * 通知接收记录实体，映射 sys_notice_recipient 表。
+ *
+ * @author GPT-5.2-codex(high)
+ * @date 2026/2/12
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@TableName(value = "sys_notice_recipient")
+public class NoticeRecipient implements Serializable {
+
+    public static final int STATUS_UNREAD = 0;
+    public static final int STATUS_READ = 1;
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 主键 ID。
+     */
+    @TableId(value = "id", type = IdType.AUTO)
+    private Long id;
+
+    /**
+     * 通知 ID。
+     */
+    @TableField("notice_id")
+    private Long noticeId;
+
+    /**
+     * 接收用户 ID。
+     */
+    @TableField("user_id")
+    private Long userId;
+
+    /**
+     * 阅读状态：0-未读，1-已读。
+     */
+    @TableField("read_status")
+    private Integer readStatus;
+
+    /**
+     * 阅读时间。
+     */
+    @TableField("read_time")
+    private LocalDateTime readTime;
+
+    /**
+     * 创建时间。
+     */
+    @TableField("created_at")
+    private LocalDateTime createdAt;
+}

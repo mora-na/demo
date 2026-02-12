@@ -15,6 +15,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class GmCryptoToolTest {
 
+    private static byte[] sequentialBytes(int length, int start) {
+        byte[] data = new byte[length];
+        for (int i = 0; i < length; i++) {
+            data[i] = (byte) (start + i);
+        }
+        return data;
+    }
+
+    private static String base64Of(byte[] data) {
+        return Base64.getEncoder().encodeToString(data);
+    }
+
     @Test
     void sm3Hex_matchesKnownDigest() {
         String digest = GmCryptoTool.sm3Hex("abc");
@@ -89,17 +101,5 @@ class GmCryptoToolTest {
         String cipher = GmCryptoTool.zuc256EncryptBase64("hello", key, iv);
         String plain = GmCryptoTool.zuc256DecryptBase64(cipher, key, iv);
         assertEquals("hello", plain);
-    }
-
-    private static byte[] sequentialBytes(int length, int start) {
-        byte[] data = new byte[length];
-        for (int i = 0; i < length; i++) {
-            data[i] = (byte) (start + i);
-        }
-        return data;
-    }
-
-    private static String base64Of(byte[] data) {
-        return Base64.getEncoder().encodeToString(data);
     }
 }

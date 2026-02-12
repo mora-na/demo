@@ -67,8 +67,7 @@ public class RedisCacheStore implements CacheStore {
         if (key == null) {
             return false;
         }
-        Boolean deleted = stringRedisTemplate.delete(key);
-        return Boolean.TRUE.equals(deleted);
+        return stringRedisTemplate.delete(key);
     }
 
     @Override
@@ -76,8 +75,7 @@ public class RedisCacheStore implements CacheStore {
         if (key == null) {
             return false;
         }
-        Boolean exists = stringRedisTemplate.hasKey(key);
-        return Boolean.TRUE.equals(exists);
+        return stringRedisTemplate.hasKey(key);
     }
 
     @Override
@@ -94,7 +92,6 @@ public class RedisCacheStore implements CacheStore {
         if (key == null) {
             return -2;
         }
-        Long ttl = stringRedisTemplate.getExpire(key, unit);
-        return ttl == null ? -2 : ttl;
+        return stringRedisTemplate.getExpire(key, unit);
     }
 }

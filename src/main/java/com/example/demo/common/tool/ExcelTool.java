@@ -208,7 +208,7 @@ public final class ExcelTool {
                     break;
                 }
                 for (T item : pageData) {
-                    Row row = sheet != null ? sheet.createRow(rowIndex++) : null;
+                    Row row = sheet.createRow(rowIndex++);
                     writeDataRow(row, fieldMetas, item, dateStyle);
                     totalRows++;
                 }

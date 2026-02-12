@@ -14,6 +14,7 @@ import com.example.demo.user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -54,7 +55,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
      * @return true 表示跳过过滤
      */
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         if (!authProperties.getFilter().isEnabled()) {
             return true;
         }
@@ -80,9 +81,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
      * @throws IOException      IO 异常
      */
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
         String token = AuthTokenResolver.resolve(request);
         if (StringUtils.isBlank(token)) {
             writeUnauthorized(response, i18nService.getMessage(request, "auth.token.missing"));

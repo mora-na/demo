@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -116,7 +117,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return true;
         }
         List<UserRole> relations = roleIds.stream()
-                .filter(roleId -> roleId != null)
+                .filter(Objects::nonNull)
                 .distinct()
                 .map(roleId -> new UserRole(null, id, roleId))
                 .collect(Collectors.toList());

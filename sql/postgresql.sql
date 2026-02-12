@@ -205,115 +205,203 @@ COMMENT ON COLUMN sys_cache.cache_value IS '缓存内容（JSON）';
 COMMENT ON COLUMN sys_cache.value_class IS '值类型名称';
 COMMENT ON COLUMN sys_cache.expire_at IS '过期时间（毫秒时间戳）';
 
+CREATE SEQUENCE IF NOT EXISTS sys_notice_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_notice
+(
+    id           BIGINT PRIMARY KEY DEFAULT nextval('sys_notice_id_seq'),
+    title        VARCHAR(200) NOT NULL,
+    content      TEXT         NOT NULL,
+    scope_type   VARCHAR(32)  NOT NULL,
+    scope_value  VARCHAR(1024),
+    created_by   BIGINT,
+    created_name VARCHAR(64),
+    created_at   TIMESTAMP    NOT NULL
+);
+ALTER SEQUENCE sys_notice_id_seq OWNED BY sys_notice.id;
+CREATE INDEX IF NOT EXISTS idx_sys_notice_created_at ON sys_notice (created_at);
+COMMENT ON TABLE sys_notice IS '系统通知表';
+COMMENT ON COLUMN sys_notice.id IS '主键ID';
+COMMENT ON COLUMN sys_notice.title IS '通知标题';
+COMMENT ON COLUMN sys_notice.content IS '通知内容';
+COMMENT ON COLUMN sys_notice.scope_type IS '通知范围类型';
+COMMENT ON COLUMN sys_notice.scope_value IS '通知范围值（ID列表）';
+COMMENT ON COLUMN sys_notice.created_by IS '创建人ID';
+COMMENT ON COLUMN sys_notice.created_name IS '创建人名称';
+COMMENT ON COLUMN sys_notice.created_at IS '创建时间';
+
+CREATE SEQUENCE IF NOT EXISTS sys_notice_recipient_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_notice_recipient
+(
+    id          BIGINT PRIMARY KEY DEFAULT nextval('sys_notice_recipient_id_seq'),
+    notice_id   BIGINT    NOT NULL,
+    user_id     BIGINT    NOT NULL,
+    read_status SMALLINT  NOT NULL DEFAULT 0,
+    read_time   TIMESTAMP,
+    created_at  TIMESTAMP NOT NULL
+);
+ALTER SEQUENCE sys_notice_recipient_id_seq OWNED BY sys_notice_recipient.id;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_notice_recipient_notice_user ON sys_notice_recipient (notice_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_notice ON sys_notice_recipient (notice_id);
+CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_user ON sys_notice_recipient (user_id);
+CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_read ON sys_notice_recipient (read_status);
+COMMENT ON TABLE sys_notice_recipient IS '系统通知接收表';
+COMMENT ON COLUMN sys_notice_recipient.id IS '主键ID';
+COMMENT ON COLUMN sys_notice_recipient.notice_id IS '通知ID';
+COMMENT ON COLUMN sys_notice_recipient.user_id IS '接收用户ID';
+COMMENT ON COLUMN sys_notice_recipient.read_status IS '阅读状态：0-未读，1-已读';
+COMMENT ON COLUMN sys_notice_recipient.read_time IS '阅读时间';
+COMMENT ON COLUMN sys_notice_recipient.created_at IS '创建时间';
+
 -- 初始化基础数据（默认密码示例：Admin@1234 / Manager@1234 / User@1234）
-INSERT INTO sys_dept (id, name, code, parent_id, status, sort, remark) VALUES
-    (1, '总部', 'HQ', NULL, 1, 0, '根部门'),
-    (2, '研发中心', 'RD', 1, 1, 10, '产品研发'),
-    (3, '运营中心', 'OPS', 1, 1, 20, '运营支持')
-ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    code = EXCLUDED.code,
-    parent_id = EXCLUDED.parent_id,
-    status = EXCLUDED.status,
-    sort = EXCLUDED.sort,
-    remark = EXCLUDED.remark;
+INSERT INTO sys_dept (id, name, code, parent_id, status, sort, remark)
+VALUES (1, '总部', 'HQ', NULL, 1, 0, '根部门'),
+       (2, '研发中心', 'RD', 1, 1, 10, '产品研发'),
+       (3, '运营中心', 'OPS', 1, 1, 20, '运营支持')
+ON CONFLICT (id) DO UPDATE SET name      = EXCLUDED.name,
+                               code      = EXCLUDED.code,
+                               parent_id = EXCLUDED.parent_id,
+                               status    = EXCLUDED.status,
+                               sort      = EXCLUDED.sort,
+                               remark    = EXCLUDED.remark;
 
-INSERT INTO sys_role (id, code, name, status, data_scope_type, data_scope_value) VALUES
-    (1, 'admin', '系统管理员', 1, 'ALL', NULL),
-    (2, 'manager', '部门主管', 1, 'DEPT_AND_CHILD', NULL),
-    (3, 'user', '普通用户', 1, 'SELF', NULL)
-ON CONFLICT (id) DO UPDATE SET
-    code = EXCLUDED.code,
-    name = EXCLUDED.name,
-    status = EXCLUDED.status,
-    data_scope_type = EXCLUDED.data_scope_type,
-    data_scope_value = EXCLUDED.data_scope_value;
+INSERT INTO sys_role (id, code, name, status, data_scope_type, data_scope_value)
+VALUES (1, 'admin', '系统管理员', 1, 'ALL', NULL),
+       (2, 'manager', '部门主管', 1, 'DEPT_AND_CHILD', NULL),
+       (3, 'user', '普通用户', 1, 'SELF', NULL)
+ON CONFLICT (id) DO UPDATE SET code             = EXCLUDED.code,
+                               name             = EXCLUDED.name,
+                               status           = EXCLUDED.status,
+                               data_scope_type  = EXCLUDED.data_scope_type,
+                               data_scope_value = EXCLUDED.data_scope_value;
 
-INSERT INTO sys_permission (id, code, name, status) VALUES
-    (1, 'user:query', '用户查询', 1),
-    (2, 'user:create', '用户创建', 1),
-    (3, 'user:update', '用户更新', 1),
-    (4, 'user:disable', '用户停用', 1),
-    (5, 'user:password:reset', '重置密码', 1),
-    (6, 'user:role:assign', '分配角色', 1),
-    (7, 'user:data-scope:set', '设置数据范围', 1),
-    (8, 'user:export', '用户导出', 1),
-    (9, 'user:import', '用户导入', 1),
-    (10, 'role:query', '角色查询', 1),
-    (11, 'role:create', '角色创建', 1),
-    (12, 'role:update', '角色更新', 1),
-    (13, 'role:disable', '角色停用', 1),
-    (14, 'role:permission:assign', '分配权限', 1),
-    (15, 'role:menu:assign', '分配菜单', 1),
-    (16, 'permission:query', '权限查询', 1),
-    (17, 'permission:create', '权限创建', 1),
-    (18, 'permission:update', '权限更新', 1),
-    (19, 'permission:disable', '权限停用', 1),
-    (20, 'menu:query', '菜单查询', 1),
-    (21, 'menu:create', '菜单创建', 1),
-    (22, 'menu:update', '菜单更新', 1),
-    (23, 'menu:disable', '菜单停用', 1),
-    (24, 'dept:query', '部门查询', 1),
-    (25, 'dept:create', '部门创建', 1),
-    (26, 'dept:update', '部门更新', 1),
-    (27, 'dept:disable', '部门停用', 1)
-ON CONFLICT (id) DO UPDATE SET
-    code = EXCLUDED.code,
-    name = EXCLUDED.name,
-    status = EXCLUDED.status;
+INSERT INTO sys_permission (id, code, name, status)
+VALUES (1, 'user:query', '用户查询', 1),
+       (2, 'user:create', '用户创建', 1),
+       (3, 'user:update', '用户更新', 1),
+       (4, 'user:disable', '用户停用', 1),
+       (5, 'user:password:reset', '重置密码', 1),
+       (6, 'user:role:assign', '分配角色', 1),
+       (7, 'user:data-scope:set', '设置数据范围', 1),
+       (8, 'user:export', '用户导出', 1),
+       (9, 'user:import', '用户导入', 1),
+       (10, 'role:query', '角色查询', 1),
+       (11, 'role:create', '角色创建', 1),
+       (12, 'role:update', '角色更新', 1),
+       (13, 'role:disable', '角色停用', 1),
+       (14, 'role:permission:assign', '分配权限', 1),
+       (15, 'role:menu:assign', '分配菜单', 1),
+       (16, 'permission:query', '权限查询', 1),
+       (17, 'permission:create', '权限创建', 1),
+       (18, 'permission:update', '权限更新', 1),
+       (19, 'permission:disable', '权限停用', 1),
+       (20, 'menu:query', '菜单查询', 1),
+       (21, 'menu:create', '菜单创建', 1),
+       (22, 'menu:update', '菜单更新', 1),
+       (23, 'menu:disable', '菜单停用', 1),
+       (24, 'dept:query', '部门查询', 1),
+       (25, 'dept:create', '部门创建', 1),
+       (26, 'dept:update', '部门更新', 1),
+       (27, 'dept:disable', '部门停用', 1),
+       (28, 'notice:query', '通知查询', 1),
+       (29, 'notice:publish', '通知发布', 1)
+ON CONFLICT (id) DO UPDATE SET code   = EXCLUDED.code,
+                               name   = EXCLUDED.name,
+                               status = EXCLUDED.status;
 
-INSERT INTO sys_menu (id, name, code, parent_id, path, component, permission, status, sort, remark) VALUES
-    (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '系统管理根菜单'),
-    (110, '用户管理', 'user', 100, '/system/users', 'UserPage', 'user:query', 1, 10, '用户管理'),
-    (120, '角色管理', 'role', 100, '/system/roles', 'RolePage', 'role:query', 1, 20, '角色管理'),
-    (130, '菜单管理', 'menu', 100, '/system/menus', 'MenuPage', 'menu:query', 1, 30, '菜单管理'),
-    (140, '部门管理', 'dept', 100, '/system/depts', 'DeptPage', 'dept:query', 1, 40, '部门管理'),
-    (150, '权限管理', 'permission', 100, '/system/permissions', 'PermissionPage', 'permission:query', 1, 50, '权限管理')
-ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    code = EXCLUDED.code,
-    parent_id = EXCLUDED.parent_id,
-    path = EXCLUDED.path,
-    component = EXCLUDED.component,
-    permission = EXCLUDED.permission,
-    status = EXCLUDED.status,
-    sort = EXCLUDED.sort,
-    remark = EXCLUDED.remark;
+INSERT INTO sys_menu (id, name, code, parent_id, path, component, permission, status, sort, remark)
+VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '系统管理根菜单'),
+       (110, '用户管理', 'user', 100, '/system/users', 'UserPage', 'user:query', 1, 10, '用户管理'),
+       (120, '角色管理', 'role', 100, '/system/roles', 'RolePage', 'role:query', 1, 20, '角色管理'),
+       (130, '菜单管理', 'menu', 100, '/system/menus', 'MenuPage', 'menu:query', 1, 30, '菜单管理'),
+       (140, '部门管理', 'dept', 100, '/system/depts', 'DeptPage', 'dept:query', 1, 40, '部门管理'),
+       (150, '权限管理', 'permission', 100, '/system/permissions', 'PermissionPage', 'permission:query', 1, 50,
+        '权限管理'),
+       (160, '系统通知', 'notice', 100, '/system/notices', 'NoticePage', 'notice:query', 1, 60, '系统通知')
+ON CONFLICT (id) DO UPDATE SET name       = EXCLUDED.name,
+                               code       = EXCLUDED.code,
+                               parent_id  = EXCLUDED.parent_id,
+                               path       = EXCLUDED.path,
+                               component  = EXCLUDED.component,
+                               permission = EXCLUDED.permission,
+                               status     = EXCLUDED.status,
+                               sort       = EXCLUDED.sort,
+                               remark     = EXCLUDED.remark;
 
-INSERT INTO sys_user (id, user_name, nick_name, password, status, dept_id, data_scope_type, data_scope_value, sex, tst) VALUES
-    (1, 'admin', '超级管理员', 'b38dce307683511d93ac894f91397a1b5747899bbca077b4cf01c9c31c4f33e0', 1, 1, 'ALL', NULL, 'M', '内置账号'),
-    (2, 'manager', '部门主管', '826182ec96744b73ee254210a720573c494f1486d38715ae48802dc4818fb465', 1, 2, 'DEPT_AND_CHILD', NULL, 'M', '内置账号'),
-    (3, 'demo', '普通用户', '2177cc1d2fee90fbc535546218a2537cdfd65ab76b4a6726c88f946d4786de72', 1, 2, 'SELF', NULL, 'F', '内置账号')
-ON CONFLICT (id) DO UPDATE SET
-    user_name = EXCLUDED.user_name,
-    nick_name = EXCLUDED.nick_name,
-    password = EXCLUDED.password,
-    status = EXCLUDED.status,
-    dept_id = EXCLUDED.dept_id,
-    data_scope_type = EXCLUDED.data_scope_type,
-    data_scope_value = EXCLUDED.data_scope_value,
-    sex = EXCLUDED.sex,
-    tst = EXCLUDED.tst;
+INSERT INTO sys_user (id, user_name, nick_name, password, status, dept_id, data_scope_type, data_scope_value, sex, tst)
+VALUES (1, 'admin', '超级管理员', 'b38dce307683511d93ac894f91397a1b5747899bbca077b4cf01c9c31c4f33e0', 1, 1, 'ALL', NULL,
+        'M', '内置账号'),
+       (2, 'manager', '部门主管', '826182ec96744b73ee254210a720573c494f1486d38715ae48802dc4818fb465', 1, 2,
+        'DEPT_AND_CHILD', NULL, 'M', '内置账号'),
+       (3, 'demo', '普通用户', '2177cc1d2fee90fbc535546218a2537cdfd65ab76b4a6726c88f946d4786de72', 1, 2, 'SELF', NULL,
+        'F', '内置账号')
+ON CONFLICT (id) DO UPDATE SET user_name        = EXCLUDED.user_name,
+                               nick_name        = EXCLUDED.nick_name,
+                               password         = EXCLUDED.password,
+                               status           = EXCLUDED.status,
+                               dept_id          = EXCLUDED.dept_id,
+                               data_scope_type  = EXCLUDED.data_scope_type,
+                               data_scope_value = EXCLUDED.data_scope_value,
+                               sex              = EXCLUDED.sex,
+                               tst              = EXCLUDED.tst;
 
-INSERT INTO sys_user_role (user_id, role_id) VALUES
-    (1, 1),
-    (2, 2),
-    (3, 3)
+INSERT INTO sys_user_role (user_id, role_id)
+VALUES (1, 1),
+       (2, 2),
+       (3, 3)
 ON CONFLICT (user_id, role_id) DO NOTHING;
 
-INSERT INTO sys_role_permission (role_id, permission_id) VALUES
-    (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9),
-    (1, 10), (1, 11), (1, 12), (1, 13), (1, 14), (1, 15), (1, 16), (1, 17),
-    (1, 18), (1, 19), (1, 20), (1, 21), (1, 22), (1, 23), (1, 24), (1, 25),
-    (1, 26), (1, 27),
-    (2, 1), (2, 8), (2, 10), (2, 16), (2, 20), (2, 24),
-    (3, 1)
+INSERT INTO sys_role_permission (role_id, permission_id)
+VALUES (1, 1),
+       (1, 2),
+       (1, 3),
+       (1, 4),
+       (1, 5),
+       (1, 6),
+       (1, 7),
+       (1, 8),
+       (1, 9),
+       (1, 10),
+       (1, 11),
+       (1, 12),
+       (1, 13),
+       (1, 14),
+       (1, 15),
+       (1, 16),
+       (1, 17),
+       (1, 18),
+       (1, 19),
+       (1, 20),
+       (1, 21),
+       (1, 22),
+       (1, 23),
+       (1, 24),
+       (1, 25),
+       (1, 26),
+       (1, 27),
+       (1, 28),
+       (1, 29),
+       (2, 1),
+       (2, 8),
+       (2, 10),
+       (2, 16),
+       (2, 20),
+       (2, 24),
+       (3, 1)
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
-INSERT INTO sys_role_menu (role_id, menu_id) VALUES
-    (1, 100), (1, 110), (1, 120), (1, 130), (1, 140), (1, 150),
-    (2, 100), (2, 110), (2, 140),
-    (3, 100), (3, 110)
+INSERT INTO sys_role_menu (role_id, menu_id)
+VALUES (1, 100),
+       (1, 110),
+       (1, 120),
+       (1, 130),
+       (1, 140),
+       (1, 150),
+       (1, 160),
+       (2, 100),
+       (2, 110),
+       (2, 140),
+       (3, 100),
+       (3, 110)
 ON CONFLICT (role_id, menu_id) DO NOTHING;
 
 SELECT setval('sys_dept_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_dept));
@@ -324,3 +412,5 @@ SELECT setval('sys_user_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_user));
 SELECT setval('sys_role_permission_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_role_permission));
 SELECT setval('sys_role_menu_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_role_menu));
 SELECT setval('sys_user_role_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_user_role));
+SELECT setval('sys_notice_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_notice));
+SELECT setval('sys_notice_recipient_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_notice_recipient));
