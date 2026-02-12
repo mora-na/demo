@@ -1,18 +1,23 @@
 <template>
-  <div class="page" :class="{ 'page--home': currentView === 'home' }">
-    <div class="halo"></div>
-    <LoginPage
-      v-if="currentView === 'login'"
-      :transport-mode="transportMode"
-      @login-success="handleLoginSuccess"
-    />
-    <HomePage v-else-if="currentView === 'home'" @logout="handleLogout" />
-    <div v-else class="boot">正在校验登录状态…</div>
-  </div>
+  <el-config-provider :locale="elementLocale">
+    <div class="page" :class="{ 'page--home': currentView === 'home' }">
+      <div class="halo"></div>
+      <LoginPage
+        v-if="currentView === 'login'"
+        :transport-mode="transportMode"
+        @login-success="handleLoginSuccess"
+      />
+      <HomePage v-else-if="currentView === 'home'" @logout="handleLogout" />
+      <div v-else class="boot">{{ t("app.checking") }}</div>
+    </div>
+  </el-config-provider>
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
+import {useI18n} from "vue-i18n";
+import enUS from "element-plus/es/locale/lang/en";
+import zhCN from "element-plus/es/locale/lang/zh-cn";
 import {useAuthStore} from "./stores/auth";
 import HomePage from "./pages/HomePage.vue";
 import LoginPage from "./pages/LoginPage.vue";
@@ -20,6 +25,8 @@ import LoginPage from "./pages/LoginPage.vue";
 const authStore = useAuthStore();
 const currentView = ref<"checking" | "login" | "home">("checking");
 const transportMode = (import.meta.env.VITE_PASSWORD_TRANSPORT_MODE || "plain").toUpperCase();
+const {locale, t} = useI18n();
+const elementLocale = computed(() => (locale.value === "en-US" ? enUS : zhCN));
 
 function handleLoginSuccess() {
   currentView.value = "home";

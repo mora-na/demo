@@ -3,14 +3,14 @@
     <aside class="console-nav">
       <div class="nav-brand">
         <div class="nav-brand-row">
-          <span class="badge">控制台</span>
-          <div class="nav-title">演示系统</div>
-          <div class="nav-sub">模块化管理中心</div>
+          <span class="badge">{{ t("home.nav.badge") }}</span>
+          <div class="nav-title">{{ t("home.nav.title") }}</div>
+          <div class="nav-sub">{{ t("home.nav.sub") }}</div>
         </div>
         <button
           class="nav-toggle"
           type="button"
-          :aria-label="navCollapsed ? '展开导航' : '收起导航'"
+          :aria-label="navCollapsed ? t('home.nav.expand') : t('home.nav.collapse')"
           @click="toggleNav"
         >
           <span v-if="navCollapsed">»</span>
@@ -18,9 +18,9 @@
         </button>
       </div>
       <div class="nav-section">
-        <div class="nav-section-title">功能模块</div>
+        <div class="nav-section-title">{{ t("home.nav.section") }}</div>
         <div class="nav-tree">
-          <el-empty v-if="!filteredMenuTree.length" description="暂无可访问菜单" />
+          <el-empty v-if="!filteredMenuTree.length" :description="t('home.nav.empty')" />
           <div v-else class="nav-groups">
             <div v-for="group in filteredMenuTree" :key="group.id" class="nav-group">
               <button
@@ -54,24 +54,24 @@
     <header class="console-topbar">
       <div class="topbar-left">
         <div>
-          <div class="topbar-title">控制台概览</div>
-          <div class="topbar-sub">{{ activeGroup?.name || "请先选择模块" }}</div>
+          <div class="topbar-title">{{ t("home.topbar.title") }}</div>
+          <div class="topbar-sub">{{ activeGroup?.name || t("home.topbar.chooseModule") }}</div>
         </div>
         <div class="topbar-tags">
-          <el-tag type="success" effect="dark">在线</el-tag>
+          <el-tag type="success" effect="dark">{{ t("common.online") }}</el-tag>
         </div>
       </div>
       <div class="topbar-center">
         <el-input
           v-model.trim="menuQuery"
           class="topbar-search"
-          placeholder="搜索菜单、路径或权限"
+          :placeholder="t('home.topbar.searchPlaceholder')"
           clearable
         />
       </div>
       <div class="topbar-right">
-        <el-button text class="icon-button" aria-label="通知">🔔</el-button>
-        <el-button text class="icon-button" aria-label="设置">⚙️</el-button>
+        <el-button text class="icon-button" :aria-label="t('home.topbar.notifications')">🔔</el-button>
+        <el-button text class="icon-button" :aria-label="t('home.topbar.settings')" @click="openSettings">⚙️</el-button>
         <el-dropdown trigger="click">
           <button class="topbar-user" type="button">
             <el-avatar size="36" class="user-avatar">{{ userInitial }}</el-avatar>
@@ -84,7 +84,7 @@
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item :disabled="loggingOut" @click="handleLogout">
-                退出登录
+                {{ t("home.topbar.logout") }}
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -95,16 +95,13 @@
     <section class="console-main">
       <div class="main-hero">
         <div>
-          <h1>{{ activeGroup?.name || "控制台" }}</h1>
-          <p>{{ activeGroup ? menuDescription(activeGroup) : "从左侧选择模块查看内容" }}</p>
-        </div>
-        <div class="main-actions">
-          <el-button type="primary">新建任务</el-button>
+          <h1>{{ activeGroup?.name || t("home.main.titleFallback") }}</h1>
+          <p>{{ activeGroup ? menuDescription(activeGroup) : t("home.main.descFallback") }}</p>
         </div>
       </div>
 
       <div class="main-grid">
-        <el-empty v-if="!activeChildren.length" description="暂无可访问子菜单" />
+        <el-empty v-if="!activeChildren.length" :description="t('home.main.empty')" />
         <template v-else>
           <article
             v-for="item in activeChildren"
@@ -124,40 +121,81 @@
       <div class="main-metrics">
         <div class="metric">
           <div class="metric-value">{{ menuGroupCount }}</div>
-          <div class="metric-title">模块数</div>
+          <div class="metric-title">{{ t("home.main.metrics.group") }}</div>
         </div>
         <div class="metric">
           <div class="metric-value">{{ submenuCount }}</div>
-          <div class="metric-title">子菜单数</div>
+          <div class="metric-title">{{ t("home.main.metrics.submenu") }}</div>
         </div>
         <div class="metric">
           <div class="metric-value">{{ roleCount }}</div>
-          <div class="metric-title">角色数</div>
+          <div class="metric-title">{{ t("home.main.metrics.role") }}</div>
         </div>
         <div class="metric">
           <div class="metric-value">{{ permissionCount }}</div>
-          <div class="metric-title">权限数</div>
+          <div class="metric-title">{{ t("home.main.metrics.permission") }}</div>
         </div>
       </div>
     </section>
+
+    <el-dialog v-model="settingsVisible" :title="t('home.profile.title')" width="460px" align-center>
+      <el-form :model="profileForm" label-position="top">
+        <el-form-item :label="t('home.profile.userName')">
+          <el-input v-model.trim="profileForm.userName" disabled />
+        </el-form-item>
+        <el-form-item :label="t('home.profile.nickName')">
+          <el-input v-model.trim="profileForm.nickName" :placeholder="t('home.profile.nickNamePlaceholder')" />
+        </el-form-item>
+        <el-divider />
+        <el-form-item :label="t('home.profile.oldPassword')">
+          <el-input v-model.trim="profileForm.oldPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item :label="t('home.profile.newPassword')">
+          <el-input v-model.trim="profileForm.newPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item :label="t('home.profile.confirmPassword')">
+          <el-input v-model.trim="profileForm.confirmPassword" type="password" show-password />
+        </el-form-item>
+        <div class="profile-note">{{ t("home.profile.note") }}</div>
+      </el-form>
+      <template #footer>
+        <el-button @click="settingsVisible = false">{{ t("common.cancel") }}</el-button>
+        <el-button type="primary" :loading="savingProfile" @click="handleProfileSave">
+          {{ t("common.save") }}
+        </el-button>
+      </template>
+    </el-dialog>
   </main>
 </template>
 
 <script setup lang="ts">
 import {computed, onMounted, ref, watch} from "vue";
 import {ElMessage} from "element-plus";
-import {logout, type MenuTree} from "../api/auth";
+import {useI18n} from "vue-i18n";
+import {logout, type MenuTree, updateProfile} from "../api/auth";
 import {useAuthStore} from "../stores/auth";
 
 const emit = defineEmits<{(e: "logout"): void}>();
 
 const authStore = useAuthStore();
+const {t} = useI18n();
 const displayName = computed(
-  () => authStore.profile?.nickName || authStore.profile?.userName || authStore.userName || "用户"
+  () => authStore.profile?.nickName || authStore.profile?.userName || authStore.userName || t("common.userFallback")
 );
 const userInitial = computed(() => (displayName.value || "U").slice(0, 1));
 const loggingOut = ref(false);
 const loadingProfile = ref(false);
+const settingsVisible = ref(false);
+const savingProfile = ref(false);
+const originalNickName = ref("");
+
+const profileForm = ref({
+  userName: "",
+  nickName: "",
+  oldPassword: "",
+  newPassword: "",
+  confirmPassword: ""
+});
 
 const menuItems = computed(() => authStore.menus || []);
 const menuQuery = ref("");
@@ -200,7 +238,9 @@ const activeChildren = computed(() => {
   return [activeGroup.value];
 });
 
-const roleSummary = computed(() => (authStore.roles.length ? authStore.roles.join(" / ") : "未分配"));
+const roleSummary = computed(() =>
+  authStore.roles.length ? authStore.roles.join(" / ") : t("common.roleEmpty")
+);
 
 watch(
   menuItems,
@@ -236,8 +276,68 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return err?.response?.data?.message || err?.message || fallback;
 }
 
+function openSettings() {
+  const profile = authStore.profile;
+  profileForm.value = {
+    userName: profile?.userName || authStore.userName || "",
+    nickName: profile?.nickName || "",
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  };
+  originalNickName.value = profileForm.value.nickName || "";
+  settingsVisible.value = true;
+}
+
+async function handleProfileSave() {
+  if (savingProfile.value) {
+    return;
+  }
+  const nickName = profileForm.value.nickName.trim();
+  const wantsPasswordChange =
+    Boolean(profileForm.value.oldPassword) ||
+    Boolean(profileForm.value.newPassword) ||
+    Boolean(profileForm.value.confirmPassword);
+
+  if (!wantsPasswordChange && nickName === originalNickName.value) {
+    ElMessage.warning(t("home.profile.msg.noChanges"));
+    return;
+  }
+
+  if (wantsPasswordChange) {
+    if (!profileForm.value.oldPassword || !profileForm.value.newPassword || !profileForm.value.confirmPassword) {
+      ElMessage.warning(t("home.profile.msg.fillPassword"));
+      return;
+    }
+    if (profileForm.value.newPassword !== profileForm.value.confirmPassword) {
+      ElMessage.warning(t("home.profile.msg.confirmMismatch"));
+      return;
+    }
+  }
+
+  savingProfile.value = true;
+  try {
+    const result = await updateProfile({
+      nickName: nickName || undefined,
+      oldPassword: wantsPasswordChange ? profileForm.value.oldPassword : undefined,
+      newPassword: wantsPasswordChange ? profileForm.value.newPassword : undefined
+    });
+    if (result?.code === 200) {
+      ElMessage.success(result?.message || t("home.profile.msg.saveSuccess"));
+      await authStore.loadProfile(true);
+      settingsVisible.value = false;
+    } else {
+      ElMessage.error(result?.message || t("home.profile.msg.saveFailed"));
+    }
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, t("home.profile.msg.saveFailed")));
+  } finally {
+    savingProfile.value = false;
+  }
+}
+
 function menuDescription(menu: {remark?: string}) {
-  return menu?.remark || "功能入口";
+  return menu?.remark || t("common.entry");
 }
 
 function matchesMenu(menu: MenuTree, query: string) {
@@ -323,7 +423,7 @@ async function loadProfile() {
   try {
     const result = await authStore.loadProfile();
     if (!result.ok) {
-      ElMessage.warning(result.message || "用户信息加载失败");
+      ElMessage.warning(result.message || t("home.msg.profileLoadFailed"));
     }
   } finally {
     loadingProfile.value = false;
@@ -344,14 +444,14 @@ async function handleLogout() {
   try {
     const result = await logout(token);
     if (result?.code === 200) {
-      ElMessage.success(result?.message || "已退出登录");
+      ElMessage.success(result?.message || t("home.msg.logoutSuccess"));
       authStore.clearSession();
       emit("logout");
     } else {
-      ElMessage.error(result?.message || "退出登录失败");
+      ElMessage.error(result?.message || t("home.msg.logoutFailed"));
     }
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "退出登录失败"));
+    ElMessage.error(getErrorMessage(error, t("home.msg.logoutFailed")));
   } finally {
     loggingOut.value = false;
   }
@@ -669,6 +769,12 @@ onMounted(loadProfile);
 .user-chevron {
   font-size: 12px;
   color: var(--muted);
+}
+
+.profile-note {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: -6px;
 }
 
 .console-main {

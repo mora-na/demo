@@ -2,6 +2,7 @@ package com.example.demo.user.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.demo.auth.dto.UserProfileUpdateRequest;
 import com.example.demo.auth.service.PasswordService;
 import com.example.demo.permission.entity.UserRole;
 import com.example.demo.permission.service.UserRoleService;
@@ -14,6 +15,7 @@ import com.example.demo.user.mapper.UserMapper;
 import com.example.demo.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -134,6 +136,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setId(id);
         user.setDataScopeType(dataScopeType);
         user.setDataScopeValue(dataScopeValue);
+        return updateById(user);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateSelfProfile(Long id, UserProfileUpdateRequest request, String newPassword) {
+        if (id == null || request == null) {
+            return false;
+        }
+        User user = new User();
+        user.setId(id);
+        user.setNickName(request.getNickName());
+        user.setSex(request.getSex());
+        user.setTst(request.getTst());
+        if (StringUtils.isNotBlank(newPassword)) {
+            user.setPassword(passwordService.encode(newPassword));
+        }
         return updateById(user);
     }
 

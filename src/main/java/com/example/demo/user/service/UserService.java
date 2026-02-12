@@ -1,6 +1,7 @@
 package com.example.demo.user.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.example.demo.auth.dto.UserProfileUpdateRequest;
 import com.example.demo.user.dto.UserCreateRequest;
 import com.example.demo.user.dto.UserQuery;
 import com.example.demo.user.dto.UserUpdateRequest;
@@ -31,4 +32,6 @@ public interface UserService extends IService<User> {
     boolean assignRoles(Long id, List<Long> roleIds);
 
     boolean updateDataScope(Long id, String dataScopeType, String dataScopeValue);
+
+    boolean updateSelfProfile(Long id, UserProfileUpdateRequest request, String newPassword);
 }

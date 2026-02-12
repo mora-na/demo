@@ -1,5 +1,6 @@
 import {computed, ref} from "vue";
 import {defineStore} from "pinia";
+import {i18n} from "../i18n";
 import {fetchProfile, type MenuTree, type UserProfileInfo} from "../api/auth";
 
 const TOKEN_KEY = "demo-token";
@@ -37,7 +38,7 @@ export const useAuthStore = defineStore("auth", () => {
 
   async function loadProfile(force = false) {
     if (!token.value) {
-      return {ok: false, message: "缺少登录令牌"};
+      return {ok: false, message: i18n.global.t("common.missingToken")};
     }
     if (profileLoaded.value && !force) {
       return {ok: true};
@@ -55,7 +56,7 @@ export const useAuthStore = defineStore("auth", () => {
       }
       return {ok: true};
     }
-    return {ok: false, message: result?.message || "用户信息加载失败"};
+    return {ok: false, message: result?.message || i18n.global.t("common.profileLoadFailed")};
   }
 
   return {

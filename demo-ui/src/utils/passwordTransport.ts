@@ -125,13 +125,15 @@ async function encryptAesGcm(plainText: string, base64Key?: string): Promise<str
   if (!base64Key) {
     throw new Error("AES-GCM key is missing");
   }
-  if (!globalThis.crypto?.subtle) {
+  const crypto = globalThis.crypto;
+  if (!crypto?.subtle) {
     throw new Error("Web Crypto API is not available");
   }
   const keyBytes = base64ToBytes(base64Key);
-  const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
-  const key = await globalThis.crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["encrypt"]);
-  const cipherBuffer = await globalThis.crypto.subtle.encrypt(
+  const keyMaterial = new Uint8Array(keyBytes);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await crypto.subtle.importKey("raw", keyMaterial, "AES-GCM", false, ["encrypt"]);
+  const cipherBuffer = await crypto.subtle.encrypt(
     {name: "AES-GCM", iv},
     key,
     textEncoder.encode(plainText)

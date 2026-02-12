@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 /**
  * 认证接口控制器，处理验证码、登录与登出流程。
@@ -134,5 +135,54 @@ public class AuthController extends BaseController {
     @RequireLogin
     public CommonResult<UserProfileResponse> profile() {
         return success(userProfileService.buildProfile(AuthContext.get()));
+    }
+
+    /**
+     * 更新当前登录用户资料（不允许修改用户名）。
+     *
+     * @param request 更新请求
+     * @return 通用响应结果
+     */
+    @PutMapping("/profile")
+    @RequireLogin
+    public CommonResult<Void> updateProfile(@Valid @RequestBody(required = false) UserProfileUpdateRequest request) {
+        if (request == null) {
+            return error(400, i18n("common.request.invalid"));
+        }
+        AuthUser authUser = AuthContext.get();
+        if (authUser == null || authUser.getId() == null) {
+            return error(401, i18n("auth.user.invalid"));
+        }
+        User dbUser = userService.getById(authUser.getId());
+        if (dbUser == null) {
+            return error(404, i18n("user.not.found"));
+        }
+        String oldPasswordCipher = request.getOldPassword();
+        String newPasswordCipher = request.getNewPassword();
+        boolean wantsPasswordChange = StringUtils.isNotBlank(oldPasswordCipher) || StringUtils.isNotBlank(newPasswordCipher);
+        String newRawPassword = null;
+        if (wantsPasswordChange) {
+            if (StringUtils.isBlank(oldPasswordCipher) || StringUtils.isBlank(newPasswordCipher)) {
+                return error(400, i18n("user.password.invalid"));
+            }
+            String oldRawPassword = passwordService.decodeTransportPassword(oldPasswordCipher);
+            newRawPassword = passwordService.decodeTransportPassword(newPasswordCipher);
+            if (StringUtils.isBlank(oldRawPassword) || StringUtils.isBlank(newRawPassword)) {
+                return error(400, i18n("user.password.invalid"));
+            }
+            if (!passwordService.matches(oldRawPassword, dbUser.getPassword())) {
+                return error(400, i18n("user.password.old.invalid"));
+            }
+            if (newRawPassword.length() < 6) {
+                return error(400, i18n("user.password.length.invalid"));
+            }
+            if (!passwordService.isStrongPassword(newRawPassword)) {
+                return error(400, i18n("user.password.weak"));
+            }
+        }
+        if (!userService.updateSelfProfile(authUser.getId(), request, newRawPassword)) {
+            return error(500, i18n("common.update.failed"));
+        }
+        return success();
     }
 }

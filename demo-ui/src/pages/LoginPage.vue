@@ -1,40 +1,40 @@
 <template>
   <main class="shell">
     <section class="hero">
-      <span class="badge">演示入口</span>
-      <h1>安全进入演示系统。</h1>
+      <span class="badge">{{ t("login.badge") }}</span>
+      <h1>{{ t("login.title") }}</h1>
       <p class="lede">
-        使用账号登录，完成验证码校验，并选择与后端匹配的传输方式。
+        {{ t("login.lede") }}
       </p>
       <div class="hero-grid">
         <div class="hero-card">
-          <div class="hero-title">传输方式</div>
+          <div class="hero-title">{{ t("login.transport.title") }}</div>
           <div class="hero-value">{{ transportMode }}</div>
-          <div class="hero-note">传输过程中密码保持加密。</div>
+          <div class="hero-note">{{ t("login.transport.note") }}</div>
         </div>
         <div class="hero-card">
-          <div class="hero-title">令牌有效期</div>
-          <div class="hero-value">2 小时</div>
-          <div class="hero-note">基于服务端配置。</div>
+          <div class="hero-title">{{ t("login.tokenTtl.title") }}</div>
+          <div class="hero-value">{{ t("login.tokenTtl.value", {hours: tokenTtlHours}) }}</div>
+          <div class="hero-note">{{ t("login.tokenTtl.note") }}</div>
         </div>
         <div class="hero-card">
-          <div class="hero-title">安全策略</div>
-          <div class="hero-value">验证码</div>
-          <div class="hero-note">每次登录前需校验。</div>
+          <div class="hero-title">{{ t("login.security.title") }}</div>
+          <div class="hero-value">{{ t("login.security.value") }}</div>
+          <div class="hero-note">{{ t("login.security.note") }}</div>
         </div>
       </div>
       <div class="hero-strip">
         <div class="strip-item">
-          <span class="strip-label">系统状态</span>
-          <span class="strip-value">在线</span>
+          <span class="strip-label">{{ t("login.status.system") }}</span>
+          <span class="strip-value">{{ t("login.status.online") }}</span>
         </div>
         <div class="strip-item">
-          <span class="strip-label">安全等级</span>
-          <span class="strip-value">受控</span>
+          <span class="strip-label">{{ t("login.status.level") }}</span>
+          <span class="strip-value">{{ t("login.status.controlled") }}</span>
         </div>
         <div class="strip-item">
-          <span class="strip-label">登录窗口</span>
-          <span class="strip-value">实时刷新</span>
+          <span class="strip-label">{{ t("login.status.window") }}</span>
+          <span class="strip-value">{{ t("login.status.realtime") }}</span>
         </div>
       </div>
     </section>
@@ -44,45 +44,45 @@
         <template #header>
           <div class="panel-header">
             <div>
-              <h2>欢迎回来</h2>
-              <p>请验证身份后继续。</p>
+              <h2>{{ t("login.panel.title") }}</h2>
+              <p>{{ t("login.panel.subtitle") }}</p>
             </div>
           </div>
         </template>
 
         <el-form class="login-form" label-position="top" @submit.prevent="handleSubmit">
-          <el-form-item label="用户名">
+          <el-form-item :label="t('login.form.username')">
             <el-input
               v-model.trim="form.userName"
               autocomplete="username"
-              placeholder="请输入用户名"
+              :placeholder="t('login.form.usernamePlaceholder')"
               :disabled="loading"
             />
           </el-form-item>
 
-          <el-form-item label="密码">
+          <el-form-item :label="t('login.form.password')">
             <el-input
               v-model="form.password"
               type="password"
               show-password
               autocomplete="current-password"
-              placeholder="请输入密码"
+              :placeholder="t('login.form.passwordPlaceholder')"
               :disabled="loading"
             />
           </el-form-item>
 
           <div class="captcha-row">
-            <el-form-item class="captcha-field" label="验证码">
+            <el-form-item class="captcha-field" :label="t('login.form.captcha')">
               <el-input
                 v-model.trim="form.captchaCode"
                 autocomplete="off"
-                placeholder="输入验证码"
+                :placeholder="t('login.form.captchaPlaceholder')"
                 :disabled="loading"
               />
             </el-form-item>
             <el-button class="captcha-button" @click="loadCaptcha" :disabled="loading">
-              <img v-if="captchaImage" :src="captchaImage" alt="验证码" />
-              <span v-else>加载验证码</span>
+              <img v-if="captchaImage" :src="captchaImage" :alt="t('login.form.captcha')" />
+              <span v-else>{{ t("login.form.captchaLoading") }}</span>
             </el-button>
           </div>
 
@@ -95,11 +95,11 @@
             :class="{ 'is-loading': loading }"
             @click="handleSubmit"
           >
-            登录
+            {{ t("login.form.submit") }}
           </el-button>
 
           <p class="helper">
-            登录后将进入首页导航面板，可继续访问演示模块。
+            {{ t("login.form.helper") }}
           </p>
         </el-form>
       </el-card>
@@ -110,6 +110,7 @@
 <script setup lang="ts">
 import {onMounted, reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
+import {useI18n} from "vue-i18n";
 import {fetchCaptcha, login} from "../api/auth";
 import {useAuthStore} from "../stores/auth";
 
@@ -117,6 +118,8 @@ defineProps<{transportMode: string}>();
 const emit = defineEmits<{(e: "login-success"): void}>();
 
 const authStore = useAuthStore();
+const {t} = useI18n();
+const tokenTtlHours = 2;
 
 const form = reactive({
   userName: "",
@@ -136,9 +139,9 @@ async function loadCaptcha() {
       form.captchaId = result.data.captchaId;
       return;
     }
-    ElMessage.error(result?.message || "验证码加载失败");
+    ElMessage.error(result?.message || t("login.msg.captchaLoadFailed"));
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "验证码加载失败"));
+    ElMessage.error(getErrorMessage(error, t("login.msg.captchaLoadFailed")));
   }
 }
 
@@ -152,7 +155,7 @@ async function handleSubmit() {
     return;
   }
   if (!form.userName || !form.password || !form.captchaCode) {
-    ElMessage.warning("请填写所有字段。");
+    ElMessage.warning(t("login.msg.fillAll"));
     return;
   }
 
@@ -163,19 +166,19 @@ async function handleSubmit() {
       authStore.setSession(result.data.token, form.userName);
       const profileResult = await authStore.loadProfile(true);
       if (!profileResult.ok) {
-        ElMessage.warning(profileResult.message || "用户信息加载失败");
+        ElMessage.warning(profileResult.message || t("login.msg.profileLoadFailed"));
       }
-      ElMessage.success(`欢迎，${form.userName}！`);
+      ElMessage.success(t("login.msg.welcomeUser", {name: form.userName}));
       emit("login-success");
       form.password = "";
       form.captchaCode = "";
     } else {
-      ElMessage.error(result?.message || "登录失败");
+      ElMessage.error(result?.message || t("login.msg.loginFailed"));
       form.captchaCode = "";
       await loadCaptcha();
     }
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "登录失败"));
+    ElMessage.error(getErrorMessage(error, t("login.msg.loginFailed")));
     form.captchaCode = "";
     await loadCaptcha();
   } finally {

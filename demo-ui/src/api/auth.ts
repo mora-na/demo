@@ -17,6 +17,14 @@ export interface LoginData {
   token: string;
 }
 
+export interface UpdateProfilePayload {
+  nickName?: string;
+  sex?: string;
+  tst?: string;
+  oldPassword?: string;
+  newPassword?: string;
+}
+
 export interface UserProfileInfo {
   id: number;
   userName: string;
@@ -81,5 +89,17 @@ export async function logout(token?: string): Promise<ApiResponse<void>> {
 
 export async function fetchProfile(): Promise<ApiResponse<UserProfileResponse>> {
   const response = await api.get<ApiResponse<UserProfileResponse>>("/auth/profile");
+  return response.data;
+}
+
+export async function updateProfile(payload: UpdateProfilePayload): Promise<ApiResponse<void>> {
+  const request = {...payload};
+  if (payload.oldPassword) {
+    request.oldPassword = await encodeTransportPassword(payload.oldPassword);
+  }
+  if (payload.newPassword) {
+    request.newPassword = await encodeTransportPassword(payload.newPassword);
+  }
+  const response = await api.put<ApiResponse<void>>("/auth/profile", request);
   return response.data;
 }
