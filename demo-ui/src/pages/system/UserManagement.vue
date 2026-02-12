@@ -2,35 +2,35 @@
   <div class="system-module">
     <div class="module-head">
       <div>
-        <div class="module-title">用户管理</div>
-        <div class="module-sub">维护系统用户、账号状态与角色关系。</div>
+        <div class="module-title">{{ t("user.title") }}</div>
+        <div class="module-sub">{{ t("user.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-input v-model.trim="filters.userName" clearable placeholder="用户名"/>
-        <el-input v-model.trim="filters.nickName" clearable placeholder="昵称"/>
-        <el-select v-model="filters.status" clearable placeholder="状态" style="width: 120px">
-          <el-option :value="1" label="启用"/>
-          <el-option :value="0" label="禁用"/>
+        <el-input v-model.trim="filters.userName" clearable :placeholder="t('user.filter.userNamePlaceholder')"/>
+        <el-input v-model.trim="filters.nickName" clearable :placeholder="t('user.filter.nickNamePlaceholder')"/>
+        <el-select v-model="filters.status" clearable :placeholder="t('user.filter.statusPlaceholder')" style="width: 120px">
+          <el-option :value="1" :label="t('user.dialog.statusEnabled')"/>
+          <el-option :value="0" :label="t('user.dialog.statusDisabled')"/>
         </el-select>
-        <el-button @click="handleSearch">查询</el-button>
-        <el-button type="primary" @click="openCreate">新增用户</el-button>
+        <el-button @click="handleSearch">{{ t("user.filter.search") }}</el-button>
+        <el-button type="primary" @click="openCreate">{{ t("user.filter.create") }}</el-button>
       </div>
     </div>
 
     <el-table v-loading="loading" :data="users" row-key="id" size="small">
-      <el-table-column label="用户名" min-width="140" prop="userName"/>
-      <el-table-column label="昵称" min-width="140" prop="nickName"/>
-      <el-table-column label="性别" width="80">
+      <el-table-column :label="t('user.table.userName')" min-width="140" prop="userName"/>
+      <el-table-column :label="t('user.table.nickName')" min-width="140" prop="nickName"/>
+      <el-table-column :label="t('user.table.sex')" width="80">
         <template #default="{row}">
           {{ sexLabel(row.sex) }}
         </template>
       </el-table-column>
-      <el-table-column label="部门" prop="deptId" width="120">
+      <el-table-column :label="t('user.table.dept')" prop="deptId" width="120">
         <template #default="{row}">
           {{ deptName(row.deptId) }}
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="100">
+      <el-table-column :label="t('user.table.status')" width="100">
         <template #default="{row}">
           <el-switch
               :active-value="1"
@@ -40,11 +40,13 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="220">
+      <el-table-column :label="t('user.table.action')" width="240">
         <template #default="{row}">
-          <el-button size="small" text @click="openEdit(row)">编辑</el-button>
-          <el-button size="small" text @click="openReset(row)">重置密码</el-button>
-          <el-button size="small" text @click="openRoles(row)">分配角色</el-button>
+          <div class="action-buttons">
+            <el-button size="small" text @click="openEdit(row)">{{ t("user.table.edit") }}</el-button>
+            <el-button size="small" text @click="openReset(row)">{{ t("user.table.resetPassword") }}</el-button>
+            <el-button size="small" text @click="openRoles(row)">{{ t("user.table.assignRoles") }}</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -60,89 +62,112 @@
       />
     </div>
 
-    <el-dialog v-model="editorVisible" :title="editorTitle" align-center width="520px">
+    <el-dialog v-model="editorVisible" :title="editorTitle" align-center width="680px">
       <el-form :model="form" label-position="top">
-        <el-form-item label="用户名">
-          <el-input v-model.trim="form.userName" :disabled="editorMode === 'edit'"/>
-        </el-form-item>
-        <el-form-item label="昵称">
-          <el-input v-model.trim="form.nickName"/>
-        </el-form-item>
-        <el-form-item label="性别">
-          <el-select v-model="form.sex" placeholder="请选择">
-            <el-option label="男" value="M"/>
-            <el-option label="女" value="F"/>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="部门">
-          <el-select v-model="form.deptId" placeholder="请选择">
-            <el-option
-                v-for="dept in depts"
-                :key="dept.id"
-                :label="dept.name"
-                :value="dept.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="form.status" placeholder="请选择">
-            <el-option :value="1" label="启用"/>
-            <el-option :value="0" label="禁用"/>
-          </el-select>
-        </el-form-item>
-        <el-form-item v-if="editorMode === 'create'" label="初始密码">
-          <el-input v-model.trim="form.password" show-password type="password"/>
-        </el-form-item>
-        <el-form-item label="数据范围类型">
-          <el-select v-model="form.dataScopeType" placeholder="请选择">
-            <el-option label="全部" value="ALL"/>
-            <el-option label="本部门" value="DEPT"/>
-            <el-option label="部门及下级" value="DEPT_AND_CHILD"/>
-            <el-option label="自定义" value="CUSTOM"/>
-            <el-option label="自定义部门" value="CUSTOM_DEPT"/>
-            <el-option label="仅本人" value="SELF"/>
-            <el-option label="无权限" value="NONE"/>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="数据范围值">
-          <el-input v-model.trim="form.dataScopeValue" placeholder="逗号分隔 ID"/>
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model.trim="form.tst"/>
-        </el-form-item>
+        <el-row :gutter="16" class="form-grid">
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dialog.userName')">
+              <el-input v-model.trim="form.userName" :disabled="editorMode === 'edit'"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dialog.nickName')">
+              <el-input v-model.trim="form.nickName"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dialog.sex')">
+              <el-select v-model="form.sex" :placeholder="t('user.dialog.sexPlaceholder')">
+                <el-option :label="t('user.sex.male')" value="M"/>
+                <el-option :label="t('user.sex.female')" value="F"/>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dialog.dept')">
+              <el-select v-model="form.deptId" :placeholder="t('user.dialog.deptPlaceholder')">
+                <el-option
+                    v-for="dept in depts"
+                    :key="dept.id"
+                    :label="dept.name"
+                    :value="dept.id"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dialog.status')">
+              <el-select v-model="form.status" :placeholder="t('user.dialog.statusPlaceholder')">
+                <el-option :value="1" :label="t('user.dialog.statusEnabled')"/>
+                <el-option :value="0" :label="t('user.dialog.statusDisabled')"/>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col v-if="editorMode === 'create'" :xs="24" :sm="12">
+            <el-form-item :label="t('user.dialog.initialPassword')">
+              <el-input v-model.trim="form.password" show-password type="password"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dialog.dataScopeType')">
+              <el-select v-model="form.dataScopeType" :placeholder="t('user.dialog.dataScopePlaceholder')">
+                <el-option :label="t('user.scope.all')" value="ALL"/>
+                <el-option :label="t('user.scope.dept')" value="DEPT"/>
+                <el-option :label="t('user.scope.deptAndChild')" value="DEPT_AND_CHILD"/>
+                <el-option :label="t('user.scope.custom')" value="CUSTOM"/>
+                <el-option :label="t('user.scope.customDept')" value="CUSTOM_DEPT"/>
+                <el-option :label="t('user.scope.self')" value="SELF"/>
+                <el-option :label="t('user.scope.none')" value="NONE"/>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dialog.dataScopeValue')">
+              <el-input
+                  v-model.trim="form.dataScopeValue"
+                  :placeholder="t('user.dialog.dataScopeValuePlaceholder')"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24">
+            <el-form-item :label="t('user.dialog.remark')">
+              <el-input v-model.trim="form.tst"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <template #footer>
-        <el-button @click="editorVisible = false">取消</el-button>
-        <el-button :loading="saving" type="primary" @click="saveUser">保存</el-button>
+        <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
+        <el-button :loading="saving" type="primary" @click="saveUser">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="roleVisible" align-center title="分配角色" width="480px">
+    <el-dialog v-model="roleVisible" align-center :title="t('user.roles.title')" width="480px">
       <el-form label-position="top">
-        <el-form-item label="角色列表">
-          <el-select v-model="selectedRoleIds" multiple placeholder="请选择">
+        <el-form-item :label="t('user.roles.list')">
+          <el-select v-model="selectedRoleIds" multiple :placeholder="t('user.roles.placeholder')">
             <el-option v-for="role in roles" :key="role.id" :label="role.name" :value="role.id"/>
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="roleVisible = false">取消</el-button>
-        <el-button :loading="assigning" type="primary" @click="saveRoles">保存</el-button>
+        <el-button @click="roleVisible = false">{{ t("common.cancel") }}</el-button>
+        <el-button :loading="assigning" type="primary" @click="saveRoles">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="resetVisible" align-center title="重置密码" width="420px">
+    <el-dialog v-model="resetVisible" align-center :title="t('user.reset.title')" width="420px">
       <el-form label-position="top">
-        <el-form-item label="新密码">
+        <el-form-item :label="t('user.reset.newPassword')">
           <el-input v-model.trim="resetForm.newPassword" show-password type="password"/>
         </el-form-item>
-        <el-form-item label="确认密码">
+        <el-form-item :label="t('user.reset.confirmPassword')">
           <el-input v-model.trim="resetForm.confirmPassword" show-password type="password"/>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="resetVisible = false">取消</el-button>
-        <el-button :loading="resetting" type="primary" @click="saveReset">保存</el-button>
+        <el-button @click="resetVisible = false">{{ t("common.cancel") }}</el-button>
+        <el-button :loading="resetting" type="primary" @click="saveReset">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -151,6 +176,7 @@
 <script lang="ts" setup>
 import {computed, onMounted, reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
+import {useI18n} from "vue-i18n";
 import {
   assignUserRoles,
   createUser,
@@ -181,6 +207,7 @@ const resetVisible = ref(false);
 const editorMode = ref<"create" | "edit">("create");
 const editorUserId = ref<number | null>(null);
 const selectedUserId = ref<number | null>(null);
+const {t} = useI18n();
 
 const filters = reactive({
   userName: "",
@@ -211,7 +238,9 @@ const resetForm = reactive({
   confirmPassword: ""
 });
 
-const editorTitle = computed(() => (editorMode.value === "create" ? "新增用户" : "编辑用户"));
+const editorTitle = computed(() =>
+    editorMode.value === "create" ? t("user.dialog.createTitle") : t("user.dialog.editTitle")
+);
 
 function getErrorMessage(error: unknown, fallback: string): string {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
@@ -220,12 +249,12 @@ function getErrorMessage(error: unknown, fallback: string): string {
 
 function sexLabel(value?: string) {
   if (value === "M") {
-    return "男";
+    return t("user.sex.male");
   }
   if (value === "F") {
-    return "女";
+    return t("user.sex.female");
   }
-  return "-";
+  return t("user.sex.unknown");
 }
 
 function deptName(id?: number | null) {
@@ -250,10 +279,10 @@ async function fetchUsers() {
       users.value = result.data.data || [];
       total.value = result.data.total || 0;
     } else {
-      ElMessage.error(result?.message || "加载用户失败");
+      ElMessage.error(result?.message || t("user.msg.loadFailed"));
     }
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "加载用户失败"));
+    ElMessage.error(getErrorMessage(error, t("user.msg.loadFailed")));
   } finally {
     loading.value = false;
   }
@@ -334,7 +363,7 @@ function openEdit(row: UserVO) {
 
 async function saveUser() {
   if (!form.userName) {
-    ElMessage.warning("请输入用户名");
+    ElMessage.warning(t("user.msg.validateUserName"));
     return;
   }
   saving.value = true;
@@ -342,26 +371,26 @@ async function saveUser() {
     if (editorMode.value === "create") {
       const result = await createUser(form);
       if (result?.code === 200) {
-        ElMessage.success(result?.message || "创建成功");
+        ElMessage.success(result?.message || t("user.msg.createSuccess"));
         editorVisible.value = false;
         fetchUsers();
       } else {
-        ElMessage.error(result?.message || "创建失败");
+        ElMessage.error(result?.message || t("user.msg.createFailed"));
       }
     } else if (editorUserId.value != null) {
       const payload: UserUpdatePayload = {...form};
       delete (payload as { password?: string }).password;
       const result = await updateUser(editorUserId.value, payload);
       if (result?.code === 200) {
-        ElMessage.success(result?.message || "更新成功");
+        ElMessage.success(result?.message || t("user.msg.updateSuccess"));
         editorVisible.value = false;
         fetchUsers();
       } else {
-        ElMessage.error(result?.message || "更新失败");
+        ElMessage.error(result?.message || t("user.msg.updateFailed"));
       }
     }
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "保存失败"));
+    ElMessage.error(getErrorMessage(error, t("user.msg.saveFailed")));
   } finally {
     saving.value = false;
   }
@@ -374,11 +403,11 @@ async function handleStatusChange(row: UserVO, value: number) {
     const result = await updateUserStatus(row.id, value);
     if (result?.code !== 200) {
       row.status = previous;
-      ElMessage.error(result?.message || "状态更新失败");
+      ElMessage.error(result?.message || t("user.msg.statusUpdateFailed"));
     }
   } catch (error) {
     row.status = previous;
-    ElMessage.error(getErrorMessage(error, "状态更新失败"));
+    ElMessage.error(getErrorMessage(error, t("user.msg.statusUpdateFailed")));
   }
 }
 
@@ -402,13 +431,13 @@ async function saveRoles() {
   try {
     const result = await assignUserRoles(selectedUserId.value, selectedRoleIds.value);
     if (result?.code === 200) {
-      ElMessage.success(result?.message || "角色已更新");
+      ElMessage.success(result?.message || t("user.msg.rolesUpdated"));
       roleVisible.value = false;
     } else {
-      ElMessage.error(result?.message || "角色更新失败");
+      ElMessage.error(result?.message || t("user.msg.rolesUpdateFailed"));
     }
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "角色更新失败"));
+    ElMessage.error(getErrorMessage(error, t("user.msg.rolesUpdateFailed")));
   } finally {
     assigning.value = false;
   }
@@ -423,11 +452,11 @@ function openReset(row: UserVO) {
 
 async function saveReset() {
   if (!resetForm.newPassword) {
-    ElMessage.warning("请输入新密码");
+    ElMessage.warning(t("user.msg.validatePassword"));
     return;
   }
   if (resetForm.newPassword !== resetForm.confirmPassword) {
-    ElMessage.warning("两次输入的密码不一致");
+    ElMessage.warning(t("user.msg.validatePasswordConfirm"));
     return;
   }
   if (selectedUserId.value == null) {
@@ -437,19 +466,20 @@ async function saveReset() {
   try {
     const result = await resetUserPassword(selectedUserId.value, resetForm.newPassword);
     if (result?.code === 200) {
-      ElMessage.success(result?.message || "密码已重置");
+      ElMessage.success(result?.message || t("user.msg.passwordReset"));
       resetVisible.value = false;
     } else {
-      ElMessage.error(result?.message || "密码重置失败");
+      ElMessage.error(result?.message || t("user.msg.passwordResetFailed"));
     }
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "密码重置失败"));
+    ElMessage.error(getErrorMessage(error, t("user.msg.passwordResetFailed")));
   } finally {
     resetting.value = false;
   }
 }
 
 onMounted(() => {
+  fetchDepts();
   fetchUsers();
 });
 </script>
@@ -499,5 +529,16 @@ onMounted(() => {
 .module-footer {
   display: flex;
   justify-content: flex-end;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.form-grid :deep(.el-form-item) {
+  margin-bottom: 12px;
 }
 </style>

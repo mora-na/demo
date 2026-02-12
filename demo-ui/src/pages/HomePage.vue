@@ -27,12 +27,25 @@
                   :class="{ active: activeGroup?.id === group.id }"
                   class="nav-item nav-root"
                   type="button"
-                  @click="selectMenu(group)"
+                  @click="handleGroupClick(group)"
               >
-                <span class="nav-icon">{{ menuInitial(group.name) }}</span>
+                <span class="nav-icon">
+                  <component :is="menuIconComponent(group)" class="nav-icon-svg"/>
+                </span>
                 <span class="nav-label">{{ group.name }}</span>
+                <span
+                    v-if="group.children?.length && !navCollapsed"
+                    :class="{ expanded: isGroupExpanded(group) }"
+                    class="nav-arrow"
+                >
+                  ▾
+                </span>
               </button>
-              <div v-if="group.children?.length" class="nav-children">
+              <div
+                  v-if="group.children?.length && !navCollapsed"
+                  v-show="isGroupExpanded(group)"
+                  class="nav-children"
+              >
                 <button
                     v-for="child in group.children"
                     :key="child.id"
@@ -41,7 +54,9 @@
                     type="button"
                     @click="selectMenu(child)"
                 >
-                  <span class="nav-icon">{{ menuInitial(child.name) }}</span>
+                  <span class="nav-icon">
+                    <component :is="menuIconComponent(child)" class="nav-icon-svg"/>
+                  </span>
                   <span class="nav-label">{{ child.name }}</span>
                 </button>
               </div>
@@ -73,7 +88,9 @@
         <el-popover v-model:visible="noticeVisible" :width="360" placement="bottom-end" trigger="click">
           <template #reference>
             <el-badge :hidden="unreadCount === 0" :value="unreadCount" class="notice-badge">
-              <el-button :aria-label="t('home.topbar.notifications')" class="icon-button" text>🔔</el-button>
+              <el-button :aria-label="t('home.topbar.notifications')" class="icon-button" text>
+                <Bell class="topbar-icon"/>
+              </el-button>
             </el-badge>
           </template>
           <div class="notice-panel">
@@ -103,7 +120,9 @@
             </div>
           </div>
         </el-popover>
-        <el-button :aria-label="t('home.topbar.settings')" class="icon-button" text @click="openSettings">⚙️</el-button>
+        <el-button :aria-label="t('home.topbar.settings')" class="icon-button" text @click="openSettings">
+          <SlidersHorizontal class="topbar-icon"/>
+        </el-button>
         <el-dropdown trigger="click">
           <button class="topbar-user" type="button">
             <el-avatar class="user-avatar" size="32">{{ userInitial }}</el-avatar>
@@ -220,9 +239,30 @@
 </template>
 
 <script lang="ts" setup>
+import type {Component} from "vue";
 import {computed, onMounted, ref, watch} from "vue";
 import {ElMessage} from "element-plus";
 import {useI18n} from "vue-i18n";
+import {
+  Activity,
+  BarChart3,
+  Bell,
+  BookOpen,
+  Building2,
+  Circle,
+  Folder,
+  Home,
+  KeyRound,
+  LayoutDashboard,
+  LayoutList,
+  ScrollText,
+  Settings2,
+  Shield,
+  SlidersHorizontal,
+  Timer,
+  Users,
+  Wrench
+} from "lucide-vue-next";
 import {logout, type MenuTree, updateProfile} from "../api/auth";
 import {getUnreadNoticeCount, listMyNotices, markAllNoticesRead, markNoticeRead, type NoticeMyVO} from "../api/system";
 import {useAuthStore} from "../stores/auth";
@@ -260,6 +300,9 @@ const menuItems = computed(() => authStore.menus || []);
 const menuQuery = ref("");
 const activeMenuId = ref<number | null>(null);
 const navCollapsed = ref(false);
+const MENU_STORAGE_KEY = "demo.activeMenuId";
+const NAV_COLLAPSE_WIDTH = 1180;
+const expandedGroupIds = ref<number[]>([]);
 
 const menuTotal = computed(() => countMenuItems(menuItems.value));
 const filteredMenuTree = computed(() => {
@@ -312,9 +355,15 @@ const roleSummary = computed(() =>
 watch(
     menuItems,
     (items) => {
-      if (items.length && activeMenuId.value == null) {
-        activeMenuId.value = items[0].id;
+      if (!items.length || activeMenuId.value != null) {
+        return;
       }
+      const stored = readStoredMenuId();
+      if (stored != null && findMenuById(items, stored)) {
+        activeMenuId.value = stored;
+        return;
+      }
+      activeMenuId.value = items[0].id;
     },
     {immediate: true}
 );
@@ -338,6 +387,15 @@ watch(
 );
 
 watch(
+    () => activeMenuId.value,
+    (value) => {
+      if (value != null) {
+        storeMenuId(value);
+      }
+    }
+);
+
+watch(
     () => noticeVisible.value,
     (visible) => {
       if (visible) {
@@ -352,10 +410,35 @@ function selectMenu(menu: MenuTree) {
     return;
   }
   activeMenuId.value = menu.id;
+  storeMenuId(menu.id);
+}
+
+function handleGroupClick(menu: MenuTree) {
+  if (menu?.id == null) {
+    return;
+  }
+  if (menu.children?.length) {
+    toggleGroup(menu.id);
+  }
+  selectMenu(menu);
+}
+
+function toggleGroup(id: number) {
+  const current = expandedGroupIds.value;
+  if (current.includes(id)) {
+    expandedGroupIds.value = current.filter((item) => item !== id);
+    return;
+  }
+  expandedGroupIds.value = [...current, id];
+}
+
+function isGroupExpanded(group: MenuTree) {
+  return expandedGroupIds.value.includes(group.id);
 }
 
 function selectMenuById(id: number) {
   activeMenuId.value = id;
+  storeMenuId(id);
 }
 
 function toggleNav() {
@@ -368,6 +451,40 @@ function menuInitial(name?: string) {
   }
   const trimmed = name.trim();
   return trimmed ? trimmed.slice(0, 1) : "•";
+}
+
+const MENU_ICON_MAP: Record<string, Component> = {
+  home: Home,
+  dashboard: LayoutDashboard,
+  system: Settings2,
+  user: Users,
+  role: Shield,
+  menu: LayoutList,
+  dept: Building2,
+  permission: KeyRound,
+  notice: Bell,
+  job: Timer,
+  log: ScrollText,
+  report: BarChart3,
+  monitor: Activity,
+  config: Settings2,
+  file: Folder,
+  dict: BookOpen,
+  tool: Wrench
+};
+
+function menuIconComponent(menu: MenuTree): Component {
+  const code = (menu.code || "").toLowerCase();
+  const path = (menu.path || "").toLowerCase();
+  if (MENU_ICON_MAP[code]) {
+    return MENU_ICON_MAP[code];
+  }
+  for (const [key, icon] of Object.entries(MENU_ICON_MAP)) {
+    if (code.includes(key) || path.includes(key)) {
+      return icon;
+    }
+  }
+  return Circle;
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -587,6 +704,27 @@ function findMenuById(items: MenuTree[], id: number | null): MenuTree | null {
   return null;
 }
 
+function readStoredMenuId(): number | null {
+  try {
+    const raw = localStorage.getItem(MENU_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function storeMenuId(id: number) {
+  try {
+    localStorage.setItem(MENU_STORAGE_KEY, String(id));
+  } catch (error) {
+    // ignore storage errors
+  }
+}
+
 function findGroupById(items: MenuTree[], id: number): MenuTree | null {
   for (const item of items) {
     if (item.id === id) {
@@ -648,6 +786,7 @@ async function handleLogout() {
 }
 
 onMounted(async () => {
+  navCollapsed.value = window.innerWidth < NAV_COLLAPSE_WIDTH;
   await loadProfile();
   await refreshUnreadCount();
 });
@@ -762,11 +901,12 @@ onMounted(async () => {
   width: 100%;
   border: 1px solid transparent;
   border-radius: 14px;
-  padding: 10px 12px 10px 18px;
+  padding: 10px 12px 10px 14px;
   background: rgba(255, 255, 255, 0.7);
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
   font-size: 13px;
   text-align: left;
   position: relative;
@@ -800,18 +940,54 @@ onMounted(async () => {
   font-weight: 600;
 }
 
+.nav-arrow {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.nav-arrow.expanded {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
 
 .nav-icon {
-  display: none;
+  display: inline-flex;
   width: 28px;
   height: 28px;
   border-radius: 10px;
-  background: rgba(43, 124, 255, 0.12);
-  color: #1c3f8f;
+  background: rgba(47, 107, 255, 0.1);
+  color: #2341a8;
   align-items: center;
   justify-content: center;
   font-size: 13px;
   font-weight: 600;
+}
+
+.nav-icon-svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nav-item.nav-child .nav-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  font-size: 12px;
+  background: rgba(15, 23, 42, 0.08);
+  color: #2b3a55;
+}
+
+.nav-item.nav-child .nav-icon-svg {
+  width: 14px;
+  height: 14px;
 }
 
 .nav-label {
@@ -834,11 +1010,7 @@ onMounted(async () => {
 
 .console.nav-collapsed .nav-item {
   padding: 10px;
-  align-items: center;
-}
-
-.console.nav-collapsed .nav-icon {
-  display: inline-flex;
+  justify-content: center;
 }
 
 .console.nav-collapsed .nav-children {

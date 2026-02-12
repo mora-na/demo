@@ -2,19 +2,19 @@
   <div class="system-module">
     <div class="module-head">
       <div>
-        <div class="module-title">角色管理</div>
-        <div class="module-sub">维护角色信息与权限、菜单授权。</div>
+        <div class="module-title">{{ t("role.title") }}</div>
+        <div class="module-sub">{{ t("role.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-button type="primary" @click="openCreate">新增角色</el-button>
+        <el-button type="primary" @click="openCreate">{{ t("role.create") }}</el-button>
       </div>
     </div>
 
     <el-table v-loading="loading" :data="roles" row-key="id" size="small">
-      <el-table-column label="编码" min-width="140" prop="code"/>
-      <el-table-column label="名称" min-width="140" prop="name"/>
-      <el-table-column label="数据范围" min-width="140" prop="dataScopeType"/>
-      <el-table-column label="状态" width="100">
+      <el-table-column :label="t('role.table.code')" min-width="140" prop="code"/>
+      <el-table-column :label="t('role.table.name')" min-width="140" prop="name"/>
+      <el-table-column :label="t('role.table.dataScope')" min-width="140" prop="dataScopeType"/>
+      <el-table-column :label="t('role.table.status')" width="100">
         <template #default="{row}">
           <el-switch
               :active-value="1"
@@ -24,54 +24,66 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="240">
+      <el-table-column :label="t('role.table.action')" width="240">
         <template #default="{row}">
-          <el-button size="small" text @click="openEdit(row)">编辑</el-button>
-          <el-button size="small" text @click="openPermissions(row)">分配权限</el-button>
-          <el-button size="small" text @click="openMenus(row)">分配菜单</el-button>
+          <el-button size="small" text @click="openEdit(row)">{{ t("role.table.edit") }}</el-button>
+          <el-button size="small" text @click="openPermissions(row)">{{ t("role.table.assignPermissions") }}</el-button>
+          <el-button size="small" text @click="openMenus(row)">{{ t("role.table.assignMenus") }}</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="editorVisible" :title="editorTitle" align-center width="520px">
+    <el-dialog v-model="editorVisible" :title="editorTitle" align-center width="640px">
       <el-form :model="form" label-position="top">
-        <el-form-item label="角色编码">
-          <el-input v-model.trim="form.code"/>
-        </el-form-item>
-        <el-form-item label="角色名称">
-          <el-input v-model.trim="form.name"/>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="form.status" placeholder="请选择">
-            <el-option :value="1" label="启用"/>
-            <el-option :value="0" label="禁用"/>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="数据范围类型">
-          <el-select v-model="form.dataScopeType" placeholder="请选择">
-            <el-option label="全部" value="ALL"/>
-            <el-option label="本部门" value="DEPT"/>
-            <el-option label="部门及下级" value="DEPT_AND_CHILD"/>
-            <el-option label="自定义" value="CUSTOM"/>
-            <el-option label="自定义部门" value="CUSTOM_DEPT"/>
-            <el-option label="仅本人" value="SELF"/>
-            <el-option label="无权限" value="NONE"/>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="数据范围值">
-          <el-input v-model.trim="form.dataScopeValue" placeholder="逗号分隔 ID"/>
-        </el-form-item>
+        <el-row :gutter="16" class="form-grid">
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('role.dialog.code')">
+              <el-input v-model.trim="form.code"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('role.dialog.name')">
+              <el-input v-model.trim="form.name"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('role.dialog.status')">
+              <el-select v-model="form.status" :placeholder="t('role.dialog.statusPlaceholder')">
+                <el-option :value="1" :label="t('role.dialog.statusEnabled')"/>
+                <el-option :value="0" :label="t('role.dialog.statusDisabled')"/>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('role.dialog.dataScopeType')">
+              <el-select v-model="form.dataScopeType" :placeholder="t('role.dialog.dataScopePlaceholder')">
+                <el-option :label="t('role.scope.all')" value="ALL"/>
+                <el-option :label="t('role.scope.dept')" value="DEPT"/>
+                <el-option :label="t('role.scope.deptAndChild')" value="DEPT_AND_CHILD"/>
+                <el-option :label="t('role.scope.custom')" value="CUSTOM"/>
+                <el-option :label="t('role.scope.customDept')" value="CUSTOM_DEPT"/>
+                <el-option :label="t('role.scope.self')" value="SELF"/>
+                <el-option :label="t('role.scope.none')" value="NONE"/>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24">
+            <el-form-item :label="t('role.dialog.dataScopeValue')">
+              <el-input v-model.trim="form.dataScopeValue" :placeholder="t('role.dialog.dataScopeValuePlaceholder')"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <template #footer>
-        <el-button @click="editorVisible = false">取消</el-button>
-        <el-button :loading="saving" type="primary" @click="saveRole">保存</el-button>
+        <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
+        <el-button :loading="saving" type="primary" @click="saveRole">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="permissionVisible" align-center title="分配权限" width="520px">
+    <el-dialog v-model="permissionVisible" align-center :title="t('role.permissions.title')" width="520px">
       <el-form label-position="top">
-        <el-form-item label="权限列表">
-          <el-select v-model="selectedPermissionIds" multiple placeholder="请选择">
+        <el-form-item :label="t('role.permissions.list')">
+          <el-select v-model="selectedPermissionIds" multiple :placeholder="t('role.permissions.placeholder')">
             <el-option
                 v-for="permission in permissions"
                 :key="permission.id"
@@ -82,12 +94,12 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="permissionVisible = false">取消</el-button>
-        <el-button :loading="assigning" type="primary" @click="savePermissions">保存</el-button>
+        <el-button @click="permissionVisible = false">{{ t("common.cancel") }}</el-button>
+        <el-button :loading="assigning" type="primary" @click="savePermissions">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="menuVisible" align-center title="分配菜单" width="520px">
+    <el-dialog v-model="menuVisible" align-center :title="t('role.menus.title')" width="520px">
       <el-tree
           ref="menuTreeRef"
           :data="menuTree"
@@ -96,8 +108,8 @@
           show-checkbox
       />
       <template #footer>
-        <el-button @click="menuVisible = false">取消</el-button>
-        <el-button :loading="assigningMenus" type="primary" @click="saveMenus">保存</el-button>
+        <el-button @click="menuVisible = false">{{ t("common.cancel") }}</el-button>
+        <el-button :loading="assigningMenus" type="primary" @click="saveMenus">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -106,6 +118,7 @@
 <script lang="ts" setup>
 import {computed, nextTick, onMounted, reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
+import {useI18n} from "vue-i18n";
 import {
   assignRoleMenus,
   assignRolePermissions,
@@ -139,6 +152,7 @@ const editorMode = ref<"create" | "edit">("create");
 const editorRoleId = ref<number | null>(null);
 const selectedRoleId = ref<number | null>(null);
 const selectedPermissionIds = ref<number[]>([]);
+const {t} = useI18n();
 type MenuTreeRef = {
   setCheckedKeys: (keys: number[]) => void;
   getCheckedKeys: (leafOnly?: boolean) => number[];
@@ -155,7 +169,9 @@ const form = reactive<RoleCreatePayload & RoleUpdatePayload>({
   dataScopeValue: ""
 });
 
-const editorTitle = computed(() => (editorMode.value === "create" ? "新增角色" : "编辑角色"));
+const editorTitle = computed(() =>
+    editorMode.value === "create" ? t("role.dialog.createTitle") : t("role.dialog.editTitle")
+);
 
 function getErrorMessage(error: unknown, fallback: string): string {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
@@ -169,10 +185,10 @@ async function fetchRoles() {
     if (result?.code === 200 && result.data) {
       roles.value = result.data;
     } else {
-      ElMessage.error(result?.message || "加载角色失败");
+      ElMessage.error(result?.message || t("role.msg.loadFailed"));
     }
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "加载角色失败"));
+    ElMessage.error(getErrorMessage(error, t("role.msg.loadFailed")));
   } finally {
     loading.value = false;
   }
@@ -225,7 +241,7 @@ function openEdit(role: RoleVO) {
 
 async function saveRole() {
   if (!form.code || !form.name) {
-    ElMessage.warning("请填写角色编码与名称");
+    ElMessage.warning(t("role.msg.validateForm"));
     return;
   }
   saving.value = true;
@@ -233,11 +249,11 @@ async function saveRole() {
     if (editorMode.value === "create") {
       const result = await createRole(form);
       if (result?.code === 200) {
-        ElMessage.success(result?.message || "创建成功");
+        ElMessage.success(result?.message || t("role.msg.createSuccess"));
         editorVisible.value = false;
         fetchRoles();
       } else {
-        ElMessage.error(result?.message || "创建失败");
+        ElMessage.error(result?.message || t("role.msg.createFailed"));
       }
     } else if (editorRoleId.value != null) {
       const payload: RoleUpdatePayload = {
@@ -248,15 +264,15 @@ async function saveRole() {
       };
       const result = await updateRole(editorRoleId.value, payload);
       if (result?.code === 200) {
-        ElMessage.success(result?.message || "更新成功");
+        ElMessage.success(result?.message || t("role.msg.updateSuccess"));
         editorVisible.value = false;
         fetchRoles();
       } else {
-        ElMessage.error(result?.message || "更新失败");
+        ElMessage.error(result?.message || t("role.msg.updateFailed"));
       }
     }
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "保存失败"));
+    ElMessage.error(getErrorMessage(error, t("role.msg.saveFailed")));
   } finally {
     saving.value = false;
   }
@@ -269,11 +285,11 @@ async function handleStatusChange(role: RoleVO, value: number) {
     const result = await updateRoleStatus(role.id, value);
     if (result?.code !== 200) {
       role.status = previous;
-      ElMessage.error(result?.message || "状态更新失败");
+      ElMessage.error(result?.message || t("role.msg.statusUpdateFailed"));
     }
   } catch (error) {
     role.status = previous;
-    ElMessage.error(getErrorMessage(error, "状态更新失败"));
+    ElMessage.error(getErrorMessage(error, t("role.msg.statusUpdateFailed")));
   }
 }
 
@@ -292,14 +308,14 @@ async function savePermissions() {
   try {
     const result = await assignRolePermissions(selectedRoleId.value, selectedPermissionIds.value);
     if (result?.code === 200) {
-      ElMessage.success(result?.message || "权限已更新");
+      ElMessage.success(result?.message || t("role.msg.permissionsUpdated"));
       permissionVisible.value = false;
       fetchRoles();
     } else {
-      ElMessage.error(result?.message || "权限更新失败");
+      ElMessage.error(result?.message || t("role.msg.permissionsUpdateFailed"));
     }
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "权限更新失败"));
+    ElMessage.error(getErrorMessage(error, t("role.msg.permissionsUpdateFailed")));
   } finally {
     assigning.value = false;
   }
@@ -327,13 +343,13 @@ async function saveMenus() {
     const menuIds = Array.from(new Set([...(checked || []), ...(halfChecked || [])]));
     const result = await assignRoleMenus(selectedRoleId.value, menuIds);
     if (result?.code === 200) {
-      ElMessage.success(result?.message || "菜单已更新");
+      ElMessage.success(result?.message || t("role.msg.menusUpdated"));
       menuVisible.value = false;
     } else {
-      ElMessage.error(result?.message || "菜单更新失败");
+      ElMessage.error(result?.message || t("role.msg.menusUpdateFailed"));
     }
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "菜单更新失败"));
+    ElMessage.error(getErrorMessage(error, t("role.msg.menusUpdateFailed")));
   } finally {
     assigningMenus.value = false;
   }
@@ -372,5 +388,9 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.form-grid :deep(.el-form-item) {
+  margin-bottom: 12px;
 }
 </style>

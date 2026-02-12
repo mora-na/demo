@@ -2,43 +2,43 @@
   <div class="system-module">
     <div class="module-head">
       <div>
-        <div class="module-title">系统通知</div>
-        <div class="module-sub">发布系统通知并追踪阅读状态。</div>
+        <div class="module-title">{{ t("notice.title") }}</div>
+        <div class="module-sub">{{ t("notice.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-input v-model.trim="filters.keyword" clearable placeholder="标题/内容关键词"/>
-        <el-select v-model="filters.scopeType" clearable placeholder="通知范围" style="width: 140px">
-          <el-option label="全部" value="ALL"/>
-          <el-option label="部门" value="DEPT"/>
-          <el-option label="角色" value="ROLE"/>
-          <el-option label="用户" value="USER"/>
+        <el-input v-model.trim="filters.keyword" clearable :placeholder="t('notice.filter.keywordPlaceholder')"/>
+        <el-select v-model="filters.scopeType" clearable :placeholder="t('notice.filter.scopePlaceholder')" style="width: 140px">
+          <el-option :label="t('notice.scope.all')" value="ALL"/>
+          <el-option :label="t('notice.scope.dept')" value="DEPT"/>
+          <el-option :label="t('notice.scope.role')" value="ROLE"/>
+          <el-option :label="t('notice.scope.user')" value="USER"/>
         </el-select>
-        <el-button @click="handleSearch">查询</el-button>
-        <el-button type="primary" @click="openPublish">发布通知</el-button>
+        <el-button @click="handleSearch">{{ t("notice.filter.search") }}</el-button>
+        <el-button type="primary" @click="openPublish">{{ t("notice.filter.publish") }}</el-button>
       </div>
     </div>
 
     <el-table v-loading="loading" :data="notices" row-key="id" size="small">
-      <el-table-column label="标题" min-width="180" prop="title"/>
-      <el-table-column label="范围" width="100">
+      <el-table-column :label="t('notice.table.title')" min-width="180" prop="title"/>
+      <el-table-column :label="t('notice.table.scope')" width="100">
         <template #default="{row}">
           {{ scopeLabel(row.scopeType) }}
         </template>
       </el-table-column>
-      <el-table-column label="已读/总数" width="120">
+      <el-table-column :label="t('notice.table.readSummary')" width="120">
         <template #default="{row}">
           {{ readSummary(row) }}
         </template>
       </el-table-column>
-      <el-table-column label="发布人" prop="createdName" width="120"/>
-      <el-table-column label="发布时间" width="170">
+      <el-table-column :label="t('notice.table.publisher')" prop="createdName" width="120"/>
+      <el-table-column :label="t('notice.table.publishTime')" width="170">
         <template #default="{row}">
           {{ formatDateTime(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="140">
+      <el-table-column :label="t('notice.table.action')" width="140">
         <template #default="{row}">
-          <el-button size="small" text @click="openDetail(row)">详情</el-button>
+          <el-button size="small" text @click="openDetail(row)">{{ t("notice.table.detail") }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -54,25 +54,25 @@
       />
     </div>
 
-    <el-dialog v-model="publishVisible" align-center title="发布系统通知" width="540px">
+    <el-dialog v-model="publishVisible" align-center :title="t('notice.publish.title')" width="540px">
       <el-form :model="publishForm" label-position="top">
-        <el-form-item label="通知标题">
-          <el-input v-model.trim="publishForm.title" placeholder="请输入通知标题"/>
+        <el-form-item :label="t('notice.publish.titleLabel')">
+          <el-input v-model.trim="publishForm.title" :placeholder="t('notice.publish.titlePlaceholder')"/>
         </el-form-item>
-        <el-form-item label="通知内容">
+        <el-form-item :label="t('notice.publish.contentLabel')">
           <el-input
               v-model.trim="publishForm.content"
               :rows="4"
-              placeholder="请输入通知内容"
+              :placeholder="t('notice.publish.contentPlaceholder')"
               type="textarea"
           />
         </el-form-item>
-        <el-form-item label="通知范围">
-          <el-select v-model="publishForm.scopeType" placeholder="请选择范围">
-            <el-option label="全部" value="ALL"/>
-            <el-option label="部门" value="DEPT"/>
-            <el-option label="角色" value="ROLE"/>
-            <el-option label="用户" value="USER"/>
+        <el-form-item :label="t('notice.publish.scopeLabel')">
+          <el-select v-model="publishForm.scopeType" :placeholder="t('notice.publish.scopePlaceholder')">
+            <el-option :label="t('notice.scope.all')" value="ALL"/>
+            <el-option :label="t('notice.scope.dept')" value="DEPT"/>
+            <el-option :label="t('notice.scope.role')" value="ROLE"/>
+            <el-option :label="t('notice.scope.user')" value="USER"/>
           </el-select>
         </el-form-item>
         <el-form-item v-if="publishForm.scopeType !== 'ALL'" :label="scopeTargetLabel">
@@ -92,43 +92,43 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="publishVisible = false">取消</el-button>
-        <el-button :loading="publishing" type="primary" @click="submitPublish">发布</el-button>
+        <el-button @click="publishVisible = false">{{ t("common.cancel") }}</el-button>
+        <el-button :loading="publishing" type="primary" @click="submitPublish">{{ t("notice.publish.publish") }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="detailVisible" align-center title="通知详情" width="680px">
+    <el-dialog v-model="detailVisible" align-center :title="t('notice.detail.title')" width="680px">
       <div class="detail-meta">
         <div class="detail-title">{{ detailNotice?.title || "-" }}</div>
         <div class="detail-sub">
-          <span>范围：{{ scopeLabel(detailNotice?.scopeType) }}</span>
-          <span>发布人：{{ detailNotice?.createdName || "-" }}</span>
-          <span>发布时间：{{ formatDateTime(detailNotice?.createdAt) }}</span>
+          <span>{{ t("notice.detail.scopeLabel") }}{{ scopeLabel(detailNotice?.scopeType) }}</span>
+          <span>{{ t("notice.detail.publisherLabel") }}{{ detailNotice?.createdName || "-" }}</span>
+          <span>{{ t("notice.detail.publishTimeLabel") }}{{ formatDateTime(detailNotice?.createdAt) }}</span>
         </div>
         <div class="detail-content">{{ detailNotice?.content || "" }}</div>
       </div>
       <el-divider/>
       <el-table v-loading="detailLoading" :data="recipients" row-key="id" size="small">
-        <el-table-column label="用户名" min-width="140" prop="userName"/>
-        <el-table-column label="昵称" min-width="140" prop="nickName"/>
-        <el-table-column label="部门" width="140">
+        <el-table-column :label="t('notice.detail.userName')" min-width="140" prop="userName"/>
+        <el-table-column :label="t('notice.detail.nickName')" min-width="140" prop="nickName"/>
+        <el-table-column :label="t('notice.detail.dept')" width="140">
           <template #default="{row}">
             {{ deptName(row.deptId) }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column :label="t('notice.detail.status')" width="100">
           <template #default="{row}">
-            {{ row.readStatus === 1 ? "已读" : "未读" }}
+            {{ row.readStatus === 1 ? t("notice.detail.statusRead") : t("notice.detail.statusUnread") }}
           </template>
         </el-table-column>
-        <el-table-column label="阅读时间" width="170">
+        <el-table-column :label="t('notice.detail.readTime')" width="170">
           <template #default="{row}">
             {{ formatDateTime(row.readTime) }}
           </template>
         </el-table-column>
       </el-table>
       <template #footer>
-        <el-button @click="detailVisible = false">关闭</el-button>
+        <el-button @click="detailVisible = false">{{ t("notice.detail.close") }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -137,6 +137,7 @@
 <script lang="ts" setup>
 import {computed, onMounted, reactive, ref, watch} from "vue";
 import {ElMessage} from "element-plus";
+import {useI18n} from "vue-i18n";
 import {
   type DeptVO,
   listDepts,
@@ -160,6 +161,7 @@ const publishing = ref(false);
 const publishVisible = ref(false);
 const detailVisible = ref(false);
 const detailNotice = ref<NoticeVO | null>(null);
+const {t} = useI18n();
 
 const filters = reactive({
   keyword: "",
@@ -183,28 +185,28 @@ const users = ref<UserVO[]>([]);
 
 const scopeTargetLabel = computed(() => {
   if (publishForm.scopeType === "DEPT") {
-    return "接收部门";
+    return t("notice.publish.targetDept");
   }
   if (publishForm.scopeType === "ROLE") {
-    return "接收角色";
+    return t("notice.publish.targetRole");
   }
   if (publishForm.scopeType === "USER") {
-    return "接收用户";
+    return t("notice.publish.targetUser");
   }
-  return "接收对象";
+  return t("notice.publish.targetDefault");
 });
 
 const scopePlaceholder = computed(() => {
   if (publishForm.scopeType === "DEPT") {
-    return "请选择部门";
+    return t("notice.publish.targetDeptPlaceholder");
   }
   if (publishForm.scopeType === "ROLE") {
-    return "请选择角色";
+    return t("notice.publish.targetRolePlaceholder");
   }
   if (publishForm.scopeType === "USER") {
-    return "请选择用户";
+    return t("notice.publish.targetUserPlaceholder");
   }
-  return "请选择";
+  return t("notice.publish.targetDefaultPlaceholder");
 });
 
 const scopeOptions = computed(() => {
@@ -223,13 +225,13 @@ const scopeOptions = computed(() => {
 function scopeLabel(scopeType?: string) {
   switch (scopeType) {
     case "ALL":
-      return "全部";
+      return t("notice.scope.all");
     case "DEPT":
-      return "部门";
+      return t("notice.scope.dept");
     case "ROLE":
-      return "角色";
+      return t("notice.scope.role");
     case "USER":
-      return "用户";
+      return t("notice.scope.user");
     default:
       return scopeType || "-";
   }
@@ -283,10 +285,10 @@ async function loadNotices() {
       notices.value = result.data.data || [];
       total.value = result.data.total || 0;
     } else {
-      ElMessage.error(result?.message || "加载通知失败");
+      ElMessage.error(result?.message || t("notice.msg.loadFailed"));
     }
   } catch (error) {
-    ElMessage.error("加载通知失败");
+    ElMessage.error(t("notice.msg.loadFailed"));
   } finally {
     loading.value = false;
   }
@@ -352,15 +354,15 @@ async function ensureUsers() {
 
 async function submitPublish() {
   if (!publishForm.title.trim()) {
-    ElMessage.warning("请输入通知标题");
+    ElMessage.warning(t("notice.msg.validateTitle"));
     return;
   }
   if (!publishForm.content.trim()) {
-    ElMessage.warning("请输入通知内容");
+    ElMessage.warning(t("notice.msg.validateContent"));
     return;
   }
   if (publishForm.scopeType !== "ALL" && (!publishForm.scopeIds || !publishForm.scopeIds.length)) {
-    ElMessage.warning("请选择接收对象");
+    ElMessage.warning(t("notice.msg.validateTarget"));
     return;
   }
   publishing.value = true;
@@ -372,14 +374,14 @@ async function submitPublish() {
       scopeIds: publishForm.scopeType === "ALL" ? undefined : publishForm.scopeIds
     });
     if (result?.code === 200) {
-      ElMessage.success("通知发布成功");
+      ElMessage.success(t("notice.msg.publishSuccess"));
       publishVisible.value = false;
       loadNotices();
     } else {
-      ElMessage.error(result?.message || "通知发布失败");
+      ElMessage.error(result?.message || t("notice.msg.publishFailed"));
     }
   } catch (error) {
-    ElMessage.error("通知发布失败");
+    ElMessage.error(t("notice.msg.publishFailed"));
   } finally {
     publishing.value = false;
   }
@@ -396,10 +398,10 @@ async function openDetail(row: NoticeVO) {
     if (result?.code === 200 && result.data) {
       recipients.value = result.data;
     } else {
-      ElMessage.error(result?.message || "加载详情失败");
+      ElMessage.error(result?.message || t("notice.msg.detailLoadFailed"));
     }
   } catch (error) {
-    ElMessage.error("加载详情失败");
+    ElMessage.error(t("notice.msg.detailLoadFailed"));
   } finally {
     detailLoading.value = false;
   }

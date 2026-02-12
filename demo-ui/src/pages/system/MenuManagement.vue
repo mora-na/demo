@@ -2,26 +2,26 @@
   <div class="system-module">
     <div class="module-head">
       <div>
-        <div class="module-title">菜单管理</div>
-        <div class="module-sub">维护系统菜单与前端路由配置。</div>
+        <div class="module-title">{{ t("menu.title") }}</div>
+        <div class="module-sub">{{ t("menu.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-button type="primary" @click="openCreate">新增菜单</el-button>
+        <el-button type="primary" @click="openCreate">{{ t("menu.create") }}</el-button>
       </div>
     </div>
 
     <el-table v-loading="loading" :data="menus" row-key="id" size="small">
-      <el-table-column label="名称" min-width="140" prop="name"/>
-      <el-table-column label="编码" min-width="120" prop="code"/>
-      <el-table-column label="父级" min-width="120">
+      <el-table-column :label="t('menu.table.name')" min-width="140" prop="name"/>
+      <el-table-column :label="t('menu.table.code')" min-width="120" prop="code"/>
+      <el-table-column :label="t('menu.table.parent')" min-width="120">
         <template #default="{row}">
           {{ parentName(row.parentId) }}
         </template>
       </el-table-column>
-      <el-table-column label="路径" min-width="160" prop="path"/>
-      <el-table-column label="权限" min-width="160" prop="permission"/>
-      <el-table-column label="排序" prop="sort" width="80"/>
-      <el-table-column label="状态" width="100">
+      <el-table-column :label="t('menu.table.path')" min-width="160" prop="path"/>
+      <el-table-column :label="t('menu.table.permission')" min-width="160" prop="permission"/>
+      <el-table-column :label="t('menu.table.sort')" prop="sort" width="80"/>
+      <el-table-column :label="t('menu.table.status')" width="100">
         <template #default="{row}">
           <el-switch
               :active-value="1"
@@ -31,57 +31,77 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="140">
+      <el-table-column :label="t('menu.table.action')" width="140">
         <template #default="{row}">
-          <el-button size="small" text @click="openEdit(row)">编辑</el-button>
+          <el-button size="small" text @click="openEdit(row)">{{ t("menu.table.edit") }}</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="editorVisible" :title="editorTitle" align-center width="520px">
+    <el-dialog v-model="editorVisible" :title="editorTitle" align-center width="700px">
       <el-form :model="form" label-position="top">
-        <el-form-item label="名称">
-          <el-input v-model.trim="form.name"/>
-        </el-form-item>
-        <el-form-item label="编码">
-          <el-input v-model.trim="form.code"/>
-        </el-form-item>
-        <el-form-item label="父级菜单">
-          <el-tree-select
-              v-model="form.parentId"
-              :data="menuTree"
-              :props="{label: 'name', value: 'id', children: 'children'}"
-              :render-after-expand="false"
-              check-strictly
-              clearable
-              placeholder="请选择"
-          />
-        </el-form-item>
-        <el-form-item label="路径">
-          <el-input v-model.trim="form.path"/>
-        </el-form-item>
-        <el-form-item label="组件">
-          <el-input v-model.trim="form.component"/>
-        </el-form-item>
-        <el-form-item label="权限标识">
-          <el-input v-model.trim="form.permission"/>
-        </el-form-item>
-        <el-form-item label="排序">
-          <el-input-number v-model="form.sort" :min="0"/>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="form.status" placeholder="请选择">
-            <el-option :value="1" label="启用"/>
-            <el-option :value="0" label="禁用"/>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model.trim="form.remark"/>
-        </el-form-item>
+        <el-row :gutter="16" class="form-grid">
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('menu.dialog.name')">
+              <el-input v-model.trim="form.name"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('menu.dialog.code')">
+              <el-input v-model.trim="form.code"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('menu.dialog.parent')">
+              <el-tree-select
+                  v-model="form.parentId"
+                  :data="menuTree"
+                  :props="{label: 'name', value: 'id', children: 'children'}"
+                  :render-after-expand="false"
+                  check-strictly
+                  clearable
+                  :placeholder="t('menu.dialog.parentPlaceholder')"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('menu.dialog.path')">
+              <el-input v-model.trim="form.path"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('menu.dialog.component')">
+              <el-input v-model.trim="form.component"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('menu.dialog.permission')">
+              <el-input v-model.trim="form.permission"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('menu.dialog.sort')">
+              <el-input-number v-model="form.sort" :min="0"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('menu.dialog.status')">
+              <el-select v-model="form.status" :placeholder="t('menu.dialog.statusPlaceholder')">
+                <el-option :value="1" :label="t('menu.dialog.statusEnabled')"/>
+                <el-option :value="0" :label="t('menu.dialog.statusDisabled')"/>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24">
+            <el-form-item :label="t('menu.dialog.remark')">
+              <el-input v-model.trim="form.remark"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <template #footer>
-        <el-button @click="editorVisible = false">取消</el-button>
-        <el-button :loading="saving" type="primary" @click="saveMenu">保存</el-button>
+        <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
+        <el-button :loading="saving" type="primary" @click="saveMenu">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -90,6 +110,7 @@
 <script lang="ts" setup>
 import {computed, onMounted, reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
+import {useI18n} from "vue-i18n";
 import {buildTree, type TreeNode} from "../../utils/tree";
 import {createMenu, listMenus, type MenuVO, updateMenu, updateMenuStatus} from "../../api/system";
 
@@ -100,6 +121,7 @@ const saving = ref(false);
 const editorVisible = ref(false);
 const editorMode = ref<"create" | "edit">("create");
 const editorMenuId = ref<number | null>(null);
+const {t} = useI18n();
 
 const form = reactive({
   name: "",
@@ -113,7 +135,9 @@ const form = reactive({
   remark: ""
 });
 
-const editorTitle = computed(() => (editorMode.value === "create" ? "新增菜单" : "编辑菜单"));
+const editorTitle = computed(() =>
+    editorMode.value === "create" ? t("menu.dialog.createTitle") : t("menu.dialog.editTitle")
+);
 
 function getErrorMessage(error: unknown, fallback: string): string {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
@@ -148,10 +172,10 @@ async function fetchMenus() {
       menus.value = result.data;
       menuTree.value = buildTree(result.data);
     } else {
-      ElMessage.error(result?.message || "加载菜单失败");
+      ElMessage.error(result?.message || t("menu.msg.loadFailed"));
     }
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "加载菜单失败"));
+    ElMessage.error(getErrorMessage(error, t("menu.msg.loadFailed")));
   } finally {
     loading.value = false;
   }
@@ -182,7 +206,7 @@ function openEdit(menu: MenuVO) {
 
 async function saveMenu() {
   if (!form.name) {
-    ElMessage.warning("请输入菜单名称");
+    ElMessage.warning(t("menu.msg.validateName"));
     return;
   }
   saving.value = true;
@@ -190,24 +214,24 @@ async function saveMenu() {
     if (editorMode.value === "create") {
       const result = await createMenu(form);
       if (result?.code === 200) {
-        ElMessage.success(result?.message || "创建成功");
+        ElMessage.success(result?.message || t("menu.msg.createSuccess"));
         editorVisible.value = false;
         fetchMenus();
       } else {
-        ElMessage.error(result?.message || "创建失败");
+        ElMessage.error(result?.message || t("menu.msg.createFailed"));
       }
     } else if (editorMenuId.value != null) {
       const result = await updateMenu(editorMenuId.value, form);
       if (result?.code === 200) {
-        ElMessage.success(result?.message || "更新成功");
+        ElMessage.success(result?.message || t("menu.msg.updateSuccess"));
         editorVisible.value = false;
         fetchMenus();
       } else {
-        ElMessage.error(result?.message || "更新失败");
+        ElMessage.error(result?.message || t("menu.msg.updateFailed"));
       }
     }
   } catch (error) {
-    ElMessage.error(getErrorMessage(error, "保存失败"));
+    ElMessage.error(getErrorMessage(error, t("menu.msg.saveFailed")));
   } finally {
     saving.value = false;
   }
@@ -220,11 +244,11 @@ async function handleStatusChange(menu: MenuVO, value: number) {
     const result = await updateMenuStatus(menu.id, value);
     if (result?.code !== 200) {
       menu.status = previous;
-      ElMessage.error(result?.message || "状态更新失败");
+      ElMessage.error(result?.message || t("menu.msg.statusUpdateFailed"));
     }
   } catch (error) {
     menu.status = previous;
-    ElMessage.error(getErrorMessage(error, "状态更新失败"));
+    ElMessage.error(getErrorMessage(error, t("menu.msg.statusUpdateFailed")));
   }
 }
 
@@ -259,5 +283,9 @@ onMounted(fetchMenus);
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.form-grid :deep(.el-form-item) {
+  margin-bottom: 12px;
 }
 </style>

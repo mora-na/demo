@@ -2,13 +2,13 @@
   <section class="system-panel">
     <div class="system-head">
       <div>
-        <div class="system-title">系统管理</div>
-        <div class="system-sub">维护用户、权限与组织结构配置。</div>
+        <div class="system-title">{{ t("systemPanel.title") }}</div>
+        <div class="system-sub">{{ t("systemPanel.subtitle") }}</div>
       </div>
     </div>
 
     <el-tabs v-model="activeTab" class="system-tabs" @tab-change="handleTabChange">
-      <el-tab-pane v-for="menu in menus" :key="menu.id" :label="menu.name" :name="String(menu.id)"/>
+      <el-tab-pane v-for="menu in menus" :key="menu.id" :label="menuLabel(menu)" :name="String(menu.id)"/>
     </el-tabs>
 
     <div class="system-body">
@@ -19,13 +19,14 @@
       <PermissionManagement v-else-if="activeMenuCode === 'permission'"/>
       <NoticeManagement v-else-if="activeMenuCode === 'notice'"/>
       <JobManagement v-else-if="activeMenuCode === 'job'"/>
-      <div v-else class="system-placeholder">请选择系统管理子菜单。</div>
+      <div v-else class="system-placeholder">{{ t("systemPanel.placeholder") }}</div>
     </div>
   </section>
 </template>
 
 <script lang="ts" setup>
 import {computed, ref, watch} from "vue";
+import {useI18n} from "vue-i18n";
 import type {MenuTree} from "../../api/auth";
 import UserManagement from "./UserManagement.vue";
 import RoleManagement from "./RoleManagement.vue";
@@ -43,6 +44,7 @@ const props = defineProps<{
 const emit = defineEmits<{ (e: "menu-change", id: number): void }>();
 
 const activeTab = ref("");
+const {t} = useI18n();
 
 const activeMenu = computed(() => {
   if (!activeTab.value) {
@@ -56,6 +58,27 @@ const activeMenu = computed(() => {
 });
 
 const activeMenuCode = computed(() => activeMenu.value?.code || "");
+
+function menuLabel(menu: MenuTree) {
+  switch (menu.code) {
+    case "user":
+      return t("systemPanel.tabs.user");
+    case "role":
+      return t("systemPanel.tabs.role");
+    case "menu":
+      return t("systemPanel.tabs.menu");
+    case "dept":
+      return t("systemPanel.tabs.dept");
+    case "permission":
+      return t("systemPanel.tabs.permission");
+    case "notice":
+      return t("systemPanel.tabs.notice");
+    case "job":
+      return t("systemPanel.tabs.job");
+    default:
+      return menu.name;
+  }
+}
 
 function syncTab() {
   if (props.activeMenuId != null) {

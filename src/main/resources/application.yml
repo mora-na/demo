@@ -40,6 +40,14 @@ spring:
       # 单请求最大大小
       max-request-size: 120MB
   quartz:
+    # Quartz 是否自动启动
+    auto-startup: true
+    # 启动延迟（秒，0 表示立即启动）
+    startup-delay: 5
+    # 是否覆盖已存在的 Job/Trigger（JDBC 模式建议谨慎开启）
+    overwrite-existing-jobs: false
+    # 关闭应用时是否等待任务执行完成
+    wait-for-jobs-to-complete-on-shutdown: false
     # 持久化任务到数据库
     job-store-type: jdbc
     jdbc:
@@ -49,13 +57,40 @@ spring:
       org:
         quartz:
           scheduler:
+            # 调度器名称（需与表中 SCHED_NAME 一致）
             instanceName: DemoQuartzScheduler
+            # 节点 ID（AUTO 表示自动生成）
             instanceId: AUTO
+            # 禁用版本更新检查
+            skipUpdateCheck: true
+          threadPool:
+            # 线程池实现类
+            class: org.quartz.simpl.SimpleThreadPool
+            # 线程数（按并发任务量配置）
+            threadCount: 10
+            # 线程优先级（1-10）
+            threadPriority: 5
+            # 继承初始化线程的上下文类加载器
+            threadsInheritContextClassLoaderOfInitializingThread: true
           jobStore:
+            # 使用 Spring 托管的数据源（默认 DataSource）
             class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
-            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            # JDBC 方言委托类
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            # 表前缀（需与建表脚本保持一致）
             tablePrefix: sys_quartz_
+            # Misfire 判定阈值（毫秒）
+            misfireThreshold: 60000
+            # 单次处理的 misfire 数量上限
+            maxMisfiresToHandleAtATime: 20
+            # 是否启用集群
             isClustered: false
+            # 集群心跳间隔（毫秒，开启集群时生效）
+            clusterCheckinInterval: 20000
+            # JobDataMap 是否仅支持字符串属性
+            useProperties: false
+            # 获取触发器时加锁（高并发 DB 建议开启）
+            acquireTriggersWithinLock: true
 
 # 缓存配置
 cache:
@@ -220,7 +255,7 @@ security:
     # 是否启用数据范围控制
     enabled: true
     # 默认数据范围类型
-    default-type: ALL
+    default-type: DEPT_AND_CHILD
     # 数据范围来源
     source: db
     # 数据范围缓存时长（秒）

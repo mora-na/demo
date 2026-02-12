@@ -405,8 +405,6 @@ export interface JobVO {
     status?: number;
     allowConcurrent?: number;
     misfirePolicy?: string;
-    targetType?: string;
-    targetIds?: number[];
     params?: string;
     remark?: string;
     createdName?: string;
@@ -435,8 +433,6 @@ export interface JobCreatePayload {
     status?: number;
     allowConcurrent?: number;
     misfirePolicy?: string;
-    targetType?: string;
-    targetIds?: number[];
     params?: string;
     remark?: string;
 }
@@ -448,8 +444,6 @@ export interface JobUpdatePayload {
     status?: number;
     allowConcurrent?: number;
     misfirePolicy?: string;
-    targetType?: string;
-    targetIds?: number[];
     params?: string;
     remark?: string;
 }

@@ -113,5 +113,491 @@ export default {
             logoutSuccess: "Signed out",
             logoutFailed: "Sign out failed"
         }
+    },
+    job: {
+        title: "Scheduled Jobs",
+        subtitle: "Manage scheduled jobs and execution strategies.",
+        filter: {
+            namePlaceholder: "Job name",
+            handlerPlaceholder: "Handler",
+            statusPlaceholder: "Status",
+            search: "Search",
+            create: "New job"
+        },
+        table: {
+            name: "Job name",
+            handler: "Handler",
+            cron: "Cron",
+            nextFireTime: "Next run",
+            concurrent: "Concurrent",
+            status: "Status",
+            action: "Actions",
+            yes: "Yes",
+            no: "No",
+            edit: "Edit",
+            run: "Run now",
+            logs: "Run logs",
+            delete: "Delete"
+        },
+        dialog: {
+            createTitle: "New job",
+            editTitle: "Edit job",
+            name: "Job name",
+            namePlaceholder: "Enter job name",
+            handler: "Handler",
+            handlerPlaceholder: "Select a handler",
+            cron: "Cron expression",
+            cronPlaceholder: "e.g. 0 0/5 * * * ?",
+            misfire: "Misfire policy",
+            misfirePlaceholder: "Select a policy",
+            misfireDefault: "Default",
+            misfireIgnore: "Ignore misfires",
+            misfireFire: "Fire and proceed",
+            misfireDoNothing: "Do nothing",
+            concurrent: "Allow concurrent",
+            concurrentPlaceholder: "Select",
+            concurrentYes: "Allow",
+            concurrentNo: "Disallow",
+            status: "Job status",
+            statusPlaceholder: "Select",
+            statusEnabled: "Enabled",
+            statusDisabled: "Disabled",
+            params: "Params",
+            paramsPlaceholder: "Optional, JSON or string",
+            remark: "Remark"
+        },
+        cronHelper: {
+            open: "Builder",
+            title: "Cron Expression Builder",
+            template: "Pattern",
+            templatePlaceholder: "Select",
+            groups: {
+                frequency: "By frequency",
+                timePoint: "By exact time",
+                date: "By date",
+                combo: "Combination"
+            },
+            templates: {
+                freqSeconds: "Every N seconds (Quartz)",
+                freqMinutes: "Every N minutes",
+                freqHours: "Every N hours",
+                freqDays: "Every N days",
+                freqWeeks: "Every N weeks (weekday)",
+                freqMonths: "Every N months (day)",
+                freqYears: "Yearly on date",
+                timeFixed: "Fixed time (daily)",
+                timeMulti: "Multiple times",
+                timeRange: "Time range",
+                dateMonthDays: "Specific days of month",
+                dateWeekdays: "Specific weekdays",
+                dateLastDay: "Last day of month (L)",
+                dateNearestWeekday: "Nearest weekday (W)",
+                dateNthWeekday: "Nth weekday (#)",
+                comboWorkdaysHours: "Workdays + hours",
+                comboQuarterStart: "Quarter + month start",
+                comboRangeStep: "Range + step"
+            },
+            intervalSeconds: "Second interval",
+            intervalMinutes: "Minute interval",
+            intervalHours: "Hour interval",
+            intervalDays: "Day interval",
+            intervalWeeks: "Week interval",
+            intervalMonths: "Month interval",
+            hour: "Hour",
+            minute: "Minute",
+            second: "Second",
+            hours: "Hours",
+            minutes: "Minutes",
+            hoursPlaceholder: "Select hours",
+            minutesPlaceholder: "Select minutes",
+            time: "Run time",
+            rangeStartHour: "Start hour",
+            rangeEndHour: "End hour",
+            stepMinutes: "Minute step",
+            nth: "Nth",
+            months: "Months",
+            monthsPlaceholder: "Select months",
+            weekday: "Weekday",
+            weekdayPlaceholder: "Select",
+            weekdays: {
+                mon: "Mon",
+                tue: "Tue",
+                wed: "Wed",
+                thu: "Thu",
+                fri: "Fri",
+                sat: "Sat",
+                sun: "Sun"
+            },
+            dayOfMonth: "Day of month (1-31)",
+            dayOfMonthPlaceholder: "Select days",
+            preview: "Expression preview",
+            apply: "Use this expression",
+            invalid: "Generated expression is invalid"
+        },
+        logs: {
+            title: "Execution logs",
+            task: "Job",
+            handler: "Handler",
+            status: "Status",
+            statusSuccess: "Success",
+            statusFail: "Failed",
+            startTime: "Start time",
+            duration: "Duration (ms)",
+            message: "Message",
+            close: "Close"
+        },
+        msg: {
+            loadFailed: "Failed to load jobs",
+            createSuccess: "Job created",
+            createFailed: "Failed to create job",
+            updateSuccess: "Job updated",
+            updateFailed: "Failed to update job",
+            saveFailed: "Failed to save job",
+            statusUpdated: "Status updated",
+            statusUpdateFailed: "Failed to update status",
+            runSuccess: "Job triggered",
+            runFailed: "Failed to trigger job",
+            deleteSuccess: "Job deleted",
+            deleteFailed: "Failed to delete job",
+            loadLogFailed: "Failed to load logs",
+            validateName: "Enter a job name",
+            validateHandler: "Select a handler",
+            validateCron: "Enter a Cron expression"
+        }
+    },
+    systemPanel: {
+        title: "System Management",
+        subtitle: "Manage users, permissions, and organizational structure.",
+        placeholder: "Select a system management tab.",
+        tabs: {
+            user: "Users",
+            role: "Roles",
+            menu: "Menus",
+            dept: "Departments",
+            permission: "Permissions",
+            notice: "Notices",
+            job: "Scheduled Jobs"
+        }
+    },
+    dept: {
+        title: "Department Management",
+        subtitle: "Maintain departments and hierarchy.",
+        create: "New department",
+        table: {
+            name: "Name",
+            code: "Code",
+            parent: "Parent",
+            sort: "Sort",
+            status: "Status",
+            action: "Actions",
+            edit: "Edit"
+        },
+        dialog: {
+            createTitle: "New department",
+            editTitle: "Edit department",
+            name: "Name",
+            code: "Code",
+            parent: "Parent department",
+            parentPlaceholder: "Select",
+            sort: "Sort",
+            status: "Status",
+            statusPlaceholder: "Select",
+            statusEnabled: "Enabled",
+            statusDisabled: "Disabled",
+            remark: "Remark"
+        },
+        msg: {
+            loadFailed: "Failed to load departments",
+            createSuccess: "Created",
+            createFailed: "Create failed",
+            updateSuccess: "Updated",
+            updateFailed: "Update failed",
+            saveFailed: "Save failed",
+            statusUpdateFailed: "Failed to update status",
+            validateName: "Enter department name"
+        }
+    },
+    menu: {
+        title: "Menu Management",
+        subtitle: "Maintain system menus and frontend routes.",
+        create: "New menu",
+        table: {
+            name: "Name",
+            code: "Code",
+            parent: "Parent",
+            path: "Path",
+            permission: "Permission",
+            sort: "Sort",
+            status: "Status",
+            action: "Actions",
+            edit: "Edit"
+        },
+        dialog: {
+            createTitle: "New menu",
+            editTitle: "Edit menu",
+            name: "Name",
+            code: "Code",
+            parent: "Parent menu",
+            parentPlaceholder: "Select",
+            path: "Path",
+            component: "Component",
+            permission: "Permission key",
+            sort: "Sort",
+            status: "Status",
+            statusPlaceholder: "Select",
+            statusEnabled: "Enabled",
+            statusDisabled: "Disabled",
+            remark: "Remark"
+        },
+        msg: {
+            loadFailed: "Failed to load menus",
+            createSuccess: "Created",
+            createFailed: "Create failed",
+            updateSuccess: "Updated",
+            updateFailed: "Update failed",
+            saveFailed: "Save failed",
+            statusUpdateFailed: "Failed to update status",
+            validateName: "Enter menu name"
+        }
+    },
+    permission: {
+        title: "Permission Management",
+        subtitle: "Maintain permission keys and names.",
+        create: "New permission",
+        table: {
+            code: "Code",
+            name: "Name",
+            status: "Status",
+            action: "Actions",
+            edit: "Edit"
+        },
+        dialog: {
+            createTitle: "New permission",
+            editTitle: "Edit permission",
+            code: "Permission code",
+            name: "Permission name",
+            status: "Status",
+            statusPlaceholder: "Select",
+            statusEnabled: "Enabled",
+            statusDisabled: "Disabled"
+        },
+        msg: {
+            loadFailed: "Failed to load permissions",
+            createSuccess: "Created",
+            createFailed: "Create failed",
+            updateSuccess: "Updated",
+            updateFailed: "Update failed",
+            saveFailed: "Save failed",
+            statusUpdateFailed: "Failed to update status",
+            validateForm: "Enter code and name"
+        }
+    },
+    role: {
+        title: "Role Management",
+        subtitle: "Maintain roles, permissions, and menu assignments.",
+        create: "New role",
+        table: {
+            code: "Code",
+            name: "Name",
+            dataScope: "Data scope",
+            status: "Status",
+            action: "Actions",
+            edit: "Edit",
+            assignPermissions: "Assign permissions",
+            assignMenus: "Assign menus"
+        },
+        dialog: {
+            createTitle: "New role",
+            editTitle: "Edit role",
+            code: "Role code",
+            name: "Role name",
+            status: "Status",
+            statusPlaceholder: "Select",
+            statusEnabled: "Enabled",
+            statusDisabled: "Disabled",
+            dataScopeType: "Data scope type",
+            dataScopePlaceholder: "Select",
+            dataScopeValue: "Data scope value",
+            dataScopeValuePlaceholder: "Comma-separated IDs"
+        },
+        scope: {
+            all: "All",
+            dept: "Dept only",
+            deptAndChild: "Dept & children",
+            custom: "Custom",
+            customDept: "Custom dept",
+            self: "Self only",
+            none: "No access"
+        },
+        permissions: {
+            title: "Assign permissions",
+            list: "Permission list",
+            placeholder: "Select"
+        },
+        menus: {
+            title: "Assign menus"
+        },
+        msg: {
+            loadFailed: "Failed to load roles",
+            createSuccess: "Created",
+            createFailed: "Create failed",
+            updateSuccess: "Updated",
+            updateFailed: "Update failed",
+            saveFailed: "Save failed",
+            statusUpdateFailed: "Failed to update status",
+            validateForm: "Enter role code and name",
+            permissionsUpdated: "Permissions updated",
+            permissionsUpdateFailed: "Failed to update permissions",
+            menusUpdated: "Menus updated",
+            menusUpdateFailed: "Failed to update menus"
+        }
+    },
+    user: {
+        title: "User Management",
+        subtitle: "Manage users, status, and role relations.",
+        filter: {
+            userNamePlaceholder: "Username",
+            nickNamePlaceholder: "Nickname",
+            statusPlaceholder: "Status",
+            search: "Search",
+            create: "New user"
+        },
+        table: {
+            userName: "Username",
+            nickName: "Nickname",
+            sex: "Sex",
+            dept: "Department",
+            status: "Status",
+            action: "Actions",
+            edit: "Edit",
+            resetPassword: "Reset password",
+            assignRoles: "Assign roles"
+        },
+        dialog: {
+            createTitle: "New user",
+            editTitle: "Edit user",
+            userName: "Username",
+            nickName: "Nickname",
+            sex: "Sex",
+            sexPlaceholder: "Select",
+            dept: "Department",
+            deptPlaceholder: "Select",
+            status: "Status",
+            statusPlaceholder: "Select",
+            statusEnabled: "Enabled",
+            statusDisabled: "Disabled",
+            initialPassword: "Initial password",
+            dataScopeType: "Data scope type",
+            dataScopePlaceholder: "Select",
+            dataScopeValue: "Data scope value",
+            dataScopeValuePlaceholder: "Comma-separated IDs",
+            remark: "Remark"
+        },
+        scope: {
+            all: "All",
+            dept: "Dept only",
+            deptAndChild: "Dept & children",
+            custom: "Custom",
+            customDept: "Custom dept",
+            self: "Self only",
+            none: "No access"
+        },
+        sex: {
+            male: "Male",
+            female: "Female",
+            unknown: "-"
+        },
+        roles: {
+            title: "Assign roles",
+            list: "Role list",
+            placeholder: "Select"
+        },
+        reset: {
+            title: "Reset password",
+            newPassword: "New password",
+            confirmPassword: "Confirm password"
+        },
+        msg: {
+            loadFailed: "Failed to load users",
+            createSuccess: "Created",
+            createFailed: "Create failed",
+            updateSuccess: "Updated",
+            updateFailed: "Update failed",
+            saveFailed: "Save failed",
+            statusUpdateFailed: "Failed to update status",
+            rolesUpdated: "Roles updated",
+            rolesUpdateFailed: "Failed to update roles",
+            passwordReset: "Password reset",
+            passwordResetFailed: "Failed to reset password",
+            validateUserName: "Enter username",
+            validatePassword: "Enter new password",
+            validatePasswordConfirm: "Passwords do not match"
+        }
+    },
+    notice: {
+        title: "System Notices",
+        subtitle: "Publish notices and track read status.",
+        filter: {
+            keywordPlaceholder: "Title/content keyword",
+            scopePlaceholder: "Scope",
+            search: "Search",
+            publish: "Publish"
+        },
+        scope: {
+            all: "All",
+            dept: "Department",
+            role: "Role",
+            user: "User"
+        },
+        table: {
+            title: "Title",
+            scope: "Scope",
+            readSummary: "Read/Total",
+            publisher: "Publisher",
+            publishTime: "Published at",
+            action: "Actions",
+            detail: "Detail"
+        },
+        publish: {
+            title: "Publish notice",
+            titleLabel: "Title",
+            titlePlaceholder: "Enter notice title",
+            contentLabel: "Content",
+            contentPlaceholder: "Enter notice content",
+            scopeLabel: "Scope",
+            scopePlaceholder: "Select scope",
+            targetDept: "Target dept",
+            targetRole: "Target role",
+            targetUser: "Target user",
+            targetDefault: "Targets",
+            targetDeptPlaceholder: "Select departments",
+            targetRolePlaceholder: "Select roles",
+            targetUserPlaceholder: "Select users",
+            targetDefaultPlaceholder: "Select",
+            publish: "Publish"
+        },
+        detail: {
+            title: "Notice detail",
+            scopeLabel: "Scope: ",
+            publisherLabel: "Publisher: ",
+            publishTimeLabel: "Published at: ",
+            userName: "Username",
+            nickName: "Nickname",
+            dept: "Department",
+            status: "Status",
+            statusRead: "Read",
+            statusUnread: "Unread",
+            readTime: "Read time",
+            close: "Close"
+        },
+        msg: {
+            loadFailed: "Failed to load notices",
+            publishSuccess: "Notice published",
+            publishFailed: "Failed to publish notice",
+            detailLoadFailed: "Failed to load detail",
+            validateTitle: "Enter notice title",
+            validateContent: "Enter notice content",
+            validateTarget: "Select recipients"
+        }
     }
 };
