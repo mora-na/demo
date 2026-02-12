@@ -82,7 +82,7 @@ public class User implements Serializable {
      * 性别
      */
     @TableField("sex")
-    @Excel(header = "性别", mapping = {"0:女", "1:男"}, sort = 4)
+    @Excel(header = "性别", mapping = {"F:女", "M:男"}, sort = 4)
     private String sex;
 
     /**

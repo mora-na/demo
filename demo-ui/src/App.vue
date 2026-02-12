@@ -6,18 +6,19 @@
       :transport-mode="transportMode"
       @login-success="handleLoginSuccess"
     />
-    <HomePage v-else @logout="handleLogout" />
+    <HomePage v-else-if="currentView === 'home'" @logout="handleLogout" />
+    <div v-else class="boot">正在校验登录状态…</div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {ref} from "vue";
+import {onMounted, ref} from "vue";
 import {useAuthStore} from "./stores/auth";
 import HomePage from "./pages/HomePage.vue";
 import LoginPage from "./pages/LoginPage.vue";
 
 const authStore = useAuthStore();
-const currentView = ref<"login" | "home">(authStore.isAuthenticated ? "home" : "login");
+const currentView = ref<"checking" | "login" | "home">("checking");
 const transportMode = (import.meta.env.VITE_PASSWORD_TRANSPORT_MODE || "plain").toUpperCase();
 
 function handleLoginSuccess() {
@@ -27,6 +28,24 @@ function handleLoginSuccess() {
 function handleLogout() {
   currentView.value = "login";
 }
+
+onMounted(async () => {
+  if (!authStore.token) {
+    currentView.value = "login";
+    return;
+  }
+  try {
+    const result = await authStore.loadProfile();
+    if (result.ok) {
+      currentView.value = "home";
+      return;
+    }
+  } catch {
+    // Swallow errors and fall back to login.
+  }
+  authStore.clearSession();
+  currentView.value = "login";
+});
 </script>
 
 <style scoped>
@@ -36,15 +55,13 @@ function handleLogout() {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
+  padding: 16px;
   overflow: hidden;
 }
 
 .page--home {
   align-items: stretch;
   justify-content: flex-start;
-  padding-top: 0;
-  padding-bottom: 24px;
 }
 
 .page::before,
@@ -88,6 +105,19 @@ function handleLogout() {
   transform: translateY(-20%) rotate(-10deg);
   z-index: 0;
   animation: drift 18s ease-in-out infinite;
+}
+
+.boot {
+  position: relative;
+  z-index: 1;
+  font-size: 14px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(18, 18, 18, 0.08);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  padding: 16px 22px;
+  border-radius: 999px;
 }
 
 @keyframes drift {

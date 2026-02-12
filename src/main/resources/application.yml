@@ -186,7 +186,7 @@ security:
     source: db
     # 超级用户列表
     super-users:
-      - master # 超级用户账号
+      - admin # 超级用户账号
     # 权限缓存时长（秒）
     cache-seconds: 600
     # 权限校验排除路径（会与 security.common.exclude-paths 合并）

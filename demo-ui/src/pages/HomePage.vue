@@ -364,15 +364,16 @@ onMounted(loadProfile);
 .console {
   position: relative;
   z-index: 1;
-  width: min(1320px, 100%);
-  min-height: calc(100vh - 96px);
+  width: 100%;
+  max-width: none;
+  min-height: calc(100vh - 32px);
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
   grid-template-rows: auto 1fr;
   grid-template-areas:
     "nav topbar"
     "nav main";
-  gap: 20px;
+  gap: 12px;
 }
 
 .console.nav-collapsed {
@@ -383,8 +384,8 @@ onMounted(loadProfile);
   grid-area: nav;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px 16px;
+  gap: 14px;
+  padding: 14px 12px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(18, 18, 18, 0.08);
@@ -552,7 +553,7 @@ onMounted(loadProfile);
 }
 
 .console.nav-collapsed .console-nav {
-  padding: 16px 10px;
+  padding: 12px 8px;
 }
 
 .console.nav-collapsed .nav-brand {
@@ -563,10 +564,10 @@ onMounted(loadProfile);
   grid-area: topbar;
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(220px, 320px) auto;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
-  padding: 12px 18px;
-  border-radius: 0 0 22px 22px;
+  padding: 10px 14px;
+  border-radius: 22px;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(18, 18, 18, 0.08);
   box-shadow: var(--shadow);
@@ -674,8 +675,8 @@ onMounted(loadProfile);
   grid-area: main;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 20px 24px;
+  gap: 12px;
+  padding: 16px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(18, 18, 18, 0.08);
@@ -686,7 +687,7 @@ onMounted(loadProfile);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
@@ -710,7 +711,7 @@ onMounted(loadProfile);
 .main-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 .main-card {

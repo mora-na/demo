@@ -472,9 +472,9 @@ ON DUPLICATE KEY UPDATE
     remark = VALUES(remark);
 
 INSERT INTO sys_user (id, user_name, nick_name, password, status, dept_id, data_scope_type, data_scope_value, sex, tst) VALUES
-    (1, 'master', '超级管理员', '226b97d9a11e6a3c6a6cf70161b0aaba8a1d0314104590c601791f420a294c07', 1, 1, 'ALL', NULL, 'M', '内置账号'),
-    (2, 'manager', '部门主管', 'fa5f4af1c215d2aac1697ab7046a099665831a3a0079b85cf5017df67622c6bb', 1, 2, 'DEPT_AND_CHILD', NULL, 'M', '内置账号'),
-    (3, 'demo', '普通用户', 'dd43b8283d213a7f5814bc814d210a1cd9aeb06a383d275c05ff2c8700dbddb2', 1, 2, 'SELF', NULL, 'F', '内置账号')
+    (1, 'admin', '超级管理员', 'b38dce307683511d93ac894f91397a1b5747899bbca077b4cf01c9c31c4f33e0', 1, 1, 'ALL', NULL, 'M', '内置账号'),
+    (2, 'manager', '部门主管', '826182ec96744b73ee254210a720573c494f1486d38715ae48802dc4818fb465', 1, 2, 'DEPT_AND_CHILD', NULL, 'M', '内置账号'),
+    (3, 'demo', '普通用户', '2177cc1d2fee90fbc535546218a2537cdfd65ab76b4a6726c88f946d4786de72', 1, 2, 'SELF', NULL, 'F', '内置账号')
 ON DUPLICATE KEY UPDATE
     nick_name = VALUES(nick_name),
     password = VALUES(password),
