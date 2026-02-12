@@ -2,13 +2,17 @@ package com.example.demo.user.controller;
 
 import com.example.demo.auth.service.PasswordService;
 import com.example.demo.common.model.CommonResult;
+import com.example.demo.common.model.PageResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.dept.service.DeptService;
+import com.example.demo.permission.entity.UserRole;
+import com.example.demo.permission.service.UserRoleService;
 import com.example.demo.user.converter.UserConverter;
 import com.example.demo.user.dto.*;
 import com.example.demo.user.entity.User;
 import com.example.demo.user.service.UserService;
+import com.example.demo.user.service.UserViewService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -30,8 +34,61 @@ public class UserAdminController extends BaseController {
 
     private final UserService userService;
     private final UserConverter userConverter;
+    private final UserViewService userViewService;
+    private final UserRoleService userRoleService;
     private final DeptService deptService;
     private final PasswordService passwordService;
+
+    /**
+     * 获取用户列表。
+     *
+     * @param query 查询参数
+     * @return 用户分页列表
+     */
+    @GetMapping
+    @RequirePermission("user:query")
+    public CommonResult<PageResult<UserVO>> list(@ModelAttribute UserQuery query) {
+        return success(page(query, userService::selectUsers, userViewService::toView));
+    }
+
+    /**
+     * 查询用户详情。
+     *
+     * @param id 用户 ID
+     * @return 用户详情
+     */
+    @GetMapping("/{id}")
+    @RequirePermission("user:query")
+    public CommonResult<UserVO> detail(@PathVariable Long id) {
+        User user = userService.getById(id);
+        if (user == null) {
+            return error(404, i18n("user.not.found"));
+        }
+        return success(userViewService.toView(user));
+    }
+
+    /**
+     * 查询用户已分配角色 ID 列表。
+     *
+     * @param id 用户 ID
+     * @return 角色 ID 列表
+     */
+    @GetMapping("/{id}/roles")
+    @RequirePermission("user:query")
+    public CommonResult<java.util.List<Long>> userRoleIds(@PathVariable Long id) {
+        if (userService.getById(id) == null) {
+            return error(404, i18n("user.not.found"));
+        }
+        java.util.List<Long> roleIds = userRoleService.list(
+                        com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserRole.class)
+                                .eq(UserRole::getUserId, id))
+                .stream()
+                .map(UserRole::getRoleId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+        return success(roleIds);
+    }
 
     @PostMapping
     @RequirePermission("user:create")

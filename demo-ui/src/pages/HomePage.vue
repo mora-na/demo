@@ -74,7 +74,7 @@
         <el-button text class="icon-button" :aria-label="t('home.topbar.settings')" @click="openSettings">⚙️</el-button>
         <el-dropdown trigger="click">
           <button class="topbar-user" type="button">
-            <el-avatar size="36" class="user-avatar">{{ userInitial }}</el-avatar>
+            <el-avatar size="32" class="user-avatar">{{ userInitial }}</el-avatar>
             <div class="user-meta">
               <div class="user-name">{{ displayName }}</div>
               <div class="user-role">{{ roleSummary }}</div>
@@ -93,49 +93,57 @@
     </header>
 
     <section class="console-main">
-      <div class="main-hero">
-        <div>
-          <h1>{{ activeGroup?.name || t("home.main.titleFallback") }}</h1>
-          <p>{{ activeGroup ? menuDescription(activeGroup) : t("home.main.descFallback") }}</p>
+      <template v-if="!isSystemGroup">
+        <div class="main-hero">
+          <div>
+            <h1>{{ activeGroup?.name || t("home.main.titleFallback") }}</h1>
+            <p>{{ activeGroup ? menuDescription(activeGroup) : t("home.main.descFallback") }}</p>
+          </div>
         </div>
-      </div>
 
-      <div class="main-grid">
-        <el-empty v-if="!activeChildren.length" :description="t('home.main.empty')" />
-        <template v-else>
-          <article
-            v-for="item in activeChildren"
-            :key="item.id"
-            class="main-card"
-            @click="selectMenu(item)"
-          >
-            <div class="main-card-head">
-              <div class="main-card-title">{{ item.name }}</div>
-              <span class="main-card-icon">↗</span>
-            </div>
-            <div class="main-card-desc">{{ menuDescription(item) }}</div>
-          </article>
-        </template>
-      </div>
+        <div class="main-grid">
+          <el-empty v-if="!activeChildren.length" :description="t('home.main.empty')" />
+          <template v-else>
+            <article
+              v-for="item in activeChildren"
+              :key="item.id"
+              class="main-card"
+              @click="selectMenu(item)"
+            >
+              <div class="main-card-head">
+                <div class="main-card-title">{{ item.name }}</div>
+                <span class="main-card-icon">↗</span>
+              </div>
+              <div class="main-card-desc">{{ menuDescription(item) }}</div>
+            </article>
+          </template>
+        </div>
 
-      <div class="main-metrics">
-        <div class="metric">
-          <div class="metric-value">{{ menuGroupCount }}</div>
-          <div class="metric-title">{{ t("home.main.metrics.group") }}</div>
+        <div class="main-metrics">
+          <div class="metric">
+            <div class="metric-value">{{ menuGroupCount }}</div>
+            <div class="metric-title">{{ t("home.main.metrics.group") }}</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">{{ submenuCount }}</div>
+            <div class="metric-title">{{ t("home.main.metrics.submenu") }}</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">{{ roleCount }}</div>
+            <div class="metric-title">{{ t("home.main.metrics.role") }}</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">{{ permissionCount }}</div>
+            <div class="metric-title">{{ t("home.main.metrics.permission") }}</div>
+          </div>
         </div>
-        <div class="metric">
-          <div class="metric-value">{{ submenuCount }}</div>
-          <div class="metric-title">{{ t("home.main.metrics.submenu") }}</div>
-        </div>
-        <div class="metric">
-          <div class="metric-value">{{ roleCount }}</div>
-          <div class="metric-title">{{ t("home.main.metrics.role") }}</div>
-        </div>
-        <div class="metric">
-          <div class="metric-value">{{ permissionCount }}</div>
-          <div class="metric-title">{{ t("home.main.metrics.permission") }}</div>
-        </div>
-      </div>
+      </template>
+      <SystemManagementPanel
+        v-else
+        :menus="activeChildren"
+        :active-menu-id="activeMenuId"
+        @menu-change="selectMenuById"
+      />
     </section>
 
     <el-dialog v-model="settingsVisible" :title="t('home.profile.title')" width="460px" align-center>
@@ -174,6 +182,7 @@ import {ElMessage} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {logout, type MenuTree, updateProfile} from "../api/auth";
 import {useAuthStore} from "../stores/auth";
+import SystemManagementPanel from "./system/SystemManagementPanel.vue";
 
 const emit = defineEmits<{(e: "logout"): void}>();
 
@@ -238,6 +247,14 @@ const activeChildren = computed(() => {
   return [activeGroup.value];
 });
 
+const isSystemGroup = computed(() => {
+  const group = activeGroup.value;
+  if (!group) {
+    return false;
+  }
+  return group.code === "system" || (group.path ? group.path.startsWith("/system") : false);
+});
+
 const roleSummary = computed(() =>
   authStore.roles.length ? authStore.roles.join(" / ") : t("common.roleEmpty")
 );
@@ -252,11 +269,33 @@ watch(
   {immediate: true}
 );
 
+watch(
+  () => [isSystemGroup.value, activeChildren.value, activeMenuId.value],
+  () => {
+    if (!isSystemGroup.value) {
+      return;
+    }
+    const children = activeChildren.value;
+    if (!children.length) {
+      return;
+    }
+    const activeId = activeMenuId.value;
+    if (activeId == null || !children.some((item) => item.id === activeId)) {
+      activeMenuId.value = children[0].id;
+    }
+  },
+  {immediate: true}
+);
+
 function selectMenu(menu: MenuTree) {
   if (menu?.id == null) {
     return;
   }
   activeMenuId.value = menu.id;
+}
+
+function selectMenuById(id: number) {
+  activeMenuId.value = id;
 }
 
 function toggleNav() {
@@ -466,26 +505,26 @@ onMounted(loadProfile);
   z-index: 1;
   width: 100%;
   max-width: none;
-  min-height: calc(100vh - 32px);
+  min-height: calc(100vh - 16px);
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 200px minmax(0, 1fr);
   grid-template-rows: auto 1fr;
   grid-template-areas:
     "nav topbar"
     "nav main";
-  gap: 12px;
+  gap: 8px;
 }
 
 .console.nav-collapsed {
-  grid-template-columns: 76px minmax(0, 1fr);
+  grid-template-columns: 64px minmax(0, 1fr);
 }
 
 .console-nav {
   grid-area: nav;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 14px 12px;
+  gap: 10px;
+  padding: 12px 10px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(18, 18, 18, 0.08);
@@ -653,7 +692,7 @@ onMounted(loadProfile);
 }
 
 .console.nav-collapsed .console-nav {
-  padding: 12px 8px;
+  padding: 10px 6px;
 }
 
 .console.nav-collapsed .nav-brand {
@@ -663,10 +702,10 @@ onMounted(loadProfile);
 .console-topbar {
   grid-area: topbar;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(220px, 320px) auto;
-  gap: 12px;
+  grid-template-columns: minmax(200px, 1fr) minmax(200px, 300px) auto;
+  gap: 8px;
   align-items: center;
-  padding: 10px 14px;
+  padding: 4px 12px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(18, 18, 18, 0.08);
@@ -679,25 +718,25 @@ onMounted(loadProfile);
 
 .topbar-left {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
 }
 
 .topbar-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
 }
 
 .topbar-sub {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted);
 }
 
 .topbar-tags {
   display: flex;
-  gap: 12px;
+  gap: 6px;
   flex-wrap: wrap;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
 }
 
@@ -718,12 +757,12 @@ onMounted(loadProfile);
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .icon-button {
-  font-size: 18px;
-  padding: 6px 8px;
+  font-size: 16px;
+  padding: 4px 6px;
   color: var(--muted);
 }
 
@@ -734,8 +773,8 @@ onMounted(loadProfile);
 .topbar-user {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
+  gap: 8px;
+  padding: 4px 8px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(18, 18, 18, 0.08);
@@ -757,12 +796,12 @@ onMounted(loadProfile);
 }
 
 .user-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
 }
 
 .user-role {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--muted);
 }
 
@@ -781,8 +820,8 @@ onMounted(loadProfile);
   grid-area: main;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 12px;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(18, 18, 18, 0.08);
@@ -793,7 +832,7 @@ onMounted(loadProfile);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -817,7 +856,7 @@ onMounted(loadProfile);
 .main-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .main-card {
@@ -870,11 +909,11 @@ onMounted(loadProfile);
 .main-metrics {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .metric {
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 14px;
   border: 1px solid rgba(18, 18, 18, 0.08);
   background: rgba(255, 255, 255, 0.7);
@@ -894,14 +933,14 @@ onMounted(loadProfile);
 
 @media (max-width: 1200px) {
   .console {
-    grid-template-columns: 220px minmax(0, 1fr);
+    grid-template-columns: 200px minmax(0, 1fr);
     grid-template-rows: auto 1fr;
     grid-template-areas:
       "nav topbar"
       "nav main";
   }
   .console.nav-collapsed {
-    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-columns: 60px minmax(0, 1fr);
   }
 }
 
@@ -929,7 +968,7 @@ onMounted(loadProfile);
   .console-nav,
   .console-topbar,
   .console-main {
-    padding: 16px;
+    padding: 12px;
   }
   .topbar-right {
     width: 100%;

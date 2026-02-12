@@ -12,6 +12,17 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       proxy: {
+        "/prod-api": {
+          target: proxyTarget,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/prod-api/, ""),
+          configure(proxy) {
+            proxy.on("proxyReq", (proxyReq) => {
+              // Ensure IPv6 host header is bracketed (URL.host already does this).
+              proxyReq.setHeader("host", targetHostHeader);
+            });
+          }
+        },
         "/auth": {
           target: proxyTarget,
           changeOrigin: true,

@@ -62,7 +62,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 8px;
   overflow: hidden;
 }
 

@@ -6,6 +6,7 @@ import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.menu.dto.RoleMenuAssignRequest;
 import com.example.demo.menu.entity.Menu;
+import com.example.demo.menu.entity.RoleMenu;
 import com.example.demo.menu.service.MenuService;
 import com.example.demo.menu.service.RoleMenuService;
 import com.example.demo.permission.dto.*;
@@ -85,6 +86,29 @@ public class RoleAdminController extends BaseController {
                 .map(RolePermission::getPermissionId)
                 .collect(Collectors.toList());
         return success(toVO(role, permissionIds));
+    }
+
+    /**
+     * 查询角色已分配菜单 ID 列表。
+     *
+     * @param id 角色 ID
+     * @return 菜单 ID 列表
+     */
+    @GetMapping("/{id}/menus")
+    @RequirePermission("role:query")
+    public CommonResult<List<Long>> menuIds(@PathVariable Long id) {
+        Role role = roleService.getById(id);
+        if (role == null) {
+            return error(404, i18n("role.not.found"));
+        }
+        List<Long> menuIds = roleMenuService.list(Wrappers.lambdaQuery(RoleMenu.class)
+                        .eq(RoleMenu::getRoleId, id))
+                .stream()
+                .map(RoleMenu::getMenuId)
+                .filter(mid -> mid != null)
+                .distinct()
+                .collect(Collectors.toList());
+        return success(menuIds);
     }
 
     /**
