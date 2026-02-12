@@ -1,10 +1,9 @@
 package com.example.demo.user.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.example.demo.common.annotation.Excel;
+import com.example.demo.common.entity.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,17 +20,11 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName(value = "sys_user")
-public class User implements Serializable {
+public class User extends BaseEntity implements Serializable {
 
     public static final int STATUS_ENABLED = 1;
     public static final int STATUS_DISABLED = 0;
     private static final long serialVersionUID = 1L;
-    /**
-     * 主键ID
-     */
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
-
     /**
      * 用户名（唯一）
      */

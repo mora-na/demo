@@ -29,7 +29,11 @@ public class OrderConverter {
         if (orderVO == null) {
             return new Order();
         }
-        return new Order(orderVO.getId(), orderVO.getUserId(), orderVO.getAmount());
+        Order order = new Order();
+        order.setId(orderVO.getId());
+        order.setUserId(orderVO.getUserId());
+        order.setAmount(orderVO.getAmount());
+        return order;
     }
 
     public List<Order> toEntityList(List<OrderVO> orderVOList) {

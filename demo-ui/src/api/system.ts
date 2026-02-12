@@ -396,3 +396,120 @@ export async function markAllNoticesRead(): Promise<ApiResponse<number>> {
     const response = await api.put<ApiResponse<number>>('/notices/read-all');
     return response.data;
 }
+
+export interface JobVO {
+    id: number;
+    name: string;
+    handlerName: string;
+    cronExpression: string;
+    status?: number;
+    allowConcurrent?: number;
+    misfirePolicy?: string;
+    targetType?: string;
+    targetIds?: number[];
+    params?: string;
+    remark?: string;
+    createdName?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    nextFireTime?: string;
+}
+
+export interface JobHandlerInfo {
+    name: string;
+    className: string;
+}
+
+export interface JobQuery {
+    pageNum?: number;
+    pageSize?: number;
+    name?: string;
+    handlerName?: string;
+    status?: number;
+}
+
+export interface JobCreatePayload {
+    name: string;
+    handlerName: string;
+    cronExpression: string;
+    status?: number;
+    allowConcurrent?: number;
+    misfirePolicy?: string;
+    targetType?: string;
+    targetIds?: number[];
+    params?: string;
+    remark?: string;
+}
+
+export interface JobUpdatePayload {
+    name?: string;
+    handlerName?: string;
+    cronExpression?: string;
+    status?: number;
+    allowConcurrent?: number;
+    misfirePolicy?: string;
+    targetType?: string;
+    targetIds?: number[];
+    params?: string;
+    remark?: string;
+}
+
+export interface JobLogVO {
+    id: number;
+    jobId: number;
+    jobName: string;
+    handlerName: string;
+    status?: number;
+    message?: string;
+    startTime?: string;
+    endTime?: string;
+    durationMs?: number;
+}
+
+export async function listJobs(params: JobQuery): Promise<ApiResponse<PageResult<JobVO>>> {
+    const response = await api.get<ApiResponse<PageResult<JobVO>>>('/jobs', {params});
+    return response.data;
+}
+
+export async function getJobDetail(id: number): Promise<ApiResponse<JobVO>> {
+    const response = await api.get<ApiResponse<JobVO>>(`/jobs/${id}`);
+    return response.data;
+}
+
+export async function createJob(payload: JobCreatePayload): Promise<ApiResponse<JobVO>> {
+    const response = await api.post<ApiResponse<JobVO>>('/jobs', payload);
+    return response.data;
+}
+
+export async function updateJob(id: number, payload: JobUpdatePayload): Promise<ApiResponse<void>> {
+    const response = await api.put<ApiResponse<void>>(`/jobs/${id}`, payload);
+    return response.data;
+}
+
+export async function deleteJob(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/jobs/${id}`);
+    return response.data;
+}
+
+export async function updateJobStatus(id: number, status: number): Promise<ApiResponse<void>> {
+    const response = await api.put<ApiResponse<void>>(`/jobs/${id}/status`, {status});
+    return response.data;
+}
+
+export async function runJob(id: number): Promise<ApiResponse<void>> {
+    const response = await api.put<ApiResponse<void>>(`/jobs/${id}/run`);
+    return response.data;
+}
+
+export async function listJobHandlers(): Promise<ApiResponse<JobHandlerInfo[]>> {
+    const response = await api.get<ApiResponse<JobHandlerInfo[]>>('/jobs/handlers');
+    return response.data;
+}
+
+export async function listJobLogs(id: number, params: {
+    pageNum?: number;
+    pageSize?: number
+}): Promise<ApiResponse<PageResult<JobLogVO>>> {
+    const response = await api.get<ApiResponse<PageResult<JobLogVO>>>(`/jobs/${id}/logs`, {params});
+    return response.data;
+}

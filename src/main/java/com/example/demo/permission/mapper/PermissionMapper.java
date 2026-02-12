@@ -29,12 +29,14 @@ public interface PermissionMapper extends BaseMapper<Permission> {
             "join sys_role r on r.id = rp.role_id " +
             "join sys_user_role ur on ur.role_id = rp.role_id " +
             "where ur.user_id = #{userId} and p.status = 1 and r.status = 1 " +
+            "and p.is_deleted = 0 and rp.is_deleted = 0 and r.is_deleted = 0 and ur.is_deleted = 0 " +
             "union " +
             "select m.permission as code from sys_menu m " +
             "join sys_role_menu rm on rm.menu_id = m.id " +
             "join sys_role r2 on r2.id = rm.role_id " +
             "join sys_user_role ur2 on ur2.role_id = rm.role_id " +
-            "where ur2.user_id = #{userId} and m.status = 1 and r2.status = 1" +
+            "where ur2.user_id = #{userId} and m.status = 1 and r2.status = 1 " +
+            "and m.is_deleted = 0 and rm.is_deleted = 0 and r2.is_deleted = 0 and ur2.is_deleted = 0" +
             ") t where t.code is not null and t.code <> ''")
     List<String> selectPermissionCodesByUserId(@Param("userId") Long userId);
 }

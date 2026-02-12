@@ -43,7 +43,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     public List<Notice> selectNotices(NoticeQuery query) {
         if (query == null) {
             return list(Wrappers.lambdaQuery(Notice.class)
-                    .orderByDesc(Notice::getCreatedAt)
+                    .orderByDesc(Notice::getCreateTime)
                     .orderByDesc(Notice::getId));
         }
         String keyword = StringUtils.trimToEmpty(query.getKeyword());
@@ -54,7 +54,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
                                 .or()
                                 .like(Notice::getContent, keyword))
                 .eq(StringUtils.isNotBlank(scopeType), Notice::getScopeType, scopeType.toUpperCase())
-                .orderByDesc(Notice::getCreatedAt)
+                .orderByDesc(Notice::getCreateTime)
                 .orderByDesc(Notice::getId));
     }
 
@@ -90,9 +90,9 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
             view.setContent(notice.getContent());
             view.setScopeType(notice.getScopeType());
             view.setScopeValue(notice.getScopeValue());
-            view.setCreatedBy(notice.getCreatedBy());
+            view.setCreatedBy(parseLong(notice.getCreateBy()));
             view.setCreatedName(notice.getCreatedName());
-            view.setCreatedAt(notice.getCreatedAt());
+            view.setCreatedAt(notice.getCreateTime());
             NoticeReadStat stat = notice.getId() == null ? null : stats.get(notice.getId());
             view.setTotalCount(stat == null || stat.getTotalCount() == null ? 0L : stat.getTotalCount());
             view.setReadCount(stat == null || stat.getReadCount() == null ? 0L : stat.getReadCount());
@@ -176,17 +176,36 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         notice.setScopeType(scopeType);
         notice.setScopeValue(buildScopeValue(scopeType, request.getScopeIds()));
         if (publisher != null) {
-            notice.setCreatedBy(publisher.getId());
+            notice.setCreateBy(publisher.getId() == null ? null : String.valueOf(publisher.getId()));
             notice.setCreatedName(StringUtils.defaultIfBlank(publisher.getNickName(), publisher.getUserName()));
         }
-        notice.setCreatedAt(now);
+        notice.setCreateTime(now);
         save(notice);
 
         List<NoticeRecipient> recipients = targetUserIds.stream()
-                .map(userId -> new NoticeRecipient(null, notice.getId(), userId, NoticeRecipient.STATUS_UNREAD, null, now))
+                .map(userId -> {
+                    NoticeRecipient recipient = new NoticeRecipient();
+                    recipient.setNoticeId(notice.getId());
+                    recipient.setUserId(userId);
+                    recipient.setReadStatus(NoticeRecipient.STATUS_UNREAD);
+                    recipient.setReadTime(null);
+                    recipient.setCreateTime(now);
+                    return recipient;
+                })
                 .collect(Collectors.toList());
         noticeRecipientService.saveBatch(recipients);
         return notice;
+    }
+
+    private Long parseLong(String value) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
+        try {
+            return Long.parseLong(value.trim());
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 
     private String normalizeScopeType(String scopeType) {

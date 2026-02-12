@@ -1,8 +1,8 @@
 package com.example.demo.order.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.demo.common.entity.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,15 +14,9 @@ import java.math.BigDecimal;
 @TableName(value = "sys_order")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Order implements Serializable {
+public class Order extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * 订单ID（外部传入，非自增）
-     */
-    @TableId("id")
-    private Long id;
 
     /**
      * 下单用户ID

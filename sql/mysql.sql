@@ -7,6 +7,20 @@ CREATE TABLE IF NOT EXISTS sys_user
         AUTO_INCREMENT
         COMMENT
             '主键ID',
+    create_time
+                     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time
+                     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by
+                     VARCHAR(64)           DEFAULT NULL COMMENT '创建人',
+    update_by
+                     VARCHAR(64)           DEFAULT NULL COMMENT '更新人',
+    is_deleted
+                     TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version
+                     INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark
+                     VARCHAR(500)          DEFAULT NULL COMMENT '备注',
     user_name
                      VARCHAR(64)  NOT NULL COMMENT '用户名（唯一）',
     nick_name        VARCHAR(64) COMMENT '昵称',
@@ -23,7 +37,8 @@ CREATE TABLE IF NOT EXISTS sys_user
             ),
     UNIQUE KEY uk_sys_user_user_name
         (
-         user_name
+         user_name,
+         is_deleted
             ),
     KEY idx_sys_user_dept
         (
@@ -41,20 +56,34 @@ CREATE TABLE IF NOT EXISTS sys_dept
         AUTO_INCREMENT
         COMMENT
             '主键ID',
+    create_time
+              DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time
+              DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by
+              VARCHAR(64)           DEFAULT NULL COMMENT '创建人',
+    update_by
+              VARCHAR(64)           DEFAULT NULL COMMENT '更新人',
+    is_deleted
+              TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version
+              INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark
+              VARCHAR(500)          DEFAULT NULL COMMENT '备注',
     name
               VARCHAR(128) NOT NULL COMMENT '部门名称',
     code      VARCHAR(64) COMMENT '部门编码（唯一）',
     parent_id BIGINT COMMENT '上级部门ID',
     status    TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
     sort      INT          NOT NULL DEFAULT 0 COMMENT '排序',
-    remark    VARCHAR(255) COMMENT '备注',
     PRIMARY KEY
         (
          id
             ),
     UNIQUE KEY uk_sys_dept_code
         (
-         code
+         code,
+         is_deleted
             ),
     KEY idx_sys_dept_parent
         (
@@ -72,6 +101,20 @@ CREATE TABLE IF NOT EXISTS sys_role
         AUTO_INCREMENT
         COMMENT
             '主键ID',
+    create_time
+                     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time
+                     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by
+                     VARCHAR(64)           DEFAULT NULL COMMENT '创建人',
+    update_by
+                     VARCHAR(64)           DEFAULT NULL COMMENT '更新人',
+    is_deleted
+                     TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version
+                     INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark
+                     VARCHAR(500)          DEFAULT NULL COMMENT '备注',
     code
                      VARCHAR(64)  NOT NULL COMMENT '角色编码（唯一）',
     name             VARCHAR(128) NOT NULL COMMENT '角色名称',
@@ -84,7 +127,8 @@ CREATE TABLE IF NOT EXISTS sys_role
             ),
     UNIQUE KEY uk_sys_role_code
         (
-         code
+         code,
+         is_deleted
             )
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='角色表';
@@ -98,6 +142,20 @@ CREATE TABLE IF NOT EXISTS sys_permission
         AUTO_INCREMENT
         COMMENT
             '主键ID',
+    create_time
+           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time
+           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by
+           VARCHAR(64)           DEFAULT NULL COMMENT '创建人',
+    update_by
+           VARCHAR(64)           DEFAULT NULL COMMENT '更新人',
+    is_deleted
+           TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version
+           INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark
+           VARCHAR(500)          DEFAULT NULL COMMENT '备注',
     code
            VARCHAR(64)  NOT NULL COMMENT '权限编码（唯一）',
     name   VARCHAR(128) NOT NULL COMMENT '权限名称',
@@ -108,7 +166,8 @@ CREATE TABLE IF NOT EXISTS sys_permission
             ),
     UNIQUE KEY uk_sys_permission_code
         (
-         code
+         code,
+         is_deleted
             )
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='权限表';
@@ -122,6 +181,20 @@ CREATE TABLE IF NOT EXISTS sys_menu
         AUTO_INCREMENT
         COMMENT
             '主键ID',
+    create_time
+               DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time
+               DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by
+               VARCHAR(64)           DEFAULT NULL COMMENT '创建人',
+    update_by
+               VARCHAR(64)           DEFAULT NULL COMMENT '更新人',
+    is_deleted
+               TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version
+               INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark
+               VARCHAR(500)          DEFAULT NULL COMMENT '备注',
     name
                VARCHAR(128) NOT NULL COMMENT '菜单名称',
     code       VARCHAR(64) COMMENT '菜单编码（唯一）',
@@ -131,14 +204,14 @@ CREATE TABLE IF NOT EXISTS sys_menu
     permission VARCHAR(64) COMMENT '菜单权限标识',
     status     TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
     sort       INT          NOT NULL DEFAULT 0 COMMENT '排序',
-    remark     VARCHAR(255) COMMENT '备注',
     PRIMARY KEY
         (
          id
             ),
     UNIQUE KEY uk_sys_menu_code
         (
-         code
+         code,
+         is_deleted
             ),
     KEY idx_sys_menu_parent
         (
@@ -151,21 +224,35 @@ CREATE TABLE IF NOT EXISTS sys_role_permission
 (
     id
         BIGINT
-        NOT
-            NULL
+                   NOT
+                       NULL
         AUTO_INCREMENT
         COMMENT
             '主键ID',
+    create_time
+        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time
+        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by
+        VARCHAR(64)         DEFAULT NULL COMMENT '创建人',
+    update_by
+        VARCHAR(64)         DEFAULT NULL COMMENT '更新人',
+    is_deleted
+        TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version
+        INT        NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark
+        VARCHAR(500)        DEFAULT NULL COMMENT '备注',
     role_id
         BIGINT
-        NOT
-            NULL
+                   NOT
+                       NULL
         COMMENT
             '角色ID',
     permission_id
         BIGINT
-        NOT
-            NULL
+                   NOT
+                       NULL
         COMMENT
             '权限ID',
     PRIMARY
@@ -176,7 +263,8 @@ CREATE TABLE IF NOT EXISTS sys_role_permission
     UNIQUE KEY uk_sys_role_permission_role_perm
         (
          role_id,
-         permission_id
+         permission_id,
+         is_deleted
             ),
     KEY idx_sys_role_permission_role
         (
@@ -193,21 +281,35 @@ CREATE TABLE IF NOT EXISTS sys_role_menu
 (
     id
         BIGINT
-        NOT
-            NULL
+                   NOT
+                       NULL
         AUTO_INCREMENT
         COMMENT
             '主键ID',
+    create_time
+        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time
+        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by
+        VARCHAR(64)         DEFAULT NULL COMMENT '创建人',
+    update_by
+        VARCHAR(64)         DEFAULT NULL COMMENT '更新人',
+    is_deleted
+        TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version
+        INT        NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark
+        VARCHAR(500)        DEFAULT NULL COMMENT '备注',
     role_id
         BIGINT
-        NOT
-            NULL
+                   NOT
+                       NULL
         COMMENT
             '角色ID',
     menu_id
         BIGINT
-        NOT
-            NULL
+                   NOT
+                       NULL
         COMMENT
             '菜单ID',
     PRIMARY
@@ -218,7 +320,8 @@ CREATE TABLE IF NOT EXISTS sys_role_menu
     UNIQUE KEY uk_sys_role_menu_role_menu
         (
          role_id,
-         menu_id
+         menu_id,
+         is_deleted
             ),
     KEY idx_sys_role_menu_role
         (
@@ -235,21 +338,35 @@ CREATE TABLE IF NOT EXISTS sys_user_role
 (
     id
         BIGINT
-        NOT
-            NULL
+                   NOT
+                       NULL
         AUTO_INCREMENT
         COMMENT
             '主键ID',
+    create_time
+        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time
+        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by
+        VARCHAR(64)         DEFAULT NULL COMMENT '创建人',
+    update_by
+        VARCHAR(64)         DEFAULT NULL COMMENT '更新人',
+    is_deleted
+        TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version
+        INT        NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark
+        VARCHAR(500)        DEFAULT NULL COMMENT '备注',
     user_id
         BIGINT
-        NOT
-            NULL
+                   NOT
+                       NULL
         COMMENT
             '用户ID',
     role_id
         BIGINT
-        NOT
-            NULL
+                   NOT
+                       NULL
         COMMENT
             '角色ID',
     PRIMARY
@@ -260,7 +377,8 @@ CREATE TABLE IF NOT EXISTS sys_user_role
     UNIQUE KEY uk_sys_user_role_user_role
         (
          user_id,
-         role_id
+         role_id,
+         is_deleted
             ),
     KEY idx_sys_user_role_user
         (
@@ -282,6 +400,20 @@ CREATE TABLE IF NOT EXISTS sys_data_scope_rule
         AUTO_INCREMENT
         COMMENT
             '主键ID',
+    create_time
+                DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time
+                DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by
+                VARCHAR(64)          DEFAULT NULL COMMENT '创建人',
+    update_by
+                VARCHAR(64)          DEFAULT NULL COMMENT '更新人',
+    is_deleted
+                TINYINT(1)  NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version
+                INT         NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark
+                VARCHAR(500)         DEFAULT NULL COMMENT '备注',
     table_name
                 VARCHAR(64) NOT NULL COMMENT '目标表名（小写匹配）',
     column_name VARCHAR(64) NOT NULL COMMENT '数据范围字段名',
@@ -292,7 +424,8 @@ CREATE TABLE IF NOT EXISTS sys_data_scope_rule
             ),
     UNIQUE KEY uk_sys_data_scope_rule_table
         (
-         table_name
+         table_name,
+         is_deleted
             )
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='数据范围规则表';
@@ -301,19 +434,34 @@ CREATE TABLE IF NOT EXISTS sys_order
 (
     id
         BIGINT
-               NOT
-                   NULL
+                   NOT
+                       NULL
+        AUTO_INCREMENT
         COMMENT
-            '订单ID（外部传入，非自增）',
+            '主键ID',
+    create_time
+        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time
+        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by
+        VARCHAR(64)         DEFAULT NULL COMMENT '创建人',
+    update_by
+        VARCHAR(64)         DEFAULT NULL COMMENT '更新人',
+    is_deleted
+        TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version
+        INT        NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark
+        VARCHAR(500)        DEFAULT NULL COMMENT '备注',
     user_id
         BIGINT
-               NOT
-                   NULL
+                   NOT
+                       NULL
         COMMENT
             '用户ID',
     amount
         DECIMAL(18,
-            2) NOT NULL COMMENT '订单金额',
+            2)     NOT NULL COMMENT '订单金额',
     PRIMARY KEY
         (
          id
@@ -345,21 +493,33 @@ CREATE TABLE IF NOT EXISTS sys_notice
         AUTO_INCREMENT
         COMMENT
             '主键ID',
+    create_time
+                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time
+                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by
+                 VARCHAR(64)           DEFAULT NULL COMMENT '创建人',
+    update_by
+                 VARCHAR(64)           DEFAULT NULL COMMENT '更新人',
+    is_deleted
+                 TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version
+                 INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark
+                 VARCHAR(500)          DEFAULT NULL COMMENT '备注',
     title
                  VARCHAR(200) NOT NULL COMMENT '通知标题',
     content      TEXT         NOT NULL COMMENT '通知内容',
     scope_type   VARCHAR(32)  NOT NULL COMMENT '通知范围类型',
     scope_value  VARCHAR(1024) COMMENT '通知范围值（ID列表）',
-    created_by   BIGINT COMMENT '创建人ID',
     created_name VARCHAR(64) COMMENT '创建人名称',
-    created_at   DATETIME     NOT NULL COMMENT '创建时间',
     PRIMARY KEY
         (
          id
             ),
-    KEY idx_sys_notice_created_at
+    KEY idx_sys_notice_create_time
         (
-         created_at
+         create_time
             )
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统通知表';
@@ -368,26 +528,39 @@ CREATE TABLE IF NOT EXISTS sys_notice_recipient
 (
     id
                 BIGINT
-                         NOT
-                             NULL
+                           NOT
+                               NULL
         AUTO_INCREMENT
         COMMENT
             '主键ID',
+    create_time
+                DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time
+                DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by
+                VARCHAR(64)         DEFAULT NULL COMMENT '创建人',
+    update_by
+                VARCHAR(64)         DEFAULT NULL COMMENT '更新人',
+    is_deleted
+                TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version
+                INT        NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark
+                VARCHAR(500)        DEFAULT NULL COMMENT '备注',
     notice_id
                 BIGINT
-                         NOT
-                             NULL
+                           NOT
+                               NULL
         COMMENT
             '通知ID',
     user_id
                 BIGINT
-                         NOT
-                             NULL
+                           NOT
+                               NULL
         COMMENT
             '接收用户ID',
-    read_status TINYINT  NOT NULL DEFAULT 0 COMMENT '阅读状态：0-未读，1-已读',
+    read_status TINYINT    NOT NULL DEFAULT 0 COMMENT '阅读状态：0-未读，1-已读',
     read_time   DATETIME COMMENT '阅读时间',
-    created_at  DATETIME NOT NULL COMMENT '创建时间',
     PRIMARY KEY
         (
          id
@@ -395,7 +568,8 @@ CREATE TABLE IF NOT EXISTS sys_notice_recipient
     UNIQUE KEY uk_sys_notice_recipient_notice_user
         (
          notice_id,
-         user_id
+         user_id,
+         is_deleted
             ),
     KEY idx_sys_notice_recipient_notice
         (
@@ -411,6 +585,223 @@ CREATE TABLE IF NOT EXISTS sys_notice_recipient
             )
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统通知接收表';
+
+CREATE TABLE IF NOT EXISTS sys_job
+(
+    id               BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    name             VARCHAR(128) NOT NULL COMMENT '任务名称',
+    handler_name     VARCHAR(128) NOT NULL COMMENT '处理器名称',
+    cron_expression  VARCHAR(128) NOT NULL COMMENT 'Cron表达式',
+    status           TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-停用',
+    allow_concurrent TINYINT      NOT NULL DEFAULT 1 COMMENT '是否允许并发：1-允许，0-禁止',
+    misfire_policy   VARCHAR(32)           DEFAULT 'DEFAULT' COMMENT '误触发策略',
+    target_type      VARCHAR(32) COMMENT '定人范围类型',
+    target_ids       VARCHAR(512) COMMENT '定人范围ID列表',
+    params           TEXT COMMENT '任务参数',
+    remark           VARCHAR(255) COMMENT '备注',
+    created_by       BIGINT COMMENT '创建人ID',
+    created_name     VARCHAR(64) COMMENT '创建人名称',
+    created_at       DATETIME     NOT NULL COMMENT '创建时间',
+    updated_at       DATETIME COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_sys_job_status (status),
+    KEY idx_sys_job_handler (handler_name)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='定时任务表';
+
+CREATE TABLE IF NOT EXISTS sys_job_log
+(
+    id           BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    job_id       BIGINT       NOT NULL COMMENT '任务ID',
+    job_name     VARCHAR(128) NOT NULL COMMENT '任务名称',
+    handler_name VARCHAR(128) NOT NULL COMMENT '处理器名称',
+    status       TINYINT      NOT NULL COMMENT '执行状态：1-成功，0-失败',
+    message      VARCHAR(512) COMMENT '执行信息',
+    start_time   DATETIME     NOT NULL COMMENT '开始时间',
+    end_time     DATETIME COMMENT '结束时间',
+    duration_ms  BIGINT COMMENT '耗时毫秒',
+    PRIMARY KEY (id),
+    KEY idx_sys_job_log_job (job_id),
+    KEY idx_sys_job_log_start (start_time)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='定时任务日志表';
+
+create table if not exists sys_quartz_job_details
+(
+    sched_name        varchar(120) not null,
+    job_name          varchar(200) not null,
+    job_group         varchar(200) not null,
+    description       varchar(250) null,
+    job_class_name    varchar(250) not null,
+    is_durable        tinyint(1)   not null,
+    is_nonconcurrent  tinyint(1)   not null,
+    is_update_data    tinyint(1)   not null,
+    requests_recovery tinyint(1)   not null,
+    job_data          blob         null,
+    primary key (sched_name, job_name, job_group)
+) engine = innodb
+  default charset = utf8mb4;
+
+create table if not exists sys_quartz_triggers
+(
+    sched_name     varchar(120) not null,
+    trigger_name   varchar(200) not null,
+    trigger_group  varchar(200) not null,
+    job_name       varchar(200) not null,
+    job_group      varchar(200) not null,
+    description    varchar(250) null,
+    next_fire_time bigint(13)   null,
+    prev_fire_time bigint(13)   null,
+    priority       integer      null,
+    trigger_state  varchar(16)  not null,
+    trigger_type   varchar(8)   not null,
+    start_time     bigint(13)   not null,
+    end_time       bigint(13)   null,
+    calendar_name  varchar(200) null,
+    misfire_instr  smallint(2)  null,
+    job_data       blob         null,
+    primary key (sched_name, trigger_name, trigger_group),
+    foreign key (sched_name, job_name, job_group)
+        references sys_quartz_job_details (sched_name, job_name, job_group)
+) engine = innodb
+  default charset = utf8mb4;
+
+create table if not exists sys_quartz_simple_triggers
+(
+    sched_name      varchar(120) not null,
+    trigger_name    varchar(200) not null,
+    trigger_group   varchar(200) not null,
+    repeat_count    bigint(7)    not null,
+    repeat_interval bigint(12)   not null,
+    times_triggered bigint(10)   not null,
+    primary key (sched_name, trigger_name, trigger_group),
+    foreign key (sched_name, trigger_name, trigger_group)
+        references sys_quartz_triggers (sched_name, trigger_name, trigger_group)
+) engine = innodb
+  default charset = utf8mb4;
+
+create table if not exists sys_quartz_cron_triggers
+(
+    sched_name      varchar(120) not null,
+    trigger_name    varchar(200) not null,
+    trigger_group   varchar(200) not null,
+    cron_expression varchar(200) not null,
+    time_zone_id    varchar(80),
+    primary key (sched_name, trigger_name, trigger_group),
+    foreign key (sched_name, trigger_name, trigger_group)
+        references sys_quartz_triggers (sched_name, trigger_name, trigger_group)
+) engine = innodb
+  default charset = utf8mb4;
+
+create table if not exists sys_quartz_simprop_triggers
+(
+    sched_name    varchar(120)   not null,
+    trigger_name  varchar(200)   not null,
+    trigger_group varchar(200)   not null,
+    str_prop_1    varchar(512)   null,
+    str_prop_2    varchar(512)   null,
+    str_prop_3    varchar(512)   null,
+    int_prop_1    int            null,
+    int_prop_2    int            null,
+    long_prop_1   bigint         null,
+    long_prop_2   bigint         null,
+    dec_prop_1    decimal(13, 4) null,
+    dec_prop_2    decimal(13, 4) null,
+    bool_prop_1   varchar(1)     null,
+    bool_prop_2   varchar(1)     null,
+    primary key (sched_name, trigger_name, trigger_group),
+    foreign key (sched_name, trigger_name, trigger_group)
+        references sys_quartz_triggers (sched_name, trigger_name, trigger_group)
+) engine = innodb
+  default charset = utf8mb4;
+
+create table if not exists sys_quartz_blob_triggers
+(
+    sched_name    varchar(120) not null,
+    trigger_name  varchar(200) not null,
+    trigger_group varchar(200) not null,
+    blob_data     blob         null,
+    primary key (sched_name, trigger_name, trigger_group),
+    foreign key (sched_name, trigger_name, trigger_group)
+        references sys_quartz_triggers (sched_name, trigger_name, trigger_group)
+) engine = innodb
+  default charset = utf8mb4;
+
+create table if not exists sys_quartz_calendars
+(
+    sched_name    varchar(120) not null,
+    calendar_name varchar(200) not null,
+    calendar      blob         not null,
+    primary key (sched_name, calendar_name)
+) engine = innodb
+  default charset = utf8mb4;
+
+create table if not exists sys_quartz_paused_trigger_grps
+(
+    sched_name    varchar(120) not null,
+    trigger_group varchar(200) not null,
+    primary key (sched_name, trigger_group)
+) engine = innodb
+  default charset = utf8mb4;
+
+create table if not exists sys_quartz_fired_triggers
+(
+    sched_name        varchar(120) not null,
+    entry_id          varchar(95)  not null,
+    trigger_name      varchar(200) not null,
+    trigger_group     varchar(200) not null,
+    instance_name     varchar(200) not null,
+    fired_time        bigint(13)   not null,
+    sched_time        bigint(13)   not null,
+    priority          integer      not null,
+    state             varchar(16)  not null,
+    job_name          varchar(200) null,
+    job_group         varchar(200) null,
+    is_nonconcurrent  tinyint(1)   null,
+    requests_recovery tinyint(1)   null,
+    primary key (sched_name, entry_id)
+) engine = innodb
+  default charset = utf8mb4;
+
+create table if not exists sys_quartz_scheduler_state
+(
+    sched_name        varchar(120) not null,
+    instance_name     varchar(200) not null,
+    last_checkin_time bigint(13)   not null,
+    checkin_interval  bigint(13)   not null,
+    primary key (sched_name, instance_name)
+) engine = innodb
+  default charset = utf8mb4;
+
+create table if not exists sys_quartz_locks
+(
+    sched_name varchar(120) not null,
+    lock_name  varchar(40)  not null,
+    primary key (sched_name, lock_name)
+) engine = innodb
+  default charset = utf8mb4;
+
+create index idx_sys_quartz_j_req_recovery on sys_quartz_job_details (sched_name, requests_recovery);
+create index idx_sys_quartz_j_grp on sys_quartz_job_details (sched_name, job_group);
+create index idx_sys_quartz_t_j on sys_quartz_triggers (sched_name, job_name, job_group);
+create index idx_sys_quartz_t_jg on sys_quartz_triggers (sched_name, job_group);
+create index idx_sys_quartz_t_c on sys_quartz_triggers (sched_name, calendar_name);
+create index idx_sys_quartz_t_g on sys_quartz_triggers (sched_name, trigger_group);
+create index idx_sys_quartz_t_state on sys_quartz_triggers (sched_name, trigger_state);
+create index idx_sys_quartz_t_n_state on sys_quartz_triggers (sched_name, trigger_name, trigger_group, trigger_state);
+create index idx_sys_quartz_t_n_g_state on sys_quartz_triggers (sched_name, trigger_group, trigger_state);
+create index idx_sys_quartz_t_next_fire_time on sys_quartz_triggers (sched_name, next_fire_time);
+create index idx_sys_quartz_t_nft_st on sys_quartz_triggers (sched_name, trigger_state, next_fire_time);
+create index idx_sys_quartz_t_nft_misfire on sys_quartz_triggers (sched_name, misfire_instr, next_fire_time);
+create index idx_sys_quartz_t_nft_st_misfire on sys_quartz_triggers (sched_name, misfire_instr, next_fire_time, trigger_state);
+create index idx_sys_quartz_t_nft_st_misfire_grp on sys_quartz_triggers (sched_name, misfire_instr, next_fire_time,
+                                                                         trigger_group, trigger_state);
+create index idx_sys_quartz_ft_trig_inst_name on sys_quartz_fired_triggers (sched_name, instance_name);
+create index idx_sys_quartz_ft_inst_job_req_rcvry on sys_quartz_fired_triggers (sched_name, instance_name, requests_recovery);
+create index idx_sys_quartz_ft_j_g on sys_quartz_fired_triggers (sched_name, job_name, job_group);
+create index idx_sys_quartz_ft_jg on sys_quartz_fired_triggers (sched_name, job_group);
+create index idx_sys_quartz_ft_t_g on sys_quartz_fired_triggers (sched_name, trigger_name, trigger_group);
+create index idx_sys_quartz_ft_tg on sys_quartz_fired_triggers (sched_name, trigger_group);
 
 -- 初始化基础数据（默认密码示例：Admin@1234 / Manager@1234 / User@1234）
 INSERT INTO sys_dept (id, name, code, parent_id, status, sort, remark)
@@ -461,7 +852,13 @@ VALUES (1, 'user:query', '用户查询', 1),
        (26, 'dept:update', '部门更新', 1),
        (27, 'dept:disable', '部门停用', 1),
        (28, 'notice:query', '通知查询', 1),
-       (29, 'notice:publish', '通知发布', 1)
+       (29, 'notice:publish', '通知发布', 1),
+       (30, 'job:query', '任务查询', 1),
+       (31, 'job:create', '任务创建', 1),
+       (32, 'job:update', '任务更新', 1),
+       (33, 'job:delete', '任务删除', 1),
+       (34, 'job:status', '任务状态', 1),
+       (35, 'job:run', '任务执行', 1)
 ON DUPLICATE KEY UPDATE name   = VALUES(name),
                         status = VALUES(status);
 
@@ -473,7 +870,8 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (140, '部门管理', 'dept', 100, '/system/depts', 'DeptPage', 'dept:query', 1, 40, '部门管理'),
        (150, '权限管理', 'permission', 100, '/system/permissions', 'PermissionPage', 'permission:query', 1, 50,
         '权限管理'),
-       (160, '系统通知', 'notice', 100, '/system/notices', 'NoticePage', 'notice:query', 1, 60, '系统通知')
+       (160, '系统通知', 'notice', 100, '/system/notices', 'NoticePage', 'notice:query', 1, 60, '系统通知'),
+       (170, '定时任务', 'job', 100, '/system/jobs', 'JobPage', 'job:query', 1, 70, '定时任务')
 ON DUPLICATE KEY UPDATE name       = VALUES(name),
                         parent_id  = VALUES(parent_id),
                         path       = VALUES(path),
@@ -535,6 +933,12 @@ VALUES (1, 1),
        (1, 27),
        (1, 28),
        (1, 29),
+       (1, 30),
+       (1, 31),
+       (1, 32),
+       (1, 33),
+       (1, 34),
+       (1, 35),
        (2, 1),
        (2, 8),
        (2, 10),
@@ -552,6 +956,7 @@ VALUES (1, 100),
        (1, 140),
        (1, 150),
        (1, 160),
+       (1, 170),
        (2, 100),
        (2, 110),
        (2, 140),

@@ -119,7 +119,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         List<UserRole> relations = roleIds.stream()
                 .filter(Objects::nonNull)
                 .distinct()
-                .map(roleId -> new UserRole(null, id, roleId))
+                .map(roleId -> {
+                    UserRole relation = new UserRole();
+                    relation.setUserId(id);
+                    relation.setRoleId(roleId);
+                    return relation;
+                })
                 .collect(Collectors.toList());
         if (relations.isEmpty()) {
             return true;

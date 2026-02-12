@@ -43,7 +43,12 @@ public class RoleMenuServiceImpl extends ServiceImpl<RoleMenuMapper, RoleMenu> i
         List<RoleMenu> relations = menuIds.stream()
                 .filter(Objects::nonNull)
                 .distinct()
-                .map(menuId -> new RoleMenu(null, roleId, menuId))
+                .map(menuId -> {
+                    RoleMenu relation = new RoleMenu();
+                    relation.setRoleId(roleId);
+                    relation.setMenuId(menuId);
+                    return relation;
+                })
                 .collect(Collectors.toList());
         if (relations.isEmpty()) {
             return true;

@@ -2,6 +2,7 @@ package com.example.demo.common.config;
 
 import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.example.demo.common.mybatis.*;
 import org.apache.ibatis.logging.nologging.NoLoggingImpl;
 import org.apache.ibatis.logging.slf4j.Slf4jImpl;
@@ -32,6 +33,7 @@ public class MybatisPlusConfig {
                                                          DataScopeProperties dataScopeProperties,
                                                          DataScopeRuleProvider dataScopeRuleProvider) {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
         if (properties.isEnabled()) {
             interceptor.addInnerInterceptor(new SqlGuardInnerInterceptor(properties));
         }

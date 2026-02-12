@@ -18,6 +18,7 @@
       <DeptManagement v-else-if="activeMenuCode === 'dept'"/>
       <PermissionManagement v-else-if="activeMenuCode === 'permission'"/>
       <NoticeManagement v-else-if="activeMenuCode === 'notice'"/>
+      <JobManagement v-else-if="activeMenuCode === 'job'"/>
       <div v-else class="system-placeholder">请选择系统管理子菜单。</div>
     </div>
   </section>
@@ -32,6 +33,7 @@ import MenuManagement from "./MenuManagement.vue";
 import DeptManagement from "./DeptManagement.vue";
 import PermissionManagement from "./PermissionManagement.vue";
 import NoticeManagement from "./NoticeManagement.vue";
+import JobManagement from "./JobManagement.vue";
 
 const props = defineProps<{
   menus: MenuTree[];

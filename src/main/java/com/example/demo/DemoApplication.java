@@ -18,7 +18,8 @@ import org.springframework.cache.annotation.EnableCaching;
         "com.example.demo.menu.mapper",
         "com.example.demo.permission.mapper",
         "com.example.demo.datascope.mapper",
-        "com.example.demo.notice.mapper"
+        "com.example.demo.notice.mapper",
+        "com.example.demo.job.mapper"
 })
 public class DemoApplication extends SpringBootServletInitializer {
 

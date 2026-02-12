@@ -39,6 +39,23 @@ spring:
       max-file-size: 120MB
       # 单请求最大大小
       max-request-size: 120MB
+  quartz:
+    # 持久化任务到数据库
+    job-store-type: jdbc
+    jdbc:
+      # 禁止自动建表，使用 SQL 脚本初始化
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: DemoQuartzScheduler
+            instanceId: AUTO
+          jobStore:
+            class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            tablePrefix: sys_quartz_
+            isClustered: false
 
 # 缓存配置
 cache:
@@ -67,6 +84,11 @@ mybatis-plus:
     lazy-loading-enabled: true
     # 是否启用激进懒加载
     aggressive-lazy-loading: false
+  global-config:
+    db-config:
+      logic-delete-field: is_deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
 
 # SQL 日志配置
 sql-log:

@@ -49,7 +49,12 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         List<RolePermission> relations = permissionIds.stream()
                 .filter(Objects::nonNull)
                 .distinct()
-                .map(pid -> new RolePermission(null, roleId, pid))
+                .map(pid -> {
+                    RolePermission relation = new RolePermission();
+                    relation.setRoleId(roleId);
+                    relation.setPermissionId(pid);
+                    return relation;
+                })
                 .collect(Collectors.toList());
         if (relations.isEmpty()) {
             return true;

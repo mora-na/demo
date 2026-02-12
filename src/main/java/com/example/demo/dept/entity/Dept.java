@@ -1,9 +1,8 @@
 package com.example.demo.dept.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.demo.common.entity.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,15 +19,9 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName(value = "sys_dept")
-public class Dept implements Serializable {
+public class Dept extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    /**
-     * 自增主键 ID，用于唯一标识部门记录。
-     */
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
 
     /**
      * 部门名称。
@@ -60,9 +53,4 @@ public class Dept implements Serializable {
     @TableField("sort")
     private Integer sort;
 
-    /**
-     * 备注说明。
-     */
-    @TableField("remark")
-    private String remark;
 }
