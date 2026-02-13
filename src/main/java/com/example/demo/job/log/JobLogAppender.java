@@ -36,7 +36,7 @@ public class JobLogAppender extends AppenderBase<ILoggingEvent> {
             return;
         }
         Level minLevel = Level.toLevel(properties.getMinLevel(), Level.INFO);
-        if (event.getLevel() == null || event.getLevel().isGreaterOrEqual(minLevel) == false) {
+        if (event.getLevel() == null || !event.getLevel().isGreaterOrEqual(minLevel)) {
             return;
         }
         String runId = resolveRunId(event);
@@ -44,7 +44,7 @@ public class JobLogAppender extends AppenderBase<ILoggingEvent> {
             return;
         }
         String line = formatLine(event);
-        if (line != null && !line.isEmpty()) {
+        if (!line.isEmpty()) {
             collector.append(runId, line);
         }
     }

@@ -61,10 +61,6 @@ public abstract class AbstractQuartzJob implements Job {
             throw new JobExecutionException(ex);
         } finally {
             String manualLog = jobContext.getLogContent();
-            String autoLog = null;
-            if (logCollector != null && runId != null) {
-                autoLog = logCollector.finish(runId);
-            }
             if (logCollector != null) {
                 MDC.remove(logCollector.getMdcKey());
                 MDC.remove(logCollector.getThreadKey());
@@ -82,8 +78,8 @@ public abstract class AbstractQuartzJob implements Job {
                 log.setEndTime(end);
                 log.setDurationMs(java.time.Duration.between(start, end).toMillis());
                 String merged = logCollector != null
-                        ? logCollector.mergeLogs(manualLog, autoLog)
-                        : mergeLogDetail(manualLog, autoLog);
+                        ? logCollector.mergeLogs(manualLog, runId == null ? null : logCollector.finish(runId))
+                        : mergeLogDetail(manualLog, null);
                 log.setLogDetail(logCollector != null ? merged : trimLogDetail(merged));
                 logService.save(log);
                 if (logCollector != null && runId != null) {
