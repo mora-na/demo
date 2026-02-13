@@ -38,6 +38,37 @@
 - 权限校验由权限拦截器控制：`security.permission.*`
 - 菜单权限通过 `sys_menu.permission` 汇入权限判断。
 
+## 定时任务（Quartz）
+
+- 持久化调度配置：`spring.quartz.*`
+- 任务处理器需要实现 `JobHandler`，并作为 Spring Bean 注册。
+- 执行记录存储于 `sys_job_log`，详情日志使用 `log_detail` 字段。
+
+## 执行日志自动收集（Job Log Collect）
+
+- 开关与范围：
+    - `job.log.collect.enabled`
+    - `job.log.collect.scope`（MDC | THREAD）
+- 收集级别与长度：
+    - `job.log.collect.min-level`
+    - `job.log.collect.max-length`
+- 异步合并：
+    - `job.log.collect.merge-delay-millis`
+    - `job.log.collect.max-hold-millis`
+- 线程上下文兜底：
+    - `job.log.collect.inherit-thread-context`
+- 说明：
+    - 默认按 MDC 识别执行上下文，并自动收集同线程日志。
+    - `@Async` 会自动透传 MDC。
+    - 自建线程池建议使用 `MdcUtils.wrapExecutorService`，保证稳定收集。
+
+## 通知（SSE 推送）
+
+- 推送配置：`notice.sse.*`
+    - 心跳频率：`notice.sse.heartbeat-interval-millis`
+    - 断线判定：`notice.sse.heartbeat-timeout-millis`
+    - 最新列表推送条数：`notice.sse.latest-limit`
+
 ## 数据范围
 
 - 开关与默认范围：`security.data-scope.enabled` / `security.data-scope.default-type`

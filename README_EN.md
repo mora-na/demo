@@ -1,7 +1,6 @@
-# Demo Backend (Spring Boot)
+# Demo System (Spring Boot)
 
-A Spring Boot backend demo with authentication, authorization, data-scope controls, organization/department modeling,
-and menu permissions, plus built-in security protections and utilities.
+A full-stack starter system focused on authentication, system management, scheduled jobs, and notifications. Designed as a solid baseline for admin/back‑office projects.
 
 ## Highlights
 
@@ -11,13 +10,28 @@ and menu permissions, plus built-in security protections and utilities.
 - Data scope: role-based visibility (ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE).
 - Protections: SQL guard, XSS filter, rate limiting, duplicate-submit prevention.
 - Excel import/export for user data.
+- Scheduled jobs: Quartz persistence, handler management, execution logs with detail view.
+- System notices: publish & read states, SSE pushes unread counts and latest items.
+- Cache strategies: Redis / in-memory / database cache options.
 
 ## Tech Stack
 
-- Spring Boot 2.7.x
+### Backend
+- Spring Boot 2.7.x (current 2.7.12)
 - MyBatis-Plus + PageHelper
-- Redis (captcha, token, rate limit, etc.)
-- PostgreSQL/MySQL (see scripts in `sql/`)
+- Quartz (JDBC persistence)
+- Redis + Caffeine (multi-level cache)
+- Druid + Dynamic Datasource
+- Jasypt (config encryption)
+- Logback (logging)
+- PostgreSQL / MySQL (see `sql/`)
+
+### Frontend (`demo-ui`)
+- Vue 3 + Vite + TypeScript
+- Pinia + Axios
+- Element Plus
+- vue-i18n
+- lucide-vue-next (icons)
 
 ## Quick Start
 
@@ -37,6 +51,14 @@ The `dev` profile is active by default. Override it with:
 
 ```bash
 SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run
+```
+
+To start the frontend:
+
+```bash
+cd demo-ui
+npm install
+npm run dev
 ```
 
 ## Structure

@@ -1,6 +1,6 @@
 # Demo 系统（Spring Boot）
 
-一个 Spring Boot 后端示例系统，内置认证、权限、数据范围控制、组织部门与菜单权限等能力，并提供若干安全防护与通用功能。
+一个前后端分离的示例系统，聚焦“认证鉴权 + 系统管理 + 定时任务 + 通知推送”等通用能力，适合作为中后台项目的起点。
 
 ## 功能亮点
 
@@ -10,13 +10,28 @@
 - 数据范围控制：按角色配置可见范围（ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE）。
 - 安全防护：SQL 防护、XSS 过滤、限流、重复提交防护。
 - Excel 导入导出：用户数据批量导入导出示例。
+- 定时任务：Quartz 持久化调度、任务处理器管理、执行日志与详情查看。
+- 系统通知：支持发布与阅读状态，SSE 实时推送未读数与列表。
+- 缓存体系：Redis / 本地内存 / 数据库多策略缓存配置。
 
 ## 技术栈
 
-- Spring Boot 2.7.x
+### 后端
+- Spring Boot 2.7.x（当前 2.7.12）
 - MyBatis-Plus + PageHelper
-- Redis（验证码、令牌、限流等）
-- PostgreSQL/MySQL（见 `sql/` 脚本）
+- Quartz（JDBC 持久化）
+- Redis + Caffeine（多级缓存）
+- Druid + Dynamic Datasource
+- Jasypt（配置加密）
+- Logback（日志）
+- PostgreSQL / MySQL（见 `sql/`）
+
+### 前端（`demo-ui`）
+- Vue 3 + Vite + TypeScript
+- Pinia + Axios
+- Element Plus
+- vue-i18n
+- lucide-vue-next（图标）
 
 ## 快速开始
 
@@ -36,6 +51,14 @@
 
 ```bash
 SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run
+```
+
+如需启动前端：
+
+```bash
+cd demo-ui
+npm install
+npm run dev
 ```
 
 ## 目录结构

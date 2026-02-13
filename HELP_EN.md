@@ -38,6 +38,37 @@ This document focuses on configuration and operations details, complementing `RE
 - Permission checks are controlled by `security.permission.*`.
 - Menu permissions are derived from `sys_menu.permission`.
 
+## Scheduled Jobs (Quartz)
+
+- Persistent scheduling: `spring.quartz.*`
+- Job handlers must implement `JobHandler` and be registered as Spring beans.
+- Execution logs are stored in `sys_job_log`, with detail logs in `log_detail`.
+
+## Job Log Auto Collection
+
+- Switches and scope:
+    - `job.log.collect.enabled`
+    - `job.log.collect.scope` (MDC | THREAD)
+- Level and size:
+    - `job.log.collect.min-level`
+    - `job.log.collect.max-length`
+- Delayed merge:
+    - `job.log.collect.merge-delay-millis`
+    - `job.log.collect.max-hold-millis`
+- Thread-context fallback:
+    - `job.log.collect.inherit-thread-context`
+- Notes:
+    - Logs are collected by MDC during job execution.
+    - `@Async` automatically propagates MDC via TaskDecorator.
+    - Custom executors should use `MdcUtils.wrapExecutorService` for stable collection.
+
+## Notifications (SSE)
+
+- Push config: `notice.sse.*`
+    - Heartbeat interval: `notice.sse.heartbeat-interval-millis`
+    - Offline timeout: `notice.sse.heartbeat-timeout-millis`
+    - Latest list size: `notice.sse.latest-limit`
+
 ## Data Scope
 
 - Toggle and default scope: `security.data-scope.enabled` / `security.data-scope.default-type`
