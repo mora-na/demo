@@ -34,12 +34,14 @@
           />
         </template>
       </el-table-column>
-      <el-table-column :label="t('role.table.action')" width="240">
+      <el-table-column :label="t('role.table.action')" width="360">
         <template #default="{row}">
-          <el-button size="small" text @click="openEdit(row)">{{ t("role.table.edit") }}</el-button>
-          <el-button size="small" text @click="openPermissions(row)">{{ t("role.table.assignPermissions") }}</el-button>
-          <el-button size="small" text @click="openMenus(row)">{{ t("role.table.assignMenus") }}</el-button>
-          <el-button size="small" text type="danger" @click="removeRole(row)">{{ t("role.table.delete") }}</el-button>
+          <div class="action-buttons">
+            <el-button size="small" text @click="openEdit(row)">{{ t("role.table.edit") }}</el-button>
+            <el-button size="small" text @click="openPermissions(row)">{{ t("role.table.assignPermissions") }}</el-button>
+            <el-button size="small" text @click="openMenus(row)">{{ t("role.table.assignMenus") }}</el-button>
+            <el-button size="small" text type="danger" @click="removeRole(row)">{{ t("role.table.delete") }}</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -448,6 +450,17 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.action-buttons :deep(.el-button) {
+  white-space: nowrap;
 }
 
 .form-grid :deep(.el-form-item) {

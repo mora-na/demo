@@ -47,7 +47,7 @@
             <el-button size="small" text @click="openEdit(row)">{{ t("job.table.edit") }}</el-button>
             <el-button size="small" text @click="runOnce(row)">{{ t("job.table.run") }}</el-button>
             <el-button size="small" text @click="openLogs(row)">{{ t("job.table.logs") }}</el-button>
-            <el-button size="small" text @click="removeJob(row)">{{ t("job.table.delete") }}</el-button>
+            <el-button size="small" text type="danger" @click="removeJob(row)">{{ t("job.table.delete") }}</el-button>
           </div>
         </template>
       </el-table-column>
@@ -1104,6 +1104,7 @@ onMounted(() => {
   padding: 0 6px;
   min-height: 22px;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .cron-helper {

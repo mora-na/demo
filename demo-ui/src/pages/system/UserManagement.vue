@@ -50,7 +50,7 @@
           />
         </template>
       </el-table-column>
-      <el-table-column :label="t('user.table.action')" width="240">
+      <el-table-column :label="t('user.table.action')" width="360">
         <template #default="{row}">
           <div class="action-buttons">
             <el-button size="small" text @click="openEdit(row)">{{ t("user.table.edit") }}</el-button>
@@ -596,6 +596,10 @@ onMounted(() => {
   gap: 6px;
   flex-wrap: nowrap;
   align-items: center;
+}
+
+.action-buttons :deep(.el-button) {
+  white-space: nowrap;
 }
 
 .form-grid :deep(.el-form-item) {

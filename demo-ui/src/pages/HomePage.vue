@@ -1,201 +1,205 @@
 <template>
-  <main :class="{ 'nav-collapsed': navCollapsed }" class="console">
-    <aside class="console-nav">
-      <div class="nav-brand">
-        <div class="nav-brand-row">
-          <span class="badge">{{ t("home.nav.badge") }}</span>
-          <div class="nav-title">{{ t("home.nav.title") }}</div>
-          <div class="nav-sub">{{ t("home.nav.sub") }}</div>
+  <main :class="{ 'drawer-open': navDrawerVisible }" class="console">
+
+    <aside :class="{ open: navDrawerVisible, ready: navDrawerReady }" class="console-drawer">
+      <nav class="console-nav">
+        <div class="nav-brand">
+          <div class="nav-brand-row">
+            <span class="badge">{{ t("home.nav.badge") }}</span>
+            <div class="nav-title">{{ t("home.nav.title") }}</div>
+            <div class="nav-sub">{{ t("home.nav.sub") }}</div>
+          </div>
         </div>
-        <button
-            :aria-label="navCollapsed ? t('home.nav.expand') : t('home.nav.collapse')"
-            class="nav-toggle"
-            type="button"
-            @click="toggleNav"
-        >
-          <span v-if="navCollapsed">»</span>
-          <span v-else>«</span>
-        </button>
-      </div>
-      <div class="nav-section">
-        <div class="nav-section-title">{{ t("home.nav.section") }}</div>
-        <div class="nav-tree">
-          <el-empty v-if="!filteredMenuTree.length" :description="t('home.nav.empty')"/>
-          <div v-else class="nav-groups">
-            <div v-for="group in filteredMenuTree" :key="group.id" class="nav-group">
-              <button
-                  :class="{ active: activeGroup?.id === group.id }"
-                  class="nav-item nav-root"
-                  type="button"
-                  @click="handleGroupClick(group)"
-              >
-                <span class="nav-icon">
-                  <component :is="menuIconComponent(group)" class="nav-icon-svg"/>
-                </span>
-                <span class="nav-label">{{ group.name }}</span>
-                <span
-                    v-if="group.children?.length && !navCollapsed"
-                    :class="{ expanded: isGroupExpanded(group) }"
-                    class="nav-arrow"
-                >
-                  ▾
-                </span>
-              </button>
-              <div
-                  v-if="group.children?.length && !navCollapsed"
-                  v-show="isGroupExpanded(group)"
-                  class="nav-children"
-              >
+        <div class="nav-section">
+          <div class="nav-section-title">{{ t("home.nav.section") }}</div>
+          <div class="nav-tree">
+            <el-empty v-if="!filteredMenuTree.length" :description="t('home.nav.empty')"/>
+            <div v-else class="nav-groups">
+              <div v-for="group in filteredMenuTree" :key="group.id" class="nav-group">
                 <button
-                    v-for="child in group.children"
-                    :key="child.id"
-                    :class="{ active: activeMenuId === child.id }"
-                    class="nav-item nav-child"
+                    :class="{ active: activeGroup?.id === group.id }"
+                    class="nav-item nav-root"
                     type="button"
-                    @click="selectMenu(child)"
+                    @click="handleGroupClick(group)"
                 >
                   <span class="nav-icon">
-                    <component :is="menuIconComponent(child)" class="nav-icon-svg"/>
+                    <component :is="menuIconComponent(group)" class="nav-icon-svg"/>
                   </span>
-                  <span class="nav-label">{{ child.name }}</span>
+                  <span class="nav-label">{{ group.name }}</span>
+                  <span
+                      v-if="group.children?.length"
+                      :class="{ expanded: isGroupExpanded(group) }"
+                      class="nav-arrow"
+                  >
+                    ▾
+                  </span>
+                </button>
+                <div
+                    v-if="group.children?.length"
+                    v-show="isGroupExpanded(group)"
+                    class="nav-children"
+                >
+                  <button
+                      v-for="child in group.children"
+                      :key="child.id"
+                      :class="{ active: activeMenuId === child.id }"
+                      class="nav-item nav-child"
+                      type="button"
+                      @click="selectMenu(child)"
+                  >
+                    <span class="nav-icon">
+                      <component :is="menuIconComponent(child)" class="nav-icon-svg"/>
+                    </span>
+                    <span class="nav-label">{{ child.name }}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="console-content">
+      <header class="console-topbar">
+        <div class="topbar-left">
+          <div>
+            <el-button
+                :aria-label="navDrawerVisible ? t('home.nav.collapse') : t('home.nav.expand')"
+                class="icon-button nav-trigger"
+                text
+                @click="toggleNav"
+            >
+              <Menu class="topbar-icon"/>
+            </el-button>
+            <div class="topbar-title">{{ t("home.topbar.title") }}</div>
+            <div class="topbar-sub">{{ activeGroup?.name || t("home.topbar.chooseModule") }}</div>
+          </div>
+          <div class="topbar-tags">
+            <el-tag effect="dark" type="success">{{ t("common.online") }}</el-tag>
+          </div>
+        </div>
+        <div class="topbar-center">
+          <el-input
+              v-model.trim="menuQuery"
+              :placeholder="t('home.topbar.searchPlaceholder')"
+              class="topbar-search"
+              clearable
+          />
+        </div>
+        <div class="topbar-right">
+          <el-popover v-model:visible="noticeVisible" :width="360" placement="bottom-end" trigger="click">
+            <template #reference>
+              <el-badge :hidden="unreadCount === 0" :value="unreadCount" class="notice-badge">
+                <el-button :aria-label="t('home.topbar.notifications')" class="icon-button" text>
+                  <Bell class="topbar-icon"/>
+                </el-button>
+              </el-badge>
+            </template>
+            <div class="notice-panel">
+              <div class="notice-panel-head">
+                <span>系统通知</span>
+                <el-button :disabled="!noticeItems.length" size="small" text @click="handleMarkAllRead">
+                  全部已读
+                </el-button>
+              </div>
+              <div class="notice-panel-body">
+                <div v-if="noticeLoading" class="notice-empty">加载中...</div>
+                <div v-else-if="!noticeItems.length" class="notice-empty">暂无通知</div>
+                <button
+                    v-for="item in noticeItems"
+                    :key="item.id"
+                    :class="{unread: item.readStatus !== 1}"
+                    class="notice-item"
+                    type="button"
+                    @click="openNotice(item)"
+                >
+                  <div class="notice-item-title">{{ item.title }}</div>
+                  <div class="notice-item-meta">
+                    <span>{{ item.createdName || t('common.userFallback') }}</span>
+                    <span>{{ formatDateTime(item.createdAt) }}</span>
+                  </div>
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <header class="console-topbar">
-      <div class="topbar-left">
-        <div>
-          <div class="topbar-title">{{ t("home.topbar.title") }}</div>
-          <div class="topbar-sub">{{ activeGroup?.name || t("home.topbar.chooseModule") }}</div>
-        </div>
-        <div class="topbar-tags">
-          <el-tag effect="dark" type="success">{{ t("common.online") }}</el-tag>
-        </div>
-      </div>
-      <div class="topbar-center">
-        <el-input
-            v-model.trim="menuQuery"
-            :placeholder="t('home.topbar.searchPlaceholder')"
-            class="topbar-search"
-            clearable
-        />
-      </div>
-      <div class="topbar-right">
-        <el-popover v-model:visible="noticeVisible" :width="360" placement="bottom-end" trigger="click">
-          <template #reference>
-            <el-badge :hidden="unreadCount === 0" :value="unreadCount" class="notice-badge">
-              <el-button :aria-label="t('home.topbar.notifications')" class="icon-button" text>
-                <Bell class="topbar-icon"/>
-              </el-button>
-            </el-badge>
-          </template>
-          <div class="notice-panel">
-            <div class="notice-panel-head">
-              <span>系统通知</span>
-              <el-button :disabled="!noticeItems.length" size="small" text @click="handleMarkAllRead">
-                全部已读
-              </el-button>
-            </div>
-            <div class="notice-panel-body">
-              <div v-if="noticeLoading" class="notice-empty">加载中...</div>
-              <div v-else-if="!noticeItems.length" class="notice-empty">暂无通知</div>
-              <button
-                  v-for="item in noticeItems"
-                  :key="item.id"
-                  :class="{unread: item.readStatus !== 1}"
-                  class="notice-item"
-                  type="button"
-                  @click="openNotice(item)"
-              >
-                <div class="notice-item-title">{{ item.title }}</div>
-                <div class="notice-item-meta">
-                  <span>{{ item.createdName || t('common.userFallback') }}</span>
-                  <span>{{ formatDateTime(item.createdAt) }}</span>
-                </div>
-              </button>
-            </div>
-          </div>
-        </el-popover>
-        <el-button :aria-label="t('home.topbar.settings')" class="icon-button" text @click="openSettings">
-          <SlidersHorizontal class="topbar-icon"/>
-        </el-button>
-        <el-dropdown trigger="click">
-          <button class="topbar-user" type="button">
-            <el-avatar class="user-avatar" :size="32">{{ userInitial }}</el-avatar>
-            <div class="user-meta">
-              <div class="user-name">{{ displayName }}</div>
-              <div class="user-role">{{ roleSummary }}</div>
-            </div>
-            <span class="user-chevron">▾</span>
-          </button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item :disabled="loggingOut" @click="handleLogout">
-                {{ t("home.topbar.logout") }}
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-    </header>
-
-    <section class="console-main">
-      <template v-if="!isSystemGroup">
-        <div class="main-hero">
-          <div>
-            <h1>{{ activeGroup?.name || t("home.main.titleFallback") }}</h1>
-            <p>{{ activeGroup ? menuDescription(activeGroup) : t("home.main.descFallback") }}</p>
-          </div>
-        </div>
-
-        <div class="main-grid">
-          <el-empty v-if="!activeChildren.length" :description="t('home.main.empty')"/>
-          <template v-else>
-            <article
-                v-for="item in activeChildren"
-                :key="item.id"
-                class="main-card"
-                @click="selectMenu(item)"
-            >
-              <div class="main-card-head">
-                <div class="main-card-title">{{ item.name }}</div>
-                <span class="main-card-icon">↗</span>
+          </el-popover>
+          <el-button :aria-label="t('home.topbar.settings')" class="icon-button" text @click="openSettings">
+            <SlidersHorizontal class="topbar-icon"/>
+          </el-button>
+          <el-dropdown trigger="click">
+            <button class="topbar-user" type="button">
+              <el-avatar class="user-avatar" :size="32">{{ userInitial }}</el-avatar>
+              <div class="user-meta">
+                <div class="user-name">{{ displayName }}</div>
+                <div class="user-role">{{ roleSummary }}</div>
               </div>
-              <div class="main-card-desc">{{ menuDescription(item) }}</div>
-            </article>
-          </template>
+              <span class="user-chevron">▾</span>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item :disabled="loggingOut" @click="handleLogout">
+                  {{ t("home.topbar.logout") }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
+      </header>
 
-        <div class="main-metrics">
-          <div class="metric">
-            <div class="metric-value">{{ menuGroupCount }}</div>
-            <div class="metric-title">{{ t("home.main.metrics.group") }}</div>
+      <section class="console-main">
+        <template v-if="!isSystemGroup">
+          <div class="main-hero">
+            <div>
+              <h1>{{ activeGroup?.name || t("home.main.titleFallback") }}</h1>
+              <p>{{ activeGroup ? menuDescription(activeGroup) : t("home.main.descFallback") }}</p>
+            </div>
           </div>
-          <div class="metric">
-            <div class="metric-value">{{ submenuCount }}</div>
-            <div class="metric-title">{{ t("home.main.metrics.submenu") }}</div>
+
+          <div class="main-grid">
+            <el-empty v-if="!activeChildren.length" :description="t('home.main.empty')"/>
+            <template v-else>
+              <article
+                  v-for="item in activeChildren"
+                  :key="item.id"
+                  class="main-card"
+                  @click="selectMenu(item)"
+              >
+                <div class="main-card-head">
+                  <div class="main-card-title">{{ item.name }}</div>
+                  <span class="main-card-icon">↗</span>
+                </div>
+                <div class="main-card-desc">{{ menuDescription(item) }}</div>
+              </article>
+            </template>
           </div>
-          <div class="metric">
-            <div class="metric-value">{{ roleCount }}</div>
-            <div class="metric-title">{{ t("home.main.metrics.role") }}</div>
+
+          <div class="main-metrics">
+            <div class="metric">
+              <div class="metric-value">{{ menuGroupCount }}</div>
+              <div class="metric-title">{{ t("home.main.metrics.group") }}</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value">{{ submenuCount }}</div>
+              <div class="metric-title">{{ t("home.main.metrics.submenu") }}</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value">{{ roleCount }}</div>
+              <div class="metric-title">{{ t("home.main.metrics.role") }}</div>
+            </div>
+            <div class="metric">
+              <div class="metric-value">{{ permissionCount }}</div>
+              <div class="metric-title">{{ t("home.main.metrics.permission") }}</div>
+            </div>
           </div>
-          <div class="metric">
-            <div class="metric-value">{{ permissionCount }}</div>
-            <div class="metric-title">{{ t("home.main.metrics.permission") }}</div>
-          </div>
-        </div>
-      </template>
-      <SystemManagementPanel
-          v-else
-          :active-menu-id="activeMenuId"
-          :menus="activeChildren"
-          @menu-change="selectMenuById"
-      />
-    </section>
+        </template>
+        <SystemManagementPanel
+            v-else
+            :active-menu-id="activeMenuId"
+            :menus="activeChildren"
+            @menu-change="selectMenuById"
+        />
+      </section>
+    </div>
 
     <el-dialog v-model="settingsVisible" :title="t('home.profile.title')" align-center width="460px">
       <el-form :model="profileForm" label-position="top">
@@ -255,6 +259,7 @@ import {
   KeyRound,
   LayoutDashboard,
   LayoutList,
+  Menu,
   ScrollText,
   Settings2,
   Shield,
@@ -299,9 +304,10 @@ const profileForm = ref({
 const menuItems = computed(() => authStore.menus || []);
 const menuQuery = ref("");
 const activeMenuId = ref<number | null>(null);
-const navCollapsed = ref(false);
+const navDrawerVisible = ref(true);
+const navDrawerReady = ref(false);
 const MENU_STORAGE_KEY = "demo.activeMenuId";
-const NAV_COLLAPSE_WIDTH = 1180;
+const NAV_DRAWER_STORAGE_KEY = "demo.navDrawerOpen";
 const expandedGroupIds = ref<number[]>([]);
 
 const menuTotal = computed(() => countMenuItems(menuItems.value));
@@ -396,6 +402,13 @@ watch(
 );
 
 watch(
+    () => navDrawerVisible.value,
+    (value) => {
+      storeNavDrawerState(value);
+    }
+);
+
+watch(
     () => noticeVisible.value,
     (visible) => {
       if (visible) {
@@ -442,7 +455,7 @@ function selectMenuById(id: number) {
 }
 
 function toggleNav() {
-  navCollapsed.value = !navCollapsed.value;
+  navDrawerVisible.value = !navDrawerVisible.value;
 }
 
 function menuInitial(name?: string) {
@@ -717,9 +730,35 @@ function readStoredMenuId(): number | null {
   }
 }
 
+function readStoredNavDrawerState(): boolean | null {
+  try {
+    const raw = localStorage.getItem(NAV_DRAWER_STORAGE_KEY);
+    if (raw === null) {
+      return null;
+    }
+    if (raw === "1") {
+      return true;
+    }
+    if (raw === "0") {
+      return false;
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
 function storeMenuId(id: number) {
   try {
     localStorage.setItem(MENU_STORAGE_KEY, String(id));
+  } catch (error) {
+    // ignore storage errors
+  }
+}
+
+function storeNavDrawerState(open: boolean) {
+  try {
+    localStorage.setItem(NAV_DRAWER_STORAGE_KEY, open ? "1" : "0");
   } catch (error) {
     // ignore storage errors
   }
@@ -786,7 +825,11 @@ async function handleLogout() {
 }
 
 onMounted(async () => {
-  navCollapsed.value = window.innerWidth < NAV_COLLAPSE_WIDTH;
+  const storedDrawer = readStoredNavDrawerState();
+  if (storedDrawer !== null) {
+    navDrawerVisible.value = storedDrawer;
+  }
+  navDrawerReady.value = true;
   await loadProfile();
   await refreshUnreadCount();
 });
@@ -794,35 +837,62 @@ onMounted(async () => {
 
 <style scoped>
 .console {
+  --nav-drawer-width: 240px;
+  --nav-drawer-collapsed-width: 72px;
   position: relative;
   z-index: 1;
   width: 100%;
   max-width: none;
   min-height: calc(100vh - 16px);
-  display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    "nav topbar"
-    "nav main";
+  display: flex;
   gap: 8px;
 }
 
-.console.nav-collapsed {
-  grid-template-columns: 64px minmax(0, 1fr);
-}
-
-.console-nav {
-  grid-area: nav;
+.console-drawer {
+  flex: 0 0 var(--nav-drawer-width);
+  max-width: var(--nav-drawer-width);
+  min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 10px;
+  overflow: hidden;
+  opacity: 1;
+  pointer-events: auto;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(18, 18, 18, 0.08);
   box-shadow: var(--shadow);
   backdrop-filter: blur(12px);
+}
+
+.console-drawer.ready {
+  transition: flex-basis 0.2s ease, max-width 0.2s ease;
+}
+
+.console-drawer.open {
+  flex-basis: var(--nav-drawer-width);
+  max-width: var(--nav-drawer-width);
+}
+
+.console-drawer:not(.open) {
+  flex-basis: var(--nav-drawer-collapsed-width);
+  max-width: var(--nav-drawer-collapsed-width);
+}
+
+.console-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.console-nav {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 10px;
 }
 
 .nav-brand {
@@ -846,24 +916,6 @@ onMounted(async () => {
 .nav-sub {
   font-size: 13px;
   color: var(--muted);
-}
-
-.nav-toggle {
-  border: 1px solid rgba(18, 18, 18, 0.1);
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
-  width: 32px;
-  height: 32px;
-  font-size: 16px;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  transition: border 0.2s ease, transform 0.2s ease;
-}
-
-.nav-toggle:hover {
-  border-color: rgba(43, 124, 255, 0.4);
-  transform: translateY(-1px);
 }
 
 .nav-section {
@@ -1001,27 +1053,24 @@ onMounted(async () => {
   padding-left: 6px;
 }
 
-.console.nav-collapsed .nav-brand-row,
-.console.nav-collapsed .nav-section-title,
-.console.nav-collapsed .nav-label,
-.console.nav-collapsed .badge {
+.console-drawer:not(.open) .nav-brand-row,
+.console-drawer:not(.open) .nav-section-title,
+.console-drawer:not(.open) .nav-label,
+.console-drawer:not(.open) .badge,
+.console-drawer:not(.open) .nav-arrow {
   display: none;
 }
 
-.console.nav-collapsed .nav-item {
+.console-drawer:not(.open) .nav-item {
   padding: 10px;
   justify-content: center;
 }
 
-.console.nav-collapsed .nav-children {
+.console-drawer:not(.open) .nav-children {
   padding-left: 0;
 }
 
-.console.nav-collapsed .console-nav {
-  padding: 10px 6px;
-}
-
-.console.nav-collapsed .nav-brand {
+.console-drawer:not(.open) .nav-brand {
   justify-content: center;
 }
 
@@ -1231,7 +1280,6 @@ onMounted(async () => {
 }
 
 .console-main {
-  grid-area: main;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1240,6 +1288,8 @@ onMounted(async () => {
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(18, 18, 18, 0.08);
   box-shadow: var(--shadow);
+  flex: 1;
+  min-height: 0;
 }
 
 .main-hero {
@@ -1345,29 +1395,7 @@ onMounted(async () => {
 }
 
 
-@media (max-width: 1200px) {
-  .console {
-    grid-template-columns: 200px minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-      "nav topbar"
-      "nav main";
-  }
-
-  .console.nav-collapsed {
-    grid-template-columns: 60px minmax(0, 1fr);
-  }
-}
-
 @media (max-width: 980px) {
-  .console {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "topbar"
-      "nav"
-      "main";
-  }
-
   .console-topbar {
     grid-template-columns: 1fr;
   }
@@ -1379,6 +1407,11 @@ onMounted(async () => {
 }
 
 @media (max-width: 640px) {
+  .console {
+    --nav-drawer-collapsed-width: 0px;
+    gap: 0;
+  }
+
   .console {
     min-height: auto;
   }
