@@ -248,7 +248,8 @@ CREATE TABLE IF NOT EXISTS sys_notice_recipient
     UNIQUE KEY uk_sys_notice_recipient_notice_user (notice_id, user_id, is_deleted),
     KEY idx_sys_notice_recipient_notice (notice_id),
     KEY idx_sys_notice_recipient_user (user_id),
-    KEY idx_sys_notice_recipient_read (read_status)
+    KEY idx_sys_notice_recipient_read (read_status),
+    KEY idx_sys_notice_recipient_user_read (user_id, read_status, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统通知接收表';
 

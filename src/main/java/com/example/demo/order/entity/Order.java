@@ -5,15 +5,17 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.example.demo.common.entity.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Data
-@TableName(value = "sys_order")
 @NoArgsConstructor
 @AllArgsConstructor
+@TableName(value = "sys_order")
+@EqualsAndHashCode(callSuper = true)
 public class Order extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

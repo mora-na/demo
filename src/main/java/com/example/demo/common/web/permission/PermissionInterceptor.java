@@ -15,6 +15,8 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -181,9 +183,8 @@ public class PermissionInterceptor implements HandlerInterceptor {
      */
     private void writeUnauthorized(HttpServletResponse response, String message) throws Exception {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json;charset=UTF-8");
         CommonResult<Object> result = CommonResult.error(HttpServletResponse.SC_UNAUTHORIZED, message);
-        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
+        writeJson(response, result);
     }
 
     /**
@@ -197,8 +198,24 @@ public class PermissionInterceptor implements HandlerInterceptor {
      */
     private void writeForbidden(HttpServletResponse response, String message) throws Exception {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        response.setContentType("application/json;charset=UTF-8");
         CommonResult<Object> result = CommonResult.error(HttpServletResponse.SC_FORBIDDEN, message);
-        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
+        writeJson(response, result);
+    }
+
+    private void writeJson(HttpServletResponse response, CommonResult<Object> result) throws Exception {
+        if (response.isCommitted()) {
+            return;
+        }
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setContentType("application/json;charset=UTF-8");
+        String body = OBJECT_MAPPER.writeValueAsString(result);
+        try {
+            response.getWriter().write(body);
+        } catch (IllegalStateException ex) {
+            try {
+                response.getOutputStream().write(body.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException ignore) {
+            }
+        }
     }
 }

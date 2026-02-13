@@ -8,7 +8,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 通知推送载荷，用于 SSE 下发。
+ * 最新通知摘要（用于 SSE 推送）。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/13
@@ -16,11 +16,11 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class NoticePushPayload implements Serializable {
+public class NoticeLatestVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Long noticeId;
+    private Long id;
 
     private String title;
 
@@ -28,11 +28,7 @@ public class NoticePushPayload implements Serializable {
 
     private LocalDateTime createdAt;
 
-    private Long unreadCount;
+    private Integer readStatus;
 
-    private java.util.List<NoticeLatestVO> latestNotices;
-
-    private Long heartbeatIntervalMillis;
-
-    private Long heartbeatTimeoutMillis;
+    private LocalDateTime readTime;
 }

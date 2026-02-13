@@ -80,6 +80,11 @@ export default {
             settings: "设置",
             logout: "退出登录"
         },
+        notice: {
+            title: "系统通知",
+            streamOnline: "实时",
+            streamOffline: "断线"
+        },
         main: {
             titleFallback: "控制台",
             descFallback: "从左侧选择模块查看内容",

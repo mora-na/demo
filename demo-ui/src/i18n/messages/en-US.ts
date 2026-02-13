@@ -80,6 +80,11 @@ export default {
             settings: "Settings",
             logout: "Sign out"
         },
+        notice: {
+            title: "System Notices",
+            streamOnline: "Live",
+            streamOffline: "Offline"
+        },
         main: {
             titleFallback: "Console",
             descFallback: "Pick a module from the left to view details",

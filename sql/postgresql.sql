@@ -400,6 +400,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_notice_recipient_notice_user ON sys_not
 CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_notice ON sys_notice_recipient (notice_id);
 CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_user ON sys_notice_recipient (user_id);
 CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_read ON sys_notice_recipient (read_status);
+CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_user_read ON sys_notice_recipient (user_id, read_status, is_deleted);
 COMMENT ON TABLE sys_notice_recipient IS '系统通知接收表';
 COMMENT ON COLUMN sys_notice_recipient.id IS '主键ID';
 COMMENT ON COLUMN sys_notice_recipient.create_time IS '创建时间';

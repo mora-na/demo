@@ -120,6 +120,14 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     }
 
     @Override
+    public List<NoticeLatestVO> listMyLatestNotices(Long userId, int limit) {
+        if (userId == null || limit <= 0) {
+            return Collections.emptyList();
+        }
+        return noticeRecipientMapper.selectMyLatestNotices(userId, limit);
+    }
+
+    @Override
     public long countUnread(Long userId) {
         if (userId == null) {
             return 0L;
@@ -196,7 +204,15 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
                 })
                 .collect(Collectors.toList());
         noticeRecipientService.saveBatch(recipients);
-        noticeStreamService.pushToUsers(targetUserIds, notice);
+        Map<Long, Long> unreadCounts = noticeRecipientMapper.countUnreadByUserIds(targetUserIds)
+                .stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        com.example.demo.notice.dto.NoticeUnreadCount::getUserId,
+                        count -> count.getUnreadCount() == null ? 0L : count.getUnreadCount(),
+                        (left, right) -> right
+                ));
+        noticeStreamService.pushToUsers(targetUserIds, notice, unreadCounts);
         return notice;
     }
 

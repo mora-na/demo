@@ -23,6 +23,8 @@ public interface NoticeService extends IService<Notice> {
 
     List<NoticeMyVO> listMyNotices(Long userId);
 
+    List<NoticeLatestVO> listMyLatestNotices(Long userId, int limit);
+
     long countUnread(Long userId);
 
     boolean markRead(Long noticeId, Long userId);

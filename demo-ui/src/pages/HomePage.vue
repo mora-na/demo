@@ -98,7 +98,12 @@
             </template>
             <div class="notice-panel">
               <div class="notice-panel-head">
-                <span>系统通知</span>
+                <div class="notice-panel-title">
+                  <span>{{ t("home.notice.title") }}</span>
+                  <span :class="['notice-status', noticeStreamConnected ? 'is-online' : 'is-offline']">
+                    {{ noticeStreamConnected ? t("home.notice.streamOnline") : t("home.notice.streamOffline") }}
+                  </span>
+                </div>
                 <el-button :disabled="!noticeItems.length" size="small" text @click="handleMarkAllRead">
                   全部已读
                 </el-button>
@@ -324,8 +329,11 @@ const noticeItems = ref<NoticeMyVO[]>([]);
 const noticeDetailVisible = ref(false);
 const noticeDetail = ref<NoticeMyVO | null>(null);
 const unreadCount = ref(0);
+const noticeStreamConnected = ref(false);
+const lastNoticePingAt = ref<number | null>(null);
 let noticeStream: EventSource | null = null;
 let noticeStreamRetryTimer: number | null = null;
+let noticeStreamHealthTimer: number | null = null;
 
 const profileForm = reactive({
   userName: "",
@@ -571,6 +579,69 @@ async function refreshUnreadCount() {
   }
 }
 
+let noticePingTimeoutMs = 45000;
+
+function markNoticeStreamAlive() {
+  noticeStreamConnected.value = true;
+  lastNoticePingAt.value = Date.now();
+}
+
+function startNoticeStreamHealthCheck() {
+  if (noticeStreamHealthTimer != null) {
+    window.clearInterval(noticeStreamHealthTimer);
+  }
+  noticeStreamHealthTimer = window.setInterval(() => {
+    if (lastNoticePingAt.value == null) {
+      return;
+    }
+    if (noticePingTimeoutMs <= 0) {
+      return;
+    }
+    const stale = Date.now() - lastNoticePingAt.value > noticePingTimeoutMs;
+    if (stale) {
+      noticeStreamConnected.value = false;
+    }
+  }, 5000);
+}
+
+function stopNoticeStreamHealthCheck() {
+  if (noticeStreamHealthTimer != null) {
+    window.clearInterval(noticeStreamHealthTimer);
+    noticeStreamHealthTimer = null;
+  }
+}
+
+function mapLatestToNotice(item: Record<string, any>): NoticeMyVO {
+  return {
+    id: Number(item.id || 0),
+    title: item.title || "",
+    content: "",
+    createdName: item.createdName,
+    createdAt: item.createdAt,
+    readStatus: item.readStatus,
+    readTime: item.readTime
+  };
+}
+
+function applyNoticePayload(payload: any) {
+  let updated = false;
+  if (payload && typeof payload.unreadCount === "number") {
+    unreadCount.value = payload.unreadCount;
+    updated = true;
+  }
+  if (payload && typeof payload.heartbeatTimeoutMillis === "number") {
+    noticePingTimeoutMs = payload.heartbeatTimeoutMillis;
+    if (noticePingTimeoutMs <= 0) {
+      noticeStreamConnected.value = true;
+    }
+  }
+  if (payload && Array.isArray(payload.latestNotices) && !noticeVisible.value) {
+    noticeItems.value = payload.latestNotices.map(mapLatestToNotice);
+    updated = true;
+  }
+  return updated;
+}
+
 function startNoticeStream() {
   stopNoticeStream();
   const token = authStore.token;
@@ -581,13 +652,37 @@ function startNoticeStream() {
   const url = `${baseUrl}/notices/stream?token=${encodeURIComponent(token)}`;
   const source = new EventSource(url);
   noticeStream = source;
-  source.addEventListener("notice", () => {
-    refreshUnreadCount();
+  noticeStreamConnected.value = false;
+  lastNoticePingAt.value = null;
+  startNoticeStreamHealthCheck();
+  source.onopen = () => {
+    markNoticeStreamAlive();
+  };
+  const handlePayloadEvent = (event: MessageEvent) => {
+    markNoticeStreamAlive();
+    let updated = false;
+    if (event?.data) {
+      try {
+        const payload = JSON.parse(event.data);
+        updated = applyNoticePayload(payload);
+      } catch {
+        // ignore parse errors
+      }
+    }
+    if (!updated) {
+      refreshUnreadCount();
+    }
     if (noticeVisible.value) {
       loadMyNotices();
     }
+  };
+  source.addEventListener("init", handlePayloadEvent);
+  source.addEventListener("notice", handlePayloadEvent);
+  source.addEventListener("ping", () => {
+    markNoticeStreamAlive();
   });
   source.onerror = () => {
+    noticeStreamConnected.value = false;
     stopNoticeStream();
     scheduleNoticeStreamReconnect();
   };
@@ -612,6 +707,9 @@ function stopNoticeStream() {
     window.clearTimeout(noticeStreamRetryTimer);
     noticeStreamRetryTimer = null;
   }
+  stopNoticeStreamHealthCheck();
+  noticeStreamConnected.value = false;
+  lastNoticePingAt.value = null;
 }
 
 async function loadMyNotices() {
@@ -1260,6 +1358,34 @@ onUnmounted(() => {
   justify-content: space-between;
   font-size: 13px;
   font-weight: 600;
+}
+
+.notice-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notice-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(18, 18, 18, 0.08);
+  color: var(--muted);
+}
+
+.notice-status.is-online {
+  background: rgba(38, 179, 93, 0.16);
+  color: #1c7f45;
+}
+
+.notice-status.is-offline {
+  background: rgba(220, 38, 38, 0.12);
+  color: #b91c1c;
 }
 
 .notice-panel-body {

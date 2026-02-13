@@ -109,6 +109,16 @@ cache:
     # 清理间隔（秒），0 表示关闭定时清理
     cleanup-interval-seconds: 300
 
+# 系统通知 SSE 配置
+notice:
+  sse:
+    # 心跳间隔（毫秒），<=0 表示禁用心跳
+    heartbeat-interval-millis: 60000
+    # 断线判定超时（毫秒）
+    heartbeat-timeout-millis: 180000
+    # 推送最新通知数量
+    latest-limit: 5
+
 # MyBatis-Plus 配置
 mybatis-plus:
   # Mapper XML 文件路径
@@ -119,10 +129,15 @@ mybatis-plus:
     lazy-loading-enabled: true
     # 是否启用激进懒加载
     aggressive-lazy-loading: false
+  # 全局配置
   global-config:
+    # 数据库配置
     db-config:
+      # 逻辑删除字段
       logic-delete-field: is_deleted
+      # 逻辑删除值
       logic-delete-value: 1
+      # 逻辑未删除值
       logic-not-delete-value: 0
 
 # SQL 日志配置

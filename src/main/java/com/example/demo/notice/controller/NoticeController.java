@@ -7,6 +7,7 @@ import com.example.demo.common.model.PageResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequireLogin;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.notice.config.NoticeStreamProperties;
 import com.example.demo.notice.dto.*;
 import com.example.demo.notice.entity.Notice;
 import com.example.demo.notice.entity.NoticeRecipient;
@@ -39,6 +40,7 @@ public class NoticeController extends BaseController {
     private final NoticeService noticeService;
     private final NoticeRecipientService noticeRecipientService;
     private final NoticeStreamService noticeStreamService;
+    private final NoticeStreamProperties noticeStreamProperties;
 
     /**
      * 管理端获取通知列表。
@@ -144,7 +146,11 @@ public class NoticeController extends BaseController {
         if (user == null || user.getId() == null) {
             return new SseEmitter(0L);
         }
-        return noticeStreamService.connect(user.getId());
+        Long userId = user.getId();
+        int latestLimit = noticeStreamProperties.getLatestLimit();
+        List<NoticeLatestVO> latestNotices = noticeService.listMyLatestNotices(userId, latestLimit);
+        long unreadCount = noticeService.countUnread(userId);
+        return noticeStreamService.connect(userId, latestNotices, unreadCount);
     }
 
     /**
