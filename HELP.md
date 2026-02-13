@@ -69,10 +69,31 @@
     - 断线判定：`notice.sse.heartbeat-timeout-millis`
     - 最新列表推送条数：`notice.sse.latest-limit`
 
+## 许可证与合规
+
+已生成依赖许可证报告（见 `target/`）：
+
+- 后端（Maven）：`target/site/aggregate-third-party-report.html`
+- 前端（node_modules 扫描）：`target/licenses/frontend-licenses.json`
+- 前端汇总：`target/licenses/frontend-licenses-summary.txt`
+
+重新生成：
+
+```bash
+./mvnw -q -DskipTests org.codehaus.mojo:license-maven-plugin:2.4.0:aggregate-third-party-report
+python3 scripts/licenses_scan_frontend.py  # 或使用你自己的扫描脚本
+```
+
+风险提示（仅作初步提醒）：
+
+- 后端报告中包含 **EPL 2.0 / LGPL 2.1 / GPL2 w/ CPE** 等许可条目，请在商用发布前做法务确认。
+- 前端依赖以 MIT/ISC/BSD/Apache 为主，风险相对较低，但仍建议以报告为准。
+
 ## 数据范围
 
 - 开关与默认范围：`security.data-scope.enabled` / `security.data-scope.default-type`
 - 表字段映射：`sys_data_scope_rule`（如映射 `dept_id`）
+- 详细说明文档：`docs/DATA_SCOPE.md`
 
 ## 安全防护
 

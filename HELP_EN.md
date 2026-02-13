@@ -69,6 +69,26 @@ This document focuses on configuration and operations details, complementing `RE
     - Offline timeout: `notice.sse.heartbeat-timeout-millis`
     - Latest list size: `notice.sse.latest-limit`
 
+## Licenses & Compliance
+
+Generated reports (under `target/`):
+
+- Backend (Maven): `target/site/aggregate-third-party-report.html`
+- Frontend (node_modules scan): `target/licenses/frontend-licenses.json`
+- Frontend summary: `target/licenses/frontend-licenses-summary.txt`
+
+Regenerate:
+
+```bash
+./mvnw -q -DskipTests org.codehaus.mojo:license-maven-plugin:2.4.0:aggregate-third-party-report
+python3 scripts/licenses_scan_frontend.py
+```
+
+Risk hints (initial check only):
+
+- Backend report includes **EPL 2.0 / LGPL 2.1 / GPL2 w/ CPE** entries; review before commercial release.
+- Frontend is mostly MIT/ISC/BSD/Apache, but always verify against the report.
+
 ## Data Scope
 
 - Toggle and default scope: `security.data-scope.enabled` / `security.data-scope.default-type`
