@@ -26,6 +26,10 @@ public class SysUserVO implements Serializable {
 
     private String nickName;
 
+    private String phone;
+
+    private String email;
+
     private String sex;
 
     private Integer status;

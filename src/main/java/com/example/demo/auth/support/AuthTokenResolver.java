@@ -41,6 +41,10 @@ public final class AuthTokenResolver {
         if (StringUtils.isNotBlank(token)) {
             return token;
         }
+        String queryToken = request.getParameter("token");
+        if (StringUtils.isNotBlank(queryToken)) {
+            return queryToken;
+        }
         return null;
     }
 }

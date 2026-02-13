@@ -28,19 +28,21 @@
         @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="46"/>
-      <el-table-column :label="t('user.table.userName')" min-width="140" prop="userName"/>
-      <el-table-column :label="t('user.table.nickName')" min-width="140" prop="nickName"/>
-      <el-table-column :label="t('user.table.sex')" width="80">
+      <el-table-column :label="t('user.table.userName')" min-width="120" prop="userName" show-overflow-tooltip/>
+      <el-table-column :label="t('user.table.nickName')" min-width="120" prop="nickName" show-overflow-tooltip/>
+      <el-table-column :label="t('user.table.phone')" width="120" prop="phone" show-overflow-tooltip/>
+      <el-table-column :label="t('user.table.email')" min-width="160" prop="email" show-overflow-tooltip/>
+      <el-table-column :label="t('user.table.sex')" width="70">
         <template #default="{row}">
           {{ sexLabel(row.sex) }}
         </template>
       </el-table-column>
-      <el-table-column :label="t('user.table.dept')" prop="deptId" width="120">
+      <el-table-column :label="t('user.table.dept')" prop="deptId" width="110">
         <template #default="{row}">
           {{ deptName(row.deptId) }}
         </template>
       </el-table-column>
-      <el-table-column :label="t('user.table.status')" width="100">
+      <el-table-column :label="t('user.table.status')" width="90">
         <template #default="{row}">
           <el-switch
               :active-value="1"
@@ -50,7 +52,7 @@
           />
         </template>
       </el-table-column>
-      <el-table-column :label="t('user.table.action')" width="360">
+      <el-table-column :label="t('user.table.action')" width="320">
         <template #default="{row}">
           <div class="action-buttons">
             <el-button size="small" text @click="openEdit(row)">{{ t("user.table.edit") }}</el-button>
@@ -84,6 +86,16 @@
           <el-col :xs="24" :sm="12">
             <el-form-item :label="t('user.dialog.nickName')">
               <el-input v-model.trim="form.nickName"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dialog.phone')">
+              <el-input v-model.trim="form.phone" :placeholder="t('user.dialog.phonePlaceholder')"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dialog.email')">
+              <el-input v-model.trim="form.email" :placeholder="t('user.dialog.emailPlaceholder')"/>
             </el-form-item>
           </el-col>
           <el-col :xs="24" :sm="12">
@@ -236,6 +248,8 @@ const total = ref(0);
 const form = reactive<UserCreatePayload & UserUpdatePayload>({
   userName: "",
   nickName: "",
+  phone: "",
+  email: "",
   password: "",
   sex: "",
   status: 1,
@@ -342,6 +356,8 @@ function handleSelectionChange(rows: UserVO[]) {
 function resetFormState() {
   form.userName = "";
   form.nickName = "";
+  form.phone = "";
+  form.email = "";
   form.password = "";
   form.sex = "";
   form.status = 1;
@@ -370,6 +386,8 @@ function openEdit(row: UserVO) {
   resetFormState();
   form.userName = row.userName;
   form.nickName = row.nickName;
+  form.phone = row.phone || "";
+  form.email = row.email || "";
   form.sex = row.sex || "";
   form.status = row.status ?? 1;
   form.deptId = row.deptId ?? undefined;
@@ -593,12 +611,15 @@ onMounted(() => {
 
 .action-buttons {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: nowrap;
   align-items: center;
 }
 
 .action-buttons :deep(.el-button) {
+  padding: 0 6px;
+  min-height: 22px;
+  font-size: 12px;
   white-space: nowrap;
 }
 

@@ -17,6 +17,8 @@ import com.example.demo.permission.mapper.PermissionMapper;
 import com.example.demo.permission.service.PermissionService;
 import com.example.demo.permission.service.RoleService;
 import com.example.demo.permission.service.UserRoleService;
+import com.example.demo.user.entity.SysUser;
+import com.example.demo.user.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ public class UserProfileService {
     private final RoleMenuService roleMenuService;
     private final MenuService menuService;
     private final PermissionProperties permissionProperties;
+    private final SysUserService userService;
 
     public UserProfileResponse buildProfile(AuthUser authUser) {
         UserProfileResponse response = new UserProfileResponse();
@@ -58,11 +61,23 @@ public class UserProfileService {
     private UserProfileInfo toProfileInfo(AuthUser authUser) {
         UserProfileInfo info = new UserProfileInfo();
         info.setId(authUser.getId());
-        info.setUserName(authUser.getUserName());
-        info.setNickName(authUser.getNickName());
-        info.setDeptId(authUser.getDeptId());
-        info.setDataScopeType(authUser.getDataScopeType());
-        info.setDataScopeValue(authUser.getDataScopeValue());
+        SysUser user = userService.getById(authUser.getId());
+        if (user != null) {
+            info.setUserName(user.getUserName());
+            info.setNickName(user.getNickName());
+            info.setPhone(user.getPhone());
+            info.setEmail(user.getEmail());
+            info.setSex(user.getSex());
+            info.setDeptId(user.getDeptId());
+            info.setDataScopeType(user.getDataScopeType());
+            info.setDataScopeValue(user.getDataScopeValue());
+        } else {
+            info.setUserName(authUser.getUserName());
+            info.setNickName(authUser.getNickName());
+            info.setDeptId(authUser.getDeptId());
+            info.setDataScopeType(authUser.getDataScopeType());
+            info.setDataScopeValue(authUser.getDataScopeValue());
+        }
         return info;
     }
 

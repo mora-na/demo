@@ -54,6 +54,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         SysUser user = new SysUser();
         user.setUserName(request.getUserName());
         user.setNickName(request.getNickName());
+        user.setPhone(request.getPhone());
+        user.setEmail(request.getEmail());
         user.setSex(request.getSex());
         user.setRemark(request.getRemark());
         user.setStatus(request.getStatus() == null ? SysUser.STATUS_ENABLED : request.getStatus());
@@ -75,6 +77,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setId(id);
         user.setUserName(request.getUserName());
         user.setNickName(request.getNickName());
+        user.setPhone(request.getPhone());
+        user.setEmail(request.getEmail());
         user.setSex(request.getSex());
         user.setStatus(request.getStatus());
         user.setDeptId(request.getDeptId());
@@ -154,6 +158,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         SysUser user = new SysUser();
         user.setId(id);
         user.setNickName(request.getNickName());
+        user.setPhone(request.getPhone());
+        user.setEmail(request.getEmail());
         user.setSex(request.getSex());
         user.setRemark(request.getRemark());
         if (StringUtils.isNotBlank(newPassword)) {

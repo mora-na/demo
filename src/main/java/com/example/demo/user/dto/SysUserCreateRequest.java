@@ -21,6 +21,12 @@ public class SysUserCreateRequest {
     @Size(max = 64)
     private String nickName;
 
+    @Size(max = 32)
+    private String phone;
+
+    @Size(max = 128)
+    private String email;
+
     @Size(max = 256)
     private String password;
 

@@ -201,24 +201,56 @@
       </section>
     </div>
 
-    <el-dialog v-model="settingsVisible" :title="t('home.profile.title')" align-center width="460px">
+    <el-dialog v-model="settingsVisible" :title="t('home.profile.title')" align-center width="560px">
       <el-form :model="profileForm" label-position="top">
-        <el-form-item :label="t('home.profile.userName')">
-          <el-input v-model.trim="profileForm.userName" disabled/>
-        </el-form-item>
-        <el-form-item :label="t('home.profile.nickName')">
-          <el-input v-model.trim="profileForm.nickName" :placeholder="t('home.profile.nickNamePlaceholder')"/>
-        </el-form-item>
+        <el-row :gutter="16" class="profile-grid">
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('home.profile.userName')">
+              <el-input v-model.trim="profileForm.userName" disabled/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('home.profile.nickName')">
+              <el-input v-model.trim="profileForm.nickName" :placeholder="t('home.profile.nickNamePlaceholder')"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('home.profile.phone')">
+              <el-input v-model.trim="profileForm.phone" :placeholder="t('home.profile.phonePlaceholder')"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('home.profile.email')">
+              <el-input v-model.trim="profileForm.email" :placeholder="t('home.profile.emailPlaceholder')"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('home.profile.sex')">
+              <el-select v-model="profileForm.sex" :placeholder="t('home.profile.sexPlaceholder')">
+                <el-option :label="t('home.profile.sexMale')" value="M"/>
+                <el-option :label="t('home.profile.sexFemale')" value="F"/>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-divider/>
-        <el-form-item :label="t('home.profile.oldPassword')">
-          <el-input v-model.trim="profileForm.oldPassword" show-password type="password"/>
-        </el-form-item>
-        <el-form-item :label="t('home.profile.newPassword')">
-          <el-input v-model.trim="profileForm.newPassword" show-password type="password"/>
-        </el-form-item>
-        <el-form-item :label="t('home.profile.confirmPassword')">
-          <el-input v-model.trim="profileForm.confirmPassword" show-password type="password"/>
-        </el-form-item>
+        <el-row :gutter="16" class="profile-grid">
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('home.profile.oldPassword')">
+              <el-input v-model.trim="profileForm.oldPassword" show-password type="password"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('home.profile.newPassword')">
+              <el-input v-model.trim="profileForm.newPassword" show-password type="password"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('home.profile.confirmPassword')">
+              <el-input v-model.trim="profileForm.confirmPassword" show-password type="password"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <div class="profile-note">{{ t("home.profile.note") }}</div>
       </el-form>
       <template #footer>
@@ -244,7 +276,7 @@
 
 <script lang="ts" setup>
 import type {Component} from "vue";
-import {computed, onMounted, ref, watch} from "vue";
+import {computed, onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {ElMessage} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {
@@ -292,10 +324,15 @@ const noticeItems = ref<NoticeMyVO[]>([]);
 const noticeDetailVisible = ref(false);
 const noticeDetail = ref<NoticeMyVO | null>(null);
 const unreadCount = ref(0);
+let noticeStream: EventSource | null = null;
+let noticeStreamRetryTimer: number | null = null;
 
-const profileForm = ref({
+const profileForm = reactive({
   userName: "",
   nickName: "",
+  phone: "",
+  email: "",
+  sex: "",
   oldPassword: "",
   newPassword: "",
   confirmPassword: ""
@@ -534,6 +571,49 @@ async function refreshUnreadCount() {
   }
 }
 
+function startNoticeStream() {
+  stopNoticeStream();
+  const token = authStore.token;
+  if (!token) {
+    return;
+  }
+  const baseUrl = (import.meta.env.VITE_API_BASE_URL || "/prod-api").replace(/\/$/, "");
+  const url = `${baseUrl}/notices/stream?token=${encodeURIComponent(token)}`;
+  const source = new EventSource(url);
+  noticeStream = source;
+  source.addEventListener("notice", () => {
+    refreshUnreadCount();
+    if (noticeVisible.value) {
+      loadMyNotices();
+    }
+  });
+  source.onerror = () => {
+    stopNoticeStream();
+    scheduleNoticeStreamReconnect();
+  };
+}
+
+function scheduleNoticeStreamReconnect() {
+  if (!authStore.token || noticeStreamRetryTimer != null) {
+    return;
+  }
+  noticeStreamRetryTimer = window.setTimeout(() => {
+    noticeStreamRetryTimer = null;
+    startNoticeStream();
+  }, 5000);
+}
+
+function stopNoticeStream() {
+  if (noticeStream) {
+    noticeStream.close();
+    noticeStream = null;
+  }
+  if (noticeStreamRetryTimer != null) {
+    window.clearTimeout(noticeStreamRetryTimer);
+    noticeStreamRetryTimer = null;
+  }
+}
+
 async function loadMyNotices() {
   if (noticeLoading.value) {
     return;
@@ -596,16 +676,18 @@ async function handleMarkAllRead() {
   }
 }
 
-function openSettings() {
+async function openSettings() {
+  await authStore.loadProfile(true);
   const profile = authStore.profile;
-  profileForm.value = {
-    userName: profile?.userName || authStore.userName || "",
-    nickName: profile?.nickName || "",
-    oldPassword: "",
-    newPassword: "",
-    confirmPassword: ""
-  };
-  originalNickName.value = profileForm.value.nickName || "";
+  profileForm.userName = profile?.userName || authStore.userName || "";
+  profileForm.nickName = profile?.nickName || "";
+  profileForm.phone = profile?.phone || "";
+  profileForm.email = profile?.email || "";
+  profileForm.sex = profile?.sex || "";
+  profileForm.oldPassword = "";
+  profileForm.newPassword = "";
+  profileForm.confirmPassword = "";
+  originalNickName.value = profileForm.nickName || "";
   settingsVisible.value = true;
 }
 
@@ -613,23 +695,32 @@ async function handleProfileSave() {
   if (savingProfile.value) {
     return;
   }
-  const nickName = profileForm.value.nickName.trim();
+  const nickName = profileForm.nickName.trim();
+  const phone = profileForm.phone.trim();
+  const email = profileForm.email.trim();
+  const sex = profileForm.sex;
   const wantsPasswordChange =
-      Boolean(profileForm.value.oldPassword) ||
-      Boolean(profileForm.value.newPassword) ||
-      Boolean(profileForm.value.confirmPassword);
+      Boolean(profileForm.oldPassword) ||
+      Boolean(profileForm.newPassword) ||
+      Boolean(profileForm.confirmPassword);
 
-  if (!wantsPasswordChange && nickName === originalNickName.value) {
+  const hasProfileChange =
+      nickName !== originalNickName.value ||
+      phone !== (authStore.profile?.phone || "") ||
+      email !== (authStore.profile?.email || "") ||
+      sex !== (authStore.profile?.sex || "");
+
+  if (!wantsPasswordChange && !hasProfileChange) {
     ElMessage.warning(t("home.profile.msg.noChanges"));
     return;
   }
 
   if (wantsPasswordChange) {
-    if (!profileForm.value.oldPassword || !profileForm.value.newPassword || !profileForm.value.confirmPassword) {
+    if (!profileForm.oldPassword || !profileForm.newPassword || !profileForm.confirmPassword) {
       ElMessage.warning(t("home.profile.msg.fillPassword"));
       return;
     }
-    if (profileForm.value.newPassword !== profileForm.value.confirmPassword) {
+    if (profileForm.newPassword !== profileForm.confirmPassword) {
       ElMessage.warning(t("home.profile.msg.confirmMismatch"));
       return;
     }
@@ -639,8 +730,11 @@ async function handleProfileSave() {
   try {
     const result = await updateProfile({
       nickName: nickName || undefined,
-      oldPassword: wantsPasswordChange ? profileForm.value.oldPassword : undefined,
-      newPassword: wantsPasswordChange ? profileForm.value.newPassword : undefined
+      phone: phone || undefined,
+      email: email || undefined,
+      sex: sex || undefined,
+      oldPassword: wantsPasswordChange ? profileForm.oldPassword : undefined,
+      newPassword: wantsPasswordChange ? profileForm.newPassword : undefined
     });
     if (result?.code === 200) {
       ElMessage.success(result?.message || t("home.profile.msg.saveSuccess"));
@@ -832,6 +926,11 @@ onMounted(async () => {
   navDrawerReady.value = true;
   await loadProfile();
   await refreshUnreadCount();
+  startNoticeStream();
+});
+
+onUnmounted(() => {
+  stopNoticeStream();
 });
 </script>
 
@@ -1277,6 +1376,15 @@ onMounted(async () => {
   font-size: 12px;
   color: var(--muted);
   margin-top: -6px;
+}
+
+.profile-grid :deep(.el-form-item) {
+  margin-bottom: 12px;
+}
+
+.profile-grid :deep(.el-select),
+.profile-grid :deep(.el-input) {
+  width: 100%;
 }
 
 .console-main {

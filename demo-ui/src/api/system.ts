@@ -18,6 +18,8 @@ export interface UserVO {
     id: number;
     userName: string;
     nickName: string;
+    phone?: string;
+    email?: string;
     sex?: string;
     status?: number;
     deptId?: number | null;
@@ -71,6 +73,8 @@ export interface UserQuery {
     pageSize?: number;
     userName?: string;
     nickName?: string;
+    phone?: string;
+    email?: string;
     sex?: string;
     status?: number;
     deptId?: number | null;
@@ -79,6 +83,8 @@ export interface UserQuery {
 export interface UserCreatePayload {
     userName: string;
     nickName?: string;
+    phone?: string;
+    email?: string;
     password?: string;
     sex?: string;
     status?: number;
@@ -91,6 +97,8 @@ export interface UserCreatePayload {
 export interface UserUpdatePayload {
     userName?: string;
     nickName?: string;
+    phone?: string;
+    email?: string;
     sex?: string;
     status?: number;
     deptId?: number | null;

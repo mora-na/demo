@@ -40,6 +40,20 @@ public class SysUser extends BaseEntity implements Serializable {
     private String nickName;
 
     /**
+     * 手机号码
+     */
+    @TableField("phone")
+    @Excel(value = "手机号", sort = 3)
+    private String phone;
+
+    /**
+     * 用户邮箱
+     */
+    @TableField("email")
+    @Excel(value = "邮箱", sort = 4)
+    private String email;
+
+    /**
      * 登录密码（加密存储）
      */
     @TableField("password")
@@ -49,14 +63,14 @@ public class SysUser extends BaseEntity implements Serializable {
      * 状态：1-启用；0-禁用
      */
     @TableField("status")
-    @Excel(header = "状态", mapping = {"0:禁用", "1:启用"}, sort = 3)
+    @Excel(header = "状态", mapping = {"0:禁用", "1:启用"}, sort = 5)
     private Integer status;
 
     /**
      * 部门ID（组织归属）
      */
     @TableField("dept_id")
-    @Excel("部门ID")
+    @Excel(value = "部门ID", sort = 7)
     private Long deptId;
 
     /**
@@ -75,7 +89,7 @@ public class SysUser extends BaseEntity implements Serializable {
      * 性别
      */
     @TableField("sex")
-    @Excel(header = "性别", mapping = {"F:女", "M:男"}, sort = 4)
+    @Excel(header = "性别", mapping = {"F:女", "M:男"}, sort = 6)
     private String sex;
 
 }

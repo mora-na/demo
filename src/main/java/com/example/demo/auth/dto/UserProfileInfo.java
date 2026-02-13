@@ -21,6 +21,12 @@ public class UserProfileInfo implements Serializable {
 
     private String nickName;
 
+    private String phone;
+
+    private String email;
+
+    private String sex;
+
     private Long deptId;
 
     private String dataScopeType;

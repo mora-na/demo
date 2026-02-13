@@ -19,6 +19,8 @@ export interface LoginData {
 
 export interface UpdateProfilePayload {
     nickName?: string;
+    phone?: string;
+    email?: string;
     sex?: string;
     remark?: string;
     oldPassword?: string;
@@ -29,6 +31,9 @@ export interface UserProfileInfo {
     id: number;
     userName: string;
     nickName: string;
+    phone?: string;
+    email?: string;
+    sex?: string;
     deptId: number | null;
     dataScopeType: string;
     dataScopeValue: string;

@@ -27,6 +27,8 @@ public class SysUserConverter {
         user.setId(query.getId());
         user.setUserName(query.getUserName());
         user.setNickName(query.getNickName());
+        user.setPhone(query.getPhone());
+        user.setEmail(query.getEmail());
         user.setSex(query.getSex());
         user.setRemark(query.getRemark());
         user.setStatus(query.getStatus());
@@ -42,6 +44,8 @@ public class SysUserConverter {
         user.setId(userVO.getId());
         user.setUserName(userVO.getUserName());
         user.setNickName(userVO.getNickName());
+        user.setPhone(userVO.getPhone());
+        user.setEmail(userVO.getEmail());
         user.setSex(userVO.getSex());
         user.setStatus(userVO.getStatus());
         user.setDeptId(userVO.getDeptId());
@@ -66,6 +70,8 @@ public class SysUserConverter {
         view.setId(user.getId());
         view.setUserName(user.getUserName());
         view.setNickName(user.getNickName());
+        view.setPhone(user.getPhone());
+        view.setEmail(user.getEmail());
         view.setSex(user.getSex());
         view.setStatus(user.getStatus());
         view.setDeptId(user.getDeptId());

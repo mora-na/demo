@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS sys_user
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     user_name VARCHAR(64) NOT NULL COMMENT '用户名（唯一）',
     nick_name VARCHAR(64) COMMENT '昵称',
+    phone VARCHAR(32) COMMENT '手机号码',
+    email VARCHAR(128) COMMENT '用户邮箱',
     password VARCHAR(128) NOT NULL COMMENT '登录密码（加密存储）',
     status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
     dept_id BIGINT COMMENT '部门ID',
@@ -549,14 +551,18 @@ ON DUPLICATE KEY UPDATE name       = VALUES(name),
                         sort       = VALUES(sort),
                         remark     = VALUES(remark);
 
-INSERT INTO sys_user (id, user_name, nick_name, password, status, dept_id, data_scope_type, data_scope_value, sex, remark)
-VALUES (1, 'admin', '超级管理员', 'b38dce307683511d93ac894f91397a1b5747899bbca077b4cf01c9c31c4f33e0', 1, 1, 'ALL', NULL,
-        'M', '内置账号'),
-       (2, 'manager', '部门主管', '826182ec96744b73ee254210a720573c494f1486d38715ae48802dc4818fb465', 1, 2,
+INSERT INTO sys_user (id, user_name, nick_name, phone, email, password, status, dept_id, data_scope_type, data_scope_value,
+                      sex, remark)
+VALUES (1, 'admin', '超级管理员', NULL, NULL,
+        'b38dce307683511d93ac894f91397a1b5747899bbca077b4cf01c9c31c4f33e0', 1, 1, 'ALL', NULL, 'M', '内置账号'),
+       (2, 'manager', '部门主管', NULL, NULL,
+        '826182ec96744b73ee254210a720573c494f1486d38715ae48802dc4818fb465', 1, 2,
         'DEPT_AND_CHILD', NULL, 'M', '内置账号'),
-       (3, 'demo', '普通用户', '2177cc1d2fee90fbc535546218a2537cdfd65ab76b4a6726c88f946d4786de72', 1, 2, 'SELF', NULL,
-        'F', '内置账号')
+       (3, 'demo', '普通用户', NULL, NULL,
+        '2177cc1d2fee90fbc535546218a2537cdfd65ab76b4a6726c88f946d4786de72', 1, 2, 'SELF', NULL, 'F', '内置账号')
 ON DUPLICATE KEY UPDATE nick_name        = VALUES(nick_name),
+                        phone            = VALUES(phone),
+                        email            = VALUES(email),
                         password         = VALUES(password),
                         status           = VALUES(status),
                         dept_id          = VALUES(dept_id),

@@ -13,10 +13,12 @@ import com.example.demo.notice.entity.NoticeRecipient;
 import com.example.demo.notice.model.NoticeScopeType;
 import com.example.demo.notice.service.NoticeRecipientService;
 import com.example.demo.notice.service.NoticeService;
+import com.example.demo.notice.service.NoticeStreamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.validation.Valid;
 import java.util.Collections;
@@ -36,6 +38,7 @@ public class NoticeController extends BaseController {
 
     private final NoticeService noticeService;
     private final NoticeRecipientService noticeRecipientService;
+    private final NoticeStreamService noticeStreamService;
 
     /**
      * 管理端获取通知列表。
@@ -129,6 +132,19 @@ public class NoticeController extends BaseController {
             return error(401, i18n("auth.permission.required"));
         }
         return success(noticeService.countUnread(user.getId()));
+    }
+
+    /**
+     * 建立通知 SSE 连接，接收新通知推送。
+     */
+    @GetMapping(value = "/stream", produces = "text/event-stream")
+    @RequireLogin
+    public SseEmitter stream() {
+        AuthUser user = AuthContext.get();
+        if (user == null || user.getId() == null) {
+            return new SseEmitter(0L);
+        }
+        return noticeStreamService.connect(user.getId());
     }
 
     /**

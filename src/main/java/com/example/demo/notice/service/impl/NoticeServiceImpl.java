@@ -11,6 +11,7 @@ import com.example.demo.notice.mapper.NoticeRecipientMapper;
 import com.example.demo.notice.model.NoticeScopeType;
 import com.example.demo.notice.service.NoticeRecipientService;
 import com.example.demo.notice.service.NoticeService;
+import com.example.demo.notice.service.NoticeStreamService;
 import com.example.demo.permission.entity.UserRole;
 import com.example.demo.permission.service.UserRoleService;
 import com.example.demo.user.entity.SysUser;
@@ -36,6 +37,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
 
     private final NoticeRecipientMapper noticeRecipientMapper;
     private final NoticeRecipientService noticeRecipientService;
+    private final NoticeStreamService noticeStreamService;
     private final SysUserService userService;
     private final UserRoleService userRoleService;
 
@@ -194,6 +196,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
                 })
                 .collect(Collectors.toList());
         noticeRecipientService.saveBatch(recipients);
+        noticeStreamService.pushToUsers(targetUserIds, notice);
         return notice;
     }
 

@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS sys_user
     id               BIGINT PRIMARY KEY    DEFAULT nextval('sys_user_id_seq'),
     user_name        VARCHAR(64)  NOT NULL,
     nick_name        VARCHAR(64),
+    phone            VARCHAR(32),
+    email            VARCHAR(128),
     password         VARCHAR(128) NOT NULL,
     status           SMALLINT     NOT NULL DEFAULT 1,
     dept_id          BIGINT,
@@ -31,6 +33,8 @@ COMMENT ON COLUMN sys_user.version IS '乐观锁版本号';
 COMMENT ON COLUMN sys_user.remark IS '备注';
 COMMENT ON COLUMN sys_user.user_name IS '用户名（唯一）';
 COMMENT ON COLUMN sys_user.nick_name IS '昵称';
+COMMENT ON COLUMN sys_user.phone IS '手机号码';
+COMMENT ON COLUMN sys_user.email IS '用户邮箱';
 COMMENT ON COLUMN sys_user.password IS '登录密码（加密存储）';
 COMMENT ON COLUMN sys_user.status IS '状态：1-启用，0-禁用';
 COMMENT ON COLUMN sys_user.dept_id IS '部门ID';
@@ -823,15 +827,19 @@ ON CONFLICT (id) DO UPDATE SET name       = EXCLUDED.name,
                                sort       = EXCLUDED.sort,
                                remark     = EXCLUDED.remark;
 
-INSERT INTO sys_user (id, user_name, nick_name, password, status, dept_id, data_scope_type, data_scope_value, sex, remark)
-VALUES (1, 'admin', '超级管理员', 'b38dce307683511d93ac894f91397a1b5747899bbca077b4cf01c9c31c4f33e0', 1, 1, 'ALL', NULL,
-        'M', '内置账号'),
-       (2, 'manager', '部门主管', '826182ec96744b73ee254210a720573c494f1486d38715ae48802dc4818fb465', 1, 2,
+INSERT INTO sys_user (id, user_name, nick_name, phone, email, password, status, dept_id, data_scope_type, data_scope_value,
+                      sex, remark)
+VALUES (1, 'admin', '超级管理员', NULL, NULL,
+        'b38dce307683511d93ac894f91397a1b5747899bbca077b4cf01c9c31c4f33e0', 1, 1, 'ALL', NULL, 'M', '内置账号'),
+       (2, 'manager', '部门主管', NULL, NULL,
+        '826182ec96744b73ee254210a720573c494f1486d38715ae48802dc4818fb465', 1, 2,
         'DEPT_AND_CHILD', NULL, 'M', '内置账号'),
-       (3, 'demo', '普通用户', '2177cc1d2fee90fbc535546218a2537cdfd65ab76b4a6726c88f946d4786de72', 1, 2, 'SELF', NULL,
-        'F', '内置账号')
+       (3, 'demo', '普通用户', NULL, NULL,
+        '2177cc1d2fee90fbc535546218a2537cdfd65ab76b4a6726c88f946d4786de72', 1, 2, 'SELF', NULL, 'F', '内置账号')
 ON CONFLICT (id) DO UPDATE SET user_name        = EXCLUDED.user_name,
                                nick_name        = EXCLUDED.nick_name,
+                               phone            = EXCLUDED.phone,
+                               email            = EXCLUDED.email,
                                password         = EXCLUDED.password,
                                status           = EXCLUDED.status,
                                dept_id          = EXCLUDED.dept_id,
