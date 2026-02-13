@@ -228,7 +228,9 @@ public class NoticeStreamService {
                 try {
                     emitter.send(SseEmitter.event().name("ping").data(now));
                 } catch (IOException ex) {
-                    log.debug("Heartbeat failed for user {}, removing emitter.", userId, ex);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Heartbeat failed for user {}, removing emitter: {}", userId, ex.getMessage());
+                    }
                     removeEmitter(userId, emitter);
                 }
             }

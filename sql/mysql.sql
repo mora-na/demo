@@ -282,6 +282,7 @@ CREATE TABLE IF NOT EXISTS sys_job_log
     handler_name VARCHAR(128) NOT NULL COMMENT '处理器名称',
     status TINYINT NOT NULL COMMENT '执行状态：1-成功，0-失败',
     message VARCHAR(512) COMMENT '执行信息',
+    log_detail TEXT COMMENT '执行日志',
     start_time DATETIME NOT NULL COMMENT '开始时间',
     end_time DATETIME COMMENT '结束时间',
     duration_ms BIGINT COMMENT '耗时毫秒',

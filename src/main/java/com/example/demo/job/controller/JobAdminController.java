@@ -159,4 +159,14 @@ public class JobAdminController extends BaseController {
                 rawPage.getPageSize());
         return success(result);
     }
+
+    @GetMapping("/logs/{logId}")
+    @RequirePermission("job:query")
+    public CommonResult<JobLogDetailVO> logDetail(@PathVariable Long logId) {
+        com.example.demo.job.entity.SysJobLog log = jobLogService.getById(logId);
+        if (log == null) {
+            return error(404, i18n("job.log.not.found"));
+        }
+        return success(jobLogService.toDetailView(log));
+    }
 }

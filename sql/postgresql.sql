@@ -459,6 +459,7 @@ CREATE TABLE IF NOT EXISTS sys_job_log
     handler_name VARCHAR(128) NOT NULL,
     status       SMALLINT     NOT NULL,
     message      VARCHAR(512),
+    log_detail   TEXT,
     start_time   TIMESTAMP    NOT NULL,
     end_time     TIMESTAMP,
     duration_ms  BIGINT
@@ -473,6 +474,7 @@ COMMENT ON COLUMN sys_job_log.job_name IS '任务名称';
 COMMENT ON COLUMN sys_job_log.handler_name IS '处理器名称';
 COMMENT ON COLUMN sys_job_log.status IS '执行状态：1-成功，0-失败';
 COMMENT ON COLUMN sys_job_log.message IS '执行信息';
+COMMENT ON COLUMN sys_job_log.log_detail IS '执行日志';
 COMMENT ON COLUMN sys_job_log.start_time IS '开始时间';
 COMMENT ON COLUMN sys_job_log.end_time IS '结束时间';
 COMMENT ON COLUMN sys_job_log.duration_ms IS '耗时毫秒';

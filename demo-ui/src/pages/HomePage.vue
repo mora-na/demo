@@ -63,7 +63,7 @@
     <div class="console-content">
       <header class="console-topbar">
         <div class="topbar-left">
-          <div>
+          <div class="topbar-left-main">
             <el-button
                 :aria-label="navDrawerVisible ? t('home.nav.collapse') : t('home.nav.expand')"
                 class="icon-button nav-trigger"
@@ -76,7 +76,9 @@
             <div class="topbar-sub">{{ activeGroup?.name || t("home.topbar.chooseModule") }}</div>
           </div>
           <div class="topbar-tags">
-            <el-tag effect="dark" type="success">{{ t("common.online") }}</el-tag>
+            <el-tag effect="dark" :type="noticeStreamConnected ? 'success' : 'danger'">
+              {{ noticeStreamConnected ? t("home.notice.streamOnline") : t("home.notice.streamOffline") }}
+            </el-tag>
           </div>
         </div>
         <div class="topbar-center">
@@ -1292,6 +1294,13 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.topbar-left-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .topbar-title {

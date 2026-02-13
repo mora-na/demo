@@ -528,6 +528,10 @@ export interface JobLogVO {
     durationMs?: number;
 }
 
+export interface JobLogDetailVO extends JobLogVO {
+    logDetail?: string;
+}
+
 export async function listJobs(params: JobQuery): Promise<ApiResponse<PageResult<JobVO>>> {
     const response = await api.get<ApiResponse<PageResult<JobVO>>>('/jobs', {params});
     return response.data;
@@ -573,5 +577,10 @@ export async function listJobLogs(id: number, params: {
     pageSize?: number
 }): Promise<ApiResponse<PageResult<JobLogVO>>> {
     const response = await api.get<ApiResponse<PageResult<JobLogVO>>>(`/jobs/${id}/logs`, {params});
+    return response.data;
+}
+
+export async function getJobLogDetail(logId: number): Promise<ApiResponse<JobLogDetailVO>> {
+    const response = await api.get<ApiResponse<JobLogDetailVO>>(`/jobs/logs/${logId}`);
     return response.data;
 }

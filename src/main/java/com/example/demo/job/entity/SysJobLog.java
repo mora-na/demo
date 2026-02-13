@@ -46,6 +46,9 @@ public class SysJobLog implements Serializable {
     @TableField("message")
     private String message;
 
+    @TableField("log_detail")
+    private String logDetail;
+
     @TableField("start_time")
     private LocalDateTime startTime;
 

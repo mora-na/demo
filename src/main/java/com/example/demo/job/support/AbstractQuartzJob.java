@@ -2,11 +2,14 @@ package com.example.demo.job.support;
 
 import com.example.demo.common.spring.SpringContextHolder;
 import com.example.demo.job.entity.SysJobLog;
+import com.example.demo.job.log.JobLogCollector;
+import com.example.demo.job.log.JobLogThreadContext;
 import com.example.demo.job.service.SysJobLogService;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.slf4j.MDC;
 
 import java.time.LocalDateTime;
 
@@ -23,22 +26,50 @@ public abstract class AbstractQuartzJob implements Job {
         JobDataMap dataMap = context.getMergedJobDataMap();
         JobContext jobContext = buildContext(dataMap);
         SysJobLogService logService = SpringContextHolder.getBean(SysJobLogService.class);
+        JobLogCollector logCollector = SpringContextHolder.getBean(JobLogCollector.class);
         LocalDateTime start = LocalDateTime.now();
         boolean success = false;
         String message = null;
+        String runId = null;
+        if (logCollector != null && logCollector.isEnabled()) {
+            runId = logCollector.start();
+            if (runId != null) {
+                MDC.put(logCollector.getMdcKey(), runId);
+                MDC.put(logCollector.getThreadKey(), Thread.currentThread().getName());
+                JobLogThreadContext.set(runId);
+            }
+        }
+        jobContext.appendLog("开始执行: " + start);
+        if (jobContext.getParams() != null && !jobContext.getParams().trim().isEmpty()) {
+            jobContext.appendLog("参数: " + jobContext.getParams());
+        }
         try {
             JobHandlerRegistry registry = SpringContextHolder.getBean(JobHandlerRegistry.class);
             JobHandler handler = registry == null ? null : registry.getHandler(jobContext.getHandlerName());
             if (handler == null) {
                 message = "handler not found";
+                jobContext.appendLog("处理器不存在: " + jobContext.getHandlerName());
                 return;
             }
             handler.execute(jobContext);
             success = true;
+            jobContext.appendLog("执行成功");
         } catch (Exception ex) {
             message = ex.getMessage();
+            jobContext.appendLog("执行异常: " + (message == null ? ex.getClass().getSimpleName() : message));
+            jobContext.appendLog(buildStackTrace(ex));
             throw new JobExecutionException(ex);
         } finally {
+            String manualLog = jobContext.getLogContent();
+            String autoLog = null;
+            if (logCollector != null && runId != null) {
+                autoLog = logCollector.finish(runId);
+            }
+            if (logCollector != null) {
+                MDC.remove(logCollector.getMdcKey());
+                MDC.remove(logCollector.getThreadKey());
+            }
+            JobLogThreadContext.clear();
             if (logService != null) {
                 SysJobLog log = new SysJobLog();
                 log.setJobId(jobContext.getJobId());
@@ -50,7 +81,18 @@ public abstract class AbstractQuartzJob implements Job {
                 LocalDateTime end = LocalDateTime.now();
                 log.setEndTime(end);
                 log.setDurationMs(java.time.Duration.between(start, end).toMillis());
+                String merged = logCollector != null
+                        ? logCollector.mergeLogs(manualLog, autoLog)
+                        : mergeLogDetail(manualLog, autoLog);
+                log.setLogDetail(logCollector != null ? merged : trimLogDetail(merged));
                 logService.save(log);
+                if (logCollector != null && runId != null) {
+                    if (logCollector.shouldDelayMerge()) {
+                        logCollector.scheduleMerge(runId, log.getId(), manualLog);
+                    } else {
+                        logCollector.close(runId);
+                    }
+                }
             }
         }
     }
@@ -74,5 +116,38 @@ public abstract class AbstractQuartzJob implements Job {
             return value;
         }
         return value.substring(0, 500);
+    }
+
+    private String trimLogDetail(String detail) {
+        if (detail == null) {
+            return null;
+        }
+        String value = detail.trim();
+        if (value.isEmpty()) {
+            return null;
+        }
+        if (value.length() <= 8000) {
+            return value;
+        }
+        return value.substring(0, 8000);
+    }
+
+    private String mergeLogDetail(String manual, String autoLog) {
+        String left = manual == null ? "" : manual.trim();
+        String right = autoLog == null ? "" : autoLog.trim();
+        if (left.isEmpty()) {
+            return right.isEmpty() ? null : right;
+        }
+        if (right.isEmpty()) {
+            return left;
+        }
+        return left + "\n----\n" + right;
+    }
+
+    private String buildStackTrace(Exception ex) {
+        java.io.StringWriter writer = new java.io.StringWriter();
+        java.io.PrintWriter printWriter = new java.io.PrintWriter(writer);
+        ex.printStackTrace(printWriter);
+        return writer.toString();
     }
 }

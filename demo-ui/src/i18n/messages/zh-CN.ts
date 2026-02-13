@@ -257,7 +257,11 @@ export default {
             statusFail: "失败",
             startTime: "开始时间",
             duration: "耗时(ms)",
-            message: "信息",
+            message: "失败原因",
+            action: "操作",
+            viewLog: "查看日志",
+            detailTitle: "执行日志",
+            emptyLog: "暂无执行日志",
             close: "关闭"
         },
         msg: {
@@ -274,6 +278,7 @@ export default {
             deleteSuccess: "任务已删除",
             deleteFailed: "删除失败",
             loadLogFailed: "加载日志失败",
+            loadLogDetailFailed: "加载执行日志失败",
             validateName: "请输入任务名称",
             validateHandler: "请选择处理器",
             validateCron: "请输入 Cron 表达式"

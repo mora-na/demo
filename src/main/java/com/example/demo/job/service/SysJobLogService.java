@@ -1,6 +1,7 @@
 package com.example.demo.job.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.example.demo.job.dto.JobLogDetailVO;
 import com.example.demo.job.dto.JobLogQuery;
 import com.example.demo.job.dto.JobLogVO;
 import com.example.demo.job.entity.SysJobLog;
@@ -18,4 +19,6 @@ public interface SysJobLogService extends IService<SysJobLog> {
     List<SysJobLog> selectLogs(JobLogQuery query);
 
     List<JobLogVO> toViewList(List<SysJobLog> logs);
+
+    JobLogDetailVO toDetailView(SysJobLog log);
 }

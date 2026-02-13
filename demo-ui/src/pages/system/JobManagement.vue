@@ -119,26 +119,31 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="logVisible" align-center :title="t('job.logs.title')" width="720px">
+    <el-dialog v-model="logVisible" align-center :title="t('job.logs.title')" width="820px">
       <el-table v-loading="logLoading" :data="logs" row-key="id" size="small">
-        <el-table-column :label="t('job.logs.task')" min-width="160" prop="jobName"/>
-        <el-table-column :label="t('job.logs.handler')" min-width="140" prop="handlerName"/>
-        <el-table-column :label="t('job.logs.status')" width="80">
+        <el-table-column :label="t('job.logs.task')" prop="jobName" width="120" show-overflow-tooltip/>
+        <el-table-column :label="t('job.logs.handler')" prop="handlerName" width="120" show-overflow-tooltip/>
+        <el-table-column :label="t('job.logs.status')" width="70">
           <template #default="{row}">
             {{ row.status === 1 ? t("job.logs.statusSuccess") : t("job.logs.statusFail") }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('job.logs.startTime')" width="170">
+        <el-table-column :label="t('job.logs.startTime')" width="140">
           <template #default="{row}">
             {{ formatDateTime(row.startTime) }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('job.logs.duration')" width="100">
+        <el-table-column :label="t('job.logs.duration')" width="80">
           <template #default="{row}">
             {{ row.durationMs ?? 0 }}
           </template>
         </el-table-column>
-        <el-table-column :label="t('job.logs.message')" min-width="200" prop="message"/>
+        <el-table-column :label="t('job.logs.message')" prop="message" width="180" show-overflow-tooltip/>
+        <el-table-column :label="t('job.logs.action')" width="90">
+          <template #default="{row}">
+            <el-button size="small" text @click="openLogDetail(row)">{{ t("job.logs.viewLog") }}</el-button>
+          </template>
+        </el-table-column>
       </el-table>
       <div class="module-footer">
         <el-pagination
@@ -152,6 +157,20 @@
       </div>
       <template #footer>
         <el-button @click="logVisible = false">{{ t("job.logs.close") }}</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="logDetailVisible" align-center :title="t('job.logs.detailTitle')" width="720px">
+      <div class="log-detail-body" v-loading="logDetailLoading">
+        <div class="log-detail-meta">
+          <span>{{ logDetail?.jobName || "-" }}</span>
+          <span>{{ formatDateTime(logDetail?.startTime) }}</span>
+          <span>{{ logDetail?.status === 1 ? t("job.logs.statusSuccess") : t("job.logs.statusFail") }}</span>
+        </div>
+        <pre class="log-detail-content">{{ logDetail?.logDetail || t("job.logs.emptyLog") }}</pre>
+      </div>
+      <template #footer>
+        <el-button @click="logDetailVisible = false">{{ t("job.logs.close") }}</el-button>
       </template>
     </el-dialog>
 
@@ -520,8 +539,10 @@ import {useI18n} from "vue-i18n";
 import {
   createJob,
   deleteJob,
+  getJobLogDetail,
   type JobCreatePayload,
   type JobHandlerInfo,
+  type JobLogDetailVO,
   type JobLogVO,
   type JobUpdatePayload,
   type JobVO,
@@ -549,6 +570,9 @@ const logPageNum = ref(1);
 const logPageSize = ref(10);
 const logTotal = ref(0);
 const activeLogJobId = ref<number | null>(null);
+const logDetailVisible = ref(false);
+const logDetailLoading = ref(false);
+const logDetail = ref<JobLogDetailVO | null>(null);
 
 const filters = reactive({
   name: "",
@@ -1010,6 +1034,29 @@ async function loadLogs() {
   }
 }
 
+async function openLogDetail(row: JobLogVO) {
+  if (row?.id == null) {
+    return;
+  }
+  logDetailLoading.value = true;
+  logDetailVisible.value = true;
+  logDetail.value = null;
+  try {
+    const result = await getJobLogDetail(row.id);
+    if (result?.code === 200) {
+      logDetail.value = result.data || null;
+    } else {
+      ElMessage.error(result?.message || t("job.msg.loadLogDetailFailed"));
+      logDetailVisible.value = false;
+    }
+  } catch (error) {
+    ElMessage.error(t("job.msg.loadLogDetailFailed"));
+    logDetailVisible.value = false;
+  } finally {
+    logDetailLoading.value = false;
+  }
+}
+
 function handleLogPageChange(value: number) {
   logPageNum.value = value;
   loadLogs();
@@ -1072,6 +1119,35 @@ onMounted(() => {
 .module-footer {
   display: flex;
   justify-content: flex-end;
+}
+
+.log-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.log-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.log-detail-content {
+  margin: 0;
+  padding: 12px;
+  min-height: 220px;
+  max-height: 420px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(18, 18, 18, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .job-editor-form {

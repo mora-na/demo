@@ -257,7 +257,11 @@ export default {
             statusFail: "Failed",
             startTime: "Start time",
             duration: "Duration (ms)",
-            message: "Message",
+            message: "Failure reason",
+            action: "Action",
+            viewLog: "View log",
+            detailTitle: "Execution log",
+            emptyLog: "No log content",
             close: "Close"
         },
         msg: {
@@ -274,6 +278,7 @@ export default {
             deleteSuccess: "Job deleted",
             deleteFailed: "Failed to delete job",
             loadLogFailed: "Failed to load logs",
+            loadLogDetailFailed: "Failed to load execution log",
             validateName: "Enter a job name",
             validateHandler: "Select a handler",
             validateCron: "Enter a Cron expression"

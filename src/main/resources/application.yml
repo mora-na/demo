@@ -92,6 +92,29 @@ spring:
             # 获取触发器时加锁（高并发 DB 建议开启）
             acquireTriggersWithinLock: true
 
+# 定时任务日志收集配置
+job:
+  log:
+    collect:
+      # 是否启用自动收集
+      enabled: true
+      # 收集范围：MDC | THREAD
+      scope: MDC
+      # 最低收集级别（含）：TRACE/DEBUG/INFO/WARN/ERROR
+      min-level: INFO
+      # 单次执行最大日志长度（字符）
+      max-length: 65536
+      # 延迟合并时间（毫秒）
+      merge-delay-millis: 3000
+      # 最大缓冲保留时间（毫秒）
+      max-hold-millis: 60000
+      # 是否启用 InheritableThreadLocal 兜底透传
+      inherit-thread-context: true
+      # MDC 关联键
+      mdc-key: jobLogId
+      # 线程名 MDC 键（scope=THREAD 生效）
+      thread-key: jobLogThread
+
 # 缓存配置
 cache:
   # 缓存位置：redis | memory | db

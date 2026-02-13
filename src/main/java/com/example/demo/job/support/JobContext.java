@@ -21,4 +21,20 @@ public class JobContext {
     private String cronExpression;
 
     private String params;
+
+    private final StringBuilder logBuffer = new StringBuilder();
+
+    public void appendLog(String message) {
+        if (message == null || message.trim().isEmpty()) {
+            return;
+        }
+        if (logBuffer.length() > 0) {
+            logBuffer.append('\n');
+        }
+        logBuffer.append(message);
+    }
+
+    public String getLogContent() {
+        return logBuffer.toString();
+    }
 }

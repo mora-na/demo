@@ -2,6 +2,7 @@ package com.example.demo.job.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.demo.job.dto.JobLogDetailVO;
 import com.example.demo.job.dto.JobLogQuery;
 import com.example.demo.job.dto.JobLogVO;
 import com.example.demo.job.entity.SysJobLog;
@@ -24,12 +25,23 @@ public class SysJobLogServiceImpl extends ServiceImpl<SysJobLogMapper, SysJobLog
 
     @Override
     public List<SysJobLog> selectLogs(JobLogQuery query) {
+        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysJobLog> wrapper =
+                Wrappers.lambdaQuery(SysJobLog.class)
+                        .select(SysJobLog::getId,
+                                SysJobLog::getJobId,
+                                SysJobLog::getJobName,
+                                SysJobLog::getHandlerName,
+                                SysJobLog::getStatus,
+                                SysJobLog::getMessage,
+                                SysJobLog::getStartTime,
+                                SysJobLog::getEndTime,
+                                SysJobLog::getDurationMs);
         if (query == null) {
-            return list(Wrappers.lambdaQuery(SysJobLog.class)
+            return list(wrapper
                     .orderByDesc(SysJobLog::getStartTime)
                     .orderByDesc(SysJobLog::getId));
         }
-        return list(Wrappers.lambdaQuery(SysJobLog.class)
+        return list(wrapper
                 .eq(query.getJobId() != null, SysJobLog::getJobId, query.getJobId())
                 .orderByDesc(SysJobLog::getStartTime)
                 .orderByDesc(SysJobLog::getId));
@@ -58,5 +70,24 @@ public class SysJobLogServiceImpl extends ServiceImpl<SysJobLogMapper, SysJobLog
             result.add(view);
         }
         return result;
+    }
+
+    @Override
+    public JobLogDetailVO toDetailView(SysJobLog log) {
+        if (log == null) {
+            return null;
+        }
+        JobLogDetailVO view = new JobLogDetailVO();
+        view.setId(log.getId());
+        view.setJobId(log.getJobId());
+        view.setJobName(log.getJobName());
+        view.setHandlerName(log.getHandlerName());
+        view.setStatus(log.getStatus());
+        view.setMessage(log.getMessage());
+        view.setLogDetail(log.getLogDetail());
+        view.setStartTime(log.getStartTime());
+        view.setEndTime(log.getEndTime());
+        view.setDurationMs(log.getDurationMs());
+        return view;
     }
 }
