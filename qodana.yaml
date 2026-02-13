@@ -23,6 +23,30 @@ profile:
 #    paths:
 #      - <path/where/not/run/inspection>
 
+#Exclude generated/vendor/large directories from analysis
+exclude:
+  - name: All
+    paths:
+      - .idea
+      - .git
+      - target
+      - logs
+      - demo-ui/node_modules
+      - demo-ui/dist
+      - demo-ui/.vite
+      - demo-ui/.cache
+      - demo-ui/.turbo
+      - demo-ui/.pnpm-store
+      - demo-ui/.vitepress
+      - demo-ui/.output
+      - demo-ui/.nuxt
+      - demo-ui/.next
+      - demo-ui/.svelte-kit
+      - demo-ui/coverage
+      - demo-ui/.eslintcache
+      - "**/*.log"
+      - "**/.DS_Store"
+
 projectJDK: "17" #(Applied in CI/CD pipeline)
 
 #Execute shell command before Qodana execution (Applied in CI/CD pipeline)
