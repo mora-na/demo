@@ -70,7 +70,7 @@
           <el-input v-model.trim="form.name" :placeholder="t('job.dialog.namePlaceholder')"/>
         </el-form-item>
         <el-form-item :label="t('job.dialog.handler')">
-          <el-select v-model="form.handlerName" filterable :placeholder="t('job.dialog.handlerPlaceholder')">
+          <el-select v-model="form.handlerName" :placeholder="t('job.dialog.handlerPlaceholder')">
             <el-option
                 v-for="handler in handlers"
                 :key="handler.name"
@@ -1114,7 +1114,7 @@ onMounted(() => {
 
 .cron-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
 }
 
@@ -1131,6 +1131,12 @@ onMounted(() => {
 .cron-item :deep(.el-input-number),
 .cron-item :deep(.el-select) {
   width: 100%;
+}
+
+.cron-inline :deep(.el-input-number) {
+  flex: 1 1 0;
+  min-width: 100px;
+  width: auto;
 }
 
 @media (max-width: 720px) {
