@@ -2,22 +2,27 @@ package com.example.demo.user.dto;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 /**
- * 用户更新请求参数，允许部分字段可选修改。
+ * 用户创建请求参数，包含基础信息与数据范围设置。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
 @Data
-public class UserUpdateRequest {
+public class SysUserCreateRequest {
 
+    @NotBlank
     @Size(max = 64)
     private String userName;
 
     @Size(max = 64)
     private String nickName;
+
+    @Size(max = 256)
+    private String password;
 
     @Size(max = 16)
     private String sex;
@@ -26,6 +31,10 @@ public class UserUpdateRequest {
 
     private Long deptId;
 
+    private String dataScopeType;
+
+    private String dataScopeValue;
+
     @Size(max = 255)
-    private String tst;
+    private String remark;
 }

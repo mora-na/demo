@@ -14,10 +14,20 @@
         </el-select>
         <el-button @click="handleSearch">{{ t("user.filter.search") }}</el-button>
         <el-button type="primary" @click="openCreate">{{ t("user.filter.create") }}</el-button>
+        <el-button v-if="selectedUserIds.length" type="danger" @click="removeUsers">
+          {{ t("user.filter.delete") }}
+        </el-button>
       </div>
     </div>
 
-    <el-table v-loading="loading" :data="users" row-key="id" size="small">
+    <el-table
+        v-loading="loading"
+        :data="users"
+        row-key="id"
+        size="small"
+        @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" width="46"/>
       <el-table-column :label="t('user.table.userName')" min-width="140" prop="userName"/>
       <el-table-column :label="t('user.table.nickName')" min-width="140" prop="nickName"/>
       <el-table-column :label="t('user.table.sex')" width="80">
@@ -46,6 +56,7 @@
             <el-button size="small" text @click="openEdit(row)">{{ t("user.table.edit") }}</el-button>
             <el-button size="small" text @click="openReset(row)">{{ t("user.table.resetPassword") }}</el-button>
             <el-button size="small" text @click="openRoles(row)">{{ t("user.table.assignRoles") }}</el-button>
+            <el-button size="small" text type="danger" @click="removeUser(row)">{{ t("user.table.delete") }}</el-button>
           </div>
         </template>
       </el-table-column>
@@ -131,7 +142,7 @@
           </el-col>
           <el-col :xs="24">
             <el-form-item :label="t('user.dialog.remark')">
-              <el-input v-model.trim="form.tst"/>
+              <el-input v-model.trim="form.remark"/>
             </el-form-item>
           </el-col>
         </el-row>
@@ -175,11 +186,13 @@
 
 <script lang="ts" setup>
 import {computed, onMounted, reactive, ref} from "vue";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {
   assignUserRoles,
   createUser,
+  deleteUser,
+  deleteUsers,
   type DeptVO,
   getUserRoleIds,
   listDepts,
@@ -207,6 +220,7 @@ const resetVisible = ref(false);
 const editorMode = ref<"create" | "edit">("create");
 const editorUserId = ref<number | null>(null);
 const selectedUserId = ref<number | null>(null);
+const selectedUserIds = ref<number[]>([]);
 const {t} = useI18n();
 
 const filters = reactive({
@@ -228,7 +242,7 @@ const form = reactive<UserCreatePayload & UserUpdatePayload>({
   deptId: undefined,
   dataScopeType: "",
   dataScopeValue: "",
-  tst: ""
+  remark: ""
 });
 
 const selectedRoleIds = ref<number[]>([]);
@@ -321,6 +335,10 @@ function handleSizeChange(value: number) {
   fetchUsers();
 }
 
+function handleSelectionChange(rows: UserVO[]) {
+  selectedUserIds.value = rows.map((row) => row.id);
+}
+
 function resetFormState() {
   form.userName = "";
   form.nickName = "";
@@ -330,7 +348,7 @@ function resetFormState() {
   form.deptId = undefined;
   form.dataScopeType = "";
   form.dataScopeValue = "";
-  form.tst = "";
+  form.remark = "";
 }
 
 function openCreate() {
@@ -357,7 +375,7 @@ function openEdit(row: UserVO) {
   form.deptId = row.deptId ?? undefined;
   form.dataScopeType = row.dataScopeType || "";
   form.dataScopeValue = row.dataScopeValue || "";
-  form.tst = row.tst || "";
+  form.remark = row.remark || "";
   editorVisible.value = true;
 }
 
@@ -421,6 +439,48 @@ async function openRoles(row: UserVO) {
     selectedRoleIds.value = [];
   }
   roleVisible.value = true;
+}
+
+async function removeUser(row: UserVO) {
+  try {
+    await ElMessageBox.confirm(
+        t("user.msg.deleteConfirm", {name: row.userName}),
+        t("common.confirmTitle"),
+        {type: "warning"}
+    );
+  } catch {
+    return;
+  }
+  const result = await deleteUser(row.id);
+  if (result?.code === 200) {
+    ElMessage.success(t("user.msg.deleteSuccess"));
+    fetchUsers();
+  } else {
+    ElMessage.error(result?.message || t("user.msg.deleteFailed"));
+  }
+}
+
+async function removeUsers() {
+  if (!selectedUserIds.value.length) {
+    ElMessage.warning(t("user.msg.deleteEmpty"));
+    return;
+  }
+  try {
+    await ElMessageBox.confirm(
+        t("user.msg.batchDeleteConfirm", {count: selectedUserIds.value.length}),
+        t("common.confirmTitle"),
+        {type: "warning"}
+    );
+  } catch {
+    return;
+  }
+  const result = await deleteUsers(selectedUserIds.value);
+  if (result?.code === 200) {
+    ElMessage.success(t("user.msg.deleteSuccess"));
+    fetchUsers();
+  } else {
+    ElMessage.error(result?.message || t("user.msg.deleteFailed"));
+  }
 }
 
 async function saveRoles() {

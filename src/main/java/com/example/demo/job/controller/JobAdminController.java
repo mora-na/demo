@@ -9,7 +9,6 @@ import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.job.dto.*;
 import com.example.demo.job.entity.SysJob;
 import com.example.demo.job.model.JobMisfirePolicy;
-import com.example.demo.job.model.JobTargetType;
 import com.example.demo.job.service.SysJobLogService;
 import com.example.demo.job.service.SysJobService;
 import com.example.demo.job.support.JobHandlerRegistry;
@@ -77,15 +76,6 @@ public class JobAdminController extends BaseController {
                 && !JobMisfirePolicy.isSupported(request.getMisfirePolicy())) {
             return error(400, i18n("job.misfire.invalid"));
         }
-        if (StringUtils.isNotBlank(request.getTargetType())
-                && !JobTargetType.isSupported(request.getTargetType())) {
-            return error(400, i18n("job.target.invalid"));
-        }
-        if (StringUtils.isNotBlank(request.getTargetType())
-                && !JobTargetType.ALL.equalsIgnoreCase(request.getTargetType())
-                && (request.getTargetIds() == null || request.getTargetIds().isEmpty())) {
-            return error(400, i18n("job.target.invalid"));
-        }
         AuthUser user = AuthContext.get();
         SysJob job = jobService.createJob(request, user);
         if (job == null) {
@@ -112,16 +102,6 @@ public class JobAdminController extends BaseController {
         if (StringUtils.isNotBlank(request.getMisfirePolicy())
                 && !JobMisfirePolicy.isSupported(request.getMisfirePolicy())) {
             return error(400, i18n("job.misfire.invalid"));
-        }
-        if (StringUtils.isNotBlank(request.getTargetType())
-                && !JobTargetType.isSupported(request.getTargetType())) {
-            return error(400, i18n("job.target.invalid"));
-        }
-        if (StringUtils.isNotBlank(request.getTargetType())
-                && !JobTargetType.ALL.equalsIgnoreCase(request.getTargetType())
-                && request.getTargetIds() != null
-                && request.getTargetIds().isEmpty()) {
-            return error(400, i18n("job.target.invalid"));
         }
         if (!jobService.updateJob(id, request)) {
             return error(500, i18n("job.update.failed"));

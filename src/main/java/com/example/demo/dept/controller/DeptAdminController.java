@@ -12,6 +12,7 @@ import com.example.demo.dept.entity.Dept;
 import com.example.demo.dept.service.DeptService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -155,6 +156,39 @@ public class DeptAdminController extends BaseController {
         }
         if (!deptService.updateStatus(id, status)) {
             return error(500, i18n("common.status.update.failed"));
+        }
+        return success();
+    }
+
+    @DeleteMapping("/{id}")
+    @RequirePermission("dept:delete")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> delete(@PathVariable Long id) {
+        if (deptService.getById(id) == null) {
+            return error(404, i18n("dept.not.found"));
+        }
+        if (!deptService.removeById(id)) {
+            return error(500, i18n("common.delete.failed"));
+        }
+        return success();
+    }
+
+    @PostMapping("/batch-delete")
+    @RequirePermission("dept:delete")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> batchDelete(@RequestBody List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return success();
+        }
+        List<Long> uniqueIds = ids.stream()
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (uniqueIds.isEmpty()) {
+            return success();
+        }
+        if (!deptService.removeByIds(uniqueIds)) {
+            return error(500, i18n("common.delete.failed"));
         }
         return success();
     }

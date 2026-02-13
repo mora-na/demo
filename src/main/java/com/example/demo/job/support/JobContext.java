@@ -2,7 +2,6 @@ package com.example.demo.job.support;
 
 import lombok.Data;
 
-import java.util.List;
 
 /**
  * 定时任务执行上下文。
@@ -22,8 +21,4 @@ public class JobContext {
     private String cronExpression;
 
     private String params;
-
-    private String targetType;
-
-    private List<Long> targetIds;
 }

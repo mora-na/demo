@@ -7,10 +7,20 @@
       </div>
       <div class="module-actions">
         <el-button type="primary" @click="openCreate">{{ t("role.create") }}</el-button>
+        <el-button v-if="selectedRoleIds.length" type="danger" @click="removeRoles">
+          {{ t("role.filter.delete") }}
+        </el-button>
       </div>
     </div>
 
-    <el-table v-loading="loading" :data="roles" row-key="id" size="small">
+    <el-table
+        v-loading="loading"
+        :data="roles"
+        row-key="id"
+        size="small"
+        @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" width="46"/>
       <el-table-column :label="t('role.table.code')" min-width="140" prop="code"/>
       <el-table-column :label="t('role.table.name')" min-width="140" prop="name"/>
       <el-table-column :label="t('role.table.dataScope')" min-width="140" prop="dataScopeType"/>
@@ -29,6 +39,7 @@
           <el-button size="small" text @click="openEdit(row)">{{ t("role.table.edit") }}</el-button>
           <el-button size="small" text @click="openPermissions(row)">{{ t("role.table.assignPermissions") }}</el-button>
           <el-button size="small" text @click="openMenus(row)">{{ t("role.table.assignMenus") }}</el-button>
+          <el-button size="small" text type="danger" @click="removeRole(row)">{{ t("role.table.delete") }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -117,12 +128,14 @@
 
 <script lang="ts" setup>
 import {computed, nextTick, onMounted, reactive, ref} from "vue";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {
   assignRoleMenus,
   assignRolePermissions,
   createRole,
+  deleteRole,
+  deleteRoles,
   getRoleMenuIds,
   listMenus,
   listPermissions,
@@ -151,6 +164,7 @@ const menuVisible = ref(false);
 const editorMode = ref<"create" | "edit">("create");
 const editorRoleId = ref<number | null>(null);
 const selectedRoleId = ref<number | null>(null);
+const selectedRoleIds = ref<number[]>([]);
 const selectedPermissionIds = ref<number[]>([]);
 const {t} = useI18n();
 type MenuTreeRef = {
@@ -176,6 +190,10 @@ const editorTitle = computed(() =>
 function getErrorMessage(error: unknown, fallback: string): string {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err?.response?.data?.message || err?.message || fallback;
+}
+
+function handleSelectionChange(rows: RoleVO[]) {
+  selectedRoleIds.value = rows.map((row) => row.id);
 }
 
 async function fetchRoles() {
@@ -352,6 +370,48 @@ async function saveMenus() {
     ElMessage.error(getErrorMessage(error, t("role.msg.menusUpdateFailed")));
   } finally {
     assigningMenus.value = false;
+  }
+}
+
+async function removeRole(role: RoleVO) {
+  try {
+    await ElMessageBox.confirm(
+        t("role.msg.deleteConfirm", {name: role.name}),
+        t("common.confirmTitle"),
+        {type: "warning"}
+    );
+  } catch {
+    return;
+  }
+  const result = await deleteRole(role.id);
+  if (result?.code === 200) {
+    ElMessage.success(t("role.msg.deleteSuccess"));
+    fetchRoles();
+  } else {
+    ElMessage.error(result?.message || t("role.msg.deleteFailed"));
+  }
+}
+
+async function removeRoles() {
+  if (!selectedRoleIds.value.length) {
+    ElMessage.warning(t("role.msg.deleteEmpty"));
+    return;
+  }
+  try {
+    await ElMessageBox.confirm(
+        t("role.msg.batchDeleteConfirm", {count: selectedRoleIds.value.length}),
+        t("common.confirmTitle"),
+        {type: "warning"}
+    );
+  } catch {
+    return;
+  }
+  const result = await deleteRoles(selectedRoleIds.value);
+  if (result?.code === 200) {
+    ElMessage.success(t("role.msg.deleteSuccess"));
+    fetchRoles();
+  } else {
+    ElMessage.error(result?.message || t("role.msg.deleteFailed"));
   }
 }
 

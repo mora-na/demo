@@ -1,9 +1,9 @@
 package com.example.demo.user.converter;
 
 import com.example.demo.order.dto.OrderVO;
-import com.example.demo.user.dto.UserQuery;
-import com.example.demo.user.dto.UserVO;
-import com.example.demo.user.entity.User;
+import com.example.demo.user.dto.SysUserQuery;
+import com.example.demo.user.dto.SysUserVO;
+import com.example.demo.user.entity.SysUser;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -17,28 +17,28 @@ import java.util.stream.Collectors;
  * @date 2026/2/9
  */
 @Component
-public class UserConverter {
+public class SysUserConverter {
 
-    public User toEntity(UserQuery query) {
+    public SysUser toEntity(SysUserQuery query) {
         if (query == null) {
-            return new User();
+            return new SysUser();
         }
-        User user = new User();
+        SysUser user = new SysUser();
         user.setId(query.getId());
         user.setUserName(query.getUserName());
         user.setNickName(query.getNickName());
         user.setSex(query.getSex());
-        user.setTst(query.getTst());
+        user.setRemark(query.getRemark());
         user.setStatus(query.getStatus());
         user.setDeptId(query.getDeptId());
         return user;
     }
 
-    public User toEntity(UserVO userVO) {
+    public SysUser toEntity(SysUserVO userVO) {
         if (userVO == null) {
-            return new User();
+            return new SysUser();
         }
-        User user = new User();
+        SysUser user = new SysUser();
         user.setId(userVO.getId());
         user.setUserName(userVO.getUserName());
         user.setNickName(userVO.getNickName());
@@ -47,22 +47,22 @@ public class UserConverter {
         user.setDeptId(userVO.getDeptId());
         user.setDataScopeType(userVO.getDataScopeType());
         user.setDataScopeValue(userVO.getDataScopeValue());
-        user.setTst(userVO.getTst());
+        user.setRemark(userVO.getRemark());
         return user;
     }
 
-    public List<User> toEntityList(List<UserVO> userVOList) {
+    public List<SysUser> toEntityList(List<SysUserVO> userVOList) {
         if (userVOList == null || userVOList.isEmpty()) {
             return Collections.emptyList();
         }
         return userVOList.stream().map(this::toEntity).collect(Collectors.toList());
     }
 
-    public UserVO toView(User user, List<OrderVO> orderVOList) {
+    public SysUserVO toView(SysUser user, List<OrderVO> orderVOList) {
         if (user == null) {
-            return new UserVO();
+            return new SysUserVO();
         }
-        UserVO view = new UserVO();
+        SysUserVO view = new SysUserVO();
         view.setId(user.getId());
         view.setUserName(user.getUserName());
         view.setNickName(user.getNickName());
@@ -71,7 +71,7 @@ public class UserConverter {
         view.setDeptId(user.getDeptId());
         view.setDataScopeType(user.getDataScopeType());
         view.setDataScopeValue(user.getDataScopeValue());
-        view.setTst(user.getTst());
+        view.setRemark(user.getRemark());
         view.setOrderVOS(orderVOList);
         return view;
     }

@@ -6,13 +6,13 @@ import com.example.demo.auth.dto.UserProfileUpdateRequest;
 import com.example.demo.auth.service.PasswordService;
 import com.example.demo.permission.entity.UserRole;
 import com.example.demo.permission.service.UserRoleService;
-import com.example.demo.user.converter.UserConverter;
-import com.example.demo.user.dto.UserCreateRequest;
-import com.example.demo.user.dto.UserQuery;
-import com.example.demo.user.dto.UserUpdateRequest;
-import com.example.demo.user.entity.User;
-import com.example.demo.user.mapper.UserMapper;
-import com.example.demo.user.service.UserService;
+import com.example.demo.user.converter.SysUserConverter;
+import com.example.demo.user.dto.SysUserCreateRequest;
+import com.example.demo.user.dto.SysUserQuery;
+import com.example.demo.user.dto.SysUserUpdateRequest;
+import com.example.demo.user.entity.SysUser;
+import com.example.demo.user.mapper.SysUserMapper;
+import com.example.demo.user.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -26,37 +26,37 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
 
-    private final UserConverter userConverter;
+    private final SysUserConverter userConverter;
     private final PasswordService passwordService;
     private final UserRoleService userRoleService;
 
     @Override
-    public List<User> selectUsers(UserQuery query) {
+    public List<SysUser> selectUsers(SysUserQuery query) {
         return baseMapper.selectList(Wrappers.query(userConverter.toEntity(query)));
     }
 
     @Override
-    public User getByUserName(String userName) {
+    public SysUser getByUserName(String userName) {
         if (userName == null) {
             return null;
         }
-        return baseMapper.selectOne(Wrappers.lambdaQuery(User.class).eq(User::getUserName, userName));
+        return baseMapper.selectOne(Wrappers.lambdaQuery(SysUser.class).eq(SysUser::getUserName, userName));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public User createUser(UserCreateRequest request) {
+    public SysUser createUser(SysUserCreateRequest request) {
         if (request == null) {
             return null;
         }
-        User user = new User();
+        SysUser user = new SysUser();
         user.setUserName(request.getUserName());
         user.setNickName(request.getNickName());
         user.setSex(request.getSex());
-        user.setTst(request.getTst());
-        user.setStatus(request.getStatus() == null ? User.STATUS_ENABLED : request.getStatus());
+        user.setRemark(request.getRemark());
+        user.setStatus(request.getStatus() == null ? SysUser.STATUS_ENABLED : request.getStatus());
         user.setDeptId(request.getDeptId());
         user.setDataScopeType(request.getDataScopeType());
         user.setDataScopeValue(request.getDataScopeValue());
@@ -67,18 +67,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean updateUser(Long id, UserUpdateRequest request) {
+    public boolean updateUser(Long id, SysUserUpdateRequest request) {
         if (id == null || request == null) {
             return false;
         }
-        User user = new User();
+        SysUser user = new SysUser();
         user.setId(id);
         user.setUserName(request.getUserName());
         user.setNickName(request.getNickName());
         user.setSex(request.getSex());
         user.setStatus(request.getStatus());
         user.setDeptId(request.getDeptId());
-        user.setTst(request.getTst());
+        user.setRemark(request.getRemark());
         return updateById(user);
     }
 
@@ -88,7 +88,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (id == null) {
             return false;
         }
-        User user = new User();
+        SysUser user = new SysUser();
         user.setId(id);
         user.setStatus(status);
         return updateById(user);
@@ -100,7 +100,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (id == null || newPassword == null) {
             return false;
         }
-        User user = new User();
+        SysUser user = new SysUser();
         user.setId(id);
         user.setPassword(passwordService.encode(newPassword));
         return updateById(user);
@@ -138,7 +138,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (id == null) {
             return false;
         }
-        User user = new User();
+        SysUser user = new SysUser();
         user.setId(id);
         user.setDataScopeType(dataScopeType);
         user.setDataScopeValue(dataScopeValue);
@@ -151,11 +151,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (id == null || request == null) {
             return false;
         }
-        User user = new User();
+        SysUser user = new SysUser();
         user.setId(id);
         user.setNickName(request.getNickName());
         user.setSex(request.getSex());
-        user.setTst(request.getTst());
+        user.setRemark(request.getRemark());
         if (StringUtils.isNotBlank(newPassword)) {
             user.setPassword(passwordService.encode(newPassword));
         }

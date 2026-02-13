@@ -8,8 +8,8 @@ import com.example.demo.auth.support.AuthTokenResolver;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequireLogin;
-import com.example.demo.user.entity.User;
-import com.example.demo.user.service.UserService;
+import com.example.demo.user.entity.SysUser;
+import com.example.demo.user.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +32,7 @@ public class AuthController extends BaseController {
     private final CaptchaService captchaService;
     private final TokenService tokenService;
     private final PasswordService passwordService;
-    private final UserService userService;
+    private final SysUserService userService;
     private final LoginAttemptService loginAttemptService;
     private final UserProfileService userProfileService;
 
@@ -74,12 +74,12 @@ public class AuthController extends BaseController {
         if (!captchaService.verify(request.getCaptchaId(), request.getCaptchaCode())) {
             return error(401, i18n("auth.login.captcha.invalid"));
         }
-        User user = userService.getByUserName(request.getUserName());
+        SysUser user = userService.getByUserName(request.getUserName());
         if (user == null) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             return error(401, credentialError);
         }
-        if (user.getStatus() != null && user.getStatus().equals(User.STATUS_DISABLED)) {
+        if (user.getStatus() != null && user.getStatus().equals(SysUser.STATUS_DISABLED)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             return error(401, credentialError);
         }
@@ -153,7 +153,7 @@ public class AuthController extends BaseController {
         if (authUser == null || authUser.getId() == null) {
             return error(401, i18n("auth.user.invalid"));
         }
-        User dbUser = userService.getById(authUser.getId());
+        SysUser dbUser = userService.getById(authUser.getId());
         if (dbUser == null) {
             return error(404, i18n("user.not.found"));
         }

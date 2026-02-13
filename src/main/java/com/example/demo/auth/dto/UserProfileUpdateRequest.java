@@ -20,7 +20,7 @@ public class UserProfileUpdateRequest {
     private String sex;
 
     @Size(max = 255)
-    private String tst;
+    private String remark;
 
     private String oldPassword;
 

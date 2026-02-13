@@ -20,7 +20,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName(value = "sys_user")
-public class User extends BaseEntity implements Serializable {
+public class SysUser extends BaseEntity implements Serializable {
 
     public static final int STATUS_ENABLED = 1;
     public static final int STATUS_DISABLED = 0;
@@ -77,12 +77,5 @@ public class User extends BaseEntity implements Serializable {
     @TableField("sex")
     @Excel(header = "性别", mapping = {"F:女", "M:男"}, sort = 4)
     private String sex;
-
-    /**
-     * 备注/测试字段
-     */
-    @TableField("tst")
-    @Excel(header = "备注")
-    private String tst;
 
 }

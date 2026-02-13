@@ -13,11 +13,14 @@ import com.example.demo.permission.dto.*;
 import com.example.demo.permission.entity.Permission;
 import com.example.demo.permission.entity.Role;
 import com.example.demo.permission.entity.RolePermission;
+import com.example.demo.permission.entity.UserRole;
 import com.example.demo.permission.service.PermissionService;
 import com.example.demo.permission.service.RolePermissionService;
 import com.example.demo.permission.service.RoleService;
+import com.example.demo.permission.service.UserRoleService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +48,7 @@ public class RoleAdminController extends BaseController {
     private final PermissionService permissionService;
     private final RoleMenuService roleMenuService;
     private final MenuService menuService;
+    private final UserRoleService userRoleService;
 
     /**
      * 获取角色列表并附带权限集合。
@@ -247,6 +251,45 @@ public class RoleAdminController extends BaseController {
         }
         if (!roleMenuService.assignMenus(id, menuIds)) {
             return error(500, i18n("role.menus.assign.failed"));
+        }
+        return success();
+    }
+
+    @DeleteMapping("/{id}")
+    @RequirePermission("role:delete")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> delete(@PathVariable Long id) {
+        if (roleService.getById(id) == null) {
+            return error(404, i18n("role.not.found"));
+        }
+        rolePermissionService.remove(Wrappers.lambdaQuery(RolePermission.class).eq(RolePermission::getRoleId, id));
+        roleMenuService.remove(Wrappers.lambdaQuery(RoleMenu.class).eq(RoleMenu::getRoleId, id));
+        userRoleService.remove(Wrappers.lambdaQuery(UserRole.class).eq(UserRole::getRoleId, id));
+        if (!roleService.removeById(id)) {
+            return error(500, i18n("common.delete.failed"));
+        }
+        return success();
+    }
+
+    @PostMapping("/batch-delete")
+    @RequirePermission("role:delete")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> batchDelete(@RequestBody List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return success();
+        }
+        List<Long> uniqueIds = ids.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (uniqueIds.isEmpty()) {
+            return success();
+        }
+        rolePermissionService.remove(Wrappers.lambdaQuery(RolePermission.class).in(RolePermission::getRoleId, uniqueIds));
+        roleMenuService.remove(Wrappers.lambdaQuery(RoleMenu.class).in(RoleMenu::getRoleId, uniqueIds));
+        userRoleService.remove(Wrappers.lambdaQuery(UserRole.class).in(UserRole::getRoleId, uniqueIds));
+        if (!roleService.removeByIds(uniqueIds)) {
+            return error(500, i18n("common.delete.failed"));
         }
         return success();
     }

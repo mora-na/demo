@@ -6,18 +6,15 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 /**
- * 用户数据范围更新请求体，指定范围类型与可选值。
+ * 用户重置密码请求体，校验新密码的必填与长度约束。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
 @Data
-public class UserDataScopeRequest {
+public class SysUserResetPasswordRequest {
 
     @NotBlank
-    @Size(max = 32)
-    private String dataScopeType;
-
-    @Size(max = 512)
-    private String dataScopeValue;
+    @Size(min = 6, max = 128)
+    private String newPassword;
 }

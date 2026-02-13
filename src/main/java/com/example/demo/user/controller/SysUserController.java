@@ -7,12 +7,12 @@ import com.example.demo.common.model.PageResult;
 import com.example.demo.common.tool.ExcelTool;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
-import com.example.demo.user.converter.UserConverter;
-import com.example.demo.user.dto.UserQuery;
-import com.example.demo.user.dto.UserVO;
-import com.example.demo.user.entity.User;
-import com.example.demo.user.service.UserService;
-import com.example.demo.user.service.UserViewService;
+import com.example.demo.user.converter.SysUserConverter;
+import com.example.demo.user.dto.SysUserQuery;
+import com.example.demo.user.dto.SysUserVO;
+import com.example.demo.user.entity.SysUser;
+import com.example.demo.user.service.SysUserService;
+import com.example.demo.user.service.SysUserViewService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -32,57 +32,57 @@ import java.util.List;
 @RestController
 @RequestMapping("/hello")
 @RequiredArgsConstructor
-public class UserController extends BaseController {
+public class SysUserController extends BaseController {
 
-    private final UserService userService;
-    private final UserViewService userViewService;
-    private final UserConverter userConverter;
+    private final SysUserService userService;
+    private final SysUserViewService userViewService;
+    private final SysUserConverter userConverter;
 
     @RequestMapping("/selectUsers1")
     @RequirePermission("user:query")
-    public PageResult<UserVO> listUser1(@ModelAttribute UserQuery query) {
-        PageResult<User> pageResult = page(() -> userService.selectUsers(query));
+    public PageResult<SysUserVO> listUser1(@ModelAttribute SysUserQuery query) {
+        PageResult<SysUser> pageResult = page(() -> userService.selectUsers(query));
         return new PageResult<>(pageResult.getTotal(), userViewService.toViewList(pageResult.getData()), pageResult.getPageNum(), pageResult.getPageSize());
     }
 
     @RequestMapping("/selectUsers2")
     @RequirePermission("user:query")
-    public PageResult<UserVO> listUser2(@ModelAttribute UserQuery query) {
+    public PageResult<SysUserVO> listUser2(@ModelAttribute SysUserQuery query) {
         return page(() -> userService.selectUsers(query), userViewService::toView);
     }
 
     @RequestMapping("/selectUsers3")
     @RequirePermission("user:query")
-    public PageResult<UserVO> listUser3(@ModelAttribute UserQuery query) {
+    public PageResult<SysUserVO> listUser3(@ModelAttribute SysUserQuery query) {
         return page(query, userService::selectUsers, userViewService::toView);
     }
 
     @RequestMapping("/selectUsers4")
     @RequirePermission("user:query")
-    public PageResult<UserVO> listUser4(@ModelAttribute UserQuery query) {
-        QueryWrapper<User> wrapper = Wrappers.query(userConverter.toEntity(query));
+    public PageResult<SysUserVO> listUser4(@ModelAttribute SysUserQuery query) {
+        QueryWrapper<SysUser> wrapper = Wrappers.query(userConverter.toEntity(query));
         return page(wrapper, userService.getBaseMapper()::selectList, userViewService::toView);
     }
 
     @RequestMapping("/selectUsers5")
     @RequirePermission("user:query")
-    public PageResult<UserVO> listUser5(@ModelAttribute UserQuery query) {
+    public PageResult<SysUserVO> listUser5(@ModelAttribute SysUserQuery query) {
         startPage();
-        List<User> users = userService.selectUsers(query);
-        PageResult<User> pageResult = getPageResult(users);
+        List<SysUser> users = userService.selectUsers(query);
+        PageResult<SysUser> pageResult = getPageResult(users);
         return new PageResult<>(pageResult.getTotal(), userViewService.toViewList(pageResult.getData()), pageResult.getPageNum(), pageResult.getPageSize());
     }
 
     @GetMapping("/export")
     @RequirePermission("user:export")
-    public void export(@ModelAttribute UserQuery query, HttpServletResponse response) {
-        exportExcel(response, () -> userService.selectUsers(query), User.class, "用户信息" + LocalDateTime.now());
+    public void export(@ModelAttribute SysUserQuery query, HttpServletResponse response) {
+        exportExcel(response, () -> userService.selectUsers(query), SysUser.class, "用户信息" + LocalDateTime.now());
     }
 
     @PostMapping("/import")
     @RequirePermission("user:import")
     public CommonResult<String> importExcel(@RequestPart("file") MultipartFile file) {
-        List<User> users = ExcelTool.importFromMultipart(file, User.class);
+        List<SysUser> users = ExcelTool.importFromMultipart(file, SysUser.class);
         log.info("Received request to importExcel,users:[{}]", users);
         if (userService.saveOrUpdateBatch(users)) {
             return success(i18n("user.import.success"));

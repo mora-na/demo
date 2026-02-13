@@ -4,7 +4,6 @@ import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import java.util.List;
 
 /**
  * 定时任务创建请求。
@@ -33,11 +32,6 @@ public class JobCreateRequest {
 
     @Size(max = 32)
     private String misfirePolicy;
-
-    @Size(max = 32)
-    private String targetType;
-
-    private List<Long> targetIds;
 
     private String params;
 

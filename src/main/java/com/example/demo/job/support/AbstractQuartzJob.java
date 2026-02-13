@@ -3,15 +3,12 @@ package com.example.demo.job.support;
 import com.example.demo.common.spring.SpringContextHolder;
 import com.example.demo.job.entity.SysJobLog;
 import com.example.demo.job.service.SysJobLogService;
-import org.apache.commons.lang3.StringUtils;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Quartz 任务基类，负责桥接任务处理器与日志记录。
@@ -65,29 +62,7 @@ public abstract class AbstractQuartzJob implements Job {
         context.setHandlerName(dataMap.getString("handlerName"));
         context.setCronExpression(dataMap.getString("cronExpression"));
         context.setParams(dataMap.getString("params"));
-        context.setTargetType(dataMap.getString("targetType"));
-        context.setTargetIds(parseTargetIds(dataMap.getString("targetIds")));
         return context;
-    }
-
-    private List<Long> parseTargetIds(String value) {
-        if (StringUtils.isBlank(value)) {
-            return new ArrayList<>();
-        }
-        String[] parts = value.split(",");
-        List<Long> result = new ArrayList<>();
-        for (String part : parts) {
-            String trimmed = part.trim();
-            if (trimmed.isEmpty()) {
-                continue;
-            }
-            try {
-                result.add(Long.parseLong(trimmed));
-            } catch (NumberFormatException ignored) {
-                // ignore invalid id
-            }
-        }
-        return result;
     }
 
     private String trimMessage(String message) {

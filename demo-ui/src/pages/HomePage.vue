@@ -125,7 +125,7 @@
         </el-button>
         <el-dropdown trigger="click">
           <button class="topbar-user" type="button">
-            <el-avatar class="user-avatar" size="32">{{ userInitial }}</el-avatar>
+            <el-avatar class="user-avatar" :size="32">{{ userInitial }}</el-avatar>
             <div class="user-meta">
               <div class="user-name">{{ displayName }}</div>
               <div class="user-role">{{ roleSummary }}</div>

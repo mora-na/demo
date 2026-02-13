@@ -9,9 +9,12 @@ import com.example.demo.common.web.permission.RequireLogin;
 import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.notice.dto.*;
 import com.example.demo.notice.entity.Notice;
+import com.example.demo.notice.entity.NoticeRecipient;
 import com.example.demo.notice.model.NoticeScopeType;
+import com.example.demo.notice.service.NoticeRecipientService;
 import com.example.demo.notice.service.NoticeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +35,7 @@ import java.util.List;
 public class NoticeController extends BaseController {
 
     private final NoticeService noticeService;
+    private final NoticeRecipientService noticeRecipientService;
 
     /**
      * 管理端获取通知列表。
@@ -153,5 +157,42 @@ public class NoticeController extends BaseController {
         }
         int updated = noticeService.markAllRead(user.getId());
         return success(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    @RequirePermission("notice:delete")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> delete(@PathVariable Long id) {
+        if (noticeService.getById(id) == null) {
+            return error(404, i18n("notice.not.found"));
+        }
+        noticeRecipientService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(NoticeRecipient.class)
+                .eq(NoticeRecipient::getNoticeId, id));
+        if (!noticeService.removeById(id)) {
+            return error(500, i18n("common.delete.failed"));
+        }
+        return success();
+    }
+
+    @PostMapping("/batch-delete")
+    @RequirePermission("notice:delete")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> batchDelete(@RequestBody List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return success();
+        }
+        List<Long> uniqueIds = ids.stream()
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+        if (uniqueIds.isEmpty()) {
+            return success();
+        }
+        noticeRecipientService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(NoticeRecipient.class)
+                .in(NoticeRecipient::getNoticeId, uniqueIds));
+        if (!noticeService.removeByIds(uniqueIds)) {
+            return error(500, i18n("common.delete.failed"));
+        }
+        return success();
     }
 }

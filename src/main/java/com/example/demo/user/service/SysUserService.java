@@ -2,10 +2,10 @@ package com.example.demo.user.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.auth.dto.UserProfileUpdateRequest;
-import com.example.demo.user.dto.UserCreateRequest;
-import com.example.demo.user.dto.UserQuery;
-import com.example.demo.user.dto.UserUpdateRequest;
-import com.example.demo.user.entity.User;
+import com.example.demo.user.dto.SysUserCreateRequest;
+import com.example.demo.user.dto.SysUserQuery;
+import com.example.demo.user.dto.SysUserUpdateRequest;
+import com.example.demo.user.entity.SysUser;
 
 import java.util.List;
 
@@ -15,15 +15,15 @@ import java.util.List;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public interface UserService extends IService<User> {
+public interface SysUserService extends IService<SysUser> {
 
-    List<User> selectUsers(UserQuery query);
+    List<SysUser> selectUsers(SysUserQuery query);
 
-    User getByUserName(String userName);
+    SysUser getByUserName(String userName);
 
-    User createUser(UserCreateRequest request);
+    SysUser createUser(SysUserCreateRequest request);
 
-    boolean updateUser(Long id, UserUpdateRequest request);
+    boolean updateUser(Long id, SysUserUpdateRequest request);
 
     boolean updateStatus(Long id, Integer status);
 

@@ -3,7 +3,6 @@ package com.example.demo.job.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 定时任务视图对象。
@@ -27,10 +26,6 @@ public class JobVO {
     private Integer allowConcurrent;
 
     private String misfirePolicy;
-
-    private String targetType;
-
-    private List<Long> targetIds;
 
     private String params;
 

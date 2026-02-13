@@ -20,7 +20,7 @@ export interface LoginData {
 export interface UpdateProfilePayload {
     nickName?: string;
     sex?: string;
-    tst?: string;
+    remark?: string;
     oldPassword?: string;
     newPassword?: string;
 }

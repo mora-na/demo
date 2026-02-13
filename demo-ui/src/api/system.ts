@@ -23,7 +23,7 @@ export interface UserVO {
     deptId?: number | null;
     dataScopeType?: string;
     dataScopeValue?: string;
-    tst?: string;
+    remark?: string;
 }
 
 export interface RoleVO {
@@ -85,7 +85,7 @@ export interface UserCreatePayload {
     deptId?: number | null;
     dataScopeType?: string;
     dataScopeValue?: string;
-    tst?: string;
+    remark?: string;
 }
 
 export interface UserUpdatePayload {
@@ -96,7 +96,7 @@ export interface UserUpdatePayload {
     deptId?: number | null;
     dataScopeType?: string;
     dataScopeValue?: string;
-    tst?: string;
+    remark?: string;
 }
 
 export interface RoleCreatePayload {
@@ -201,6 +201,16 @@ export async function updateUserStatus(id: number, status: number): Promise<ApiR
     return response.data;
 }
 
+export async function deleteUser(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/users/${id}`);
+    return response.data;
+}
+
+export async function deleteUsers(ids: number[]): Promise<ApiResponse<void>> {
+    const response = await api.post<ApiResponse<void>>("/users/batch-delete", ids);
+    return response.data;
+}
+
 export async function resetUserPassword(id: number, newPassword: string): Promise<ApiResponse<void>> {
     const encoded = await encodeTransportPassword(newPassword);
     const response = await api.put<ApiResponse<void>>(`/users/${id}/reset-password`, {newPassword: encoded});
@@ -229,6 +239,16 @@ export async function updateRole(id: number, payload: RoleUpdatePayload): Promis
 
 export async function updateRoleStatus(id: number, status: number): Promise<ApiResponse<void>> {
     const response = await api.put<ApiResponse<void>>(`/roles/${id}/status`, {status});
+    return response.data;
+}
+
+export async function deleteRole(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/roles/${id}`);
+    return response.data;
+}
+
+export async function deleteRoles(ids: number[]): Promise<ApiResponse<void>> {
+    const response = await api.post<ApiResponse<void>>("/roles/batch-delete", ids);
     return response.data;
 }
 
@@ -267,6 +287,16 @@ export async function updatePermissionStatus(id: number, status: number): Promis
     return response.data;
 }
 
+export async function deletePermission(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/permissions/${id}`);
+    return response.data;
+}
+
+export async function deletePermissions(ids: number[]): Promise<ApiResponse<void>> {
+    const response = await api.post<ApiResponse<void>>("/permissions/batch-delete", ids);
+    return response.data;
+}
+
 export async function listMenus(): Promise<ApiResponse<MenuVO[]>> {
     const response = await api.get<ApiResponse<MenuVO[]>>("/menus");
     return response.data;
@@ -287,6 +317,16 @@ export async function updateMenuStatus(id: number, status: number): Promise<ApiR
     return response.data;
 }
 
+export async function deleteMenu(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/menus/${id}`);
+    return response.data;
+}
+
+export async function deleteMenus(ids: number[]): Promise<ApiResponse<void>> {
+    const response = await api.post<ApiResponse<void>>("/menus/batch-delete", ids);
+    return response.data;
+}
+
 export async function listDepts(): Promise<ApiResponse<DeptVO[]>> {
     const response = await api.get<ApiResponse<DeptVO[]>>("/depts");
     return response.data;
@@ -304,6 +344,16 @@ export async function updateDept(id: number, payload: DeptUpdatePayload): Promis
 
 export async function updateDeptStatus(id: number, status: number): Promise<ApiResponse<void>> {
     const response = await api.put<ApiResponse<void>>(`/depts/${id}/status`, {status});
+    return response.data;
+}
+
+export async function deleteDept(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/depts/${id}`);
+    return response.data;
+}
+
+export async function deleteDepts(ids: number[]): Promise<ApiResponse<void>> {
+    const response = await api.post<ApiResponse<void>>("/depts/batch-delete", ids);
     return response.data;
 }
 
@@ -356,6 +406,16 @@ export interface NoticeQuery {
 
 export async function listNotices(params: NoticeQuery): Promise<ApiResponse<PageResult<NoticeVO>>> {
     const response = await api.get<ApiResponse<PageResult<NoticeVO>>>('/notices', {params});
+    return response.data;
+}
+
+export async function deleteNotice(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/notices/${id}`);
+    return response.data;
+}
+
+export async function deleteNotices(ids: number[]): Promise<ApiResponse<void>> {
+    const response = await api.post<ApiResponse<void>>("/notices/batch-delete", ids);
     return response.data;
 }
 

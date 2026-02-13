@@ -9,6 +9,7 @@ export default {
         entry: "功能入口",
         cancel: "取消",
         save: "保存",
+        confirmTitle: "提示",
         missingToken: "缺少登录令牌",
         profileLoadFailed: "用户信息加载失败"
     },
@@ -283,6 +284,9 @@ export default {
         title: "部门管理",
         subtitle: "维护组织部门与层级结构。",
         create: "新增部门",
+        filter: {
+            delete: "批量删除"
+        },
         table: {
             name: "名称",
             code: "编码",
@@ -290,7 +294,8 @@ export default {
             sort: "排序",
             status: "状态",
             action: "操作",
-            edit: "编辑"
+            edit: "编辑",
+            delete: "删除"
         },
         dialog: {
             createTitle: "新增部门",
@@ -314,13 +319,21 @@ export default {
             updateFailed: "更新失败",
             saveFailed: "保存失败",
             statusUpdateFailed: "状态更新失败",
-            validateName: "请输入部门名称"
+            validateName: "请输入部门名称",
+            deleteConfirm: "确认删除部门 {name}？",
+            batchDeleteConfirm: "确认删除选中的 {count} 个部门？",
+            deleteSuccess: "删除成功",
+            deleteFailed: "删除失败",
+            deleteEmpty: "请先选择要删除的部门"
         }
     },
     menu: {
         title: "菜单管理",
         subtitle: "维护系统菜单与前端路由配置。",
         create: "新增菜单",
+        filter: {
+            delete: "批量删除"
+        },
         table: {
             name: "名称",
             code: "编码",
@@ -330,7 +343,8 @@ export default {
             sort: "排序",
             status: "状态",
             action: "操作",
-            edit: "编辑"
+            edit: "编辑",
+            delete: "删除"
         },
         dialog: {
             createTitle: "新增菜单",
@@ -357,19 +371,28 @@ export default {
             updateFailed: "更新失败",
             saveFailed: "保存失败",
             statusUpdateFailed: "状态更新失败",
-            validateName: "请输入菜单名称"
+            validateName: "请输入菜单名称",
+            deleteConfirm: "确认删除菜单 {name}？",
+            batchDeleteConfirm: "确认删除选中的 {count} 个菜单？",
+            deleteSuccess: "删除成功",
+            deleteFailed: "删除失败",
+            deleteEmpty: "请先选择要删除的菜单"
         }
     },
     permission: {
         title: "权限管理",
         subtitle: "维护权限标识与授权名称。",
         create: "新增权限",
+        filter: {
+            delete: "批量删除"
+        },
         table: {
             code: "编码",
             name: "名称",
             status: "状态",
             action: "操作",
-            edit: "编辑"
+            edit: "编辑",
+            delete: "删除"
         },
         dialog: {
             createTitle: "新增权限",
@@ -389,13 +412,21 @@ export default {
             updateFailed: "更新失败",
             saveFailed: "保存失败",
             statusUpdateFailed: "状态更新失败",
-            validateForm: "请填写权限编码与名称"
+            validateForm: "请填写权限编码与名称",
+            deleteConfirm: "确认删除权限 {name}？",
+            batchDeleteConfirm: "确认删除选中的 {count} 个权限？",
+            deleteSuccess: "删除成功",
+            deleteFailed: "删除失败",
+            deleteEmpty: "请先选择要删除的权限"
         }
     },
     role: {
         title: "角色管理",
         subtitle: "维护角色信息与权限、菜单授权。",
         create: "新增角色",
+        filter: {
+            delete: "批量删除"
+        },
         table: {
             code: "编码",
             name: "名称",
@@ -404,7 +435,8 @@ export default {
             action: "操作",
             edit: "编辑",
             assignPermissions: "分配权限",
-            assignMenus: "分配菜单"
+            assignMenus: "分配菜单",
+            delete: "删除"
         },
         dialog: {
             createTitle: "新增角色",
@@ -449,7 +481,12 @@ export default {
             permissionsUpdated: "权限已更新",
             permissionsUpdateFailed: "权限更新失败",
             menusUpdated: "菜单已更新",
-            menusUpdateFailed: "菜单更新失败"
+            menusUpdateFailed: "菜单更新失败",
+            deleteConfirm: "确认删除角色 {name}？",
+            batchDeleteConfirm: "确认删除选中的 {count} 个角色？",
+            deleteSuccess: "删除成功",
+            deleteFailed: "删除失败",
+            deleteEmpty: "请先选择要删除的角色"
         }
     },
     user: {
@@ -460,7 +497,8 @@ export default {
             nickNamePlaceholder: "昵称",
             statusPlaceholder: "状态",
             search: "查询",
-            create: "新增用户"
+            create: "新增用户",
+            delete: "批量删除"
         },
         table: {
             userName: "用户名",
@@ -471,7 +509,8 @@ export default {
             action: "操作",
             edit: "编辑",
             resetPassword: "重置密码",
-            assignRoles: "分配角色"
+            assignRoles: "分配角色",
+            delete: "删除"
         },
         dialog: {
             createTitle: "新增用户",
@@ -531,7 +570,12 @@ export default {
             passwordResetFailed: "密码重置失败",
             validateUserName: "请输入用户名",
             validatePassword: "请输入新密码",
-            validatePasswordConfirm: "两次输入的密码不一致"
+            validatePasswordConfirm: "两次输入的密码不一致",
+            deleteConfirm: "确认删除用户 {name}？",
+            batchDeleteConfirm: "确认删除选中的 {count} 个用户？",
+            deleteSuccess: "删除成功",
+            deleteFailed: "删除失败",
+            deleteEmpty: "请先选择要删除的用户"
         }
     },
     notice: {
@@ -541,7 +585,8 @@ export default {
             keywordPlaceholder: "标题/内容关键词",
             scopePlaceholder: "通知范围",
             search: "查询",
-            publish: "发布通知"
+            publish: "发布通知",
+            delete: "批量删除"
         },
         scope: {
             all: "全部",
@@ -556,7 +601,8 @@ export default {
             publisher: "发布人",
             publishTime: "发布时间",
             action: "操作",
-            detail: "详情"
+            detail: "详情",
+            delete: "删除"
         },
         publish: {
             title: "发布系统通知",
@@ -597,7 +643,12 @@ export default {
             detailLoadFailed: "加载详情失败",
             validateTitle: "请输入通知标题",
             validateContent: "请输入通知内容",
-            validateTarget: "请选择接收对象"
+            validateTarget: "请选择接收对象",
+            deleteConfirm: "确认删除通知《{title}》？",
+            batchDeleteConfirm: "确认删除选中的 {count} 条通知？",
+            deleteSuccess: "删除成功",
+            deleteFailed: "删除失败",
+            deleteEmpty: "请先选择要删除的通知"
         }
     }
 };

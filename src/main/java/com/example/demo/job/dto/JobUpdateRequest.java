@@ -3,7 +3,6 @@ package com.example.demo.job.dto;
 import lombok.Data;
 
 import javax.validation.constraints.Size;
-import java.util.List;
 
 /**
  * 定时任务更新请求。
@@ -29,11 +28,6 @@ public class JobUpdateRequest {
 
     @Size(max = 32)
     private String misfirePolicy;
-
-    @Size(max = 32)
-    private String targetType;
-
-    private List<Long> targetIds;
 
     private String params;
 

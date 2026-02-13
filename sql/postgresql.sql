@@ -2,13 +2,6 @@ CREATE SEQUENCE IF NOT EXISTS sys_user_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_user
 (
     id               BIGINT PRIMARY KEY    DEFAULT nextval('sys_user_id_seq'),
-    create_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by        VARCHAR(64),
-    update_by        VARCHAR(64),
-    is_deleted       SMALLINT     NOT NULL DEFAULT 0,
-    version          INT          NOT NULL DEFAULT 0,
-    remark           VARCHAR(500),
     user_name        VARCHAR(64)  NOT NULL,
     nick_name        VARCHAR(64),
     password         VARCHAR(128) NOT NULL,
@@ -17,7 +10,13 @@ CREATE TABLE IF NOT EXISTS sys_user
     data_scope_type  VARCHAR(32),
     data_scope_value VARCHAR(512),
     sex              VARCHAR(16),
-    tst              VARCHAR(255)
+    create_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by        VARCHAR(64),
+    update_by        VARCHAR(64),
+    is_deleted       SMALLINT     NOT NULL DEFAULT 0,
+    version          INT          NOT NULL DEFAULT 0,
+    remark           VARCHAR(500)
 );
 ALTER SEQUENCE sys_user_id_seq OWNED BY sys_user.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_user_name ON sys_user (user_name, is_deleted);
@@ -38,25 +37,24 @@ COMMENT ON COLUMN sys_user.dept_id IS '部门ID';
 COMMENT ON COLUMN sys_user.data_scope_type IS '数据范围类型：ALL全量/SELF仅本人/CUSTOM自定义/NONE无数据';
 COMMENT ON COLUMN sys_user.data_scope_value IS '数据范围值，CUSTOM时存储自定义范围内容（如ID列表）';
 COMMENT ON COLUMN sys_user.sex IS '性别';
-COMMENT ON COLUMN sys_user.tst IS '备注/测试字段';
 CREATE INDEX IF NOT EXISTS idx_sys_user_dept ON sys_user (dept_id);
 
 CREATE SEQUENCE IF NOT EXISTS sys_dept_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_dept
 (
     id          BIGINT PRIMARY KEY    DEFAULT nextval('sys_dept_id_seq'),
+    name        VARCHAR(128) NOT NULL,
+    code        VARCHAR(64),
+    parent_id   BIGINT,
+    status      SMALLINT     NOT NULL DEFAULT 1,
+    sort        INTEGER      NOT NULL DEFAULT 0,
     create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
     update_by   VARCHAR(64),
     is_deleted  SMALLINT     NOT NULL DEFAULT 0,
     version     INT          NOT NULL DEFAULT 0,
-    remark      VARCHAR(500),
-    name        VARCHAR(128) NOT NULL,
-    code        VARCHAR(64),
-    parent_id   BIGINT,
-    status      SMALLINT     NOT NULL DEFAULT 1,
-    sort        INTEGER      NOT NULL DEFAULT 0
+    remark      VARCHAR(500)
 );
 ALTER SEQUENCE sys_dept_id_seq OWNED BY sys_dept.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_dept_code ON sys_dept (code, is_deleted);
@@ -80,18 +78,18 @@ CREATE SEQUENCE IF NOT EXISTS sys_role_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_role
 (
     id               BIGINT PRIMARY KEY    DEFAULT nextval('sys_role_id_seq'),
+    code             VARCHAR(64)  NOT NULL,
+    name             VARCHAR(128) NOT NULL,
+    status           SMALLINT     NOT NULL DEFAULT 1,
+    data_scope_type  VARCHAR(32),
+    data_scope_value VARCHAR(512),
     create_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by        VARCHAR(64),
     update_by        VARCHAR(64),
     is_deleted       SMALLINT     NOT NULL DEFAULT 0,
     version          INT          NOT NULL DEFAULT 0,
-    remark           VARCHAR(500),
-    code             VARCHAR(64)  NOT NULL,
-    name             VARCHAR(128) NOT NULL,
-    status           SMALLINT     NOT NULL DEFAULT 1,
-    data_scope_type  VARCHAR(32),
-    data_scope_value VARCHAR(512)
+    remark           VARCHAR(500)
 );
 ALTER SEQUENCE sys_role_id_seq OWNED BY sys_role.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_code ON sys_role (code, is_deleted);
@@ -114,16 +112,16 @@ CREATE SEQUENCE IF NOT EXISTS sys_permission_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_permission
 (
     id          BIGINT PRIMARY KEY    DEFAULT nextval('sys_permission_id_seq'),
+    code        VARCHAR(64)  NOT NULL,
+    name        VARCHAR(128) NOT NULL,
+    status      SMALLINT     NOT NULL DEFAULT 1,
     create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
     update_by   VARCHAR(64),
     is_deleted  SMALLINT     NOT NULL DEFAULT 0,
     version     INT          NOT NULL DEFAULT 0,
-    remark      VARCHAR(500),
-    code        VARCHAR(64)  NOT NULL,
-    name        VARCHAR(128) NOT NULL,
-    status      SMALLINT     NOT NULL DEFAULT 1
+    remark      VARCHAR(500)
 );
 ALTER SEQUENCE sys_permission_id_seq OWNED BY sys_permission.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_permission_code ON sys_permission (code, is_deleted);
@@ -144,13 +142,6 @@ CREATE SEQUENCE IF NOT EXISTS sys_menu_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_menu
 (
     id          BIGINT PRIMARY KEY    DEFAULT nextval('sys_menu_id_seq'),
-    create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by   VARCHAR(64),
-    update_by   VARCHAR(64),
-    is_deleted  SMALLINT     NOT NULL DEFAULT 0,
-    version     INT          NOT NULL DEFAULT 0,
-    remark      VARCHAR(500),
     name        VARCHAR(128) NOT NULL,
     code        VARCHAR(64),
     parent_id   BIGINT,
@@ -158,7 +149,14 @@ CREATE TABLE IF NOT EXISTS sys_menu
     component   VARCHAR(255),
     permission  VARCHAR(64),
     status      SMALLINT     NOT NULL DEFAULT 1,
-    sort        INTEGER      NOT NULL DEFAULT 0
+    sort        INTEGER      NOT NULL DEFAULT 0,
+    create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by   VARCHAR(64),
+    update_by   VARCHAR(64),
+    is_deleted  SMALLINT     NOT NULL DEFAULT 0,
+    version     INT          NOT NULL DEFAULT 0,
+    remark      VARCHAR(500)
 );
 ALTER SEQUENCE sys_menu_id_seq OWNED BY sys_menu.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_menu_code ON sys_menu (code, is_deleted);
@@ -185,15 +183,15 @@ CREATE SEQUENCE IF NOT EXISTS sys_role_permission_id_seq START WITH 1 INCREMENT 
 CREATE TABLE IF NOT EXISTS sys_role_permission
 (
     id            BIGINT PRIMARY KEY DEFAULT nextval('sys_role_permission_id_seq'),
+    role_id       BIGINT    NOT NULL,
+    permission_id BIGINT    NOT NULL,
     create_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by     VARCHAR(64),
     update_by     VARCHAR(64),
     is_deleted    SMALLINT  NOT NULL DEFAULT 0,
     version       INT       NOT NULL DEFAULT 0,
-    remark        VARCHAR(500),
-    role_id       BIGINT    NOT NULL,
-    permission_id BIGINT    NOT NULL
+    remark        VARCHAR(500)
 );
 ALTER SEQUENCE sys_role_permission_id_seq OWNED BY sys_role_permission.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_permission_role_perm ON sys_role_permission (role_id, permission_id, is_deleted);
@@ -215,15 +213,15 @@ CREATE SEQUENCE IF NOT EXISTS sys_role_menu_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_role_menu
 (
     id          BIGINT PRIMARY KEY DEFAULT nextval('sys_role_menu_id_seq'),
+    role_id     BIGINT    NOT NULL,
+    menu_id     BIGINT    NOT NULL,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
     update_by   VARCHAR(64),
     is_deleted  SMALLINT  NOT NULL DEFAULT 0,
     version     INT       NOT NULL DEFAULT 0,
-    remark      VARCHAR(500),
-    role_id     BIGINT    NOT NULL,
-    menu_id     BIGINT    NOT NULL
+    remark      VARCHAR(500)
 );
 ALTER SEQUENCE sys_role_menu_id_seq OWNED BY sys_role_menu.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_menu_role_menu ON sys_role_menu (role_id, menu_id, is_deleted);
@@ -245,15 +243,15 @@ CREATE SEQUENCE IF NOT EXISTS sys_user_role_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_user_role
 (
     id          BIGINT PRIMARY KEY DEFAULT nextval('sys_user_role_id_seq'),
+    user_id     BIGINT    NOT NULL,
+    role_id     BIGINT    NOT NULL,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
     update_by   VARCHAR(64),
     is_deleted  SMALLINT  NOT NULL DEFAULT 0,
     version     INT       NOT NULL DEFAULT 0,
-    remark      VARCHAR(500),
-    user_id     BIGINT    NOT NULL,
-    role_id     BIGINT    NOT NULL
+    remark      VARCHAR(500)
 );
 ALTER SEQUENCE sys_user_role_id_seq OWNED BY sys_user_role.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_role_user_role ON sys_user_role (user_id, role_id, is_deleted);
@@ -275,16 +273,16 @@ CREATE SEQUENCE IF NOT EXISTS sys_data_scope_rule_id_seq START WITH 1 INCREMENT 
 CREATE TABLE IF NOT EXISTS sys_data_scope_rule
 (
     id          BIGINT PRIMARY KEY   DEFAULT nextval('sys_data_scope_rule_id_seq'),
+    table_name  VARCHAR(64) NOT NULL,
+    column_name VARCHAR(64) NOT NULL,
+    enabled     SMALLINT    NOT NULL DEFAULT 1,
     create_time TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
     update_by   VARCHAR(64),
     is_deleted  SMALLINT    NOT NULL DEFAULT 0,
     version     INT         NOT NULL DEFAULT 0,
-    remark      VARCHAR(500),
-    table_name  VARCHAR(64) NOT NULL,
-    column_name VARCHAR(64) NOT NULL,
-    enabled     SMALLINT    NOT NULL DEFAULT 1
+    remark      VARCHAR(500)
 );
 ALTER SEQUENCE sys_data_scope_rule_id_seq OWNED BY sys_data_scope_rule.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_data_scope_rule_table ON sys_data_scope_rule (table_name, is_deleted);
@@ -305,15 +303,15 @@ CREATE SEQUENCE IF NOT EXISTS sys_order_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_order
 (
     id          BIGINT PRIMARY KEY      DEFAULT nextval('sys_order_id_seq'),
+    user_id     BIGINT         NOT NULL,
+    amount      DECIMAL(18, 2) NOT NULL,
     create_time TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
     update_by   VARCHAR(64),
     is_deleted  SMALLINT       NOT NULL DEFAULT 0,
     version     INT            NOT NULL DEFAULT 0,
-    remark      VARCHAR(500),
-    user_id     BIGINT         NOT NULL,
-    amount      DECIMAL(18, 2) NOT NULL
+    remark      VARCHAR(500)
 );
 ALTER SEQUENCE sys_order_id_seq OWNED BY sys_order.id;
 CREATE INDEX IF NOT EXISTS idx_sys_order_user ON sys_order (user_id);
@@ -346,19 +344,19 @@ COMMENT ON COLUMN sys_cache.expire_at IS '过期时间（毫秒时间戳）';
 CREATE SEQUENCE IF NOT EXISTS sys_notice_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_notice
 (
-    id           BIGINT PRIMARY KEY    DEFAULT nextval('sys_notice_id_seq'),
-    create_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by    VARCHAR(64),
-    update_by    VARCHAR(64),
-    is_deleted   SMALLINT     NOT NULL DEFAULT 0,
-    version      INT          NOT NULL DEFAULT 0,
-    remark       VARCHAR(500),
+    id           BIGINT PRIMARY KEY DEFAULT nextval('sys_notice_id_seq'),
     title        VARCHAR(200) NOT NULL,
     content      TEXT         NOT NULL,
     scope_type   VARCHAR(32)  NOT NULL,
     scope_value  VARCHAR(1024),
-    created_name VARCHAR(64)
+    create_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by    VARCHAR(64),
+    update_by    VARCHAR(64),
+    created_name VARCHAR(64),
+    is_deleted   SMALLINT     NOT NULL DEFAULT 0,
+    version      INT          NOT NULL DEFAULT 0,
+    remark       VARCHAR(500)
 );
 ALTER SEQUENCE sys_notice_id_seq OWNED BY sys_notice.id;
 CREATE INDEX IF NOT EXISTS idx_sys_notice_create_time ON sys_notice (create_time);
@@ -381,17 +379,17 @@ CREATE SEQUENCE IF NOT EXISTS sys_notice_recipient_id_seq START WITH 1 INCREMENT
 CREATE TABLE IF NOT EXISTS sys_notice_recipient
 (
     id          BIGINT PRIMARY KEY DEFAULT nextval('sys_notice_recipient_id_seq'),
+    notice_id   BIGINT    NOT NULL,
+    user_id     BIGINT    NOT NULL,
+    read_status SMALLINT  NOT NULL DEFAULT 0,
+    read_time   TIMESTAMP,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
     update_by   VARCHAR(64),
     is_deleted  SMALLINT  NOT NULL DEFAULT 0,
     version     INT       NOT NULL DEFAULT 0,
-    remark      VARCHAR(500),
-    notice_id   BIGINT    NOT NULL,
-    user_id     BIGINT    NOT NULL,
-    read_status SMALLINT  NOT NULL DEFAULT 0,
-    read_time   TIMESTAMP
+    remark      VARCHAR(500)
 );
 ALTER SEQUENCE sys_notice_recipient_id_seq OWNED BY sys_notice_recipient.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_notice_recipient_notice_user ON sys_notice_recipient (notice_id, user_id, is_deleted);
@@ -422,14 +420,12 @@ CREATE TABLE IF NOT EXISTS sys_job
     status           SMALLINT     NOT NULL DEFAULT 1,
     allow_concurrent SMALLINT     NOT NULL DEFAULT 1,
     misfire_policy   VARCHAR(32)           DEFAULT 'DEFAULT',
-    target_type      VARCHAR(32),
-    target_ids       VARCHAR(512),
     params           TEXT,
-    remark           VARCHAR(255),
     created_by       BIGINT,
     created_name     VARCHAR(64),
     created_at       TIMESTAMP    NOT NULL,
-    updated_at       TIMESTAMP
+    updated_at       TIMESTAMP,
+    remark           VARCHAR(255)
 );
 ALTER SEQUENCE sys_job_id_seq OWNED BY sys_job.id;
 CREATE INDEX IF NOT EXISTS idx_sys_job_status ON sys_job (status);
@@ -442,8 +438,6 @@ COMMENT ON COLUMN sys_job.cron_expression IS 'Cron表达式';
 COMMENT ON COLUMN sys_job.status IS '状态：1-启用，0-停用';
 COMMENT ON COLUMN sys_job.allow_concurrent IS '是否允许并发：1-允许，0-禁止';
 COMMENT ON COLUMN sys_job.misfire_policy IS '误触发策略';
-COMMENT ON COLUMN sys_job.target_type IS '定人范围类型';
-COMMENT ON COLUMN sys_job.target_ids IS '定人范围ID列表';
 COMMENT ON COLUMN sys_job.params IS '任务参数';
 COMMENT ON COLUMN sys_job.remark IS '备注';
 COMMENT ON COLUMN sys_job.created_by IS '创建人ID';
@@ -798,7 +792,13 @@ VALUES (1, 'user:query', '用户查询', 1),
        (32, 'job:update', '任务更新', 1),
        (33, 'job:delete', '任务删除', 1),
        (34, 'job:status', '任务状态', 1),
-       (35, 'job:run', '任务执行', 1)
+       (35, 'job:run', '任务执行', 1),
+       (36, 'user:delete', '用户删除', 1),
+       (37, 'role:delete', '角色删除', 1),
+       (38, 'menu:delete', '菜单删除', 1),
+       (39, 'dept:delete', '部门删除', 1),
+       (40, 'permission:delete', '权限删除', 1),
+       (41, 'notice:delete', '通知删除', 1)
 ON CONFLICT (id) DO UPDATE SET code   = EXCLUDED.code,
                                name   = EXCLUDED.name,
                                status = EXCLUDED.status;
@@ -823,7 +823,7 @@ ON CONFLICT (id) DO UPDATE SET name       = EXCLUDED.name,
                                sort       = EXCLUDED.sort,
                                remark     = EXCLUDED.remark;
 
-INSERT INTO sys_user (id, user_name, nick_name, password, status, dept_id, data_scope_type, data_scope_value, sex, tst)
+INSERT INTO sys_user (id, user_name, nick_name, password, status, dept_id, data_scope_type, data_scope_value, sex, remark)
 VALUES (1, 'admin', '超级管理员', 'b38dce307683511d93ac894f91397a1b5747899bbca077b4cf01c9c31c4f33e0', 1, 1, 'ALL', NULL,
         'M', '内置账号'),
        (2, 'manager', '部门主管', '826182ec96744b73ee254210a720573c494f1486d38715ae48802dc4818fb465', 1, 2,
@@ -838,7 +838,7 @@ ON CONFLICT (id) DO UPDATE SET user_name        = EXCLUDED.user_name,
                                data_scope_type  = EXCLUDED.data_scope_type,
                                data_scope_value = EXCLUDED.data_scope_value,
                                sex              = EXCLUDED.sex,
-                               tst              = EXCLUDED.tst;
+                               remark           = EXCLUDED.remark;
 
 INSERT INTO sys_user_role (user_id, role_id)
 VALUES (1, 1),

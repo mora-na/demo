@@ -17,10 +17,8 @@ public class LogJobHandler implements JobHandler {
 
     @Override
     public void execute(JobContext context) {
-        log.info("[Job] name={}, params={}, targetType={}, targetIds={} ",
+        log.info("[Job] name={}, params={}",
                 context.getJobName(),
-                context.getParams(),
-                context.getTargetType(),
-                context.getTargetIds());
+                context.getParams());
     }
 }

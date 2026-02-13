@@ -9,8 +9,8 @@ import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.datascope.service.DataScopeResolver;
-import com.example.demo.user.entity.User;
-import com.example.demo.user.service.UserService;
+import com.example.demo.user.entity.SysUser;
+import com.example.demo.user.service.SysUserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -43,7 +43,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private final AuthProperties authProperties;
     private final CommonExcludePathsProperties commonExcludePaths;
     private final TokenService tokenService;
-    private final UserService userService;
+    private final SysUserService userService;
     private final DataScopeResolver dataScopeResolver;
     private final I18nService i18nService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
@@ -98,12 +98,12 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             writeUnauthorized(response, i18nService.getMessage(request, "auth.user.invalid"));
             return;
         }
-        User dbUser = userService.getById(user.getId());
+        SysUser dbUser = userService.getById(user.getId());
         if (dbUser == null) {
             writeUnauthorized(response, i18nService.getMessage(request, "auth.user.not.found"));
             return;
         }
-        if (dbUser.getStatus() != null && dbUser.getStatus().equals(User.STATUS_DISABLED)) {
+        if (dbUser.getStatus() != null && dbUser.getStatus().equals(SysUser.STATUS_DISABLED)) {
             writeForbidden(response, i18nService.getMessage(request, "auth.user.disabled"));
             return;
         }

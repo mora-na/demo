@@ -49,12 +49,6 @@ public class SysJob implements Serializable {
     @TableField("misfire_policy")
     private String misfirePolicy;
 
-    @TableField("target_type")
-    private String targetType;
-
-    @TableField("target_ids")
-    private String targetIds;
-
     @TableField("params")
     private String params;
 

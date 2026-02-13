@@ -11,7 +11,7 @@ import javax.validation.constraints.NotNull;
  * @date 2026/2/9
  */
 @Data
-public class UserStatusRequest {
+public class SysUserStatusRequest {
 
     @NotNull
     private Integer status;

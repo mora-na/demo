@@ -10,7 +10,6 @@ import com.example.demo.job.dto.JobVO;
 import com.example.demo.job.entity.SysJob;
 import com.example.demo.job.mapper.SysJobMapper;
 import com.example.demo.job.model.JobMisfirePolicy;
-import com.example.demo.job.model.JobTargetType;
 import com.example.demo.job.service.JobSchedulerService;
 import com.example.demo.job.service.SysJobService;
 import com.example.demo.job.support.JobHandlerRegistry;
@@ -20,8 +19,10 @@ import org.quartz.CronExpression;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * 定时任务服务实现。
@@ -69,8 +70,6 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         job.setStatus(normalizeStatus(request.getStatus()));
         job.setAllowConcurrent(normalizeConcurrent(request.getAllowConcurrent()));
         job.setMisfirePolicy(normalizeMisfirePolicy(request.getMisfirePolicy()));
-        job.setTargetType(normalizeTargetType(request.getTargetType()));
-        job.setTargetIds(joinTargetIds(request.getTargetIds()));
         job.setParams(request.getParams());
         job.setRemark(request.getRemark());
         if (creator != null) {
@@ -118,12 +117,6 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         }
         if (StringUtils.isNotBlank(request.getMisfirePolicy())) {
             job.setMisfirePolicy(normalizeMisfirePolicy(request.getMisfirePolicy()));
-        }
-        if (request.getTargetType() != null) {
-            job.setTargetType(normalizeTargetType(request.getTargetType()));
-        }
-        if (request.getTargetIds() != null) {
-            job.setTargetIds(joinTargetIds(request.getTargetIds()));
         }
         if (request.getParams() != null) {
             job.setParams(request.getParams());
@@ -197,8 +190,6 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         view.setStatus(job.getStatus());
         view.setAllowConcurrent(job.getAllowConcurrent());
         view.setMisfirePolicy(job.getMisfirePolicy());
-        view.setTargetType(job.getTargetType());
-        view.setTargetIds(parseTargetIds(job.getTargetIds()));
         view.setParams(job.getParams());
         view.setRemark(job.getRemark());
         view.setCreatedName(job.getCreatedName());
@@ -265,45 +256,4 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         return normalized;
     }
 
-    private String normalizeTargetType(String targetType) {
-        if (StringUtils.isBlank(targetType)) {
-            return JobTargetType.ALL;
-        }
-        String normalized = targetType.trim().toUpperCase(Locale.ROOT);
-        if (!JobTargetType.isSupported(normalized)) {
-            return JobTargetType.ALL;
-        }
-        return normalized;
-    }
-
-    private String joinTargetIds(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return null;
-        }
-        return ids.stream()
-                .filter(Objects::nonNull)
-                .distinct()
-                .map(String::valueOf)
-                .collect(Collectors.joining(","));
-    }
-
-    private List<Long> parseTargetIds(String value) {
-        if (StringUtils.isBlank(value)) {
-            return Collections.emptyList();
-        }
-        String[] parts = value.split(",");
-        List<Long> result = new ArrayList<>();
-        for (String part : parts) {
-            String trimmed = part.trim();
-            if (trimmed.isEmpty()) {
-                continue;
-            }
-            try {
-                result.add(Long.parseLong(trimmed));
-            } catch (NumberFormatException ignored) {
-                // ignore invalid id
-            }
-        }
-        return result;
-    }
 }

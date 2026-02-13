@@ -1,475 +1,199 @@
 CREATE TABLE IF NOT EXISTS sys_user
 (
-    id
-                     BIGINT
-                                  NOT
-                                      NULL
-        AUTO_INCREMENT
-        COMMENT
-            '主键ID',
-    create_time
-                     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time
-                     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by
-                     VARCHAR(64)           DEFAULT NULL COMMENT '创建人',
-    update_by
-                     VARCHAR(64)           DEFAULT NULL COMMENT '更新人',
-    is_deleted
-                     TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version
-                     INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark
-                     VARCHAR(500)          DEFAULT NULL COMMENT '备注',
-    user_name
-                     VARCHAR(64)  NOT NULL COMMENT '用户名（唯一）',
-    nick_name        VARCHAR(64) COMMENT '昵称',
-    password         VARCHAR(128) NOT NULL COMMENT '登录密码（加密存储）',
-    status           TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
-    dept_id          BIGINT COMMENT '部门ID',
-    data_scope_type  VARCHAR(32) COMMENT '数据范围类型：ALL全量/SELF仅本人/CUSTOM自定义/NONE无数据',
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    user_name VARCHAR(64) NOT NULL COMMENT '用户名（唯一）',
+    nick_name VARCHAR(64) COMMENT '昵称',
+    password VARCHAR(128) NOT NULL COMMENT '登录密码（加密存储）',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    dept_id BIGINT COMMENT '部门ID',
+    data_scope_type VARCHAR(32) COMMENT '数据范围类型：ALL全量/SELF仅本人/CUSTOM自定义/NONE无数据',
     data_scope_value VARCHAR(512) COMMENT '数据范围值，CUSTOM时存储自定义范围内容（如ID列表）',
-    sex              VARCHAR(16) COMMENT '性别',
-    tst              VARCHAR(255) COMMENT '备注/测试字段',
-    PRIMARY KEY
-        (
-         id
-            ),
-    UNIQUE KEY uk_sys_user_user_name
-        (
-         user_name,
-         is_deleted
-            ),
-    KEY idx_sys_user_dept
-        (
-         dept_id
-            )
+    sex VARCHAR(16) COMMENT '性别',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_user_user_name (user_name, is_deleted),
+    KEY idx_sys_user_dept (dept_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统用户表';
 
 CREATE TABLE IF NOT EXISTS sys_dept
 (
-    id
-              BIGINT
-                           NOT
-                               NULL
-        AUTO_INCREMENT
-        COMMENT
-            '主键ID',
-    create_time
-              DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time
-              DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by
-              VARCHAR(64)           DEFAULT NULL COMMENT '创建人',
-    update_by
-              VARCHAR(64)           DEFAULT NULL COMMENT '更新人',
-    is_deleted
-              TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version
-              INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark
-              VARCHAR(500)          DEFAULT NULL COMMENT '备注',
-    name
-              VARCHAR(128) NOT NULL COMMENT '部门名称',
-    code      VARCHAR(64) COMMENT '部门编码（唯一）',
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    name VARCHAR(128) NOT NULL COMMENT '部门名称',
+    code VARCHAR(64) COMMENT '部门编码（唯一）',
     parent_id BIGINT COMMENT '上级部门ID',
-    status    TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
-    sort      INT          NOT NULL DEFAULT 0 COMMENT '排序',
-    PRIMARY KEY
-        (
-         id
-            ),
-    UNIQUE KEY uk_sys_dept_code
-        (
-         code,
-         is_deleted
-            ),
-    KEY idx_sys_dept_parent
-        (
-         parent_id
-            )
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    sort INT NOT NULL DEFAULT 0 COMMENT '排序',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_dept_code (code, is_deleted),
+    KEY idx_sys_dept_parent (parent_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='部门表';
 
 CREATE TABLE IF NOT EXISTS sys_role
 (
-    id
-                     BIGINT
-                                  NOT
-                                      NULL
-        AUTO_INCREMENT
-        COMMENT
-            '主键ID',
-    create_time
-                     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time
-                     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by
-                     VARCHAR(64)           DEFAULT NULL COMMENT '创建人',
-    update_by
-                     VARCHAR(64)           DEFAULT NULL COMMENT '更新人',
-    is_deleted
-                     TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version
-                     INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark
-                     VARCHAR(500)          DEFAULT NULL COMMENT '备注',
-    code
-                     VARCHAR(64)  NOT NULL COMMENT '角色编码（唯一）',
-    name             VARCHAR(128) NOT NULL COMMENT '角色名称',
-    status           TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
-    data_scope_type  VARCHAR(32) COMMENT '数据范围类型：ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE',
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    code VARCHAR(64) NOT NULL COMMENT '角色编码（唯一）',
+    name VARCHAR(128) NOT NULL COMMENT '角色名称',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    data_scope_type VARCHAR(32) COMMENT '数据范围类型：ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE',
     data_scope_value VARCHAR(512) COMMENT '数据范围值，CUSTOM_DEPT时存储部门ID列表',
-    PRIMARY KEY
-        (
-         id
-            ),
-    UNIQUE KEY uk_sys_role_code
-        (
-         code,
-         is_deleted
-            )
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_role_code (code, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='角色表';
 
 CREATE TABLE IF NOT EXISTS sys_permission
 (
-    id
-           BIGINT
-                        NOT
-                            NULL
-        AUTO_INCREMENT
-        COMMENT
-            '主键ID',
-    create_time
-           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time
-           DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by
-           VARCHAR(64)           DEFAULT NULL COMMENT '创建人',
-    update_by
-           VARCHAR(64)           DEFAULT NULL COMMENT '更新人',
-    is_deleted
-           TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version
-           INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark
-           VARCHAR(500)          DEFAULT NULL COMMENT '备注',
-    code
-           VARCHAR(64)  NOT NULL COMMENT '权限编码（唯一）',
-    name   VARCHAR(128) NOT NULL COMMENT '权限名称',
-    status TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
-    PRIMARY KEY
-        (
-         id
-            ),
-    UNIQUE KEY uk_sys_permission_code
-        (
-         code,
-         is_deleted
-            )
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    code VARCHAR(64) NOT NULL COMMENT '权限编码（唯一）',
+    name VARCHAR(128) NOT NULL COMMENT '权限名称',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_permission_code (code, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='权限表';
 
 CREATE TABLE IF NOT EXISTS sys_menu
 (
-    id
-               BIGINT
-                            NOT
-                                NULL
-        AUTO_INCREMENT
-        COMMENT
-            '主键ID',
-    create_time
-               DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time
-               DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by
-               VARCHAR(64)           DEFAULT NULL COMMENT '创建人',
-    update_by
-               VARCHAR(64)           DEFAULT NULL COMMENT '更新人',
-    is_deleted
-               TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version
-               INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark
-               VARCHAR(500)          DEFAULT NULL COMMENT '备注',
-    name
-               VARCHAR(128) NOT NULL COMMENT '菜单名称',
-    code       VARCHAR(64) COMMENT '菜单编码（唯一）',
-    parent_id  BIGINT COMMENT '上级菜单ID',
-    path       VARCHAR(255) COMMENT '路由路径',
-    component  VARCHAR(255) COMMENT '前端组件',
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    name VARCHAR(128) NOT NULL COMMENT '菜单名称',
+    code VARCHAR(64) COMMENT '菜单编码（唯一）',
+    parent_id BIGINT COMMENT '上级菜单ID',
+    path VARCHAR(255) COMMENT '路由路径',
+    component VARCHAR(255) COMMENT '前端组件',
     permission VARCHAR(64) COMMENT '菜单权限标识',
-    status     TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
-    sort       INT          NOT NULL DEFAULT 0 COMMENT '排序',
-    PRIMARY KEY
-        (
-         id
-            ),
-    UNIQUE KEY uk_sys_menu_code
-        (
-         code,
-         is_deleted
-            ),
-    KEY idx_sys_menu_parent
-        (
-         parent_id
-            )
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    sort INT NOT NULL DEFAULT 0 COMMENT '排序',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_menu_code (code, is_deleted),
+    KEY idx_sys_menu_parent (parent_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='菜单表';
 
 CREATE TABLE IF NOT EXISTS sys_role_permission
 (
-    id
-        BIGINT
-                   NOT
-                       NULL
-        AUTO_INCREMENT
-        COMMENT
-            '主键ID',
-    create_time
-        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time
-        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by
-        VARCHAR(64)         DEFAULT NULL COMMENT '创建人',
-    update_by
-        VARCHAR(64)         DEFAULT NULL COMMENT '更新人',
-    is_deleted
-        TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version
-        INT        NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark
-        VARCHAR(500)        DEFAULT NULL COMMENT '备注',
-    role_id
-        BIGINT
-                   NOT
-                       NULL
-        COMMENT
-            '角色ID',
-    permission_id
-        BIGINT
-                   NOT
-                       NULL
-        COMMENT
-            '权限ID',
-    PRIMARY
-        KEY
-        (
-         id
-            ),
-    UNIQUE KEY uk_sys_role_permission_role_perm
-        (
-         role_id,
-         permission_id,
-         is_deleted
-            ),
-    KEY idx_sys_role_permission_role
-        (
-         role_id
-            ),
-    KEY idx_sys_role_permission_perm
-        (
-         permission_id
-            )
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    permission_id BIGINT NOT NULL COMMENT '权限ID',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_role_permission_role_perm (role_id, permission_id, is_deleted),
+    KEY idx_sys_role_permission_role (role_id),
+    KEY idx_sys_role_permission_perm (permission_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='角色-权限关联表';
 
 CREATE TABLE IF NOT EXISTS sys_role_menu
 (
-    id
-        BIGINT
-                   NOT
-                       NULL
-        AUTO_INCREMENT
-        COMMENT
-            '主键ID',
-    create_time
-        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time
-        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by
-        VARCHAR(64)         DEFAULT NULL COMMENT '创建人',
-    update_by
-        VARCHAR(64)         DEFAULT NULL COMMENT '更新人',
-    is_deleted
-        TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version
-        INT        NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark
-        VARCHAR(500)        DEFAULT NULL COMMENT '备注',
-    role_id
-        BIGINT
-                   NOT
-                       NULL
-        COMMENT
-            '角色ID',
-    menu_id
-        BIGINT
-                   NOT
-                       NULL
-        COMMENT
-            '菜单ID',
-    PRIMARY
-        KEY
-        (
-         id
-            ),
-    UNIQUE KEY uk_sys_role_menu_role_menu
-        (
-         role_id,
-         menu_id,
-         is_deleted
-            ),
-    KEY idx_sys_role_menu_role
-        (
-         role_id
-            ),
-    KEY idx_sys_role_menu_menu
-        (
-         menu_id
-            )
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    menu_id BIGINT NOT NULL COMMENT '菜单ID',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_role_menu_role_menu (role_id, menu_id, is_deleted),
+    KEY idx_sys_role_menu_role (role_id),
+    KEY idx_sys_role_menu_menu (menu_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='角色-菜单关联表';
 
 CREATE TABLE IF NOT EXISTS sys_user_role
 (
-    id
-        BIGINT
-                   NOT
-                       NULL
-        AUTO_INCREMENT
-        COMMENT
-            '主键ID',
-    create_time
-        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time
-        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by
-        VARCHAR(64)         DEFAULT NULL COMMENT '创建人',
-    update_by
-        VARCHAR(64)         DEFAULT NULL COMMENT '更新人',
-    is_deleted
-        TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version
-        INT        NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark
-        VARCHAR(500)        DEFAULT NULL COMMENT '备注',
-    user_id
-        BIGINT
-                   NOT
-                       NULL
-        COMMENT
-            '用户ID',
-    role_id
-        BIGINT
-                   NOT
-                       NULL
-        COMMENT
-            '角色ID',
-    PRIMARY
-        KEY
-        (
-         id
-            ),
-    UNIQUE KEY uk_sys_user_role_user_role
-        (
-         user_id,
-         role_id,
-         is_deleted
-            ),
-    KEY idx_sys_user_role_user
-        (
-         user_id
-            ),
-    KEY idx_sys_user_role_role
-        (
-         role_id
-            )
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_user_role_user_role (user_id, role_id, is_deleted),
+    KEY idx_sys_user_role_user (user_id),
+    KEY idx_sys_user_role_role (role_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='用户-角色关联表';
 
 CREATE TABLE IF NOT EXISTS sys_data_scope_rule
 (
-    id
-                BIGINT
-                            NOT
-                                NULL
-        AUTO_INCREMENT
-        COMMENT
-            '主键ID',
-    create_time
-                DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time
-                DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by
-                VARCHAR(64)          DEFAULT NULL COMMENT '创建人',
-    update_by
-                VARCHAR(64)          DEFAULT NULL COMMENT '更新人',
-    is_deleted
-                TINYINT(1)  NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version
-                INT         NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark
-                VARCHAR(500)         DEFAULT NULL COMMENT '备注',
-    table_name
-                VARCHAR(64) NOT NULL COMMENT '目标表名（小写匹配）',
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    table_name VARCHAR(64) NOT NULL COMMENT '目标表名（小写匹配）',
     column_name VARCHAR(64) NOT NULL COMMENT '数据范围字段名',
-    enabled     TINYINT     NOT NULL DEFAULT 1 COMMENT '是否启用：1-启用，0-禁用',
-    PRIMARY KEY
-        (
-         id
-            ),
-    UNIQUE KEY uk_sys_data_scope_rule_table
-        (
-         table_name,
-         is_deleted
-            )
+    enabled TINYINT NOT NULL DEFAULT 1 COMMENT '是否启用：1-启用，0-禁用',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_data_scope_rule_table (table_name, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='数据范围规则表';
 
 CREATE TABLE IF NOT EXISTS sys_order
 (
-    id
-        BIGINT
-                   NOT
-                       NULL
-        AUTO_INCREMENT
-        COMMENT
-            '主键ID',
-    create_time
-        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time
-        DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by
-        VARCHAR(64)         DEFAULT NULL COMMENT '创建人',
-    update_by
-        VARCHAR(64)         DEFAULT NULL COMMENT '更新人',
-    is_deleted
-        TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version
-        INT        NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark
-        VARCHAR(500)        DEFAULT NULL COMMENT '备注',
-    user_id
-        BIGINT
-                   NOT
-                       NULL
-        COMMENT
-            '用户ID',
-    amount
-        DECIMAL(18,
-            2)     NOT NULL COMMENT '订单金额',
-    PRIMARY KEY
-        (
-         id
-            ),
-    KEY idx_sys_order_user
-        (
-         user_id
-            )
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    amount DECIMAL(18, 2) NOT NULL COMMENT '订单金额',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    KEY idx_sys_order_user (user_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='订单表';
 
@@ -486,123 +210,61 @@ CREATE TABLE IF NOT EXISTS sys_cache
 
 CREATE TABLE IF NOT EXISTS sys_notice
 (
-    id
-                 BIGINT
-                              NOT
-                                  NULL
-        AUTO_INCREMENT
-        COMMENT
-            '主键ID',
-    create_time
-                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time
-                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by
-                 VARCHAR(64)           DEFAULT NULL COMMENT '创建人',
-    update_by
-                 VARCHAR(64)           DEFAULT NULL COMMENT '更新人',
-    is_deleted
-                 TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version
-                 INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark
-                 VARCHAR(500)          DEFAULT NULL COMMENT '备注',
-    title
-                 VARCHAR(200) NOT NULL COMMENT '通知标题',
-    content      TEXT         NOT NULL COMMENT '通知内容',
-    scope_type   VARCHAR(32)  NOT NULL COMMENT '通知范围类型',
-    scope_value  VARCHAR(1024) COMMENT '通知范围值（ID列表）',
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    title VARCHAR(200) NOT NULL COMMENT '通知标题',
+    content TEXT NOT NULL COMMENT '通知内容',
+    scope_type VARCHAR(32) NOT NULL COMMENT '通知范围类型',
+    scope_value VARCHAR(1024) COMMENT '通知范围值（ID列表）',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     created_name VARCHAR(64) COMMENT '创建人名称',
-    PRIMARY KEY
-        (
-         id
-            ),
-    KEY idx_sys_notice_create_time
-        (
-         create_time
-            )
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    KEY idx_sys_notice_create_time (create_time)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统通知表';
 
 CREATE TABLE IF NOT EXISTS sys_notice_recipient
 (
-    id
-                BIGINT
-                           NOT
-                               NULL
-        AUTO_INCREMENT
-        COMMENT
-            '主键ID',
-    create_time
-                DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time
-                DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by
-                VARCHAR(64)         DEFAULT NULL COMMENT '创建人',
-    update_by
-                VARCHAR(64)         DEFAULT NULL COMMENT '更新人',
-    is_deleted
-                TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version
-                INT        NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark
-                VARCHAR(500)        DEFAULT NULL COMMENT '备注',
-    notice_id
-                BIGINT
-                           NOT
-                               NULL
-        COMMENT
-            '通知ID',
-    user_id
-                BIGINT
-                           NOT
-                               NULL
-        COMMENT
-            '接收用户ID',
-    read_status TINYINT    NOT NULL DEFAULT 0 COMMENT '阅读状态：0-未读，1-已读',
-    read_time   DATETIME COMMENT '阅读时间',
-    PRIMARY KEY
-        (
-         id
-            ),
-    UNIQUE KEY uk_sys_notice_recipient_notice_user
-        (
-         notice_id,
-         user_id,
-         is_deleted
-            ),
-    KEY idx_sys_notice_recipient_notice
-        (
-         notice_id
-            ),
-    KEY idx_sys_notice_recipient_user
-        (
-         user_id
-            ),
-    KEY idx_sys_notice_recipient_read
-        (
-         read_status
-            )
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    notice_id BIGINT NOT NULL COMMENT '通知ID',
+    user_id BIGINT NOT NULL COMMENT '接收用户ID',
+    read_status TINYINT NOT NULL DEFAULT 0 COMMENT '阅读状态：0-未读，1-已读',
+    read_time DATETIME COMMENT '阅读时间',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_notice_recipient_notice_user (notice_id, user_id, is_deleted),
+    KEY idx_sys_notice_recipient_notice (notice_id),
+    KEY idx_sys_notice_recipient_user (user_id),
+    KEY idx_sys_notice_recipient_read (read_status)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统通知接收表';
 
 CREATE TABLE IF NOT EXISTS sys_job
 (
-    id               BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    name             VARCHAR(128) NOT NULL COMMENT '任务名称',
-    handler_name     VARCHAR(128) NOT NULL COMMENT '处理器名称',
-    cron_expression  VARCHAR(128) NOT NULL COMMENT 'Cron表达式',
-    status           TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-停用',
-    allow_concurrent TINYINT      NOT NULL DEFAULT 1 COMMENT '是否允许并发：1-允许，0-禁止',
-    misfire_policy   VARCHAR(32)           DEFAULT 'DEFAULT' COMMENT '误触发策略',
-    target_type      VARCHAR(32) COMMENT '定人范围类型',
-    target_ids       VARCHAR(512) COMMENT '定人范围ID列表',
-    params           TEXT COMMENT '任务参数',
-    remark           VARCHAR(255) COMMENT '备注',
-    created_by       BIGINT COMMENT '创建人ID',
-    created_name     VARCHAR(64) COMMENT '创建人名称',
-    created_at       DATETIME     NOT NULL COMMENT '创建时间',
-    updated_at       DATETIME COMMENT '更新时间',
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    name VARCHAR(128) NOT NULL COMMENT '任务名称',
+    handler_name VARCHAR(128) NOT NULL COMMENT '处理器名称',
+    cron_expression VARCHAR(128) NOT NULL COMMENT 'Cron表达式',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-停用',
+    allow_concurrent TINYINT NOT NULL DEFAULT 1 COMMENT '是否允许并发：1-允许，0-禁止',
+    misfire_policy VARCHAR(32) DEFAULT 'DEFAULT' COMMENT '误触发策略',
+    params TEXT COMMENT '任务参数',
+    created_by BIGINT COMMENT '创建人ID',
+    created_name VARCHAR(64) COMMENT '创建人名称',
+    created_at DATETIME NOT NULL COMMENT '创建时间',
+    updated_at DATETIME COMMENT '更新时间',
+    remark VARCHAR(255) COMMENT '备注',
     PRIMARY KEY (id),
     KEY idx_sys_job_status (status),
     KEY idx_sys_job_handler (handler_name)
@@ -611,15 +273,15 @@ CREATE TABLE IF NOT EXISTS sys_job
 
 CREATE TABLE IF NOT EXISTS sys_job_log
 (
-    id           BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    job_id       BIGINT       NOT NULL COMMENT '任务ID',
-    job_name     VARCHAR(128) NOT NULL COMMENT '任务名称',
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    job_id BIGINT NOT NULL COMMENT '任务ID',
+    job_name VARCHAR(128) NOT NULL COMMENT '任务名称',
     handler_name VARCHAR(128) NOT NULL COMMENT '处理器名称',
-    status       TINYINT      NOT NULL COMMENT '执行状态：1-成功，0-失败',
-    message      VARCHAR(512) COMMENT '执行信息',
-    start_time   DATETIME     NOT NULL COMMENT '开始时间',
-    end_time     DATETIME COMMENT '结束时间',
-    duration_ms  BIGINT COMMENT '耗时毫秒',
+    status TINYINT NOT NULL COMMENT '执行状态：1-成功，0-失败',
+    message VARCHAR(512) COMMENT '执行信息',
+    start_time DATETIME NOT NULL COMMENT '开始时间',
+    end_time DATETIME COMMENT '结束时间',
+    duration_ms BIGINT COMMENT '耗时毫秒',
     PRIMARY KEY (id),
     KEY idx_sys_job_log_job (job_id),
     KEY idx_sys_job_log_start (start_time)
@@ -858,7 +520,13 @@ VALUES (1, 'user:query', '用户查询', 1),
        (32, 'job:update', '任务更新', 1),
        (33, 'job:delete', '任务删除', 1),
        (34, 'job:status', '任务状态', 1),
-       (35, 'job:run', '任务执行', 1)
+       (35, 'job:run', '任务执行', 1),
+       (36, 'user:delete', '用户删除', 1),
+       (37, 'role:delete', '角色删除', 1),
+       (38, 'menu:delete', '菜单删除', 1),
+       (39, 'dept:delete', '部门删除', 1),
+       (40, 'permission:delete', '权限删除', 1),
+       (41, 'notice:delete', '通知删除', 1)
 ON DUPLICATE KEY UPDATE name   = VALUES(name),
                         status = VALUES(status);
 
@@ -881,7 +549,7 @@ ON DUPLICATE KEY UPDATE name       = VALUES(name),
                         sort       = VALUES(sort),
                         remark     = VALUES(remark);
 
-INSERT INTO sys_user (id, user_name, nick_name, password, status, dept_id, data_scope_type, data_scope_value, sex, tst)
+INSERT INTO sys_user (id, user_name, nick_name, password, status, dept_id, data_scope_type, data_scope_value, sex, remark)
 VALUES (1, 'admin', '超级管理员', 'b38dce307683511d93ac894f91397a1b5747899bbca077b4cf01c9c31c4f33e0', 1, 1, 'ALL', NULL,
         'M', '内置账号'),
        (2, 'manager', '部门主管', '826182ec96744b73ee254210a720573c494f1486d38715ae48802dc4818fb465', 1, 2,
@@ -895,7 +563,7 @@ ON DUPLICATE KEY UPDATE nick_name        = VALUES(nick_name),
                         data_scope_type  = VALUES(data_scope_type),
                         data_scope_value = VALUES(data_scope_value),
                         sex              = VALUES(sex),
-                        tst              = VALUES(tst);
+                        remark           = VALUES(remark);
 
 INSERT INTO sys_user_role (user_id, role_id)
 VALUES (1, 1),

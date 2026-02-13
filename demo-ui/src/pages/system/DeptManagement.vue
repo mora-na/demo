@@ -7,10 +7,20 @@
       </div>
       <div class="module-actions">
         <el-button type="primary" @click="openCreate">{{ t("dept.create") }}</el-button>
+        <el-button v-if="selectedDeptIds.length" type="danger" @click="removeDepts">
+          {{ t("dept.filter.delete") }}
+        </el-button>
       </div>
     </div>
 
-    <el-table v-loading="loading" :data="depts" row-key="id" size="small">
+    <el-table
+        v-loading="loading"
+        :data="depts"
+        row-key="id"
+        size="small"
+        @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" width="46"/>
       <el-table-column :label="t('dept.table.name')" min-width="140" prop="name"/>
       <el-table-column :label="t('dept.table.code')" min-width="120" prop="code"/>
       <el-table-column :label="t('dept.table.parent')" min-width="120">
@@ -29,9 +39,12 @@
           />
         </template>
       </el-table-column>
-      <el-table-column :label="t('dept.table.action')" width="140">
+      <el-table-column :label="t('dept.table.action')" width="180">
         <template #default="{row}">
           <el-button size="small" text @click="openEdit(row)">{{ t("dept.table.edit") }}</el-button>
+          <el-button size="small" text type="danger" @click="removeDept(row)">
+            {{ t("dept.table.delete") }}
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -92,10 +105,18 @@
 
 <script lang="ts" setup>
 import {computed, onMounted, reactive, ref} from "vue";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {buildTree, type TreeNode} from "../../utils/tree";
-import {createDept, type DeptVO, listDepts, updateDept, updateDeptStatus} from "../../api/system";
+import {
+  createDept,
+  deleteDept,
+  deleteDepts,
+  type DeptVO,
+  listDepts,
+  updateDept,
+  updateDeptStatus
+} from "../../api/system";
 
 const depts = ref<DeptVO[]>([]);
 const deptTree = ref<TreeNode<DeptVO>[]>([]);
@@ -104,6 +125,7 @@ const saving = ref(false);
 const editorVisible = ref(false);
 const editorMode = ref<"create" | "edit">("create");
 const editorDeptId = ref<number | null>(null);
+const selectedDeptIds = ref<number[]>([]);
 const {t} = useI18n();
 
 const form = reactive({
@@ -122,6 +144,10 @@ const editorTitle = computed(() =>
 function getErrorMessage(error: unknown, fallback: string): string {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err?.response?.data?.message || err?.message || fallback;
+}
+
+function handleSelectionChange(rows: DeptVO[]) {
+  selectedDeptIds.value = rows.map((row) => row.id);
 }
 
 function parentName(parentId?: number | null) {
@@ -176,6 +202,48 @@ function openEdit(dept: DeptVO) {
   form.sort = dept.sort ?? 0;
   form.remark = dept.remark || "";
   editorVisible.value = true;
+}
+
+async function removeDept(dept: DeptVO) {
+  try {
+    await ElMessageBox.confirm(
+        t("dept.msg.deleteConfirm", {name: dept.name}),
+        t("common.confirmTitle"),
+        {type: "warning"}
+    );
+  } catch {
+    return;
+  }
+  const result = await deleteDept(dept.id);
+  if (result?.code === 200) {
+    ElMessage.success(t("dept.msg.deleteSuccess"));
+    fetchDepts();
+  } else {
+    ElMessage.error(result?.message || t("dept.msg.deleteFailed"));
+  }
+}
+
+async function removeDepts() {
+  if (!selectedDeptIds.value.length) {
+    ElMessage.warning(t("dept.msg.deleteEmpty"));
+    return;
+  }
+  try {
+    await ElMessageBox.confirm(
+        t("dept.msg.batchDeleteConfirm", {count: selectedDeptIds.value.length}),
+        t("common.confirmTitle"),
+        {type: "warning"}
+    );
+  } catch {
+    return;
+  }
+  const result = await deleteDepts(selectedDeptIds.value);
+  if (result?.code === 200) {
+    ElMessage.success(t("dept.msg.deleteSuccess"));
+    fetchDepts();
+  } else {
+    ElMessage.error(result?.message || t("dept.msg.deleteFailed"));
+  }
 }
 
 async function saveDept() {

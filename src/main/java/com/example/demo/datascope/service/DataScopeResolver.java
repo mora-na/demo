@@ -9,7 +9,7 @@ import com.example.demo.permission.entity.Role;
 import com.example.demo.permission.entity.UserRole;
 import com.example.demo.permission.service.RoleService;
 import com.example.demo.permission.service.UserRoleService;
-import com.example.demo.user.entity.User;
+import com.example.demo.user.entity.SysUser;
 import lombok.Getter;
 import org.springframework.stereotype.Service;
 
@@ -48,7 +48,7 @@ public class DataScopeResolver {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    public DataScopeResult resolve(User user) {
+    public DataScopeResult resolve(SysUser user) {
         String fallback = properties == null ? DataScopeType.ALL : properties.getDefaultType();
         if (user == null || user.getId() == null) {
             return new DataScopeResult(normalizeType(null, fallback), null);
@@ -137,7 +137,7 @@ public class DataScopeResolver {
         return fallbackToUser(user, fallback);
     }
 
-    private DataScopeResult fallbackToUser(User user, String fallback) {
+    private DataScopeResult fallbackToUser(SysUser user, String fallback) {
         String type = normalizeType(user == null ? null : user.getDataScopeType(), fallback);
         String value = user == null ? null : user.getDataScopeValue();
         return new DataScopeResult(type, value);

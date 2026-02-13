@@ -8,17 +8,19 @@ import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.dept.service.DeptService;
 import com.example.demo.permission.entity.UserRole;
 import com.example.demo.permission.service.UserRoleService;
-import com.example.demo.user.converter.UserConverter;
+import com.example.demo.user.converter.SysUserConverter;
 import com.example.demo.user.dto.*;
-import com.example.demo.user.entity.User;
-import com.example.demo.user.service.UserService;
-import com.example.demo.user.service.UserViewService;
+import com.example.demo.user.entity.SysUser;
+import com.example.demo.user.service.SysUserService;
+import com.example.demo.user.service.SysUserViewService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 用户后台管理接口，覆盖创建、更新、状态、角色与数据范围的维护操作。
@@ -30,11 +32,11 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
-public class UserAdminController extends BaseController {
+public class SysUserAdminController extends BaseController {
 
-    private final UserService userService;
-    private final UserConverter userConverter;
-    private final UserViewService userViewService;
+    private final SysUserService userService;
+    private final SysUserConverter userConverter;
+    private final SysUserViewService userViewService;
     private final UserRoleService userRoleService;
     private final DeptService deptService;
     private final PasswordService passwordService;
@@ -47,7 +49,7 @@ public class UserAdminController extends BaseController {
      */
     @GetMapping
     @RequirePermission("user:query")
-    public CommonResult<PageResult<UserVO>> list(@ModelAttribute UserQuery query) {
+    public CommonResult<PageResult<SysUserVO>> list(@ModelAttribute SysUserQuery query) {
         return success(page(query, userService::selectUsers, userViewService::toView));
     }
 
@@ -59,8 +61,8 @@ public class UserAdminController extends BaseController {
      */
     @GetMapping("/{id}")
     @RequirePermission("user:query")
-    public CommonResult<UserVO> detail(@PathVariable Long id) {
-        User user = userService.getById(id);
+    public CommonResult<SysUserVO> detail(@PathVariable Long id) {
+        SysUser user = userService.getById(id);
         if (user == null) {
             return error(404, i18n("user.not.found"));
         }
@@ -92,7 +94,7 @@ public class UserAdminController extends BaseController {
 
     @PostMapping
     @RequirePermission("user:create")
-    public CommonResult<UserVO> create(@Valid @RequestBody UserCreateRequest request) {
+    public CommonResult<SysUserVO> create(@Valid @RequestBody SysUserCreateRequest request) {
         if (userService.getByUserName(request.getUserName()) != null) {
             return error(400, i18n("user.username.exists"));
         }
@@ -110,19 +112,19 @@ public class UserAdminController extends BaseController {
             return error(400, i18n("user.password.weak"));
         }
         request.setPassword(rawPassword);
-        User created = userService.createUser(request);
+        SysUser created = userService.createUser(request);
         return success(userConverter.toView(created, java.util.Collections.emptyList()));
     }
 
     @PutMapping("/{id}")
     @RequirePermission("user:update")
-    public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest request) {
-        User existing = userService.getById(id);
+    public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody SysUserUpdateRequest request) {
+        SysUser existing = userService.getById(id);
         if (existing == null) {
             return error(404, i18n("user.not.found"));
         }
         if (StringUtils.isNotBlank(request.getUserName())) {
-            User sameName = userService.getByUserName(request.getUserName());
+            SysUser sameName = userService.getByUserName(request.getUserName());
             if (sameName != null && !sameName.getId().equals(id)) {
                 return error(400, i18n("user.username.exists"));
             }
@@ -138,12 +140,12 @@ public class UserAdminController extends BaseController {
 
     @PutMapping("/{id}/status")
     @RequirePermission("user:disable")
-    public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody UserStatusRequest request) {
+    public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody SysUserStatusRequest request) {
         if (userService.getById(id) == null) {
             return error(404, i18n("user.not.found"));
         }
         Integer status = request.getStatus();
-        if (status == null || (status != User.STATUS_ENABLED && status != User.STATUS_DISABLED)) {
+        if (status == null || (status != SysUser.STATUS_ENABLED && status != SysUser.STATUS_DISABLED)) {
             return error(400, i18n("common.status.invalid"));
         }
         if (!userService.updateStatus(id, status)) {
@@ -154,7 +156,7 @@ public class UserAdminController extends BaseController {
 
     @PutMapping("/{id}/reset-password")
     @RequirePermission("user:password:reset")
-    public CommonResult<Void> resetPassword(@PathVariable Long id, @Valid @RequestBody UserResetPasswordRequest request) {
+    public CommonResult<Void> resetPassword(@PathVariable Long id, @Valid @RequestBody SysUserResetPasswordRequest request) {
         if (userService.getById(id) == null) {
             return error(404, i18n("user.not.found"));
         }
@@ -176,7 +178,7 @@ public class UserAdminController extends BaseController {
 
     @PutMapping("/{id}/roles")
     @RequirePermission("user:role:assign")
-    public CommonResult<Void> assignRoles(@PathVariable Long id, @Valid @RequestBody UserRoleAssignRequest request) {
+    public CommonResult<Void> assignRoles(@PathVariable Long id, @Valid @RequestBody SysUserRoleAssignRequest request) {
         if (userService.getById(id) == null) {
             return error(404, i18n("user.not.found"));
         }
@@ -188,12 +190,49 @@ public class UserAdminController extends BaseController {
 
     @PutMapping("/{id}/data-scope")
     @RequirePermission("user:data-scope:set")
-    public CommonResult<Void> updateDataScope(@PathVariable Long id, @Valid @RequestBody UserDataScopeRequest request) {
+    public CommonResult<Void> updateDataScope(@PathVariable Long id, @Valid @RequestBody SysUserDataScopeRequest request) {
         if (userService.getById(id) == null) {
             return error(404, i18n("user.not.found"));
         }
         if (!userService.updateDataScope(id, request.getDataScopeType(), request.getDataScopeValue())) {
             return error(500, i18n("user.data.scope.update.failed"));
+        }
+        return success();
+    }
+
+    @DeleteMapping("/{id}")
+    @RequirePermission("user:delete")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> delete(@PathVariable Long id) {
+        if (userService.getById(id) == null) {
+            return error(404, i18n("user.not.found"));
+        }
+        userRoleService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserRole.class)
+                .eq(UserRole::getUserId, id));
+        if (!userService.removeById(id)) {
+            return error(500, i18n("common.delete.failed"));
+        }
+        return success();
+    }
+
+    @PostMapping("/batch-delete")
+    @RequirePermission("user:delete")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> batchDelete(@RequestBody List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return success();
+        }
+        List<Long> uniqueIds = ids.stream()
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+        if (uniqueIds.isEmpty()) {
+            return success();
+        }
+        userRoleService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserRole.class)
+                .in(UserRole::getUserId, uniqueIds));
+        if (!userService.removeByIds(uniqueIds)) {
+            return error(500, i18n("common.delete.failed"));
         }
         return success();
     }

@@ -13,8 +13,8 @@ import com.example.demo.notice.service.NoticeRecipientService;
 import com.example.demo.notice.service.NoticeService;
 import com.example.demo.permission.entity.UserRole;
 import com.example.demo.permission.service.UserRoleService;
-import com.example.demo.user.entity.User;
-import com.example.demo.user.service.UserService;
+import com.example.demo.user.entity.SysUser;
+import com.example.demo.user.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
 
     private final NoticeRecipientMapper noticeRecipientMapper;
     private final NoticeRecipientService noticeRecipientService;
-    private final UserService userService;
+    private final SysUserService userService;
     private final UserRoleService userRoleService;
 
     @Override
@@ -259,9 +259,9 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         if (deptIds == null || deptIds.isEmpty()) {
             return Collections.emptyList();
         }
-        List<User> users = userService.list(Wrappers.lambdaQuery(User.class)
-                .in(User::getDeptId, deptIds)
-                .eq(User::getStatus, User.STATUS_ENABLED));
+        List<SysUser> users = userService.list(Wrappers.lambdaQuery(SysUser.class)
+                .in(SysUser::getDeptId, deptIds)
+                .eq(SysUser::getStatus, SysUser.STATUS_ENABLED));
         return toIdList(users);
     }
 
@@ -280,10 +280,10 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     }
 
     private List<Long> listEnabledUserIds(List<Long> userIds) {
-        List<User> users;
+        List<SysUser> users;
         if (userIds == null) {
-            users = userService.list(Wrappers.lambdaQuery(User.class)
-                    .eq(User::getStatus, User.STATUS_ENABLED));
+            users = userService.list(Wrappers.lambdaQuery(SysUser.class)
+                    .eq(SysUser::getStatus, SysUser.STATUS_ENABLED));
         } else if (userIds.isEmpty()) {
             return Collections.emptyList();
         } else {
@@ -293,20 +293,20 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
             return Collections.emptyList();
         }
         return users.stream()
-                .filter(user -> user != null && (user.getStatus() == null || user.getStatus() == User.STATUS_ENABLED))
-                .map(User::getId)
+                .filter(user -> user != null && (user.getStatus() == null || user.getStatus() == SysUser.STATUS_ENABLED))
+                .map(SysUser::getId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
     }
 
-    private List<Long> toIdList(List<User> users) {
+    private List<Long> toIdList(List<SysUser> users) {
         if (users == null || users.isEmpty()) {
             return Collections.emptyList();
         }
         return users.stream()
                 .filter(Objects::nonNull)
-                .map(User::getId)
+                .map(SysUser::getId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());

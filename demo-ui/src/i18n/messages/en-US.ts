@@ -9,6 +9,7 @@ export default {
         entry: "Entry point",
         cancel: "Cancel",
         save: "Save",
+        confirmTitle: "Confirmation",
         missingToken: "Missing login token",
         profileLoadFailed: "Failed to load user profile"
     },
@@ -283,6 +284,9 @@ export default {
         title: "Department Management",
         subtitle: "Maintain departments and hierarchy.",
         create: "New department",
+        filter: {
+            delete: "Delete selected"
+        },
         table: {
             name: "Name",
             code: "Code",
@@ -290,7 +294,8 @@ export default {
             sort: "Sort",
             status: "Status",
             action: "Actions",
-            edit: "Edit"
+            edit: "Edit",
+            delete: "Delete"
         },
         dialog: {
             createTitle: "New department",
@@ -314,13 +319,21 @@ export default {
             updateFailed: "Update failed",
             saveFailed: "Save failed",
             statusUpdateFailed: "Failed to update status",
-            validateName: "Enter department name"
+            validateName: "Enter department name",
+            deleteConfirm: "Delete department {name}?",
+            batchDeleteConfirm: "Delete the selected {count} departments?",
+            deleteSuccess: "Deleted",
+            deleteFailed: "Delete failed",
+            deleteEmpty: "Select departments to delete"
         }
     },
     menu: {
         title: "Menu Management",
         subtitle: "Maintain system menus and frontend routes.",
         create: "New menu",
+        filter: {
+            delete: "Delete selected"
+        },
         table: {
             name: "Name",
             code: "Code",
@@ -330,7 +343,8 @@ export default {
             sort: "Sort",
             status: "Status",
             action: "Actions",
-            edit: "Edit"
+            edit: "Edit",
+            delete: "Delete"
         },
         dialog: {
             createTitle: "New menu",
@@ -357,19 +371,28 @@ export default {
             updateFailed: "Update failed",
             saveFailed: "Save failed",
             statusUpdateFailed: "Failed to update status",
-            validateName: "Enter menu name"
+            validateName: "Enter menu name",
+            deleteConfirm: "Delete menu {name}?",
+            batchDeleteConfirm: "Delete the selected {count} menus?",
+            deleteSuccess: "Deleted",
+            deleteFailed: "Delete failed",
+            deleteEmpty: "Select menus to delete"
         }
     },
     permission: {
         title: "Permission Management",
         subtitle: "Maintain permission keys and names.",
         create: "New permission",
+        filter: {
+            delete: "Delete selected"
+        },
         table: {
             code: "Code",
             name: "Name",
             status: "Status",
             action: "Actions",
-            edit: "Edit"
+            edit: "Edit",
+            delete: "Delete"
         },
         dialog: {
             createTitle: "New permission",
@@ -389,13 +412,21 @@ export default {
             updateFailed: "Update failed",
             saveFailed: "Save failed",
             statusUpdateFailed: "Failed to update status",
-            validateForm: "Enter code and name"
+            validateForm: "Enter code and name",
+            deleteConfirm: "Delete permission {name}?",
+            batchDeleteConfirm: "Delete the selected {count} permissions?",
+            deleteSuccess: "Deleted",
+            deleteFailed: "Delete failed",
+            deleteEmpty: "Select permissions to delete"
         }
     },
     role: {
         title: "Role Management",
         subtitle: "Maintain roles, permissions, and menu assignments.",
         create: "New role",
+        filter: {
+            delete: "Delete selected"
+        },
         table: {
             code: "Code",
             name: "Name",
@@ -404,7 +435,8 @@ export default {
             action: "Actions",
             edit: "Edit",
             assignPermissions: "Assign permissions",
-            assignMenus: "Assign menus"
+            assignMenus: "Assign menus",
+            delete: "Delete"
         },
         dialog: {
             createTitle: "New role",
@@ -449,7 +481,12 @@ export default {
             permissionsUpdated: "Permissions updated",
             permissionsUpdateFailed: "Failed to update permissions",
             menusUpdated: "Menus updated",
-            menusUpdateFailed: "Failed to update menus"
+            menusUpdateFailed: "Failed to update menus",
+            deleteConfirm: "Delete role {name}?",
+            batchDeleteConfirm: "Delete the selected {count} roles?",
+            deleteSuccess: "Deleted",
+            deleteFailed: "Delete failed",
+            deleteEmpty: "Select roles to delete"
         }
     },
     user: {
@@ -460,7 +497,8 @@ export default {
             nickNamePlaceholder: "Nickname",
             statusPlaceholder: "Status",
             search: "Search",
-            create: "New user"
+            create: "New user",
+            delete: "Delete selected"
         },
         table: {
             userName: "Username",
@@ -471,7 +509,8 @@ export default {
             action: "Actions",
             edit: "Edit",
             resetPassword: "Reset password",
-            assignRoles: "Assign roles"
+            assignRoles: "Assign roles",
+            delete: "Delete"
         },
         dialog: {
             createTitle: "New user",
@@ -531,7 +570,12 @@ export default {
             passwordResetFailed: "Failed to reset password",
             validateUserName: "Enter username",
             validatePassword: "Enter new password",
-            validatePasswordConfirm: "Passwords do not match"
+            validatePasswordConfirm: "Passwords do not match",
+            deleteConfirm: "Delete user {name}?",
+            batchDeleteConfirm: "Delete the selected {count} users?",
+            deleteSuccess: "Deleted",
+            deleteFailed: "Delete failed",
+            deleteEmpty: "Select users to delete"
         }
     },
     notice: {
@@ -541,7 +585,8 @@ export default {
             keywordPlaceholder: "Title/content keyword",
             scopePlaceholder: "Scope",
             search: "Search",
-            publish: "Publish"
+            publish: "Publish",
+            delete: "Delete selected"
         },
         scope: {
             all: "All",
@@ -556,7 +601,8 @@ export default {
             publisher: "Publisher",
             publishTime: "Published at",
             action: "Actions",
-            detail: "Detail"
+            detail: "Detail",
+            delete: "Delete"
         },
         publish: {
             title: "Publish notice",
@@ -597,7 +643,12 @@ export default {
             detailLoadFailed: "Failed to load detail",
             validateTitle: "Enter notice title",
             validateContent: "Enter notice content",
-            validateTarget: "Select recipients"
+            validateTarget: "Select recipients",
+            deleteConfirm: "Delete notice \"{title}\"?",
+            batchDeleteConfirm: "Delete the selected {count} notices?",
+            deleteSuccess: "Deleted",
+            deleteFailed: "Delete failed",
+            deleteEmpty: "Select notices to delete"
         }
     }
 };

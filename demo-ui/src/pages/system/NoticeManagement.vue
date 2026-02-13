@@ -15,10 +15,20 @@
         </el-select>
         <el-button @click="handleSearch">{{ t("notice.filter.search") }}</el-button>
         <el-button type="primary" @click="openPublish">{{ t("notice.filter.publish") }}</el-button>
+        <el-button v-if="selectedNoticeIds.length" type="danger" @click="removeNotices">
+          {{ t("notice.filter.delete") }}
+        </el-button>
       </div>
     </div>
 
-    <el-table v-loading="loading" :data="notices" row-key="id" size="small">
+    <el-table
+        v-loading="loading"
+        :data="notices"
+        row-key="id"
+        size="small"
+        @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" width="46"/>
       <el-table-column :label="t('notice.table.title')" min-width="180" prop="title"/>
       <el-table-column :label="t('notice.table.scope')" width="100">
         <template #default="{row}">
@@ -36,9 +46,10 @@
           {{ formatDateTime(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column :label="t('notice.table.action')" width="140">
+      <el-table-column :label="t('notice.table.action')" width="200">
         <template #default="{row}">
           <el-button size="small" text @click="openDetail(row)">{{ t("notice.table.detail") }}</el-button>
+          <el-button size="small" text type="danger" @click="removeNotice(row)">{{ t("notice.table.delete") }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -136,9 +147,11 @@
 
 <script lang="ts" setup>
 import {computed, onMounted, reactive, ref, watch} from "vue";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {
+  deleteNotice,
+  deleteNotices,
   type DeptVO,
   listDepts,
   listNoticeRecipients,
@@ -171,6 +184,7 @@ const filters = reactive({
 const pageNum = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
+const selectedNoticeIds = ref<number[]>([]);
 
 const publishForm = reactive<NoticePublishPayload>({
   title: "",
@@ -241,6 +255,10 @@ function readSummary(row: NoticeVO) {
   const totalCount = row.totalCount ?? 0;
   const readCount = row.readCount ?? 0;
   return `${readCount}/${totalCount}`;
+}
+
+function handleSelectionChange(rows: NoticeVO[]) {
+  selectedNoticeIds.value = rows.map((row) => row.id);
 }
 
 function formatDateTime(value?: string) {
@@ -384,6 +402,48 @@ async function submitPublish() {
     ElMessage.error(t("notice.msg.publishFailed"));
   } finally {
     publishing.value = false;
+  }
+}
+
+async function removeNotice(row: NoticeVO) {
+  try {
+    await ElMessageBox.confirm(
+        t("notice.msg.deleteConfirm", {title: row.title}),
+        t("common.confirmTitle"),
+        {type: "warning"}
+    );
+  } catch {
+    return;
+  }
+  const result = await deleteNotice(row.id);
+  if (result?.code === 200) {
+    ElMessage.success(t("notice.msg.deleteSuccess"));
+    loadNotices();
+  } else {
+    ElMessage.error(result?.message || t("notice.msg.deleteFailed"));
+  }
+}
+
+async function removeNotices() {
+  if (!selectedNoticeIds.value.length) {
+    ElMessage.warning(t("notice.msg.deleteEmpty"));
+    return;
+  }
+  try {
+    await ElMessageBox.confirm(
+        t("notice.msg.batchDeleteConfirm", {count: selectedNoticeIds.value.length}),
+        t("common.confirmTitle"),
+        {type: "warning"}
+    );
+  } catch {
+    return;
+  }
+  const result = await deleteNotices(selectedNoticeIds.value);
+  if (result?.code === 200) {
+    ElMessage.success(t("notice.msg.deleteSuccess"));
+    loadNotices();
+  } else {
+    ElMessage.error(result?.message || t("notice.msg.deleteFailed"));
   }
 }
 

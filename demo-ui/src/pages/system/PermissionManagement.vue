@@ -7,10 +7,20 @@
       </div>
       <div class="module-actions">
         <el-button type="primary" @click="openCreate">{{ t("permission.create") }}</el-button>
+        <el-button v-if="selectedPermissionIds.length" type="danger" @click="removePermissions">
+          {{ t("permission.filter.delete") }}
+        </el-button>
       </div>
     </div>
 
-    <el-table v-loading="loading" :data="permissions" row-key="id" size="small">
+    <el-table
+        v-loading="loading"
+        :data="permissions"
+        row-key="id"
+        size="small"
+        @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" width="46"/>
       <el-table-column :label="t('permission.table.code')" min-width="140" prop="code"/>
       <el-table-column :label="t('permission.table.name')" min-width="160" prop="name"/>
       <el-table-column :label="t('permission.table.status')" width="100">
@@ -26,6 +36,7 @@
       <el-table-column :label="t('permission.table.action')" width="140">
         <template #default="{row}">
           <el-button size="small" text @click="openEdit(row)">{{ t("permission.table.edit") }}</el-button>
+          <el-button size="small" text type="danger" @click="removePermission(row)">{{ t("permission.table.delete") }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -55,10 +66,12 @@
 
 <script lang="ts" setup>
 import {computed, onMounted, reactive, ref} from "vue";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {
   createPermission,
+  deletePermission,
+  deletePermissions,
   listPermissions,
   type PermissionVO,
   updatePermission,
@@ -71,6 +84,7 @@ const saving = ref(false);
 const editorVisible = ref(false);
 const editorMode = ref<"create" | "edit">("create");
 const editorId = ref<number | null>(null);
+const selectedPermissionIds = ref<number[]>([]);
 const {t} = useI18n();
 
 const form = reactive({
@@ -86,6 +100,10 @@ const editorTitle = computed(() =>
 function getErrorMessage(error: unknown, fallback: string): string {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err?.response?.data?.message || err?.message || fallback;
+}
+
+function handleSelectionChange(rows: PermissionVO[]) {
+  selectedPermissionIds.value = rows.map((row) => row.id);
 }
 
 async function fetchPermissions() {
@@ -172,6 +190,48 @@ async function handleStatusChange(permission: PermissionVO, value: number) {
   } catch (error) {
     permission.status = previous;
     ElMessage.error(getErrorMessage(error, t("permission.msg.statusUpdateFailed")));
+  }
+}
+
+async function removePermission(permission: PermissionVO) {
+  try {
+    await ElMessageBox.confirm(
+        t("permission.msg.deleteConfirm", {name: permission.name}),
+        t("common.confirmTitle"),
+        {type: "warning"}
+    );
+  } catch {
+    return;
+  }
+  const result = await deletePermission(permission.id);
+  if (result?.code === 200) {
+    ElMessage.success(t("permission.msg.deleteSuccess"));
+    fetchPermissions();
+  } else {
+    ElMessage.error(result?.message || t("permission.msg.deleteFailed"));
+  }
+}
+
+async function removePermissions() {
+  if (!selectedPermissionIds.value.length) {
+    ElMessage.warning(t("permission.msg.deleteEmpty"));
+    return;
+  }
+  try {
+    await ElMessageBox.confirm(
+        t("permission.msg.batchDeleteConfirm", {count: selectedPermissionIds.value.length}),
+        t("common.confirmTitle"),
+        {type: "warning"}
+    );
+  } catch {
+    return;
+  }
+  const result = await deletePermissions(selectedPermissionIds.value);
+  if (result?.code === 200) {
+    ElMessage.success(t("permission.msg.deleteSuccess"));
+    fetchPermissions();
+  } else {
+    ElMessage.error(result?.message || t("permission.msg.deleteFailed"));
   }
 }
 

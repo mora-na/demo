@@ -1,6 +1,7 @@
 package com.example.demo.common.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.example.demo.common.annotation.Excel;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -65,5 +66,6 @@ public abstract class BaseEntity implements Serializable {
      * 备注。
      */
     @TableField("remark")
+    @Excel(header = "备注")
     private String remark;
 }

@@ -9,9 +9,12 @@ import com.example.demo.permission.dto.PermissionStatusRequest;
 import com.example.demo.permission.dto.PermissionUpdateRequest;
 import com.example.demo.permission.dto.PermissionVO;
 import com.example.demo.permission.entity.Permission;
+import com.example.demo.permission.entity.RolePermission;
 import com.example.demo.permission.service.PermissionService;
+import com.example.demo.permission.service.RolePermissionService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +35,7 @@ import java.util.stream.Collectors;
 public class PermissionAdminController extends BaseController {
 
     private final PermissionService permissionService;
+    private final RolePermissionService rolePermissionService;
 
     /**
      * 获取权限列表。
@@ -137,6 +141,43 @@ public class PermissionAdminController extends BaseController {
         }
         if (!permissionService.updateStatus(id, status)) {
             return error(500, i18n("common.status.update.failed"));
+        }
+        return success();
+    }
+
+    @DeleteMapping("/{id}")
+    @RequirePermission("permission:delete")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> delete(@PathVariable Long id) {
+        if (permissionService.getById(id) == null) {
+            return error(404, i18n("permission.not.found"));
+        }
+        rolePermissionService.remove(Wrappers.lambdaQuery(RolePermission.class)
+                .eq(RolePermission::getPermissionId, id));
+        if (!permissionService.removeById(id)) {
+            return error(500, i18n("common.delete.failed"));
+        }
+        return success();
+    }
+
+    @PostMapping("/batch-delete")
+    @RequirePermission("permission:delete")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> batchDelete(@RequestBody List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return success();
+        }
+        List<Long> uniqueIds = ids.stream()
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (uniqueIds.isEmpty()) {
+            return success();
+        }
+        rolePermissionService.remove(Wrappers.lambdaQuery(RolePermission.class)
+                .in(RolePermission::getPermissionId, uniqueIds));
+        if (!permissionService.removeByIds(uniqueIds)) {
+            return error(500, i18n("common.delete.failed"));
         }
         return success();
     }

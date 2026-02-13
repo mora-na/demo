@@ -9,9 +9,12 @@ import com.example.demo.menu.dto.MenuStatusRequest;
 import com.example.demo.menu.dto.MenuUpdateRequest;
 import com.example.demo.menu.dto.MenuVO;
 import com.example.demo.menu.entity.Menu;
+import com.example.demo.menu.entity.RoleMenu;
 import com.example.demo.menu.service.MenuService;
+import com.example.demo.menu.service.RoleMenuService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +35,7 @@ import java.util.stream.Collectors;
 public class MenuAdminController extends BaseController {
 
     private final MenuService menuService;
+    private final RoleMenuService roleMenuService;
 
     /**
      * 获取菜单列表。
@@ -161,6 +165,41 @@ public class MenuAdminController extends BaseController {
         }
         if (!menuService.updateStatus(id, status)) {
             return error(500, i18n("common.status.update.failed"));
+        }
+        return success();
+    }
+
+    @DeleteMapping("/{id}")
+    @RequirePermission("menu:delete")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> delete(@PathVariable Long id) {
+        if (menuService.getById(id) == null) {
+            return error(404, i18n("menu.not.found"));
+        }
+        roleMenuService.remove(Wrappers.lambdaQuery(RoleMenu.class).eq(RoleMenu::getMenuId, id));
+        if (!menuService.removeById(id)) {
+            return error(500, i18n("common.delete.failed"));
+        }
+        return success();
+    }
+
+    @PostMapping("/batch-delete")
+    @RequirePermission("menu:delete")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> batchDelete(@RequestBody List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return success();
+        }
+        List<Long> uniqueIds = ids.stream()
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (uniqueIds.isEmpty()) {
+            return success();
+        }
+        roleMenuService.remove(Wrappers.lambdaQuery(RoleMenu.class).in(RoleMenu::getMenuId, uniqueIds));
+        if (!menuService.removeByIds(uniqueIds)) {
+            return error(500, i18n("common.delete.failed"));
         }
         return success();
     }

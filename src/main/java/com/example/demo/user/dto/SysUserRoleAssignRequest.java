@@ -12,7 +12,7 @@ import java.util.List;
  * @date 2026/2/9
  */
 @Data
-public class UserRoleAssignRequest {
+public class SysUserRoleAssignRequest {
 
     @NotNull
     private List<Long> roleIds;
