@@ -95,8 +95,74 @@ npm run dev
 
 ### 数据范围
 
-- 开关与默认范围：`security.data-scope.enabled`、`security.data-scope.default-type`。
-- 映射规则表：`sys_data_scope_rule`。
+**目标**
+- 以“角色默认 → 角色×菜单 → 用户覆盖”的三层模型表达数据范围。
+- 同层多角色合并为并集（最大范围）。
+- 无配置时使用约定字段 `create_dept` / `create_by`。
+- 读写解耦：写入记录归属字段，读取自动拼接过滤条件。
+
+**三层架构（优先级）**
+- Layer 3：用户级覆盖（`sys_user_data_scope`），优先级最高。
+- Layer 2：角色×菜单级（`sys_role_menu` / `sys_role_menu_dept`）。
+- Layer 1：角色默认级（`sys_role`）。
+- 兜底：无角色 → `SELF`。
+
+**多角色合并**
+- 同层内取并集（最大范围）。
+- 任一角色为 `ALL` → 全量放行。
+- 其他范围合并为“可见部门集合 + 是否包含本人”。
+
+**范围类型**
+- `ALL`：全部数据
+- `DEPT`：本部门
+- `DEPT_AND_CHILD`：本部门及子部门
+- `CUSTOM_DEPT` / `CUSTOM`：自定义部门
+- `SELF`：仅本人
+- `NONE`：无可见数据
+
+**数据模型**
+- 角色默认范围：`sys_role.data_scope_type` / `data_scope_value`。
+- 角色×菜单范围：`sys_role_menu.data_scope_type` 覆盖角色默认。
+- 角色×菜单×部门：`sys_role_menu_dept` 存自定义部门集合。
+- 用户覆盖：`sys_user_data_scope`（`scope_key` 可为 `*` 表示全局）。
+- 字段映射：`sys_data_scope_rule`（`scope_key` → 表/字段/别名）。
+- 默认字段：`dept_column = create_dept`，`user_column = create_by`。
+
+**登录预加载**
+- `deptTreeIds`：当前部门及子部门集合。
+- `roleDataScopes`：角色默认 + 菜单级范围。
+- `userScopeOverrides`：用户级覆盖（`scope_key` → 覆盖配置）。
+
+**读取过滤流程（SELECT）**
+- 方法标注 `@DataScope`，写入 `scopeKey` 至线程上下文。
+- 按 `sys_data_scope_rule` 获取字段映射，缺省使用默认字段。
+- 计算最终范围（Layer3 → Layer2 → Layer1 → 兜底 SELF）。
+- SQL 追加过滤条件（示例）：
+```
+WHERE (
+  o.create_dept IN (...部门集合...)
+  OR o.create_by = #{userId}
+)
+```
+
+**特殊场景**
+- `dept_column` 为空：仅按 `user_column` 过滤，部门范围退化为 `SELF`。
+- 字段映射错误：数据库执行报错，便于快速定位配置问题。
+- 同表多维度：用不同 `scope_key` 区分过滤维度。
+
+**写入归属字段**
+- 业务表继承 `BaseEntity`，自动填充 `create_by` / `create_dept`。
+- `create_dept` 为数据归属快照，不依赖后续部门变更。
+
+**落地规范**
+- 新业务表优先使用 `create_by` / `create_dept`，零配置即可生效。
+- 历史表/第三方表通过 `sys_data_scope_rule` 补充映射。
+- 仅按用户过滤的表将 `dept_column` 设为 NULL。
+
+**关键结论**
+- 用户覆盖 > 角色×菜单 > 角色默认。
+- 同层多角色并集。
+- 无配置即使用默认字段。
 
 ### 字典管理（Dict）
 
