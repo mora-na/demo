@@ -306,9 +306,56 @@ export default {
             dept: "部门管理",
             post: "岗位管理",
             permission: "权限管理",
+            dict: "字典管理",
             notice: "系统通知",
             job: "定时任务",
             dataScope: "数据权限"
+        }
+    },
+    dict: {
+        title: "字典管理",
+        subtitle: "维护系统字典类型与数据项。",
+        cacheRefresh: "刷新缓存",
+        type: {
+            title: "字典类型",
+            create: "新增类型",
+            createTitle: "新增字典类型",
+            editTitle: "编辑字典类型",
+            dictType: "字典类型",
+            dictName: "字典名称",
+            status: "状态",
+            sort: "排序",
+            remark: "备注",
+            action: "操作",
+            filterType: "类型编码",
+            filterName: "类型名称",
+            filterStatus: "状态"
+        },
+        data: {
+            title: "字典数据",
+            create: "新增数据",
+            createTitle: "新增字典数据",
+            editTitle: "编辑字典数据",
+            dictLabel: "字典标签",
+            dictValue: "字典值",
+            status: "状态",
+            sort: "排序",
+            remark: "备注",
+            action: "操作",
+            filterLabel: "标签",
+            filterValue: "值",
+            filterStatus: "状态"
+        },
+        msg: {
+            loadFailed: "加载字典失败",
+            validateType: "请填写字典类型与名称",
+            validateData: "请填写字典标签与值",
+            deleteTypeConfirm: "确认删除字典类型【{name}】吗？",
+            deleteDataConfirm: "确认删除字典数据【{name}】吗？",
+            selectType: "请先选择字典类型",
+            selectData: "请选择需要编辑的数据",
+            cacheRefreshed: "字典缓存已刷新",
+            cacheRefreshFailed: "刷新缓存失败"
         }
     },
     monitorPanel: {

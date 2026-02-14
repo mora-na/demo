@@ -322,6 +322,7 @@ import {
 import {logout, type MenuTree, updateProfile} from "../api/auth";
 import {getUnreadNoticeCount, listMyNotices, markAllNoticesRead, markNoticeRead, type NoticeMyVO} from "../api/system";
 import {useAuthStore} from "../stores/auth";
+import {useDictStore} from "../stores/dict";
 import SystemManagementPanel from "./system/SystemManagementPanel.vue";
 import DataScopePanel from "./system/DataScopePanel.vue";
 import MonitorPanel from "./monitor/MonitorPanel.vue";
@@ -330,6 +331,7 @@ import OrderManagementPanel from "./order/OrderManagementPanel.vue";
 const emit = defineEmits<{ (e: "logout"): void }>();
 
 const authStore = useAuthStore();
+const dictStore = useDictStore();
 const {t} = useI18n();
 const displayName = computed(
     () => authStore.profile?.nickName || authStore.profile?.userName || authStore.userName || t("common.userFallback")
@@ -1125,6 +1127,7 @@ onMounted(async () => {
   }
   navDrawerReady.value = true;
   await loadProfile();
+  void dictStore.loadAll();
   await refreshUnreadCount();
 });
 

@@ -109,6 +109,48 @@ CREATE TABLE IF NOT EXISTS sys_permission
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='权限表';
 
+CREATE TABLE IF NOT EXISTS sys_dict_type
+(
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    dict_type VARCHAR(64) NOT NULL COMMENT '字典类型（唯一）',
+    dict_name VARCHAR(128) NOT NULL COMMENT '字典名称',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    sort INT NOT NULL DEFAULT 0 COMMENT '排序',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by BIGINT DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
+    update_by BIGINT DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_dict_type (dict_type, is_deleted)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='字典类型表';
+
+CREATE TABLE IF NOT EXISTS sys_dict_data
+(
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    dict_type VARCHAR(64) NOT NULL COMMENT '字典类型',
+    dict_label VARCHAR(128) NOT NULL COMMENT '字典标签',
+    dict_value VARCHAR(128) NOT NULL COMMENT '字典值',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    sort INT NOT NULL DEFAULT 0 COMMENT '排序',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by BIGINT DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
+    update_by BIGINT DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_dict_data (dict_type, dict_value, is_deleted),
+    KEY idx_sys_dict_data_type (dict_type)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='字典数据表';
+
 CREATE TABLE IF NOT EXISTS sys_menu
 (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
@@ -723,7 +765,12 @@ VALUES (1, 'user:query', '用户查询', 1),
        (66, 'log:export', '操作日志导出', 1),
        (67, 'log:delete', '操作日志清理', 1),
        (68, 'login-log:query', '登录日志查询', 1),
-       (69, 'login-log:delete', '登录日志清理', 1)
+       (69, 'login-log:delete', '登录日志清理', 1),
+       (70, 'dict:query', '字典查询', 1),
+       (71, 'dict:create', '字典创建', 1),
+       (72, 'dict:update', '字典修改', 1),
+       (73, 'dict:delete', '字典删除', 1),
+       (74, 'dict:cache:refresh', '字典缓存刷新', 1)
 ;
 
 INSERT INTO sys_menu (id, name, code, parent_id, path, component, permission, status, sort, remark)
@@ -735,6 +782,7 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (145, '岗位管理', 'post', 100, '/system/post', 'PostPage', 'post:query', 1, 45, '岗位管理'),
        (150, '权限管理', 'permission', 100, '/system/permission', 'PermissionPage', 'permission:query', 1, 50,
         '权限管理'),
+       (155, '字典管理', 'dict', 100, '/system/dict', 'DictPage', 'dict:query', 1, 55, '字典管理'),
        (160, '系统通知', 'notice', 100, '/system/notice', 'NoticePage', 'notice:query', 1, 60, '系统通知'),
        (170, '定时任务', 'job', 100, '/system/job', 'JobPage', 'job:query', 1, 70, '定时任务'),
        (180, '数据权限', 'data-scope', NULL, '/data-scope', 'DataScopePage', NULL, 1, 30, '数据权限'),
@@ -748,6 +796,18 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (191, '操作日志', 'oper-log', 190, '/monitor/oper-log', 'OperLogPage', 'log:query', 1, 10, '操作日志'),
        (192, '登录日志', 'login-log', 190, '/monitor/login-log', 'LoginLogPage', 'login-log:query', 1, 20, '登录日志'),
        (200, '订单管理', 'order', NULL, '/orders', 'OrderPage', 'order:query', 1, 20, '订单管理')
+;
+
+INSERT INTO sys_dict_type (id, dict_type, dict_name, status, sort, remark)
+VALUES (1, 'sys_gender', '性别', 1, 10, '系统内置'),
+       (2, 'sys_status', '状态', 1, 20, '系统内置')
+;
+
+INSERT INTO sys_dict_data (id, dict_type, dict_label, dict_value, status, sort, remark)
+VALUES (1, 'sys_gender', '男', 'M', 1, 10, NULL),
+       (2, 'sys_gender', '女', 'F', 1, 20, NULL),
+       (3, 'sys_status', '正常', '1', 1, 10, NULL),
+       (4, 'sys_status', '停用', '0', 1, 20, NULL)
 ;
 
 INSERT INTO sys_user (id, user_name, nick_name, phone, email, password, status, dept_id, data_scope_type, data_scope_value,
@@ -862,6 +922,11 @@ VALUES (1, 1),
        (1, 67),
        (1, 68),
        (1, 69),
+       (1, 70),
+       (1, 71),
+       (1, 72),
+       (1, 73),
+       (1, 74),
        (2, 1),
        (2, 4),
        (2, 5),
@@ -892,6 +957,7 @@ VALUES (1, 10, NULL),
        (1, 140, NULL),
        (1, 145, NULL),
        (1, 150, NULL),
+       (1, 155, NULL),
        (1, 160, NULL),
        (1, 170, NULL),
        (1, 180, NULL),

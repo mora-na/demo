@@ -989,3 +989,136 @@ export async function resolveAllDataScope(userId: number): Promise<ApiResponse<D
     });
     return response.data;
 }
+
+export interface DictTypeVO {
+    id: number;
+    dictType: string;
+    dictName: string;
+    status?: number;
+    sort?: number;
+    remark?: string;
+    createTime?: string;
+}
+
+export interface DictDataVO {
+    id: number;
+    dictType: string;
+    dictLabel: string;
+    dictValue: string;
+    status?: number;
+    sort?: number;
+    remark?: string;
+    createTime?: string;
+}
+
+export interface DictTypeQuery {
+    pageNum?: number;
+    pageSize?: number;
+    dictType?: string;
+    dictName?: string;
+    status?: number;
+}
+
+export interface DictDataQuery {
+    pageNum?: number;
+    pageSize?: number;
+    dictType?: string;
+    dictLabel?: string;
+    dictValue?: string;
+    status?: number;
+}
+
+export interface DictTypeCreatePayload {
+    dictType: string;
+    dictName: string;
+    status?: number;
+    sort?: number;
+    remark?: string;
+}
+
+export interface DictTypeUpdatePayload {
+    dictType: string;
+    dictName: string;
+    status?: number;
+    sort?: number;
+    remark?: string;
+}
+
+export interface DictDataCreatePayload {
+    dictType: string;
+    dictLabel: string;
+    dictValue: string;
+    status?: number;
+    sort?: number;
+    remark?: string;
+}
+
+export interface DictDataUpdatePayload {
+    dictLabel: string;
+    dictValue: string;
+    status?: number;
+    sort?: number;
+    remark?: string;
+}
+
+export async function listDictTypes(params: DictTypeQuery): Promise<ApiResponse<PageResult<DictTypeVO>>> {
+    const response = await api.get<ApiResponse<PageResult<DictTypeVO>>>(`/sys/dict/type/list`, {params});
+    return response.data;
+}
+
+export async function createDictType(payload: DictTypeCreatePayload): Promise<ApiResponse<DictTypeVO>> {
+    const response = await api.post<ApiResponse<DictTypeVO>>(`/sys/dict/type`, payload);
+    return response.data;
+}
+
+export async function updateDictType(id: number, payload: DictTypeUpdatePayload): Promise<ApiResponse<void>> {
+    const response = await api.put<ApiResponse<void>>(`/sys/dict/type/${id}`, payload);
+    return response.data;
+}
+
+export async function deleteDictType(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/sys/dict/type/${id}`);
+    return response.data;
+}
+
+export async function listDictData(params: DictDataQuery): Promise<ApiResponse<PageResult<DictDataVO>>> {
+    const response = await api.get<ApiResponse<PageResult<DictDataVO>>>(`/sys/dict/data/list`, {params});
+    return response.data;
+}
+
+export async function createDictData(payload: DictDataCreatePayload): Promise<ApiResponse<DictDataVO>> {
+    const response = await api.post<ApiResponse<DictDataVO>>(`/sys/dict/data`, payload);
+    return response.data;
+}
+
+export async function updateDictData(id: number, payload: DictDataUpdatePayload): Promise<ApiResponse<void>> {
+    const response = await api.put<ApiResponse<void>>(`/sys/dict/data/${id}`, payload);
+    return response.data;
+}
+
+export async function deleteDictData(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/sys/dict/data/${id}`);
+    return response.data;
+}
+
+export async function refreshDictCache(): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/sys/dict/cache/refresh`);
+    return response.data;
+}
+
+export async function fetchDictDataByType(dictType: string): Promise<ApiResponse<DictDataVO[]>> {
+    const response = await api.get<ApiResponse<DictDataVO[]>>(`/dict/data/${dictType}`);
+    return response.data;
+}
+
+export async function fetchDictDataBatch(types: string[]): Promise<ApiResponse<Record<string, DictDataVO[]>>> {
+    const response = await api.get<ApiResponse<Record<string, DictDataVO[]>>>(`/dict/data/batch`, {
+        params: {types: types.join(",")}
+    });
+    return response.data;
+}
+
+export async function fetchAllDictData(): Promise<ApiResponse<Record<string, DictDataVO[]>>> {
+    const response = await api.get<ApiResponse<Record<string, DictDataVO[]>>>(`/dict/data/all`);
+    return response.data;
+}

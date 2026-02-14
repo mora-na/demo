@@ -2,6 +2,7 @@ package com.example.demo.auth.store;
 
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.cache.CacheTool;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,14 +23,16 @@ public class TokenStore {
     private static final String TOKEN_KEY_PREFIX = "auth:token:";
 
     private final CacheTool cacheTool;
+    private final ObjectMapper objectMapper;
 
     /**
      * 构造函数，注入缓存工具。
      *
      * @param cacheTool 缓存工具
      */
-    public TokenStore(CacheTool cacheTool) {
+    public TokenStore(CacheTool cacheTool, ObjectMapper objectMapper) {
         this.cacheTool = cacheTool;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -61,10 +64,10 @@ public class TokenStore {
             return null;
         }
         Object value = cacheTool.get(buildKey(token));
-        if (!(value instanceof TokenRecord)) {
+        TokenRecord record = convertRecord(value);
+        if (record == null) {
             return null;
         }
-        TokenRecord record = (TokenRecord) value;
         long now = Instant.now().getEpochSecond();
         if (record.getExpireAtSeconds() < now) {
             cacheTool.delete(buildKey(token));
@@ -92,6 +95,20 @@ public class TokenStore {
      */
     private String buildKey(String token) {
         return TOKEN_KEY_PREFIX + token;
+    }
+
+    private TokenRecord convertRecord(Object value) {
+        if (value instanceof TokenRecord) {
+            return (TokenRecord) value;
+        }
+        if (value == null) {
+            return null;
+        }
+        try {
+            return objectMapper.convertValue(value, TokenRecord.class);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     /**

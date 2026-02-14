@@ -1,5 +1,6 @@
 package com.example.demo.user.dto;
 
+import com.example.demo.dict.annotation.DictLabel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,8 +29,10 @@ public class SysUserVO implements Serializable {
 
     private String email;
 
+    @DictLabel("sys_gender")
     private String sex;
 
+    @DictLabel("sys_status")
     private Integer status;
 
     private Long deptId;

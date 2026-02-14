@@ -88,7 +88,8 @@ auth:
   filter:
     # 是否启用认证过滤器
     enabled: true
-    # 认证过滤排除路径（会与 security.common.exclude-paths 合并）
+    # 认证过滤排除路径（AuthTokenFilter 生效，未登录也可访问）
+    # 该列表会与 security.common.exclude-paths 合并
     exclude-paths:
       - /auth/captcha # 排除验证码接口
       - /auth/login # 排除登录接口

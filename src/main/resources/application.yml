@@ -132,6 +132,12 @@ cache:
     # 清理间隔（秒），0 表示关闭定时清理
     cleanup-interval-seconds: 300
 
+# 字典缓存配置
+dict:
+  cache:
+    # 字典缓存时长（秒），<=0 表示不缓存
+    seconds: 600
+
 # 系统通知 SSE 配置
 notice:
   sse:
@@ -284,7 +290,8 @@ security:
       - admin # 超级用户账号
     # 权限缓存时长（秒）
     cache-seconds: 600
-    # 权限校验排除路径（会与 security.common.exclude-paths 合并）
+    # 权限校验排除路径（PermissionInterceptor 生效，跳过登录/权限校验）
+    # 该列表会与 security.common.exclude-paths 合并
     exclude-paths:
       - /auth/** # 排除认证接口
       - /error # 排除错误接口

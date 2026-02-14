@@ -18,6 +18,7 @@
       <DeptManagement v-else-if="activeMenuCode === 'dept'"/>
       <PostManagement v-else-if="activeMenuCode === 'post'"/>
       <PermissionManagement v-else-if="activeMenuCode === 'permission'"/>
+      <DictManagement v-else-if="activeMenuCode === 'dict'"/>
       <NoticeManagement v-else-if="activeMenuCode === 'notice'"/>
       <JobManagement v-else-if="activeMenuCode === 'job'"/>
       <DataScopePanel
@@ -39,6 +40,7 @@ import MenuManagement from "./MenuManagement.vue";
 import DeptManagement from "./DeptManagement.vue";
 import PostManagement from "./PostManagement.vue";
 import PermissionManagement from "./PermissionManagement.vue";
+import DictManagement from "./DictManagement.vue";
 import NoticeManagement from "./NoticeManagement.vue";
 import JobManagement from "./JobManagement.vue";
 import DataScopePanel from "./DataScopePanel.vue";
@@ -80,6 +82,8 @@ function menuLabel(menu: MenuTree) {
       return t("systemPanel.tabs.post");
     case "permission":
       return t("systemPanel.tabs.permission");
+    case "dict":
+      return t("systemPanel.tabs.dict");
     case "notice":
       return t("systemPanel.tabs.notice");
     case "job":

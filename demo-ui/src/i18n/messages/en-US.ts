@@ -306,9 +306,56 @@ export default {
             dept: "Departments",
             post: "Posts",
             permission: "Permissions",
+            dict: "Dictionaries",
             notice: "Notices",
             job: "Scheduled Jobs",
             dataScope: "Data Scope"
+        }
+    },
+    dict: {
+        title: "Dictionary Management",
+        subtitle: "Maintain dictionary types and entries.",
+        cacheRefresh: "Refresh Cache",
+        type: {
+            title: "Dictionary Types",
+            create: "New Type",
+            createTitle: "Create Dictionary Type",
+            editTitle: "Edit Dictionary Type",
+            dictType: "Type Code",
+            dictName: "Type Name",
+            status: "Status",
+            sort: "Sort",
+            remark: "Remark",
+            action: "Action",
+            filterType: "Type code",
+            filterName: "Type name",
+            filterStatus: "Status"
+        },
+        data: {
+            title: "Dictionary Data",
+            create: "New Entry",
+            createTitle: "Create Dictionary Entry",
+            editTitle: "Edit Dictionary Entry",
+            dictLabel: "Label",
+            dictValue: "Value",
+            status: "Status",
+            sort: "Sort",
+            remark: "Remark",
+            action: "Action",
+            filterLabel: "Label",
+            filterValue: "Value",
+            filterStatus: "Status"
+        },
+        msg: {
+            loadFailed: "Failed to load dictionaries.",
+            validateType: "Please fill type and name.",
+            validateData: "Please fill label and value.",
+            deleteTypeConfirm: "Delete dictionary type \"{name}\"?",
+            deleteDataConfirm: "Delete dictionary entry \"{name}\"?",
+            selectType: "Select a dictionary type first.",
+            selectData: "Select a row to edit.",
+            cacheRefreshed: "Dictionary cache refreshed.",
+            cacheRefreshFailed: "Failed to refresh cache."
         }
     },
     monitorPanel: {
