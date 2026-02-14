@@ -31,30 +31,8 @@ export interface OrderQuery {
     maxAmount?: number;
 }
 
-export interface OrderCreatePayload {
-    userId: number;
-    amount: number;
-    remark?: string;
-}
-
-export interface OrderUpdatePayload {
-    userId?: number;
-    amount?: number;
-    remark?: string;
-}
-
 export async function listOrders(params: OrderQuery): Promise<ApiResponse<PageResult<OrderVO>>> {
     const response = await api.get<ApiResponse<PageResult<OrderVO>>>("/orders", {params});
-    return response.data;
-}
-
-export async function createOrder(payload: OrderCreatePayload): Promise<ApiResponse<OrderVO>> {
-    const response = await api.post<ApiResponse<OrderVO>>("/orders", payload);
-    return response.data;
-}
-
-export async function updateOrder(id: number, payload: OrderUpdatePayload): Promise<ApiResponse<void>> {
-    const response = await api.put<ApiResponse<void>>(`/orders/${id}`, payload);
     return response.data;
 }
 

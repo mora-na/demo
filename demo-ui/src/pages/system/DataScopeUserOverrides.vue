@@ -228,7 +228,7 @@ function openEdit(row: UserDataScopeVO) {
   editorMode.value = "edit";
   editorId.value = row.id;
   form.userId = row.userId;
-  form.scopeKey = row.scopeKey;
+  form.scopeKey = row.scopeKey ?? "";
   form.dataScopeType = row.dataScopeType || "SELF";
   form.dataScopeValue = row.dataScopeValue || "";
   form.status = row.status ?? 1;
@@ -255,7 +255,7 @@ async function saveOverride() {
       if (result?.code === 200) {
         ElMessage.success(t("common.saveSuccess"));
         editorVisible.value = false;
-        fetchRows();
+        await fetchRows();
       } else {
         ElMessage.error(result?.message || t("common.saveFailed"));
       }
@@ -270,7 +270,7 @@ async function saveOverride() {
       if (result?.code === 200) {
         ElMessage.success(t("common.saveSuccess"));
         editorVisible.value = false;
-        fetchRows();
+        await fetchRows();
       } else {
         ElMessage.error(result?.message || t("common.saveFailed"));
       }
@@ -293,7 +293,7 @@ async function removeRow(row: UserDataScopeVO) {
   const result = await deleteUserDataScope(row.id);
   if (result?.code === 200) {
     ElMessage.success(t("common.deleteSuccess"));
-    fetchRows();
+    await fetchRows();
   } else {
     ElMessage.error(result?.message || t("common.deleteFailed"));
   }

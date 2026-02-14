@@ -1050,8 +1050,6 @@ VALUES (1, 'user:query', '用户查询', 1),
        (54, 'data-scope:user:query', '用户数据范围查询', 1),
        (55, 'data-scope:user:manage', '用户数据范围管理', 1),
        (56, 'order:query', '订单查询', 1),
-       (57, 'order:create', '订单创建', 1),
-       (58, 'order:update', '订单更新', 1),
        (59, 'order:delete', '订单删除', 1)
 ON CONFLICT (id) DO UPDATE SET code   = EXCLUDED.code,
                                name   = EXCLUDED.name,

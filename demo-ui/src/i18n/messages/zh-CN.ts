@@ -782,8 +782,7 @@ export default {
             userIdPlaceholder: "用户ID",
             minAmountPlaceholder: "最小金额",
             maxAmountPlaceholder: "最大金额",
-            search: "查询",
-            create: "新增订单"
+            search: "查询"
         },
         table: {
             id: "订单ID",
@@ -792,25 +791,10 @@ export default {
             createdAt: "下单时间",
             remark: "备注",
             action: "操作",
-            edit: "编辑",
             delete: "删除"
-        },
-        dialog: {
-            createTitle: "新增订单",
-            editTitle: "编辑订单",
-            userId: "用户ID",
-            userIdPlaceholder: "请输入用户ID",
-            amount: "订单金额",
-            amountPlaceholder: "请输入订单金额",
-            remark: "备注"
         },
         msg: {
             loadFailed: "订单加载失败",
-            fillRequired: "请填写用户ID和订单金额",
-            createSuccess: "订单已创建",
-            createFailed: "订单创建失败",
-            updateSuccess: "订单已更新",
-            updateFailed: "订单更新失败",
             deleteConfirm: "确认删除订单 #{id} 吗？",
             deleteSuccess: "订单已删除",
             deleteFailed: "订单删除失败"

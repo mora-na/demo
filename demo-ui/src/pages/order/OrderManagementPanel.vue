@@ -29,7 +29,6 @@
             controls-position="right"
         />
         <el-button @click="handleSearch">{{ t("order.filter.search") }}</el-button>
-        <el-button type="primary" @click="openCreate">{{ t("order.filter.create") }}</el-button>
       </div>
     </div>
 
@@ -51,10 +50,9 @@
         </template>
       </el-table-column>
       <el-table-column :label="t('order.table.remark')" min-width="180" prop="remark" show-overflow-tooltip/>
-      <el-table-column :label="t('order.table.action')" width="160">
+      <el-table-column :label="t('order.table.action')" width="120">
         <template #default="{row}">
           <div class="action-buttons">
-            <el-button size="small" text @click="openEdit(row)">{{ t("order.table.edit") }}</el-button>
             <el-button size="small" text type="danger" @click="removeOrder(row)">
               {{ t("order.table.delete") }}
             </el-button>
@@ -73,59 +71,19 @@
           @size-change="handleSizeChange"
       />
     </div>
-
-    <el-dialog v-model="editorVisible" :title="editorTitle" align-center width="520px">
-      <el-form :model="form" label-position="top" class="order-editor-form">
-        <el-form-item :label="t('order.dialog.userId')">
-          <el-input-number
-              v-model="form.userId"
-              :min="1"
-              :placeholder="t('order.dialog.userIdPlaceholder')"
-              controls-position="right"
-          />
-        </el-form-item>
-        <el-form-item :label="t('order.dialog.amount')">
-          <el-input-number
-              v-model="form.amount"
-              :min="0"
-              :precision="2"
-              :step="10"
-              :placeholder="t('order.dialog.amountPlaceholder')"
-              controls-position="right"
-          />
-        </el-form-item>
-        <el-form-item :label="t('order.dialog.remark')">
-          <el-input v-model.trim="form.remark" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="saving" type="primary" @click="saveOrder">{{ t("common.save") }}</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import {computed, onMounted, reactive, ref} from "vue";
+import {onMounted, reactive, ref} from "vue";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {useI18n} from "vue-i18n";
-import {
-  createOrder,
-  deleteOrder,
-  listOrders,
-  type OrderCreatePayload,
-  type OrderQuery,
-  type OrderUpdatePayload,
-  type OrderVO,
-  updateOrder
-} from "../../api/order";
+import {deleteOrder, listOrders, type OrderQuery, type OrderVO} from "../../api/order";
 
 const {t} = useI18n();
 
 const orders = ref<OrderVO[]>([]);
 const loading = ref(false);
-const saving = ref(false);
 
 const filters = reactive({
   userId: null as number | null,
@@ -136,19 +94,6 @@ const filters = reactive({
 const pageNum = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
-
-const editorVisible = ref(false);
-const editorMode = ref<"create" | "edit">("create");
-const form = reactive({
-  id: null as number | null,
-  userId: null as number | null,
-  amount: null as number | null,
-  remark: ""
-});
-
-const editorTitle = computed(() =>
-    editorMode.value === "create" ? t("order.dialog.createTitle") : t("order.dialog.editTitle")
-);
 
 function formatAmount(amount?: number | string) {
   if (amount == null) {
@@ -228,83 +173,6 @@ function handleSizeChange(value: number) {
   pageSize.value = value;
   pageNum.value = 1;
   loadOrders();
-}
-
-function resetForm() {
-  form.id = null;
-  form.userId = null;
-  form.amount = null;
-  form.remark = "";
-}
-
-function openCreate() {
-  resetForm();
-  editorMode.value = "create";
-  editorVisible.value = true;
-}
-
-function openEdit(row: OrderVO) {
-  form.id = row.id ?? null;
-  form.userId = row.userId ?? null;
-  if (row.amount == null) {
-    form.amount = null;
-  } else {
-    const value = typeof row.amount === "string" ? Number(row.amount) : row.amount;
-    form.amount = Number.isNaN(value) ? null : value;
-  }
-  form.remark = row.remark || "";
-  editorMode.value = "edit";
-  editorVisible.value = true;
-}
-
-async function saveOrder() {
-  if (saving.value) {
-    return;
-  }
-  if (form.userId == null || form.amount == null || form.amount <= 0) {
-    ElMessage.warning(t("order.msg.fillRequired"));
-    return;
-  }
-  saving.value = true;
-  try {
-    if (editorMode.value === "create") {
-      const payload: OrderCreatePayload = {
-        userId: form.userId,
-        amount: form.amount,
-        remark: form.remark || undefined
-      };
-      const result = await createOrder(payload);
-      if (result?.code === 200) {
-        ElMessage.success(t("order.msg.createSuccess"));
-        editorVisible.value = false;
-        loadOrders();
-      } else {
-        ElMessage.error(result?.message || t("order.msg.createFailed"));
-      }
-      return;
-    }
-    if (!form.id) {
-      ElMessage.error(t("order.msg.updateFailed"));
-      return;
-    }
-    const payload: OrderUpdatePayload = {
-      userId: form.userId,
-      amount: form.amount,
-      remark: form.remark || undefined
-    };
-    const result = await updateOrder(form.id, payload);
-    if (result?.code === 200) {
-      ElMessage.success(t("order.msg.updateSuccess"));
-      editorVisible.value = false;
-      loadOrders();
-    } else {
-      ElMessage.error(result?.message || t("order.msg.updateFailed"));
-    }
-  } catch (error) {
-    ElMessage.error(t("order.msg.updateFailed"));
-  } finally {
-    saving.value = false;
-  }
 }
 
 async function removeOrder(row: OrderVO) {
