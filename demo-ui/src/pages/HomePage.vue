@@ -2,6 +2,16 @@
   <main :class="{ 'drawer-open': navDrawerVisible }" class="console">
 
     <aside :class="{ open: navDrawerVisible, ready: navDrawerReady }" class="console-drawer">
+      <div class="nav-toggle">
+        <el-button
+            :aria-label="navDrawerVisible ? t('home.nav.collapse') : t('home.nav.expand')"
+            class="icon-button nav-trigger"
+            text
+            @click="toggleNav"
+        >
+          <Menu class="topbar-icon"/>
+        </el-button>
+      </div>
       <nav class="console-nav">
         <div class="nav-brand">
           <div class="nav-brand-row">
@@ -64,14 +74,6 @@
       <header class="console-topbar">
         <div class="topbar-left">
           <div class="topbar-left-main">
-            <el-button
-                :aria-label="navDrawerVisible ? t('home.nav.collapse') : t('home.nav.expand')"
-                class="icon-button nav-trigger"
-                text
-                @click="toggleNav"
-            >
-              <Menu class="topbar-icon"/>
-            </el-button>
             <div class="topbar-title">{{ t("home.topbar.title") }}</div>
             <div class="topbar-sub">{{ activeGroup?.name || t("home.topbar.chooseModule") }}</div>
           </div>
@@ -1157,6 +1159,7 @@ onUnmounted(() => {
   border: 1px solid rgba(18, 18, 18, 0.08);
   box-shadow: var(--shadow);
   backdrop-filter: blur(12px);
+  position: relative;
 }
 
 .console-drawer.ready {
@@ -1188,7 +1191,19 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 12px 10px;
+  padding: 44px 10px 12px;
+}
+
+.nav-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.console-drawer:not(.open) .nav-toggle {
+  right: 50%;
+  transform: translateX(50%);
 }
 
 .nav-brand {
@@ -1378,13 +1393,11 @@ onUnmounted(() => {
   align-items: center;
   padding: 4px 12px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(18, 18, 18, 0.08);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(12px);
-  position: sticky;
-  top: 0;
-  z-index: 3;
+  box-shadow: none;
+  backdrop-filter: none;
+  position: static;
 }
 
 .topbar-left {

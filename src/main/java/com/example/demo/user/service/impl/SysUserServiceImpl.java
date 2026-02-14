@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.auth.dto.UserProfileUpdateRequest;
 import com.example.demo.auth.service.PasswordService;
+import com.example.demo.common.annotation.DataScope;
 import com.example.demo.datascope.entity.UserDataScope;
 import com.example.demo.datascope.service.UserDataScopeService;
 import com.example.demo.permission.entity.UserRole;
@@ -41,11 +42,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private final UserDataScopeService userDataScopeService;
 
     @Override
+    @DataScope(permission = "user:query")
     public List<SysUser> selectUsers(SysUserQuery query) {
         return baseMapper.selectList(buildListQueryWrapper(query));
     }
 
     @Override
+    @DataScope(permission = "user:query")
     public IPage<SysUser> selectUsersPage(Page<SysUser> page, SysUserQuery query) {
         if (page == null) {
             return new Page<>(1, 10);
@@ -54,6 +57,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @DataScope(permission = "user:query")
     public IPage<SysUser> searchUsersPage(Page<SysUser> page, String keyword) {
         if (page == null) {
             return new Page<>(1, 10);
@@ -66,6 +70,35 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                         .like(SysUser::getUserName, keyword)
                         .or()
                         .like(SysUser::getNickName, keyword));
+    }
+
+    @Override
+    @DataScope(permission = "user:query")
+    public SysUser getByIdScoped(Long id) {
+        if (id == null) {
+            return null;
+        }
+        return getById(id);
+    }
+
+    @Override
+    @DataScope(permission = "user:query")
+    public List<Long> listScopedUserIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        List<Long> uniqueIds = ids.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (uniqueIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return baseMapper.selectList(Wrappers.lambdaQuery(SysUser.class).in(SysUser::getId, uniqueIds))
+                .stream()
+                .map(SysUser::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     private com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysUser> buildListQueryWrapper(SysUserQuery query) {
@@ -135,6 +168,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @DataScope(permission = "user:query")
     @Transactional(rollbackFor = Exception.class)
     public boolean updateUser(Long id, SysUserUpdateRequest request) {
         if (id == null || request == null) {
@@ -154,6 +188,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @DataScope(permission = "user:query")
     @Transactional(rollbackFor = Exception.class)
     public boolean updateStatus(Long id, Integer status) {
         if (id == null) {
@@ -166,6 +201,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @DataScope(permission = "user:query")
     @Transactional(rollbackFor = Exception.class)
     public boolean resetPassword(Long id, String newPassword) {
         if (id == null || newPassword == null) {
@@ -178,9 +214,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @DataScope(permission = "user:query")
     @Transactional(rollbackFor = Exception.class)
     public boolean assignRoles(Long id, List<Long> roleIds) {
         if (id == null) {
+            return false;
+        }
+        if (getById(id) == null) {
             return false;
         }
         userRoleService.remove(Wrappers.lambdaQuery(UserRole.class).eq(UserRole::getUserId, id));
@@ -204,9 +244,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @DataScope(permission = "user:query")
     @Transactional(rollbackFor = Exception.class)
     public boolean assignPosts(Long id, List<Long> postIds) {
         if (id == null) {
+            return false;
+        }
+        if (getById(id) == null) {
             return false;
         }
         userPostService.remove(Wrappers.lambdaQuery(UserPost.class).eq(UserPost::getUserId, id));
@@ -230,9 +274,13 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    @DataScope(permission = "user:query")
     @Transactional(rollbackFor = Exception.class)
     public boolean updateDataScope(Long id, String dataScopeType, String dataScopeValue, String scopeKey) {
         if (id == null) {
+            return false;
+        }
+        if (getById(id) == null) {
             return false;
         }
         // 兼容旧字段：同步保存到 sys_user
@@ -279,6 +327,49 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             user.setPassword(passwordService.encode(newPassword));
         }
         return updateById(user);
+    }
+
+    @Override
+    @DataScope(permission = "user:query")
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteUserScoped(Long id) {
+        if (id == null) {
+            return false;
+        }
+        SysUser user = getById(id);
+        if (user == null) {
+            return false;
+        }
+        userRoleService.remove(Wrappers.lambdaQuery(UserRole.class).eq(UserRole::getUserId, id));
+        userPostService.remove(Wrappers.lambdaQuery(UserPost.class).eq(UserPost::getUserId, id));
+        return removeById(id);
+    }
+
+    @Override
+    @DataScope(permission = "user:query")
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteUsersScoped(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return true;
+        }
+        List<Long> uniqueIds = ids.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (uniqueIds.isEmpty()) {
+            return true;
+        }
+        List<SysUser> users = baseMapper.selectList(Wrappers.lambdaQuery(SysUser.class).in(SysUser::getId, uniqueIds));
+        if (users.size() != uniqueIds.size()) {
+            return false;
+        }
+        List<Long> allowedIds = users.stream()
+                .map(SysUser::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        userRoleService.remove(Wrappers.lambdaQuery(UserRole.class).in(UserRole::getUserId, allowedIds));
+        userPostService.remove(Wrappers.lambdaQuery(UserPost.class).in(UserPost::getUserId, allowedIds));
+        return removeByIds(allowedIds);
     }
 
 }

@@ -8,9 +8,9 @@
           <el-option :label="t('common.enabled')" :value="1"/>
           <el-option :label="t('common.disabled')" :value="0"/>
         </el-select>
-        <el-button @click="handleSearch">{{ t("common.search") }}</el-button>
+        <el-button v-permission="'data-scope:user:query'" @click="handleSearch">{{ t("common.search") }}</el-button>
       </div>
-      <el-button type="primary" @click="openCreate">{{ t("dataScope.user.create") }}</el-button>
+      <el-button v-permission="'data-scope:user:manage'" type="primary" @click="openCreate">{{ t("dataScope.user.create") }}</el-button>
     </div>
 
     <el-table v-loading="loading" :data="rows" size="small">
@@ -30,8 +30,8 @@
       <el-table-column :label="t('dataScope.user.action')" width="160">
         <template #default="{row}">
           <div class="action-buttons">
-            <el-button size="small" text @click="openEdit(row)">{{ t("common.edit") }}</el-button>
-            <el-button size="small" text type="danger" @click="removeRow(row)">{{ t("common.delete") }}</el-button>
+            <el-button v-permission="'data-scope:user:manage'" size="small" text @click="openEdit(row)">{{ t("common.edit") }}</el-button>
+            <el-button v-permission="'data-scope:user:manage'" size="small" text type="danger" @click="removeRow(row)">{{ t("common.delete") }}</el-button>
           </div>
         </template>
       </el-table-column>
@@ -118,7 +118,7 @@
       </el-form>
       <template #footer>
         <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="saving" type="primary" @click="saveOverride">{{ t("common.save") }}</el-button>
+        <el-button v-permission="'data-scope:user:manage'" :loading="saving" type="primary" @click="saveOverride">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
   </div>

@@ -13,7 +13,7 @@
           <el-option :value="0" :label="t('job.dialog.statusDisabled')"/>
         </el-select>
         <el-button @click="handleSearch">{{ t("job.filter.search") }}</el-button>
-        <el-button type="primary" @click="openCreate">{{ t("job.filter.create") }}</el-button>
+        <el-button v-permission="'job:create'" type="primary" @click="openCreate">{{ t("job.filter.create") }}</el-button>
       </div>
     </div>
 
@@ -34,6 +34,7 @@
       <el-table-column :label="t('job.table.status')" width="110">
         <template #default="{row}">
           <el-switch
+              v-permission="'job:status'"
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
@@ -44,10 +45,10 @@
       <el-table-column :label="t('job.table.action')" width="280">
         <template #default="{row}">
           <div class="action-buttons">
-            <el-button size="small" text @click="openEdit(row)">{{ t("job.table.edit") }}</el-button>
-            <el-button size="small" text @click="runOnce(row)">{{ t("job.table.run") }}</el-button>
+            <el-button v-permission="'job:update'" size="small" text @click="openEdit(row)">{{ t("job.table.edit") }}</el-button>
+            <el-button v-permission="'job:run'" size="small" text @click="runOnce(row)">{{ t("job.table.run") }}</el-button>
             <el-button size="small" text @click="openLogs(row)">{{ t("job.table.logs") }}</el-button>
-            <el-button size="small" text type="danger" @click="removeJob(row)">{{ t("job.table.delete") }}</el-button>
+            <el-button v-permission="'job:delete'" size="small" text type="danger" @click="removeJob(row)">{{ t("job.table.delete") }}</el-button>
           </div>
         </template>
       </el-table-column>
@@ -115,7 +116,7 @@
       </el-form>
       <template #footer>
         <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="saving" type="primary" @click="saveJob">{{ t("common.save") }}</el-button>
+        <el-button v-permission="editorMode === 'create' ? 'job:create' : 'job:update'" :loading="saving" type="primary" @click="saveJob">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
 

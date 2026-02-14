@@ -31,7 +31,7 @@
             :value="menu.permission"
         />
       </el-select>
-      <el-button type="primary" :loading="loading" @click="handleResolve">
+      <el-button v-permission="'data-scope:resolve'" type="primary" :loading="loading" @click="handleResolve">
         {{ t("dataScope.overview.search") }}
       </el-button>
     </div>

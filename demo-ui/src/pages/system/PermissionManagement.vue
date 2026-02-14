@@ -6,8 +6,8 @@
         <div class="module-sub">{{ t("permission.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-button type="primary" @click="openCreate">{{ t("permission.create") }}</el-button>
-        <el-button v-if="selectedPermissionIds.length" type="danger" @click="removePermissions">
+        <el-button v-permission="'permission:create'" type="primary" @click="openCreate">{{ t("permission.create") }}</el-button>
+        <el-button v-permission="'permission:delete'" v-if="selectedPermissionIds.length" type="danger" @click="removePermissions">
           {{ t("permission.filter.delete") }}
         </el-button>
       </div>
@@ -26,6 +26,7 @@
       <el-table-column :label="t('permission.table.status')" width="100">
         <template #default="{row}">
           <el-switch
+              v-permission="'permission:disable'"
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
@@ -35,8 +36,8 @@
       </el-table-column>
       <el-table-column :label="t('permission.table.action')" width="140">
         <template #default="{row}">
-          <el-button size="small" text @click="openEdit(row)">{{ t("permission.table.edit") }}</el-button>
-          <el-button size="small" text type="danger" @click="removePermission(row)">{{ t("permission.table.delete") }}</el-button>
+          <el-button v-permission="'permission:update'" size="small" text @click="openEdit(row)">{{ t("permission.table.edit") }}</el-button>
+          <el-button v-permission="'permission:delete'" size="small" text type="danger" @click="removePermission(row)">{{ t("permission.table.delete") }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -58,7 +59,7 @@
       </el-form>
       <template #footer>
         <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="saving" type="primary" @click="savePermission">{{ t("common.save") }}</el-button>
+        <el-button v-permission="editorMode === 'create' ? 'permission:create' : 'permission:update'" :loading="saving" type="primary" @click="savePermission">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
   </div>

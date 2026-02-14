@@ -14,8 +14,8 @@
           <el-option :label="t('notice.scope.user')" value="USER"/>
         </el-select>
         <el-button @click="handleSearch">{{ t("notice.filter.search") }}</el-button>
-        <el-button type="primary" @click="openPublish">{{ t("notice.filter.publish") }}</el-button>
-        <el-button v-if="selectedNoticeIds.length" type="danger" @click="removeNotices">
+        <el-button v-permission="'notice:publish'" type="primary" @click="openPublish">{{ t("notice.filter.publish") }}</el-button>
+        <el-button v-permission="'notice:delete'" v-if="selectedNoticeIds.length" type="danger" @click="removeNotices">
           {{ t("notice.filter.delete") }}
         </el-button>
       </div>
@@ -49,7 +49,7 @@
       <el-table-column :label="t('notice.table.action')" width="200">
         <template #default="{row}">
           <el-button size="small" text @click="openDetail(row)">{{ t("notice.table.detail") }}</el-button>
-          <el-button size="small" text type="danger" @click="removeNotice(row)">{{ t("notice.table.delete") }}</el-button>
+          <el-button v-permission="'notice:delete'" size="small" text type="danger" @click="removeNotice(row)">{{ t("notice.table.delete") }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -104,7 +104,7 @@
       </el-form>
       <template #footer>
         <el-button @click="publishVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="publishing" type="primary" @click="submitPublish">{{ t("notice.publish.publish") }}</el-button>
+        <el-button v-permission="'notice:publish'" :loading="publishing" type="primary" @click="submitPublish">{{ t("notice.publish.publish") }}</el-button>
       </template>
     </el-dialog>
 

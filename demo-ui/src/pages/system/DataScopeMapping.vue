@@ -4,9 +4,9 @@
       <div class="filters">
         <el-input v-model.trim="filters.scopeKey" clearable :placeholder="t('dataScope.mapping.scopeKey')"/>
         <el-input v-model.trim="filters.tableName" clearable :placeholder="t('dataScope.mapping.tableName')"/>
-        <el-button @click="handleSearch">{{ t("common.search") }}</el-button>
+        <el-button v-permission="'data-scope:rule:query'" @click="handleSearch">{{ t("common.search") }}</el-button>
       </div>
-      <el-button type="primary" @click="openCreate">{{ t("dataScope.mapping.create") }}</el-button>
+      <el-button v-permission="'data-scope:rule:create'" type="primary" @click="openCreate">{{ t("dataScope.mapping.create") }}</el-button>
     </div>
 
     <el-table v-loading="loading" :data="rows" size="small">
@@ -25,8 +25,8 @@
       <el-table-column :label="t('dataScope.mapping.action')" width="160">
         <template #default="{row}">
           <div class="action-buttons">
-            <el-button size="small" text @click="openEdit(row)">{{ t("common.edit") }}</el-button>
-            <el-button size="small" text type="danger" @click="removeRow(row)">{{ t("common.delete") }}</el-button>
+            <el-button v-permission="'data-scope:rule:update'" size="small" text @click="openEdit(row)">{{ t("common.edit") }}</el-button>
+            <el-button v-permission="'data-scope:rule:delete'" size="small" text type="danger" @click="removeRow(row)">{{ t("common.delete") }}</el-button>
           </div>
         </template>
       </el-table-column>
@@ -83,7 +83,7 @@
       </el-form>
       <template #footer>
         <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="saving" type="primary" @click="saveRule">{{ t("common.save") }}</el-button>
+        <el-button v-permission="editorMode === 'create' ? 'data-scope:rule:create' : 'data-scope:rule:update'" :loading="saving" type="primary" @click="saveRule">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
   </div>

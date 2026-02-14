@@ -284,7 +284,8 @@ CREATE TABLE IF NOT EXISTS sys_data_scope_rule
   DEFAULT CHARSET = utf8mb4 COMMENT ='数据范围规则表';
 
 INSERT INTO sys_data_scope_rule (id, scope_key, table_name, table_alias, dept_column, user_column, filter_type, status, create_time, update_time, remark)
-VALUES (1, 'order:query', 'sys_order', '', 'create_dept', 'user_id', 1, 1, NOW(), NOW(), '订单数据范围')
+VALUES (1, 'order:query', 'sys_order', '', 'create_dept', 'user_id', 1, 1, NOW(), NOW(), '订单数据范围'),
+       (2, 'user:query', 'sys_user', '', 'dept_id', 'id', 1, 1, NOW(), NOW(), '用户数据范围')
 ;
 
 CREATE TABLE IF NOT EXISTS sys_order

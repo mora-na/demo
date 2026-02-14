@@ -474,7 +474,8 @@ COMMENT ON COLUMN sys_data_scope_rule.filter_type IS '过滤方式';
 COMMENT ON COLUMN sys_data_scope_rule.status IS '状态：0-禁用 1-启用';
 
 INSERT INTO sys_data_scope_rule (id, scope_key, table_name, table_alias, dept_column, user_column, filter_type, status, create_time, update_time, remark)
-VALUES (1, 'order:query', 'sys_order', '', 'create_dept', 'user_id', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '订单数据范围')
+VALUES (1, 'order:query', 'sys_order', '', 'create_dept', 'user_id', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '订单数据范围'),
+       (2, 'user:query', 'sys_user', '', 'dept_id', 'id', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '用户数据范围')
 ;
 
 CREATE SEQUENCE IF NOT EXISTS sys_order_id_seq START WITH 1 INCREMENT BY 1;

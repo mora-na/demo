@@ -93,7 +93,7 @@ public class SysUserAdminController extends BaseController {
     @GetMapping("/{id}")
     @RequirePermission("user:query")
     public CommonResult<SysUserVO> detail(@PathVariable Long id) {
-        SysUser user = userService.getById(id);
+        SysUser user = userService.getByIdScoped(id);
         if (user == null) {
             return error(404, i18n("user.not.found"));
         }
@@ -109,7 +109,7 @@ public class SysUserAdminController extends BaseController {
     @GetMapping("/{id}/roles")
     @RequirePermission("user:query")
     public CommonResult<java.util.List<Long>> userRoleIds(@PathVariable Long id) {
-        if (userService.getById(id) == null) {
+        if (userService.getByIdScoped(id) == null) {
             return error(404, i18n("user.not.found"));
         }
         java.util.List<Long> roleIds = userRoleService.list(
@@ -132,7 +132,7 @@ public class SysUserAdminController extends BaseController {
     @GetMapping("/{id}/posts")
     @RequirePermission("user:query")
     public CommonResult<java.util.List<Long>> userPostIds(@PathVariable Long id) {
-        if (userService.getById(id) == null) {
+        if (userService.getByIdScoped(id) == null) {
             return error(404, i18n("user.not.found"));
         }
         java.util.List<Long> postIds = userPostService.list(
@@ -173,7 +173,7 @@ public class SysUserAdminController extends BaseController {
     @PutMapping("/{id}")
     @RequirePermission("user:update")
     public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody SysUserUpdateRequest request) {
-        SysUser existing = userService.getById(id);
+        SysUser existing = userService.getByIdScoped(id);
         if (existing == null) {
             return error(404, i18n("user.not.found"));
         }
@@ -195,7 +195,7 @@ public class SysUserAdminController extends BaseController {
     @PutMapping("/{id}/status")
     @RequirePermission("user:disable")
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody SysUserStatusRequest request) {
-        if (userService.getById(id) == null) {
+        if (userService.getByIdScoped(id) == null) {
             return error(404, i18n("user.not.found"));
         }
         Integer status = request.getStatus();
@@ -211,7 +211,7 @@ public class SysUserAdminController extends BaseController {
     @PutMapping("/{id}/reset-password")
     @RequirePermission("user:password:reset")
     public CommonResult<Void> resetPassword(@PathVariable Long id, @Valid @RequestBody SysUserResetPasswordRequest request) {
-        if (userService.getById(id) == null) {
+        if (userService.getByIdScoped(id) == null) {
             return error(404, i18n("user.not.found"));
         }
         String rawPassword = passwordService.decodeTransportPassword(request.getNewPassword());
@@ -233,7 +233,7 @@ public class SysUserAdminController extends BaseController {
     @PutMapping("/{id}/roles")
     @RequirePermission("user:role:assign")
     public CommonResult<Void> assignRoles(@PathVariable Long id, @Valid @RequestBody SysUserRoleAssignRequest request) {
-        if (userService.getById(id) == null) {
+        if (userService.getByIdScoped(id) == null) {
             return error(404, i18n("user.not.found"));
         }
         if (!userService.assignRoles(id, request.getRoleIds())) {
@@ -245,7 +245,7 @@ public class SysUserAdminController extends BaseController {
     @PutMapping("/{id}/posts")
     @RequirePermission("user:post:assign")
     public CommonResult<Void> assignPosts(@PathVariable Long id, @Valid @RequestBody SysUserPostAssignRequest request) {
-        if (userService.getById(id) == null) {
+        if (userService.getByIdScoped(id) == null) {
             return error(404, i18n("user.not.found"));
         }
         if (!userService.assignPosts(id, request.getPostIds())) {
@@ -257,7 +257,7 @@ public class SysUserAdminController extends BaseController {
     @PutMapping("/{id}/data-scope")
     @RequirePermission("user:data-scope:set")
     public CommonResult<Void> updateDataScope(@PathVariable Long id, @Valid @RequestBody SysUserDataScopeRequest request) {
-        if (userService.getById(id) == null) {
+        if (userService.getByIdScoped(id) == null) {
             return error(404, i18n("user.not.found"));
         }
         if (!userService.updateDataScope(id, request.getDataScopeType(), request.getDataScopeValue(), request.getScopeKey())) {
@@ -269,7 +269,7 @@ public class SysUserAdminController extends BaseController {
     @GetMapping("/{id}/data-scope")
     @RequirePermission("data-scope:user:query")
     public CommonResult<UserDataScopeDetailResponse> listUserDataScopes(@PathVariable Long id) {
-        SysUser user = userService.getById(id);
+        SysUser user = userService.getByIdScoped(id);
         if (user == null) {
             return error(404, i18n("user.not.found"));
         }
@@ -293,7 +293,7 @@ public class SysUserAdminController extends BaseController {
     @RequirePermission("data-scope:user:manage")
     public CommonResult<UserDataScopeVO> createUserDataScope(@PathVariable Long id,
                                                              @Valid @RequestBody UserDataScopeCreateRequest request) {
-        if (userService.getById(id) == null) {
+        if (userService.getByIdScoped(id) == null) {
             return error(404, i18n("user.not.found"));
         }
         String scopeKey = normalizeScopeKey(request.getScopeKey());
@@ -375,7 +375,7 @@ public class SysUserAdminController extends BaseController {
         vo.setStatus(entity.getStatus());
         vo.setRemark(entity.getRemark());
         vo.setCreateTime(entity.getCreateTime());
-        SysUser user = entity.getUserId() == null ? null : userService.getById(entity.getUserId());
+        SysUser user = entity.getUserId() == null ? null : userService.getByIdScoped(entity.getUserId());
         if (user != null) {
             vo.setUserName(user.getUserName());
             vo.setNickName(user.getNickName());
@@ -401,14 +401,10 @@ public class SysUserAdminController extends BaseController {
     @RequirePermission("user:delete")
     @Transactional(rollbackFor = Exception.class)
     public CommonResult<Void> delete(@PathVariable Long id) {
-        if (userService.getById(id) == null) {
+        if (userService.getByIdScoped(id) == null) {
             return error(404, i18n("user.not.found"));
         }
-        userRoleService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserRole.class)
-                .eq(UserRole::getUserId, id));
-        userPostService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserPost.class)
-                .eq(UserPost::getUserId, id));
-        if (!userService.removeById(id)) {
+        if (!userService.deleteUserScoped(id)) {
             return error(500, i18n("common.delete.failed"));
         }
         return success();
@@ -428,12 +424,8 @@ public class SysUserAdminController extends BaseController {
         if (uniqueIds.isEmpty()) {
             return success();
         }
-        userRoleService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserRole.class)
-                .in(UserRole::getUserId, uniqueIds));
-        userPostService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserPost.class)
-                .in(UserPost::getUserId, uniqueIds));
-        if (!userService.removeByIds(uniqueIds)) {
-            return error(500, i18n("common.delete.failed"));
+        if (!userService.deleteUsersScoped(uniqueIds)) {
+            return error(403, i18n("auth.permission.denied"));
         }
         return success();
     }

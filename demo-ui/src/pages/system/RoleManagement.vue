@@ -6,8 +6,8 @@
         <div class="module-sub">{{ t("role.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-button type="primary" @click="openCreate">{{ t("role.create") }}</el-button>
-        <el-button v-if="selectedRoleIds.length" type="danger" @click="removeRoles">
+        <el-button v-permission="'role:create'" type="primary" @click="openCreate">{{ t("role.create") }}</el-button>
+        <el-button v-permission="'role:delete'" v-if="selectedRoleIds.length" type="danger" @click="removeRoles">
           {{ t("role.filter.delete") }}
         </el-button>
       </div>
@@ -27,6 +27,7 @@
       <el-table-column :label="t('role.table.status')" width="100">
         <template #default="{row}">
           <el-switch
+              v-permission="'role:disable'"
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
@@ -37,11 +38,11 @@
       <el-table-column :label="t('role.table.action')" width="420">
         <template #default="{row}">
           <div class="action-buttons">
-            <el-button size="small" text @click="openEdit(row)">{{ t("role.table.edit") }}</el-button>
-            <el-button size="small" text @click="openPermissions(row)">{{ t("role.table.assignPermissions") }}</el-button>
-            <el-button size="small" text @click="openMenus(row)">{{ t("role.table.assignMenus") }}</el-button>
-            <el-button size="small" text @click="openMenuScopes(row)">{{ t("role.table.menuDataScope") }}</el-button>
-            <el-button size="small" text type="danger" @click="removeRole(row)">{{ t("role.table.delete") }}</el-button>
+            <el-button v-permission="'role:update'" size="small" text @click="openEdit(row)">{{ t("role.table.edit") }}</el-button>
+            <el-button v-permission="'role:permission:assign'" size="small" text @click="openPermissions(row)">{{ t("role.table.assignPermissions") }}</el-button>
+            <el-button v-permission="'role:menu:assign'" size="small" text @click="openMenus(row)">{{ t("role.table.assignMenus") }}</el-button>
+            <el-button v-permission="'role:menu:data-scope'" size="small" text @click="openMenuScopes(row)">{{ t("role.table.menuDataScope") }}</el-button>
+            <el-button v-permission="'role:delete'" size="small" text type="danger" @click="removeRole(row)">{{ t("role.table.delete") }}</el-button>
           </div>
         </template>
       </el-table-column>
@@ -104,7 +105,7 @@
       </el-tabs>
       <template #footer>
         <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="saving" type="primary" @click="saveRole">{{ t("common.save") }}</el-button>
+        <el-button v-permission="editorMode === 'create' ? 'role:create' : 'role:update'" :loading="saving" type="primary" @click="saveRole">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
 
@@ -123,7 +124,7 @@
       </el-form>
       <template #footer>
         <el-button @click="permissionVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="assigning" type="primary" @click="savePermissions">{{ t("common.save") }}</el-button>
+        <el-button v-permission="'role:permission:assign'" :loading="assigning" type="primary" @click="savePermissions">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
 
@@ -137,7 +138,7 @@
       />
       <template #footer>
         <el-button @click="menuVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="assigningMenus" type="primary" @click="saveMenus">{{ t("common.save") }}</el-button>
+        <el-button v-permission="'role:menu:assign'" :loading="assigningMenus" type="primary" @click="saveMenus">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
 
@@ -181,8 +182,8 @@
               </div>
             </el-form>
             <div class="menu-scope-actions">
-              <el-button @click="clearMenuScope">{{ t('role.menuScope.clear') }}</el-button>
-              <el-button type="primary" @click="applyMenuScope">{{ t('role.menuScope.apply') }}</el-button>
+              <el-button v-permission="'role:menu:data-scope'" @click="clearMenuScope">{{ t('role.menuScope.clear') }}</el-button>
+              <el-button v-permission="'role:menu:data-scope'" type="primary" @click="applyMenuScope">{{ t('role.menuScope.apply') }}</el-button>
             </div>
           </div>
           <el-empty v-else :description="t('role.menuScope.empty')"/>
@@ -190,7 +191,7 @@
       </div>
       <template #footer>
         <el-button @click="menuScopeVisible = false">{{ t('common.cancel') }}</el-button>
-        <el-button :loading="menuScopeSaving" type="primary" @click="saveMenuScopes">
+        <el-button v-permission="'role:menu:data-scope'" :loading="menuScopeSaving" type="primary" @click="saveMenuScopes">
           {{ t('common.save') }}
         </el-button>
       </template>

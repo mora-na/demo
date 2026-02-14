@@ -13,8 +13,8 @@
           <el-option :value="0" :label="t('user.dialog.statusDisabled')"/>
         </el-select>
         <el-button size="small" @click="handleSearch">{{ t("user.filter.search") }}</el-button>
-        <el-button size="small" type="primary" @click="openCreate">{{ t("user.filter.create") }}</el-button>
-        <el-button v-if="selectedUserIds.length" size="small" type="danger" @click="removeUsers">
+        <el-button v-permission="'user:create'" size="small" type="primary" @click="openCreate">{{ t("user.filter.create") }}</el-button>
+        <el-button v-permission="'user:delete'" v-if="selectedUserIds.length" size="small" type="danger" @click="removeUsers">
           {{ t("user.filter.delete") }}
         </el-button>
       </div>
@@ -45,6 +45,7 @@
       <el-table-column :label="t('user.table.status')" width="80">
         <template #default="{row}">
           <el-switch
+              v-permission="'user:disable'"
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
@@ -55,12 +56,12 @@
       <el-table-column :label="t('user.table.action')" width="360" class-name="action-cell">
         <template #default="{row}">
           <div class="action-buttons">
-            <el-button size="small" text @click="openEdit(row)">{{ t("user.table.edit") }}</el-button>
-            <el-button size="small" text @click="openReset(row)">{{ t("user.table.resetPassword") }}</el-button>
-            <el-button size="small" text @click="openRoles(row)">{{ t("user.table.assignRoles") }}</el-button>
-            <el-button size="small" text @click="openPosts(row)">{{ t("user.table.assignPosts") }}</el-button>
-            <el-button size="small" text @click="openDataScope(row)">{{ t("user.table.dataScope") }}</el-button>
-            <el-button size="small" text type="danger" @click="removeUser(row)">{{ t("user.table.delete") }}</el-button>
+            <el-button v-permission="'user:update'" size="small" text @click="openEdit(row)">{{ t("user.table.edit") }}</el-button>
+            <el-button v-permission="'user:password:reset'" size="small" text @click="openReset(row)">{{ t("user.table.resetPassword") }}</el-button>
+            <el-button v-permission="'user:role:assign'" size="small" text @click="openRoles(row)">{{ t("user.table.assignRoles") }}</el-button>
+            <el-button v-permission="'user:post:assign'" size="small" text @click="openPosts(row)">{{ t("user.table.assignPosts") }}</el-button>
+            <el-button v-permission="'user:data-scope:set'" size="small" text @click="openDataScope(row)">{{ t("user.table.dataScope") }}</el-button>
+            <el-button v-permission="'user:delete'" size="small" text type="danger" @click="removeUser(row)">{{ t("user.table.delete") }}</el-button>
           </div>
         </template>
       </el-table-column>
@@ -163,7 +164,7 @@
       </el-form>
       <template #footer>
         <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="saving" type="primary" @click="saveUser">{{ t("common.save") }}</el-button>
+        <el-button v-permission="editorMode === 'create' ? 'user:create' : 'user:update'" :loading="saving" type="primary" @click="saveUser">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
 
@@ -177,7 +178,7 @@
       </el-form>
       <template #footer>
         <el-button @click="roleVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="assigning" type="primary" @click="saveRoles">{{ t("common.save") }}</el-button>
+        <el-button v-permission="'user:role:assign'" :loading="assigning" type="primary" @click="saveRoles">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
 
@@ -196,7 +197,7 @@
       </el-form>
       <template #footer>
         <el-button @click="postVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="assigningPosts" type="primary" @click="savePosts">{{ t("common.save") }}</el-button>
+        <el-button v-permission="'user:post:assign'" :loading="assigningPosts" type="primary" @click="savePosts">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
 
@@ -211,7 +212,7 @@
       </el-form>
       <template #footer>
         <el-button @click="resetVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="resetting" type="primary" @click="saveReset">{{ t("common.save") }}</el-button>
+        <el-button v-permission="'user:password:reset'" :loading="resetting" type="primary" @click="saveReset">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
 
@@ -227,7 +228,7 @@
         </div>
       </div>
       <div class="data-scope-actions">
-        <el-button type="primary" @click="openDataScopeCreate">{{ t('user.dataScope.create') }}</el-button>
+        <el-button v-permission="'user:data-scope:set'" type="primary" @click="openDataScopeCreate">{{ t('user.dataScope.create') }}</el-button>
       </div>
       <el-table :data="dataScopeOverrides" size="small">
         <el-table-column prop="menuName" :label="t('user.dataScope.menu')" min-width="160"/>
@@ -237,8 +238,8 @@
         <el-table-column :label="t('user.dataScope.action')" width="140">
           <template #default="{row}">
             <div class="action-buttons">
-              <el-button size="small" text @click="openDataScopeEdit(row)">{{ t('common.edit') }}</el-button>
-              <el-button size="small" text type="danger" @click="removeDataScope(row)">{{ t('common.delete') }}</el-button>
+              <el-button v-permission="'user:data-scope:set'" size="small" text @click="openDataScopeEdit(row)">{{ t('common.edit') }}</el-button>
+              <el-button v-permission="'user:data-scope:set'" size="small" text type="danger" @click="removeDataScope(row)">{{ t('common.delete') }}</el-button>
             </div>
           </template>
         </el-table-column>
@@ -298,7 +299,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dataScopeEditorVisible = false">{{ t('common.cancel') }}</el-button>
-        <el-button :loading="dataScopeSaving" type="primary" @click="saveDataScope">
+        <el-button v-permission="'user:data-scope:set'" :loading="dataScopeSaving" type="primary" @click="saveDataScope">
           {{ t('common.save') }}
         </el-button>
       </template>

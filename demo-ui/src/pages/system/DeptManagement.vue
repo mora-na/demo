@@ -6,8 +6,8 @@
         <div class="module-sub">{{ t("dept.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-button type="primary" @click="openCreate">{{ t("dept.create") }}</el-button>
-        <el-button v-if="selectedDeptIds.length" type="danger" @click="removeDepts">
+        <el-button v-permission="'dept:create'" type="primary" @click="openCreate">{{ t("dept.create") }}</el-button>
+        <el-button v-permission="'dept:delete'" v-if="selectedDeptIds.length" type="danger" @click="removeDepts">
           {{ t("dept.filter.delete") }}
         </el-button>
       </div>
@@ -32,6 +32,7 @@
       <el-table-column :label="t('dept.table.status')" width="100">
         <template #default="{row}">
           <el-switch
+              v-permission="'dept:disable'"
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
@@ -41,8 +42,8 @@
       </el-table-column>
       <el-table-column :label="t('dept.table.action')" width="180">
         <template #default="{row}">
-          <el-button size="small" text @click="openEdit(row)">{{ t("dept.table.edit") }}</el-button>
-          <el-button size="small" text type="danger" @click="removeDept(row)">
+          <el-button v-permission="'dept:update'" size="small" text @click="openEdit(row)">{{ t("dept.table.edit") }}</el-button>
+          <el-button v-permission="'dept:delete'" size="small" text type="danger" @click="removeDept(row)">
             {{ t("dept.table.delete") }}
           </el-button>
         </template>
@@ -97,7 +98,7 @@
       </el-form>
       <template #footer>
         <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="saving" type="primary" @click="saveDept">{{ t("common.save") }}</el-button>
+        <el-button v-permission="editorMode === 'create' ? 'dept:create' : 'dept:update'" :loading="saving" type="primary" @click="saveDept">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
   </div>

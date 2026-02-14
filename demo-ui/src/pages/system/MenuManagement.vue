@@ -6,8 +6,8 @@
         <div class="module-sub">{{ t("menu.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-button type="primary" @click="openCreate">{{ t("menu.create") }}</el-button>
-        <el-button v-if="selectedMenuIds.length" type="danger" @click="removeMenus">
+        <el-button v-permission="'menu:create'" type="primary" @click="openCreate">{{ t("menu.create") }}</el-button>
+        <el-button v-permission="'menu:delete'" v-if="selectedMenuIds.length" type="danger" @click="removeMenus">
           {{ t("menu.filter.delete") }}
         </el-button>
       </div>
@@ -34,6 +34,7 @@
       <el-table-column :label="t('menu.table.status')" width="100">
         <template #default="{row}">
           <el-switch
+              v-permission="'menu:disable'"
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
@@ -43,8 +44,8 @@
       </el-table-column>
       <el-table-column :label="t('menu.table.action')" width="140">
         <template #default="{row}">
-          <el-button size="small" text @click="openEdit(row)">{{ t("menu.table.edit") }}</el-button>
-          <el-button size="small" text type="danger" @click="removeMenu(row)">{{ t("menu.table.delete") }}</el-button>
+          <el-button v-permission="'menu:update'" size="small" text @click="openEdit(row)">{{ t("menu.table.edit") }}</el-button>
+          <el-button v-permission="'menu:delete'" size="small" text type="danger" @click="removeMenu(row)">{{ t("menu.table.delete") }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -112,7 +113,7 @@
       </el-form>
       <template #footer>
         <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
-        <el-button :loading="saving" type="primary" @click="saveMenu">{{ t("common.save") }}</el-button>
+        <el-button v-permission="editorMode === 'create' ? 'menu:create' : 'menu:update'" :loading="saving" type="primary" @click="saveMenu">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
   </div>

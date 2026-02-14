@@ -25,6 +25,10 @@ public interface SysUserService extends IService<SysUser> {
 
     IPage<SysUser> searchUsersPage(Page<SysUser> page, String keyword);
 
+    SysUser getByIdScoped(Long id);
+
+    List<Long> listScopedUserIds(List<Long> ids);
+
     SysUser getByUserName(String userName);
 
     SysUser createUser(SysUserCreateRequest request);
@@ -42,4 +46,8 @@ public interface SysUserService extends IService<SysUser> {
     boolean updateDataScope(Long id, String dataScopeType, String dataScopeValue, String scopeKey);
 
     boolean updateSelfProfile(Long id, UserProfileUpdateRequest request, String newPassword);
+
+    boolean deleteUserScoped(Long id);
+
+    boolean deleteUsersScoped(List<Long> ids);
 }
