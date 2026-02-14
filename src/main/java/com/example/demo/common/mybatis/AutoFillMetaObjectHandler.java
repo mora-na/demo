@@ -20,13 +20,13 @@ public class AutoFillMetaObjectHandler implements MetaObjectHandler {
     @Override
     public void insertFill(MetaObject metaObject) {
         LocalDateTime now = LocalDateTime.now();
-        String userKey = resolveUserKey();
+        Long userId = resolveUserId();
         Long deptId = resolveDeptId();
         strictInsertFill(metaObject, "createTime", LocalDateTime.class, now);
         strictInsertFill(metaObject, "updateTime", LocalDateTime.class, now);
-        strictInsertFill(metaObject, "createBy", String.class, userKey);
+        strictInsertFill(metaObject, "createBy", Long.class, userId);
         strictInsertFill(metaObject, "createDept", Long.class, deptId);
-        strictInsertFill(metaObject, "updateBy", String.class, userKey);
+        strictInsertFill(metaObject, "updateBy", Long.class, userId);
         strictInsertFill(metaObject, "isDeleted", Integer.class, 0);
         strictInsertFill(metaObject, "version", Integer.class, 0);
     }
@@ -34,20 +34,17 @@ public class AutoFillMetaObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         LocalDateTime now = LocalDateTime.now();
-        String userKey = resolveUserKey();
+        Long userId = resolveUserId();
         strictUpdateFill(metaObject, "updateTime", LocalDateTime.class, now);
-        strictUpdateFill(metaObject, "updateBy", String.class, userKey);
+        strictUpdateFill(metaObject, "updateBy", Long.class, userId);
     }
 
-    private String resolveUserKey() {
+    private Long resolveUserId() {
         AuthUser user = AuthContext.get();
         if (user == null) {
             return null;
         }
-        if (user.getId() != null) {
-            return String.valueOf(user.getId());
-        }
-        return user.getUserName();
+        return user.getId();
     }
 
     private Long resolveDeptId() {

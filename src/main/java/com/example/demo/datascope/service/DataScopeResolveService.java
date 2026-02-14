@@ -26,6 +26,7 @@ import com.example.demo.post.service.PostService;
 import com.example.demo.post.service.UserPostService;
 import com.example.demo.user.entity.SysUser;
 import com.example.demo.user.service.SysUserService;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -85,9 +86,6 @@ public class DataScopeResolveService {
                 continue;
             }
             DataScopeResolveResponse resolved = resolve(user, profile, menu.getPermission());
-            if (resolved == null) {
-                continue;
-            }
             DataScopeResolveMenuVO item = new DataScopeResolveMenuVO();
             item.setMenuId(menu.getId());
             item.setMenuName(menu.getName());
@@ -416,7 +414,7 @@ public class DataScopeResolveService {
         String userColumn = ruleSummary.getUserColumn();
         String alias = rule == null ? null : rule.getTableAlias();
         String deptExpr = null;
-        if (StringUtils.isNotBlank(deptColumn) && finalScope.getDeptIds() != null && !finalScope.getDeptIds().isEmpty()) {
+        if (StringUtils.isNotBlank(deptColumn) && !finalScope.getDeptIds().isEmpty()) {
             deptExpr = withAlias(alias, deptColumn) + " IN (" + joinIds(finalScope.getDeptIds()) + ")";
         }
         String userExpr = null;
@@ -454,7 +452,7 @@ public class DataScopeResolveService {
         if (scope.isNone()) {
             return "NONE";
         }
-        if (scope.isSelf() && (scope.getDeptIds() == null || scope.getDeptIds().isEmpty())) {
+        if (scope.isSelf() && scope.getDeptIds().isEmpty()) {
             return "SELF";
         }
         return buildLabel(scope.getDeptIds(), scope.isSelf());
@@ -575,6 +573,7 @@ public class DataScopeResolveService {
     private static final class RoleSelection {
         private final String type;
         private final String sourceLayer;
+        @Getter
         private final String layer1Type;
         private final String layer2Type;
         private final Set<Long> customDeptIds;
@@ -586,6 +585,7 @@ public class DataScopeResolveService {
             this.layer2Type = layer2Type;
             this.customDeptIds = customDeptIds;
         }
+
     }
 
     private static final class RoleScopeResult {

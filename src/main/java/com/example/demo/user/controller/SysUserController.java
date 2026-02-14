@@ -41,42 +41,40 @@ public class SysUserController extends BaseController {
     @RequestMapping("/selectUsers1")
     @RequirePermission("user:query")
     public PageResult<SysUserVO> listUser1(@ModelAttribute SysUserQuery query) {
-        PageResult<SysUser> pageResult = page(() -> userService.selectUsers(query));
+        PageResult<SysUser> pageResult = page(query, userService::selectUsersPage);
         return new PageResult<>(pageResult.getTotal(), userViewService.toViewList(pageResult.getData()), pageResult.getPageNum(), pageResult.getPageSize());
     }
 
     @RequestMapping("/selectUsers2")
     @RequirePermission("user:query")
     public PageResult<SysUserVO> listUser2(@ModelAttribute SysUserQuery query) {
-        return page(() -> userService.selectUsers(query), userViewService::toView);
+        return page(query, userService::selectUsersPage, userViewService::toView);
     }
 
     @RequestMapping("/selectUsers3")
     @RequirePermission("user:query")
     public PageResult<SysUserVO> listUser3(@ModelAttribute SysUserQuery query) {
-        return page(query, userService::selectUsers, userViewService::toView);
+        return page(query, userService::selectUsersPage, userViewService::toView);
     }
 
     @RequestMapping("/selectUsers4")
     @RequirePermission("user:query")
     public PageResult<SysUserVO> listUser4(@ModelAttribute SysUserQuery query) {
         QueryWrapper<SysUser> wrapper = Wrappers.query(userConverter.toEntity(query));
-        return page(wrapper, userService.getBaseMapper()::selectList, userViewService::toView);
+        return page(page -> userService.page(page, wrapper), userViewService::toView);
     }
 
     @RequestMapping("/selectUsers5")
     @RequirePermission("user:query")
     public PageResult<SysUserVO> listUser5(@ModelAttribute SysUserQuery query) {
-        startPage();
-        List<SysUser> users = userService.selectUsers(query);
-        PageResult<SysUser> pageResult = getPageResult(users);
+        PageResult<SysUser> pageResult = page(query, userService::selectUsersPage);
         return new PageResult<>(pageResult.getTotal(), userViewService.toViewList(pageResult.getData()), pageResult.getPageNum(), pageResult.getPageSize());
     }
 
     @GetMapping("/export")
     @RequirePermission("user:export")
     public void export(@ModelAttribute SysUserQuery query, HttpServletResponse response) {
-        exportExcel(response, () -> userService.selectUsers(query), SysUser.class, "用户信息" + LocalDateTime.now());
+        exportExcel(response, page -> userService.selectUsersPage(page, query), SysUser.class, "用户信息" + LocalDateTime.now());
     }
 
     @PostMapping("/import")

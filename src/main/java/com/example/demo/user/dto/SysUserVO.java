@@ -1,12 +1,10 @@
 package com.example.demo.user.dto;
 
-import com.example.demo.order.dto.OrderVO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * 用户视图对象，承载导出与关联订单的展示字段。
@@ -41,7 +39,5 @@ public class SysUserVO implements Serializable {
     private String dataScopeValue;
 
     private String remark;
-
-    private List<OrderVO> orderVOS; // 一对多
 
 }

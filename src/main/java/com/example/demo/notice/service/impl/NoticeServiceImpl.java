@@ -1,6 +1,9 @@
 package com.example.demo.notice.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.notice.dto.*;
@@ -43,21 +46,15 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
 
     @Override
     public List<Notice> selectNotices(NoticeQuery query) {
-        if (query == null) {
-            return list(Wrappers.lambdaQuery(Notice.class)
-                    .orderByDesc(Notice::getCreateTime)
-                    .orderByDesc(Notice::getId));
+        return list(buildNoticeQuery(query));
+    }
+
+    @Override
+    public IPage<Notice> selectNoticesPage(Page<Notice> page, NoticeQuery query) {
+        if (page == null) {
+            return new Page<>(1, 10);
         }
-        String keyword = StringUtils.trimToEmpty(query.getKeyword());
-        String scopeType = StringUtils.trimToEmpty(query.getScopeType());
-        return list(Wrappers.lambdaQuery(Notice.class)
-                .and(StringUtils.isNotBlank(keyword), wrapper ->
-                        wrapper.like(Notice::getTitle, keyword)
-                                .or()
-                                .like(Notice::getContent, keyword))
-                .eq(StringUtils.isNotBlank(scopeType), Notice::getScopeType, scopeType.toUpperCase())
-                .orderByDesc(Notice::getCreateTime)
-                .orderByDesc(Notice::getId));
+        return this.page(page, buildNoticeQuery(query));
     }
 
     @Override
@@ -92,7 +89,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
             view.setContent(notice.getContent());
             view.setScopeType(notice.getScopeType());
             view.setScopeValue(notice.getScopeValue());
-            view.setCreatedBy(parseLong(notice.getCreateBy()));
+            view.setCreatedBy(notice.getCreateBy());
             view.setCreatedName(notice.getCreatedName());
             view.setCreatedAt(notice.getCreateTime());
             NoticeReadStat stat = notice.getId() == null ? null : stats.get(notice.getId());
@@ -120,6 +117,19 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     }
 
     @Override
+    public IPage<NoticeMyVO> listMyNoticesPage(Page<NoticeMyVO> page, Long userId) {
+        if (page == null) {
+            return new Page<>(1, 10);
+        }
+        if (userId == null) {
+            page.setTotal(0L);
+            page.setRecords(Collections.emptyList());
+            return page;
+        }
+        return noticeRecipientMapper.selectMyNoticesPage(page, userId);
+    }
+
+    @Override
     public List<NoticeLatestVO> listMyLatestNotices(Long userId, int limit) {
         if (userId == null || limit <= 0) {
             return Collections.emptyList();
@@ -134,6 +144,24 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         }
         Long count = noticeRecipientMapper.countUnreadByUserId(userId);
         return count == null ? 0L : count;
+    }
+
+    private LambdaQueryWrapper<Notice> buildNoticeQuery(NoticeQuery query) {
+        if (query == null) {
+            return Wrappers.lambdaQuery(Notice.class)
+                    .orderByDesc(Notice::getCreateTime)
+                    .orderByDesc(Notice::getId);
+        }
+        String keyword = StringUtils.trimToEmpty(query.getKeyword());
+        String scopeType = StringUtils.trimToEmpty(query.getScopeType());
+        return Wrappers.lambdaQuery(Notice.class)
+                .and(StringUtils.isNotBlank(keyword), wrapper ->
+                        wrapper.like(Notice::getTitle, keyword)
+                                .or()
+                                .like(Notice::getContent, keyword))
+                .eq(StringUtils.isNotBlank(scopeType), Notice::getScopeType, scopeType.toUpperCase())
+                .orderByDesc(Notice::getCreateTime)
+                .orderByDesc(Notice::getId);
     }
 
     @Override
@@ -186,7 +214,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         notice.setScopeType(scopeType);
         notice.setScopeValue(buildScopeValue(scopeType, request.getScopeIds()));
         if (publisher != null) {
-            notice.setCreateBy(publisher.getId() == null ? null : String.valueOf(publisher.getId()));
+            notice.setCreateBy(publisher.getId() == null ? null : publisher.getId());
             notice.setCreatedName(StringUtils.defaultIfBlank(publisher.getNickName(), publisher.getUserName()));
         }
         notice.setCreateTime(now);

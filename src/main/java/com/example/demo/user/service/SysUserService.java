@@ -1,5 +1,7 @@
 package com.example.demo.user.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.auth.dto.UserProfileUpdateRequest;
 import com.example.demo.user.dto.SysUserCreateRequest;
@@ -18,6 +20,8 @@ import java.util.List;
 public interface SysUserService extends IService<SysUser> {
 
     List<SysUser> selectUsers(SysUserQuery query);
+
+    IPage<SysUser> selectUsersPage(Page<SysUser> page, SysUserQuery query);
 
     SysUser getByUserName(String userName);
 

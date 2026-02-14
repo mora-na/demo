@@ -1,6 +1,9 @@
 package com.example.demo.job.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.job.dto.JobLogDetailVO;
 import com.example.demo.job.dto.JobLogQuery;
@@ -25,26 +28,15 @@ public class SysJobLogServiceImpl extends ServiceImpl<SysJobLogMapper, SysJobLog
 
     @Override
     public List<SysJobLog> selectLogs(JobLogQuery query) {
-        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysJobLog> wrapper =
-                Wrappers.lambdaQuery(SysJobLog.class)
-                        .select(SysJobLog::getId,
-                                SysJobLog::getJobId,
-                                SysJobLog::getJobName,
-                                SysJobLog::getHandlerName,
-                                SysJobLog::getStatus,
-                                SysJobLog::getMessage,
-                                SysJobLog::getStartTime,
-                                SysJobLog::getEndTime,
-                                SysJobLog::getDurationMs);
-        if (query == null) {
-            return list(wrapper
-                    .orderByDesc(SysJobLog::getStartTime)
-                    .orderByDesc(SysJobLog::getId));
+        return list(buildQuery(query));
+    }
+
+    @Override
+    public IPage<SysJobLog> selectLogsPage(Page<SysJobLog> page, JobLogQuery query) {
+        if (page == null) {
+            return new Page<>(1, 10);
         }
-        return list(wrapper
-                .eq(query.getJobId() != null, SysJobLog::getJobId, query.getJobId())
-                .orderByDesc(SysJobLog::getStartTime)
-                .orderByDesc(SysJobLog::getId));
+        return this.page(page, buildQuery(query));
     }
 
     @Override
@@ -89,5 +81,28 @@ public class SysJobLogServiceImpl extends ServiceImpl<SysJobLogMapper, SysJobLog
         view.setEndTime(log.getEndTime());
         view.setDurationMs(log.getDurationMs());
         return view;
+    }
+
+    private LambdaQueryWrapper<SysJobLog> buildQuery(JobLogQuery query) {
+        LambdaQueryWrapper<SysJobLog> wrapper =
+                Wrappers.lambdaQuery(SysJobLog.class)
+                        .select(SysJobLog::getId,
+                                SysJobLog::getJobId,
+                                SysJobLog::getJobName,
+                                SysJobLog::getHandlerName,
+                                SysJobLog::getStatus,
+                                SysJobLog::getMessage,
+                                SysJobLog::getStartTime,
+                                SysJobLog::getEndTime,
+                                SysJobLog::getDurationMs);
+        if (query == null) {
+            return wrapper
+                    .orderByDesc(SysJobLog::getStartTime)
+                    .orderByDesc(SysJobLog::getId);
+        }
+        return wrapper
+                .eq(query.getJobId() != null, SysJobLog::getJobId, query.getJobId())
+                .orderByDesc(SysJobLog::getStartTime)
+                .orderByDesc(SysJobLog::getId);
     }
 }

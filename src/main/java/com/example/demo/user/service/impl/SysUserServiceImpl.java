@@ -1,6 +1,8 @@
 package com.example.demo.user.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.auth.dto.UserProfileUpdateRequest;
 import com.example.demo.auth.service.PasswordService;
@@ -41,6 +43,14 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public List<SysUser> selectUsers(SysUserQuery query) {
         return baseMapper.selectList(Wrappers.query(userConverter.toEntity(query)));
+    }
+
+    @Override
+    public IPage<SysUser> selectUsersPage(Page<SysUser> page, SysUserQuery query) {
+        if (page == null) {
+            return new Page<>(1, 10);
+        }
+        return baseMapper.selectPage(page, Wrappers.query(userConverter.toEntity(query)));
     }
 
     @Override

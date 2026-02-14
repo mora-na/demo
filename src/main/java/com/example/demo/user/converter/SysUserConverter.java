@@ -1,6 +1,5 @@
 package com.example.demo.user.converter;
 
-import com.example.demo.order.dto.OrderVO;
 import com.example.demo.user.dto.SysUserQuery;
 import com.example.demo.user.dto.SysUserVO;
 import com.example.demo.user.entity.SysUser;
@@ -62,7 +61,7 @@ public class SysUserConverter {
         return userVOList.stream().map(this::toEntity).collect(Collectors.toList());
     }
 
-    public SysUserVO toView(SysUser user, List<OrderVO> orderVOList) {
+    public SysUserVO toView(SysUser user) {
         if (user == null) {
             return new SysUserVO();
         }
@@ -78,7 +77,6 @@ public class SysUserConverter {
         view.setDataScopeType(user.getDataScopeType());
         view.setDataScopeValue(user.getDataScopeValue());
         view.setRemark(user.getRemark());
-        view.setOrderVOS(orderVOList);
         return view;
     }
 }

@@ -14,9 +14,9 @@ CREATE TABLE IF NOT EXISTS sys_user
     sex              VARCHAR(16),
     create_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by        VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by        VARCHAR(64),
+    update_by BIGINT,
     is_deleted       SMALLINT     NOT NULL DEFAULT 0,
     version          INT          NOT NULL DEFAULT 0,
     remark           VARCHAR(500)
@@ -56,9 +56,9 @@ CREATE TABLE IF NOT EXISTS sys_dept
     sort        INTEGER      NOT NULL DEFAULT 0,
     create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by   VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by   VARCHAR(64),
+    update_by BIGINT,
     is_deleted  SMALLINT     NOT NULL DEFAULT 0,
     version     INT          NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
@@ -93,9 +93,9 @@ CREATE TABLE IF NOT EXISTS sys_post
     sort        INTEGER      NOT NULL DEFAULT 0,
     create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by   VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by   VARCHAR(64),
+    update_by BIGINT,
     is_deleted  SMALLINT     NOT NULL DEFAULT 0,
     version     INT          NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
@@ -130,9 +130,9 @@ CREATE TABLE IF NOT EXISTS sys_role
     data_scope_value VARCHAR(512),
     create_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by        VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by        VARCHAR(64),
+    update_by BIGINT,
     is_deleted       SMALLINT     NOT NULL DEFAULT 0,
     version          INT          NOT NULL DEFAULT 0,
     remark           VARCHAR(500)
@@ -164,9 +164,9 @@ CREATE TABLE IF NOT EXISTS sys_permission
     status      SMALLINT     NOT NULL DEFAULT 1,
     create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by   VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by   VARCHAR(64),
+    update_by BIGINT,
     is_deleted  SMALLINT     NOT NULL DEFAULT 0,
     version     INT          NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
@@ -201,9 +201,9 @@ CREATE TABLE IF NOT EXISTS sys_menu
     sort        INTEGER      NOT NULL DEFAULT 0,
     create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by   VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by   VARCHAR(64),
+    update_by BIGINT,
     is_deleted  SMALLINT     NOT NULL DEFAULT 0,
     version     INT          NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
@@ -238,9 +238,9 @@ CREATE TABLE IF NOT EXISTS sys_role_permission
     permission_id BIGINT    NOT NULL,
     create_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by     VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by     VARCHAR(64),
+    update_by BIGINT,
     is_deleted    SMALLINT  NOT NULL DEFAULT 0,
     version       INT       NOT NULL DEFAULT 0,
     remark        VARCHAR(500)
@@ -271,9 +271,9 @@ CREATE TABLE IF NOT EXISTS sys_role_menu
     data_scope_type VARCHAR(32),
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by   VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by   VARCHAR(64),
+    update_by BIGINT,
     is_deleted  SMALLINT  NOT NULL DEFAULT 0,
     version     INT       NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
@@ -305,9 +305,9 @@ CREATE TABLE IF NOT EXISTS sys_role_menu_dept
     dept_id     BIGINT    NOT NULL,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by   VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by   VARCHAR(64),
+    update_by BIGINT,
     is_deleted  SMALLINT  NOT NULL DEFAULT 0,
     version     INT       NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
@@ -339,9 +339,9 @@ CREATE TABLE IF NOT EXISTS sys_user_role
     role_id     BIGINT    NOT NULL,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by   VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by   VARCHAR(64),
+    update_by BIGINT,
     is_deleted  SMALLINT  NOT NULL DEFAULT 0,
     version     INT       NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
@@ -374,9 +374,9 @@ CREATE TABLE IF NOT EXISTS sys_user_data_scope
     status           SMALLINT  NOT NULL DEFAULT 1,
     create_time      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by        VARCHAR(64),
+    create_by BIGINT,
     create_dept      BIGINT,
-    update_by        VARCHAR(64),
+    update_by BIGINT,
     is_deleted       SMALLINT  NOT NULL DEFAULT 0,
     version          INT       NOT NULL DEFAULT 0,
     remark           VARCHAR(500)
@@ -409,9 +409,9 @@ CREATE TABLE IF NOT EXISTS sys_user_post
     post_id     BIGINT     NOT NULL,
     create_time TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by   VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by   VARCHAR(64),
+    update_by BIGINT,
     is_deleted  SMALLINT   NOT NULL DEFAULT 0,
     version     INT        NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
@@ -446,9 +446,9 @@ CREATE TABLE IF NOT EXISTS sys_data_scope_rule
     status       SMALLINT     DEFAULT 1,
     create_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by    VARCHAR(64),
+    create_by BIGINT,
     create_dept  BIGINT,
-    update_by    VARCHAR(64),
+    update_by BIGINT,
     is_deleted   SMALLINT     NOT NULL DEFAULT 0,
     version      INT          NOT NULL DEFAULT 0,
     remark       VARCHAR(500)
@@ -473,6 +473,18 @@ COMMENT ON COLUMN sys_data_scope_rule.user_column IS '用户字段名';
 COMMENT ON COLUMN sys_data_scope_rule.filter_type IS '过滤方式';
 COMMENT ON COLUMN sys_data_scope_rule.status IS '状态：0-禁用 1-启用';
 
+INSERT INTO sys_data_scope_rule (id, scope_key, table_name, table_alias, dept_column, user_column, filter_type, status, create_time, update_time, remark)
+VALUES (1, 'order:query', 'sys_order', '', 'create_dept', 'user_id', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '订单数据范围')
+ON CONFLICT (id) DO UPDATE SET scope_key   = EXCLUDED.scope_key,
+                               table_name  = EXCLUDED.table_name,
+                               table_alias = EXCLUDED.table_alias,
+                               dept_column = EXCLUDED.dept_column,
+                               user_column = EXCLUDED.user_column,
+                               filter_type = EXCLUDED.filter_type,
+                               status      = EXCLUDED.status,
+                               update_time = EXCLUDED.update_time,
+                               remark      = EXCLUDED.remark;
+
 CREATE SEQUENCE IF NOT EXISTS sys_order_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_order
 (
@@ -481,9 +493,9 @@ CREATE TABLE IF NOT EXISTS sys_order
     amount      DECIMAL(18, 2) NOT NULL,
     create_time TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by   VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by   VARCHAR(64),
+    update_by BIGINT,
     is_deleted  SMALLINT       NOT NULL DEFAULT 0,
     version     INT            NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
@@ -527,9 +539,9 @@ CREATE TABLE IF NOT EXISTS sys_notice
     scope_value  VARCHAR(1024),
     create_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by    VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by    VARCHAR(64),
+    update_by BIGINT,
     created_name VARCHAR(64),
     is_deleted   SMALLINT     NOT NULL DEFAULT 0,
     version      INT          NOT NULL DEFAULT 0,
@@ -563,9 +575,9 @@ CREATE TABLE IF NOT EXISTS sys_notice_recipient
     read_time   TIMESTAMP,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by   VARCHAR(64),
+    create_by BIGINT,
     create_dept BIGINT,
-    update_by   VARCHAR(64),
+    update_by BIGINT,
     is_deleted  SMALLINT  NOT NULL DEFAULT 0,
     version     INT       NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
@@ -1036,7 +1048,11 @@ VALUES (1, 'user:query', '用户查询', 1),
        (52, 'data-scope:rule:update', '字段映射更新', 1),
        (53, 'data-scope:rule:delete', '字段映射删除', 1),
        (54, 'data-scope:user:query', '用户数据范围查询', 1),
-       (55, 'data-scope:user:manage', '用户数据范围管理', 1)
+       (55, 'data-scope:user:manage', '用户数据范围管理', 1),
+       (56, 'order:query', '订单查询', 1),
+       (57, 'order:create', '订单创建', 1),
+       (58, 'order:update', '订单更新', 1),
+       (59, 'order:delete', '订单删除', 1)
 ON CONFLICT (id) DO UPDATE SET code   = EXCLUDED.code,
                                name   = EXCLUDED.name,
                                status = EXCLUDED.status;
@@ -1058,7 +1074,8 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (182, '字段映射配置', 'data-scope-mapping', 180, '/system/data-scope/mapping', 'DataScopeMappingPage',
         'data-scope:rule:query', 1, 20, '字段映射配置'),
        (183, '用户特例授权', 'data-scope-user', 180, '/system/data-scope/user', 'DataScopeUserPage',
-        'data-scope:user:query', 1, 30, '用户特例授权')
+        'data-scope:user:query', 1, 30, '用户特例授权'),
+       (200, '订单管理', 'order', NULL, '/orders', 'OrderPage', 'order:query', 1, 20, '订单管理')
 ON CONFLICT (id) DO UPDATE SET name       = EXCLUDED.name,
                                code       = EXCLUDED.code,
                                parent_id  = EXCLUDED.parent_id,
@@ -1152,13 +1169,25 @@ VALUES (1, 1),
        (1, 53),
        (1, 54),
        (1, 55),
+       (1, 56),
+       (1, 57),
+       (1, 58),
+       (1, 59),
        (2, 1),
        (2, 8),
        (2, 10),
        (2, 16),
        (2, 20),
        (2, 24),
-       (3, 1)
+       (2, 56),
+       (2, 57),
+       (2, 58),
+       (2, 59),
+       (3, 1),
+       (3, 56),
+       (3, 57),
+       (3, 58),
+       (3, 59)
 ON CONFLICT (role_id, permission_id, is_deleted) DO NOTHING;
 
 INSERT INTO sys_role_menu (role_id, menu_id)
@@ -1175,12 +1204,31 @@ VALUES (1, 100),
        (1, 181),
        (1, 182),
        (1, 183),
+       (1, 200),
        (2, 100),
        (2, 110),
        (2, 140),
-       (3, 100),
-       (3, 110)
+       (2, 200),
+       (3, 200)
 ON CONFLICT (role_id, menu_id, is_deleted) DO NOTHING;
+
+INSERT INTO sys_order (id, user_id, amount, create_time, update_time, create_by, create_dept, update_by, is_deleted, version, remark)
+VALUES (1, 1, 1999.00, '2026-02-01 09:12:00', '2026-02-01 09:12:00', 1, 1, 1, 0, 0, '入门套餐'),
+       (2, 2, 499.00, '2026-02-03 14:35:00', '2026-02-03 14:35:00', 2, 2, 2, 0, 0, '部门采购'),
+       (3, 3, 129.90, '2026-02-05 10:20:00', '2026-02-05 10:20:00', 3, 2, 3, 0, 0, '演示订单'),
+       (4, 3, 799.00, '2026-02-07 16:05:00', '2026-02-07 16:05:00', 3, 2, 3, 0, 0, '升级套餐'),
+       (5, 1, 2499.00, '2026-02-10 09:50:00', '2026-02-10 09:50:00', 1, 1, 1, 0, 0, '年度订阅'),
+       (6, 2, 89.00, '2026-02-12 11:15:00', '2026-02-12 11:15:00', 2, 2, 2, 0, 0, '补充采购')
+ON CONFLICT (id) DO UPDATE SET user_id     = EXCLUDED.user_id,
+                               amount      = EXCLUDED.amount,
+                               create_time = EXCLUDED.create_time,
+                               update_time = EXCLUDED.update_time,
+                               create_by   = EXCLUDED.create_by,
+                               create_dept = EXCLUDED.create_dept,
+                               update_by   = EXCLUDED.update_by,
+                               is_deleted  = EXCLUDED.is_deleted,
+                               version     = EXCLUDED.version,
+                               remark      = EXCLUDED.remark;
 
 SELECT setval('sys_dept_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_dept));
 SELECT setval('sys_post_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_post));

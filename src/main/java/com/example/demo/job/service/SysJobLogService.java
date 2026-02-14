@@ -1,5 +1,7 @@
 package com.example.demo.job.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.job.dto.JobLogDetailVO;
 import com.example.demo.job.dto.JobLogQuery;
@@ -17,6 +19,8 @@ import java.util.List;
 public interface SysJobLogService extends IService<SysJobLog> {
 
     List<SysJobLog> selectLogs(JobLogQuery query);
+
+    IPage<SysJobLog> selectLogsPage(Page<SysJobLog> page, JobLogQuery query);
 
     List<JobLogVO> toViewList(List<SysJobLog> logs);
 

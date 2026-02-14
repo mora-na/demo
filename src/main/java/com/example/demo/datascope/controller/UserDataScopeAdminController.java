@@ -51,12 +51,12 @@ public class UserDataScopeAdminController extends BaseController {
         List<Long> userIds = resolveUserIds(query.getUserName());
         List<String> scopeKeys = resolveScopeKeys(query.getMenuKeyword());
         if (userIds != null && userIds.isEmpty()) {
-            return success(page(Collections::emptyList, this::toVO));
+            return success(emptyPage());
         }
         if (scopeKeys != null && scopeKeys.isEmpty()) {
-            return success(page(Collections::emptyList, this::toVO));
+            return success(emptyPage());
         }
-        return success(page(() -> userDataScopeService.list(Wrappers.lambdaQuery(UserDataScope.class)
+        return success(page(page -> userDataScopeService.page(page, Wrappers.lambdaQuery(UserDataScope.class)
                 .in(userIds != null && !userIds.isEmpty(), UserDataScope::getUserId, userIds)
                 .in(scopeKeys != null && !scopeKeys.isEmpty(), UserDataScope::getScopeKey, scopeKeys)
                 .eq(query.getStatus() != null, UserDataScope::getStatus, query.getStatus())

@@ -775,6 +775,47 @@ export default {
             deleteEmpty: "Select users to delete"
         }
     },
+    order: {
+        title: "Order Management",
+        subtitle: "Review and maintain order records.",
+        filter: {
+            userIdPlaceholder: "User ID",
+            minAmountPlaceholder: "Min amount",
+            maxAmountPlaceholder: "Max amount",
+            search: "Search",
+            create: "New order"
+        },
+        table: {
+            id: "Order ID",
+            user: "Customer",
+            amount: "Amount",
+            createdAt: "Placed at",
+            remark: "Remark",
+            action: "Actions",
+            edit: "Edit",
+            delete: "Delete"
+        },
+        dialog: {
+            createTitle: "New order",
+            editTitle: "Edit order",
+            userId: "User ID",
+            userIdPlaceholder: "Enter user ID",
+            amount: "Amount",
+            amountPlaceholder: "Enter amount",
+            remark: "Remark"
+        },
+        msg: {
+            loadFailed: "Failed to load orders",
+            fillRequired: "User ID and amount are required",
+            createSuccess: "Order created",
+            createFailed: "Failed to create order",
+            updateSuccess: "Order updated",
+            updateFailed: "Failed to update order",
+            deleteConfirm: "Delete order #{id}?",
+            deleteSuccess: "Order deleted",
+            deleteFailed: "Failed to delete order"
+        }
+    },
     notice: {
         title: "System Notices",
         subtitle: "Publish notices and track read status.",

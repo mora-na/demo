@@ -1,5 +1,7 @@
 package com.example.demo.common.mybatis;
 
+import lombok.Getter;
+
 /**
  * 数据范围上下文持有器，供注解切面与拦截器传递 scopeKey 等信息。
  *
@@ -28,6 +30,7 @@ public final class DataScopeContextHolder {
     /**
      * 数据范围请求上下文。
      */
+    @Getter
     public static final class DataScopeRequest {
         private final String scopeKey;
         private final String deptAlias;
@@ -39,16 +42,5 @@ public final class DataScopeContextHolder {
             this.userAlias = userAlias;
         }
 
-        public String getScopeKey() {
-            return scopeKey;
-        }
-
-        public String getDeptAlias() {
-            return deptAlias;
-        }
-
-        public String getUserAlias() {
-            return userAlias;
-        }
     }
 }

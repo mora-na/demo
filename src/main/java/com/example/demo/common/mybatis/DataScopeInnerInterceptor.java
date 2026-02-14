@@ -20,10 +20,15 @@ import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.delete.Delete;
 import net.sf.jsqlparser.statement.select.*;
 import net.sf.jsqlparser.statement.update.Update;
+import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.mapping.BoundSql;
+import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
+import org.apache.ibatis.session.ResultHandler;
+import org.apache.ibatis.session.RowBounds;
 import org.springframework.util.StringUtils;
 
 import java.sql.Connection;
@@ -73,6 +78,35 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
      */
     @Override
     public void beforePrepare(StatementHandler statementHandler, Connection connection, Integer transactionTimeout) {
+        if (statementHandler == null) {
+            return;
+        }
+        BoundSql boundSql = statementHandler.getBoundSql();
+        if (boundSql == null) {
+            return;
+        }
+        String sql = boundSql.getSql();
+        if (isSelectSql(sql)) {
+            // SELECT 由 beforeQuery 处理，避免重复改写
+            return;
+        }
+        applyDataScope(boundSql);
+    }
+
+    @Override
+    public void beforeQuery(Executor executor,
+                            MappedStatement ms,
+                            Object parameter,
+                            RowBounds rowBounds,
+                            ResultHandler resultHandler,
+                            BoundSql boundSql) {
+        if (ms == null || ms.getSqlCommandType() != SqlCommandType.SELECT) {
+            return;
+        }
+        applyDataScope(boundSql);
+    }
+
+    private void applyDataScope(BoundSql boundSql) {
         if (properties == null || !properties.isEnabled()) {
             return;
         }
@@ -85,10 +119,6 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
         }
         DataScopeContextHolder.DataScopeRequest scopeRequest = DataScopeContextHolder.get();
         if (scopeRequest == null || !StringUtils.hasText(scopeRequest.getScopeKey())) {
-            return;
-        }
-        BoundSql boundSql = statementHandler.getBoundSql();
-        if (boundSql == null) {
             return;
         }
         String sql = boundSql.getSql();
@@ -115,6 +145,18 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
             MetaObject metaObject = SystemMetaObject.forObject(boundSql);
             metaObject.setValue("sql", rewritten);
         }
+    }
+
+    private boolean isSelectSql(String sql) {
+        if (sql == null) {
+            return false;
+        }
+        String trimmed = sql.trim();
+        if (trimmed.isEmpty()) {
+            return false;
+        }
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+        return lower.startsWith("select") || lower.startsWith("with");
     }
 
     /**
@@ -500,11 +542,11 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
 
         Set<Long> deptIds = finalScope.getDeptIds();
         boolean needSelf = finalScope.isSelf();
-        if (!hasDeptColumn && deptIds != null && !deptIds.isEmpty()) {
+        if (!hasDeptColumn && !deptIds.isEmpty()) {
             needSelf = true;
         }
         Expression deptExpr = null;
-        if (hasDeptColumn && deptIds != null && !deptIds.isEmpty()) {
+        if (hasDeptColumn && !deptIds.isEmpty()) {
             Column deptCol = toColumn(deptQualifier, deptColumn);
             deptExpr = buildDeptExpression(deptIds, deptCol);
         }

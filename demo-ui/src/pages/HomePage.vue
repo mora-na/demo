@@ -154,7 +154,8 @@
       </header>
 
       <section class="console-main">
-        <template v-if="!isSystemGroup">
+        <OrderManagementPanel v-if="isOrderGroup"/>
+        <template v-else-if="!isSystemGroup">
           <div class="main-hero">
             <div>
               <h1>{{ activeGroup?.name || t("home.main.titleFallback") }}</h1>
@@ -303,6 +304,7 @@ import {
   ScrollText,
   Settings2,
   Shield,
+  ShoppingCart,
   SlidersHorizontal,
   Timer,
   Users,
@@ -312,6 +314,7 @@ import {logout, type MenuTree, updateProfile} from "../api/auth";
 import {getUnreadNoticeCount, listMyNotices, markAllNoticesRead, markNoticeRead, type NoticeMyVO} from "../api/system";
 import {useAuthStore} from "../stores/auth";
 import SystemManagementPanel from "./system/SystemManagementPanel.vue";
+import OrderManagementPanel from "./order/OrderManagementPanel.vue";
 
 const emit = defineEmits<{ (e: "logout"): void }>();
 
@@ -400,6 +403,14 @@ const isSystemGroup = computed(() => {
     return false;
   }
   return group.code === "system" || (group.path ? group.path.startsWith("/system") : false);
+});
+
+const isOrderGroup = computed(() => {
+  const group = activeGroup.value;
+  if (!group) {
+    return false;
+  }
+  return group.code === "order" || (group.path ? group.path.startsWith("/orders") : false);
 });
 
 const roleSummary = computed(() =>
@@ -543,6 +554,7 @@ const MENU_ICON_MAP: Record<string, Component> = {
   post: Briefcase,
   permission: KeyRound,
   notice: Bell,
+  order: ShoppingCart,
   job: Timer,
   log: ScrollText,
   report: BarChart3,

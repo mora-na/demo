@@ -40,7 +40,7 @@ public class JobAdminController extends BaseController {
     @GetMapping
     @RequirePermission("job:query")
     public CommonResult<PageResult<JobVO>> list(@ModelAttribute JobQuery query) {
-        PageResult<SysJob> rawPage = page(() -> jobService.selectJobs(query));
+        PageResult<SysJob> rawPage = page(query, jobService::selectJobsPage);
         List<JobVO> views = jobService.toViewList(rawPage.getData());
         PageResult<JobVO> result = new PageResult<>(rawPage.getTotal(), views, rawPage.getPageNum(), rawPage.getPageSize());
         return success(result);
@@ -151,7 +151,7 @@ public class JobAdminController extends BaseController {
         if (jobService.getById(id) == null) {
             return error(404, i18n("job.not.found"));
         }
-        PageResult<com.example.demo.job.entity.SysJobLog> rawPage = page(() -> jobLogService.selectLogs(new JobLogQuery(id)));
+        PageResult<com.example.demo.job.entity.SysJobLog> rawPage = page(new JobLogQuery(id), jobLogService::selectLogsPage);
         PageResult<JobLogVO> result = new PageResult<>(
                 rawPage.getTotal(),
                 jobLogService.toViewList(rawPage.getData()),

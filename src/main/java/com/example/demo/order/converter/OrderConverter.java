@@ -15,7 +15,13 @@ public class OrderConverter {
         if (order == null) {
             return new OrderVO();
         }
-        return new OrderVO(order.getId(), order.getUserId(), order.getAmount());
+        OrderVO view = new OrderVO();
+        view.setId(order.getId());
+        view.setUserId(order.getUserId());
+        view.setAmount(order.getAmount());
+        view.setRemark(order.getRemark());
+        view.setCreatedAt(order.getCreateTime());
+        return view;
     }
 
     public List<OrderVO> toViewList(List<Order> orderList) {
@@ -33,6 +39,7 @@ public class OrderConverter {
         order.setId(orderVO.getId());
         order.setUserId(orderVO.getUserId());
         order.setAmount(orderVO.getAmount());
+        order.setRemark(orderVO.getRemark());
         return order;
     }
 

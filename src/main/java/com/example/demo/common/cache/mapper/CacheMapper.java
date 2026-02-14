@@ -1,5 +1,6 @@
 package com.example.demo.common.cache.mapper;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.demo.common.cache.CacheEntry;
 import org.apache.ibatis.annotations.*;
@@ -32,4 +33,13 @@ public interface CacheMapper extends BaseMapper<CacheEntry> {
 
     @Delete("DELETE FROM sys_cache WHERE expire_at IS NOT NULL AND expire_at < #{now}")
     int deleteExpired(@Param("now") long now);
+
+    default int deleteBatchIds(List<String> keys) {
+        if (keys == null || keys.isEmpty()) {
+            return 0;
+        }
+        QueryWrapper<CacheEntry> wrapper = new QueryWrapper<>();
+        wrapper.in("cache_key", keys);
+        return delete(wrapper);
+    }
 }

@@ -48,7 +48,7 @@ public class NoticeController extends BaseController {
     @GetMapping
     @RequirePermission("notice:query")
     public CommonResult<PageResult<NoticeVO>> list(@ModelAttribute NoticeQuery query) {
-        PageResult<Notice> rawPage = page(() -> noticeService.selectNotices(query));
+        PageResult<Notice> rawPage = page(query, noticeService::selectNoticesPage);
         List<NoticeVO> views = noticeService.toNoticeViews(rawPage.getData());
         PageResult<NoticeVO> result = new PageResult<>(
                 rawPage.getTotal(),
@@ -119,7 +119,7 @@ public class NoticeController extends BaseController {
         if (user == null || user.getId() == null) {
             return error(401, i18n("auth.permission.required"));
         }
-        PageResult<NoticeMyVO> result = page(() -> noticeService.listMyNotices(user.getId()));
+        PageResult<NoticeMyVO> result = page(user.getId(), noticeService::listMyNoticesPage);
         return success(result);
     }
 

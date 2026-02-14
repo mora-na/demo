@@ -40,7 +40,7 @@ public abstract class BaseEntity implements Serializable {
      * 创建人。
      */
     @TableField(value = "create_by", fill = FieldFill.INSERT)
-    private String createBy;
+    private Long createBy;
 
     /**
      * 创建人所属部门ID（数据归属部门）。
@@ -52,7 +52,7 @@ public abstract class BaseEntity implements Serializable {
      * 更新人。
      */
     @TableField(value = "update_by", fill = FieldFill.INSERT_UPDATE)
-    private String updateBy;
+    private Long updateBy;
 
     /**
      * 逻辑删除标识：0-未删除；1-已删除。

@@ -1,13 +1,18 @@
 package com.example.demo.common.config;
 
+import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.example.demo.common.mybatis.*;
 import org.apache.ibatis.logging.nologging.NoLoggingImpl;
 import org.apache.ibatis.logging.slf4j.Slf4jImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+
+import java.util.Locale;
 
 /**
  * MyBatis-Plus 配置，注入拦截器链。
@@ -17,6 +22,12 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class MybatisPlusConfig {
+
+    private final Environment environment;
+
+    public MybatisPlusConfig(Environment environment) {
+        this.environment = environment;
+    }
 
     /**
      * 注册 MyBatis-Plus 拦截器链，按配置启用 SQL 防护与数据范围拦截。
@@ -34,14 +45,45 @@ public class MybatisPlusConfig {
                                                          DataScopeRuleProvider dataScopeRuleProvider,
                                                          com.example.demo.datascope.service.DataScopeEvaluator evaluator) {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
-        if (properties.isEnabled()) {
-            interceptor.addInnerInterceptor(new SqlGuardInnerInterceptor(properties));
-        }
         if (dataScopeProperties.isEnabled()) {
             interceptor.addInnerInterceptor(new DataScopeInnerInterceptor(dataScopeProperties, dataScopeRuleProvider, evaluator));
         }
+        interceptor.addInnerInterceptor(paginationInnerInterceptor());
+        if (properties.isEnabled()) {
+            interceptor.addInnerInterceptor(new SqlGuardInnerInterceptor(properties));
+        }
+        interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
         return interceptor;
+    }
+
+    private PaginationInnerInterceptor paginationInnerInterceptor() {
+        PaginationInnerInterceptor interceptor = new PaginationInnerInterceptor();
+        DbType dbType = resolveDbType();
+        if (dbType != null) {
+            interceptor.setDbType(dbType);
+        }
+        return interceptor;
+    }
+
+    private DbType resolveDbType() {
+        String url = environment == null ? null : environment.getProperty("spring.datasource.url");
+        if (url == null) {
+            return null;
+        }
+        String normalized = url.toLowerCase(Locale.ROOT);
+        if (normalized.contains(":postgresql:")) {
+            return DbType.POSTGRE_SQL;
+        }
+        if (normalized.contains(":mysql:")) {
+            return DbType.MYSQL;
+        }
+        if (normalized.contains(":mariadb:")) {
+            return DbType.MARIADB;
+        }
+        if (normalized.contains(":oracle:")) {
+            return DbType.ORACLE;
+        }
+        return null;
     }
 
     /**

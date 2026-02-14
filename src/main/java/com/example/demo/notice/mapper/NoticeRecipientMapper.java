@@ -2,6 +2,7 @@ package com.example.demo.notice.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.demo.notice.dto.*;
 import com.example.demo.notice.entity.NoticeRecipient;
 import org.apache.ibatis.annotations.Param;
@@ -35,7 +36,7 @@ public interface NoticeRecipientMapper extends BaseMapper<NoticeRecipient> {
     }
 
     static Object getFirst(Map<String, Object> row, String... keys) {
-        if (row == null || row.isEmpty() || keys == null || keys.length == 0) {
+        if (row == null || row.isEmpty() || keys == null) {
             return null;
         }
         for (String key : keys) {
@@ -78,6 +79,9 @@ public interface NoticeRecipientMapper extends BaseMapper<NoticeRecipient> {
 
     @Select("select n.id as id, n.title as title, n.content as content, " + "n.created_name as createdName, n.create_time as createdAt, " + "nr.read_status as readStatus, nr.read_time as readTime " + "from sys_notice n join sys_notice_recipient nr on nr.notice_id = n.id " + "where nr.user_id = #{userId} and n.is_deleted = 0 and nr.is_deleted = 0 " + "order by n.create_time desc, n.id desc")
     List<NoticeMyVO> selectMyNotices(@Param("userId") Long userId);
+
+    @Select("select n.id as id, n.title as title, n.content as content, " + "n.created_name as createdName, n.create_time as createdAt, " + "nr.read_status as readStatus, nr.read_time as readTime " + "from sys_notice n join sys_notice_recipient nr on nr.notice_id = n.id " + "where nr.user_id = #{userId} and n.is_deleted = 0 and nr.is_deleted = 0 " + "order by n.create_time desc, n.id desc")
+    IPage<NoticeMyVO> selectMyNoticesPage(IPage<NoticeMyVO> page, @Param("userId") Long userId);
 
     @Select("select count(1) from sys_notice_recipient where user_id = #{userId} and read_status = 0 and is_deleted = 0")
     Long countUnreadByUserId(@Param("userId") Long userId);

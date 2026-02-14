@@ -66,7 +66,7 @@ public class SysUserAdminController extends BaseController {
     @GetMapping
     @RequirePermission("user:query")
     public CommonResult<PageResult<SysUserVO>> list(@ModelAttribute SysUserQuery query) {
-        return success(page(query, userService::selectUsers, userViewService::toView));
+        return success(page(query, userService::selectUsersPage, userViewService::toView));
     }
 
     /**
@@ -152,7 +152,7 @@ public class SysUserAdminController extends BaseController {
         }
         request.setPassword(rawPassword);
         SysUser created = userService.createUser(request);
-        return success(userConverter.toView(created, java.util.Collections.emptyList()));
+        return success(userConverter.toView(created));
     }
 
     @PutMapping("/{id}")

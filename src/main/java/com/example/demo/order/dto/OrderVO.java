@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -18,6 +19,14 @@ public class OrderVO implements Serializable {
 
     private Long userId;
 
+    private String userName;
+
+    private String nickName;
+
     private BigDecimal amount;
+
+    private String remark;
+
+    private LocalDateTime createdAt;
 
 }

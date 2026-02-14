@@ -1,15 +1,14 @@
 package com.example.demo.common.web;
 
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo.common.exception.ExcelProcessException;
 import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
-import com.example.demo.common.model.PageParam;
+import com.example.demo.common.model.PageQuery;
 import com.example.demo.common.model.PageResult;
 import com.example.demo.common.tool.ExcelTool;
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -19,9 +18,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -36,89 +36,67 @@ public abstract class BaseController {
     private I18nService i18nService;
 
     /**
-     * 启动分页上下文，读取请求参数并设置默认/上限值。
-     *
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    protected void startPage() {
-        HttpServletRequest req = currentRequest();
-
-        int pageNum = parseInt(req.getParameter("pageNum"), 1);
-        int pageSize = parseInt(req.getParameter("pageSize"), 10);
-
-        // 可加上最大分页大小限制，防止一次拉太多
-        pageSize = Math.min(pageSize, 200);
-
-        PageHelper.startPage(pageNum, pageSize);
-
-    }
-
-    /**
-     * 将查询结果转换为分页响应并清理分页上下文。
-     *
-     * @param list 查询结果列表
-     * @param <T>  数据类型
-     * @return 分页结果
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    protected <T> PageResult<T> getPageResult(List<T> list) {
-        PageInfo<T> pageInfo = new PageInfo<>(list);
-        PageResult<T> pageResult = new PageResult<>(pageInfo.getTotal(), list, pageInfo.getPageNum(), pageInfo.getPageSize());
-        PageHelper.clearPage();
-        return pageResult;
-    }
-
-
-    /**
      * 执行分页查询并返回分页结果。
      *
-     * @param select 查询函数
+     * @param select 分页查询函数
      * @param <T>    数据类型
      * @return 分页结果
      * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
+     * @date 2026/2/14
      */
-    protected <T> PageResult<T> page(Supplier<List<T>> select) {
-        PageParam p = getPageParam();
-        PageInfo<T> pageInfo = doPageInfo(p, select);
-        return new PageResult<>(pageInfo.getTotal(), pageInfo.getList(), pageInfo.getPageNum(), pageInfo.getPageSize());
+    protected <T> PageResult<T> page(Function<Page<T>, IPage<T>> select) {
+        IPage<T> page = select.apply(buildPage());
+        return toPageResult(page);
     }
 
     /**
      * 执行分页查询并将实体转换为视图对象。
      *
-     * @param select    查询函数
+     * @param select    分页查询函数
      * @param converter 实体到视图转换器
      * @param <E>       实体类型
      * @param <V>       视图类型
      * @return 分页结果
      * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
+     * @date 2026/2/14
      */
-    protected <E, V> PageResult<V> page(Supplier<List<E>> select, Function<E, V> converter) {
-        PageParam p = getPageParam();
-        PageInfo<E> pageInfo = doPageInfo(p, select);
-        List<V> voList = pageInfo.getList().stream().map(converter).collect(Collectors.toList());
-        return new PageResult<>(pageInfo.getTotal(), voList, pageInfo.getPageNum(), pageInfo.getPageSize());
+    protected <E, V> PageResult<V> page(Function<Page<E>, IPage<E>> select, Function<E, V> converter) {
+        IPage<E> page = select.apply(buildPage());
+        return toPageResult(page, converter);
     }
 
     /**
      * 按查询参数执行分页查询并转换结果。
      *
      * @param query     查询参数
-     * @param select    查询函数
+     * @param select    分页查询函数
      * @param converter 实体到视图转换器
      * @param <Q>       查询参数类型
      * @param <E>       实体类型
      * @param <V>       视图类型
      * @return 分页结果
      * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
+     * @date 2026/2/14
      */
-    protected <Q, E, V> PageResult<V> page(Q query, Function<Q, List<E>> select, Function<E, V> converter) {
-        return page(() -> select.apply(query), converter);
+    protected <Q, E, V> PageResult<V> page(Q query, BiFunction<Page<E>, Q, IPage<E>> select, Function<E, V> converter) {
+        return page(page -> select.apply(page, query), converter);
+    }
+
+    /**
+     * 按查询参数执行分页查询并返回分页结果。
+     */
+    protected <Q, E> PageResult<E> page(Q query, BiFunction<Page<E>, Q, IPage<E>> select) {
+        return page(page -> select.apply(page, query));
+    }
+
+    /**
+     * 构建空分页结果（保留请求分页信息）。
+     */
+    protected <T> PageResult<T> emptyPage() {
+        PageQuery query = getPageQuery();
+        int pageNum = query.getPageNum() == null ? 1 : query.getPageNum();
+        int pageSize = query.getPageSize() == null ? 10 : query.getPageSize();
+        return new PageResult<>(0L, Collections.emptyList(), pageNum, pageSize);
     }
 
     /**
@@ -233,35 +211,46 @@ public abstract class BaseController {
 
     /**
      * 读取请求参数并构建分页参数。
-     *
-     * @return 分页参数
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
      */
-    private PageParam getPageParam() {
+    protected PageQuery getPageQuery() {
         HttpServletRequest req = currentRequest();
         int pageNum = Math.max(parseInt(req.getParameter("pageNum"), 1), 1);
         int pageSize = Math.max(parseInt(req.getParameter("pageSize"), 10), 1);
-        pageSize = Math.min(pageSize, 200);
-        return new PageParam(pageNum, pageSize);
+        pageSize = Math.min(pageSize, 500);
+        String orderByColumn = StringUtils.trimToNull(req.getParameter("orderByColumn"));
+        String isAsc = StringUtils.trimToNull(req.getParameter("isAsc"));
+        return new PageQuery(pageNum, pageSize, orderByColumn, isAsc);
     }
 
-    /**
-     * 在 PageHelper 环境中执行查询并返回 PageInfo。
-     *
-     * @param p      分页参数
-     * @param select 查询函数
-     * @param <E>    数据类型
-     * @return PageInfo 结果
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    private <E> PageInfo<E> doPageInfo(PageParam p, Supplier<List<E>> select) {
-        try (Page<Object> ignored = PageHelper.startPage(p.getPageNum(), p.getPageSize())) {
-            return ignored.doSelectPageInfo(select::get);
-        } finally {
-            PageHelper.clearPage();
+    private <T> Page<T> buildPage() {
+        return getPageQuery().buildPage();
+    }
+
+    private <T> PageResult<T> toPageResult(IPage<T> page) {
+        if (page == null) {
+            PageQuery query = getPageQuery();
+            int pageNum = query.getPageNum() == null ? 1 : query.getPageNum();
+            int pageSize = query.getPageSize() == null ? 10 : query.getPageSize();
+            return new PageResult<>(0L, Collections.emptyList(), pageNum, pageSize);
         }
+        int pageNum = (int) Math.max(page.getCurrent(), 1);
+        int pageSize = (int) Math.max(page.getSize(), 1);
+        List<T> records = page.getRecords() == null ? Collections.emptyList() : page.getRecords();
+        return new PageResult<>(Math.max(page.getTotal(), 0L), records, pageNum, pageSize);
+    }
+
+    private <E, V> PageResult<V> toPageResult(IPage<E> page, Function<E, V> converter) {
+        if (page == null) {
+            PageQuery query = getPageQuery();
+            int pageNum = query.getPageNum() == null ? 1 : query.getPageNum();
+            int pageSize = query.getPageSize() == null ? 10 : query.getPageSize();
+            return new PageResult<>(0L, Collections.emptyList(), pageNum, pageSize);
+        }
+        int pageNum = (int) Math.max(page.getCurrent(), 1);
+        int pageSize = (int) Math.max(page.getSize(), 1);
+        List<V> voList = page.getRecords() == null ? Collections.emptyList()
+                : page.getRecords().stream().map(converter).collect(Collectors.toList());
+        return new PageResult<>(Math.max(page.getTotal(), 0L), voList, pageNum, pageSize);
     }
 
     /**
@@ -311,7 +300,7 @@ public abstract class BaseController {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    protected <T> void exportExcel(HttpServletResponse response, Supplier<List<T>> query, Class<T> type, String fileName) {
+    protected <T> void exportExcel(HttpServletResponse response, Function<Page<T>, IPage<T>> query, Class<T> type, String fileName) {
         String targetName = normalizeFileName(fileName);
         try {
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");

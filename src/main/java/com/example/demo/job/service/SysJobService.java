@@ -1,5 +1,7 @@
 package com.example.demo.job.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.job.dto.JobCreateRequest;
@@ -19,6 +21,8 @@ import java.util.List;
 public interface SysJobService extends IService<SysJob> {
 
     List<SysJob> selectJobs(JobQuery query);
+
+    IPage<SysJob> selectJobsPage(Page<SysJob> page, JobQuery query);
 
     SysJob createJob(JobCreateRequest request, AuthUser creator);
 

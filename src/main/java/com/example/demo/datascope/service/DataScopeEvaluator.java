@@ -5,6 +5,7 @@ import com.example.demo.common.mybatis.DataScopeType;
 import com.example.demo.common.web.permission.PermissionProperties;
 import com.example.demo.datascope.model.RoleDataScope;
 import com.example.demo.datascope.model.UserScopeOverride;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -212,6 +213,7 @@ public class DataScopeEvaluator {
         }
     }
 
+    @Getter
     public static final class FinalScope {
         private final boolean all;
         private final boolean self;
@@ -261,20 +263,5 @@ public class DataScopeEvaluator {
             return new FinalScope(false, includeSelf, deptIds == null ? Collections.emptySet() : new LinkedHashSet<>(deptIds), false);
         }
 
-        public boolean isAll() {
-            return all;
-        }
-
-        public boolean isSelf() {
-            return self;
-        }
-
-        public Set<Long> getDeptIds() {
-            return deptIds;
-        }
-
-        public boolean isNone() {
-            return none;
-        }
     }
 }

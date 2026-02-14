@@ -1,11 +1,11 @@
 package com.example.demo.common.tool;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo.common.annotation.Excel;
 import com.example.demo.common.exception.ExcelProcessException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Supplier;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -44,7 +44,7 @@ public final class ExcelTool {
     private static final boolean DEFAULT_USE_SHARED_STRINGS = false;
     private static final boolean DEFAULT_AUTO_SIZE = false;
     private static final int DEFAULT_AUTO_SIZE_MAX_ROWS = 2000;
-    private static final boolean DEFAULT_COUNT_ENABLED = false;
+    private static final boolean DEFAULT_COUNT_ENABLED = true;
     private static final boolean DEFAULT_COMPRESS_TEMP_FILES = true;
     private static final long MAX_IMPORT_FILE_SIZE = 50L * 1024 * 1024;
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -61,8 +61,21 @@ public final class ExcelTool {
     private static volatile boolean defaultAutoSize = DEFAULT_AUTO_SIZE;
     @Getter
     private static volatile int defaultAutoSizeMaxRows = DEFAULT_AUTO_SIZE_MAX_ROWS;
-    @Getter
+    /**
+     * -- GETTER --
+     *  获取默认是否启用 COUNT 查询。
+     *
+     * @return true 表示启用 COUNT
+     *
+     * -- SETTER --
+     *  设置默认是否启用 COUNT 查询。
+     *
+     * @param countEnabled 是否启用 COUNT
+     *
+
+     */
     @Setter
+    @Getter
     private static volatile boolean defaultCountEnabled = DEFAULT_COUNT_ENABLED;
     @Getter
     @Setter
@@ -166,7 +179,7 @@ public final class ExcelTool {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    public static <T> void exportToStreamByPaging(Supplier<List<T>> query, Class<T> type, String sheetName, OutputStream outputStream) {
+    public static <T> void exportToStreamByPaging(Function<Page<T>, IPage<T>> query, Class<T> type, String sheetName, OutputStream outputStream) {
         exportToStreamByPaging(query, type, sheetName, outputStream, defaultExportPageSize);
     }
 
@@ -182,7 +195,7 @@ public final class ExcelTool {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    public static <T> void exportToStreamByPaging(Supplier<List<T>> query, Class<T> type, String sheetName, OutputStream outputStream, int pageSize) {
+    public static <T> void exportToStreamByPaging(Function<Page<T>, IPage<T>> query, Class<T> type, String sheetName, OutputStream outputStream, int pageSize) {
         Objects.requireNonNull(query, "分页查询方法不能为空");
         Objects.requireNonNull(type, "导出的实体类型不能为空");
         Objects.requireNonNull(outputStream, "输出流不能为空");
@@ -203,7 +216,8 @@ public final class ExcelTool {
             int totalRows = 0;
             int pageNum = 1;
             while (true) {
-                List<T> pageData = selectPage(query, pageNum, pageSize);
+                IPage<T> pageResult = selectPage(query, pageNum, pageSize);
+                List<T> pageData = pageResult.getRecords() == null ? Collections.emptyList() : pageResult.getRecords();
                 if (pageData.isEmpty()) {
                     break;
                 }
@@ -213,6 +227,9 @@ public final class ExcelTool {
                     totalRows++;
                 }
                 if (pageData.size() < pageSize) {
+                    break;
+                }
+                if (pageResult.getPages() > 0 && pageResult.getCurrent() >= pageResult.getPages()) {
                     break;
                 }
                 pageNum++;
@@ -589,29 +606,30 @@ public final class ExcelTool {
     }
 
     /**
-     * 通过 PageHelper 触发分页查询并返回一页数据。
+     * 通过 MyBatis-Plus 分页查询并返回一页数据。
      *
      * @param query    分页查询方法
      * @param pageNum  页码
      * @param pageSize 分页大小
      * @param <T>      实体类型
-     * @return 当前页数据
+     * @return 当前页结果
      * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
+     * @date 2026/2/14
      */
-    private static <T> List<T> selectPage(Supplier<List<T>> query, int pageNum, int pageSize) {
-        try (Page<Object> ignored = PageHelper.startPage(pageNum, pageSize, defaultCountEnabled)) {
-            List<T> pageData = query.get();
-            if (pageData == null) {
-                return Collections.emptyList();
-            }
-            if (pageData.size() > pageSize) {
-                throw new ExcelProcessException("分页查询未生效，请确认查询方法支持分页");
-            }
-            return pageData;
-        } finally {
-            PageHelper.clearPage();
+    private static <T> IPage<T> selectPage(Function<Page<T>, IPage<T>> query, int pageNum, int pageSize) {
+        Page<T> page = new Page<>(pageNum, pageSize, defaultCountEnabled);
+        IPage<T> result = query.apply(page);
+        if (result == null) {
+            Page<T> empty = new Page<>(pageNum, pageSize);
+            empty.setRecords(Collections.emptyList());
+            empty.setTotal(0L);
+            return empty;
         }
+        List<T> records = result.getRecords();
+        if (records != null && records.size() > pageSize) {
+            throw new ExcelProcessException("分页查询未生效，请确认查询方法支持分页");
+        }
+        return result;
     }
 
     /**

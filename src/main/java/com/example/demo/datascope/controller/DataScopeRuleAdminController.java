@@ -13,6 +13,7 @@ import com.example.demo.datascope.entity.DataScopeRule;
 import com.example.demo.datascope.service.DataScopeRuleService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +37,7 @@ public class DataScopeRuleAdminController extends BaseController {
     @GetMapping("/list")
     @RequirePermission("data-scope:rule:query")
     public CommonResult<PageResult<DataScopeRuleVO>> list(@ModelAttribute DataScopeRuleQuery query) {
-        return success(page(() -> dataScopeRuleService.list(Wrappers.lambdaQuery(DataScopeRule.class)
+        return success(page(page -> dataScopeRuleService.page(page, Wrappers.lambdaQuery(DataScopeRule.class)
                 .like(StringUtils.isNotBlank(query.getScopeKey()), DataScopeRule::getScopeKey, query.getScopeKey())
                 .like(StringUtils.isNotBlank(query.getTableName()), DataScopeRule::getTableName, query.getTableName())
                 .orderByAsc(DataScopeRule::getId)), this::toVO));
@@ -71,6 +72,14 @@ public class DataScopeRuleAdminController extends BaseController {
         if (StringUtils.isNotBlank(request.getScopeKey()) && existsScopeKey(request.getScopeKey(), id)) {
             return error(400, i18n("data.scope.rule.exists"));
         }
+        DataScopeRule rule = getDataScopeRule(id, request);
+        if (!dataScopeRuleService.updateById(rule)) {
+            return error(500, i18n("common.update.failed"));
+        }
+        return success();
+    }
+
+    private @NonNull DataScopeRule getDataScopeRule(Long id, DataScopeRuleUpdateRequest request) {
         DataScopeRule rule = new DataScopeRule();
         rule.setId(id);
         rule.setScopeKey(request.getScopeKey());
@@ -81,10 +90,7 @@ public class DataScopeRuleAdminController extends BaseController {
         rule.setFilterType(normalizeFilterType(request.getFilterType()));
         rule.setStatus(normalizeStatus(request.getStatus()));
         rule.setRemark(request.getRemark());
-        if (!dataScopeRuleService.updateById(rule)) {
-            return error(500, i18n("common.update.failed"));
-        }
-        return success();
+        return rule;
     }
 
     @DeleteMapping("/{id}")

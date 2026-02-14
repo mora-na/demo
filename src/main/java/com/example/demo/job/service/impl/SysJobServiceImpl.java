@@ -1,6 +1,9 @@
 package com.example.demo.job.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.job.dto.JobCreateRequest;
@@ -39,17 +42,15 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
 
     @Override
     public List<SysJob> selectJobs(JobQuery query) {
-        if (query == null) {
-            return list(Wrappers.lambdaQuery(SysJob.class)
-                    .orderByDesc(SysJob::getId));
+        return list(buildQuery(query));
+    }
+
+    @Override
+    public IPage<SysJob> selectJobsPage(Page<SysJob> page, JobQuery query) {
+        if (page == null) {
+            return new Page<>(1, 10);
         }
-        String name = StringUtils.trimToEmpty(query.getName());
-        String handler = StringUtils.trimToEmpty(query.getHandlerName());
-        return list(Wrappers.lambdaQuery(SysJob.class)
-                .like(StringUtils.isNotBlank(name), SysJob::getName, name)
-                .like(StringUtils.isNotBlank(handler), SysJob::getHandlerName, handler)
-                .eq(query.getStatus() != null, SysJob::getStatus, query.getStatus())
-                .orderByDesc(SysJob::getId));
+        return this.page(page, buildQuery(query));
     }
 
     @Override
@@ -197,6 +198,20 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         view.setUpdatedAt(job.getUpdatedAt());
         view.setNextFireTime(jobSchedulerService.getNextFireTime(job));
         return view;
+    }
+
+    private LambdaQueryWrapper<SysJob> buildQuery(JobQuery query) {
+        if (query == null) {
+            return Wrappers.lambdaQuery(SysJob.class)
+                    .orderByDesc(SysJob::getId);
+        }
+        String name = StringUtils.trimToEmpty(query.getName());
+        String handler = StringUtils.trimToEmpty(query.getHandlerName());
+        return Wrappers.lambdaQuery(SysJob.class)
+                .like(StringUtils.isNotBlank(name), SysJob::getName, name)
+                .like(StringUtils.isNotBlank(handler), SysJob::getHandlerName, handler)
+                .eq(query.getStatus() != null, SysJob::getStatus, query.getStatus())
+                .orderByDesc(SysJob::getId);
     }
 
     @Override
