@@ -23,6 +23,8 @@ public interface SysUserService extends IService<SysUser> {
 
     IPage<SysUser> selectUsersPage(Page<SysUser> page, SysUserQuery query);
 
+    IPage<SysUser> searchUsersPage(Page<SysUser> page, String keyword);
+
     SysUser getByUserName(String userName);
 
     SysUser createUser(SysUserCreateRequest request);

@@ -475,15 +475,7 @@ COMMENT ON COLUMN sys_data_scope_rule.status IS '状态：0-禁用 1-启用';
 
 INSERT INTO sys_data_scope_rule (id, scope_key, table_name, table_alias, dept_column, user_column, filter_type, status, create_time, update_time, remark)
 VALUES (1, 'order:query', 'sys_order', '', 'create_dept', 'user_id', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '订单数据范围')
-ON CONFLICT (id) DO UPDATE SET scope_key   = EXCLUDED.scope_key,
-                               table_name  = EXCLUDED.table_name,
-                               table_alias = EXCLUDED.table_alias,
-                               dept_column = EXCLUDED.dept_column,
-                               user_column = EXCLUDED.user_column,
-                               filter_type = EXCLUDED.filter_type,
-                               status      = EXCLUDED.status,
-                               update_time = EXCLUDED.update_time,
-                               remark      = EXCLUDED.remark;
+;
 
 CREATE SEQUENCE IF NOT EXISTS sys_order_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_order
@@ -958,40 +950,28 @@ CREATE TRIGGER trg_sys_notice_recipient_update_time
     FOR EACH ROW
 EXECUTE FUNCTION fn_sys_update_time();
 
--- 初始化基础数据（默认密码示例：Admin@1234 / Manager@1234 / User@1234）
+-- 初始化基础数据（默认密码示例：Passowrd@123）
 INSERT INTO sys_dept (id, name, code, parent_id, status, sort, remark)
 VALUES (1, '总部', 'HQ', NULL, 1, 0, '根部门'),
-       (2, '研发中心', 'RD', 1, 1, 10, '产品研发'),
-       (3, '运营中心', 'OPS', 1, 1, 20, '运营支持')
-ON CONFLICT (id) DO UPDATE SET name      = EXCLUDED.name,
-                               code      = EXCLUDED.code,
-                               parent_id = EXCLUDED.parent_id,
-                               status    = EXCLUDED.status,
-                               sort      = EXCLUDED.sort,
-                               remark    = EXCLUDED.remark;
+       (100, '研发中心', 'RD', 1, 1, 10, '产品研发'),
+       (200, '运营中心', 'OPS', 1, 1, 20, '运营支持')
+;
 
 INSERT INTO sys_post (id, name, code, dept_id, status, sort, remark)
-VALUES (1, '部门主管', 'MANAGER', 1, 1, 0, '部门主管岗位'),
-       (2, '普通员工', 'STAFF', 1, 1, 10, '普通员工岗位'),
-       (3, '研发经理', 'RD_MANAGER', 2, 1, 0, '研发部门岗位'),
-       (4, '研发工程师', 'RD_ENGINEER', 2, 1, 10, '研发工程师岗位'),
-       (5, '运营专员', 'OPS_STAFF', 3, 1, 10, '运营岗位')
-ON CONFLICT (id) DO UPDATE SET name    = EXCLUDED.name,
-                               code    = EXCLUDED.code,
-                               dept_id = EXCLUDED.dept_id,
-                               status  = EXCLUDED.status,
-                               sort    = EXCLUDED.sort,
-                               remark  = EXCLUDED.remark;
+VALUES (1, '总经理', 'CEO', 1, 1, 0, '总部最高负责人'),
+       (2, '部门主管', 'DEPT_MANAGER', 1, 1, 10, '全局岗位，各部门通用'),
+       (3, '普通员工', 'STAFF', 1, 1, 20, '全局岗位，各部门通用'),
+       (4, '研发经理', 'RD_MANAGER', 100, 1, 30, '研发中心岗位'),
+       (5, '研发工程师', 'RD_ENGINEER', 100, 1, 40, '研发中心岗位'),
+       (6, '运营经理', 'OPS_MANAGER', 200, 1, 50, '运营中心岗位'),
+       (7, '运营专员', 'OPS_STAFF', 200, 1, 60, '运营中心岗位')
+;
 
 INSERT INTO sys_role (id, code, name, status, data_scope_type, data_scope_value)
 VALUES (1, 'admin', '系统管理员', 1, 'ALL', NULL),
-       (2, 'manager', '部门主管', 1, 'DEPT_AND_CHILD', NULL),
+       (2, 'dept_mgr', '部门主管', 1, 'DEPT_AND_CHILD', NULL),
        (3, 'user', '普通用户', 1, 'SELF', NULL)
-ON CONFLICT (id) DO UPDATE SET code             = EXCLUDED.code,
-                               name             = EXCLUDED.name,
-                               status           = EXCLUDED.status,
-                               data_scope_type  = EXCLUDED.data_scope_type,
-                               data_scope_value = EXCLUDED.data_scope_value;
+;
 
 INSERT INTO sys_permission (id, code, name, status)
 VALUES (1, 'user:query', '用户查询', 1),
@@ -1050,72 +1030,86 @@ VALUES (1, 'user:query', '用户查询', 1),
        (54, 'data-scope:user:query', '用户数据范围查询', 1),
        (55, 'data-scope:user:manage', '用户数据范围管理', 1),
        (56, 'order:query', '订单查询', 1),
-       (59, 'order:delete', '订单删除', 1)
-ON CONFLICT (id) DO UPDATE SET code   = EXCLUDED.code,
-                               name   = EXCLUDED.name,
-                               status = EXCLUDED.status;
+       (57, 'order:create', '订单创建', 1),
+       (58, 'order:update', '订单更新', 1),
+       (59, 'order:delete', '订单删除', 1),
+       (60, 'profile:update', '个人资料更新', 1),
+       (61, 'profile:password', '个人密码修改', 1),
+       (62, 'notice:create', '通知创建', 1),
+       (63, 'notice:update', '通知编辑', 1),
+       (64, 'notice:disable', '通知撤回', 1),
+       (65, 'log:query', '操作日志查询', 1),
+       (66, 'log:export', '操作日志导出', 1),
+       (67, 'log:delete', '操作日志清理', 1),
+       (68, 'login-log:query', '登录日志查询', 1),
+       (69, 'login-log:delete', '登录日志清理', 1)
+;
 
 INSERT INTO sys_menu (id, name, code, parent_id, path, component, permission, status, sort, remark)
 VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '系统管理根菜单'),
-       (110, '用户管理', 'user', 100, '/system/users', 'UserPage', 'user:query', 1, 10, '用户管理'),
-       (120, '角色管理', 'role', 100, '/system/roles', 'RolePage', 'role:query', 1, 20, '角色管理'),
-       (130, '菜单管理', 'menu', 100, '/system/menus', 'MenuPage', 'menu:query', 1, 30, '菜单管理'),
-       (140, '部门管理', 'dept', 100, '/system/depts', 'DeptPage', 'dept:query', 1, 40, '部门管理'),
-       (145, '岗位管理', 'post', 100, '/system/posts', 'PostPage', 'post:query', 1, 45, '岗位管理'),
-       (150, '权限管理', 'permission', 100, '/system/permissions', 'PermissionPage', 'permission:query', 1, 50,
+       (110, '用户管理', 'user', 100, '/system/user', 'UserPage', 'user:query', 1, 10, '用户管理'),
+       (120, '角色管理', 'role', 100, '/system/role', 'RolePage', 'role:query', 1, 20, '角色管理'),
+       (130, '菜单管理', 'menu', 100, '/system/menu', 'MenuPage', 'menu:query', 1, 30, '菜单管理'),
+       (140, '部门管理', 'dept', 100, '/system/dept', 'DeptPage', 'dept:query', 1, 40, '部门管理'),
+       (145, '岗位管理', 'post', 100, '/system/post', 'PostPage', 'post:query', 1, 45, '岗位管理'),
+       (150, '权限管理', 'permission', 100, '/system/permission', 'PermissionPage', 'permission:query', 1, 50,
         '权限管理'),
-       (160, '系统通知', 'notice', 100, '/system/notices', 'NoticePage', 'notice:query', 1, 60, '系统通知'),
-       (170, '定时任务', 'job', 100, '/system/jobs', 'JobPage', 'job:query', 1, 70, '定时任务'),
-       (180, '数据权限', 'data-scope', 100, '/system/data-scope', 'DataScopePage', NULL, 1, 80, '数据权限'),
-       (181, '权限总览', 'data-scope-overview', 180, '/system/data-scope/overview', 'DataScopeOverviewPage',
+       (160, '系统通知', 'notice', 100, '/system/notice', 'NoticePage', 'notice:query', 1, 60, '系统通知'),
+       (170, '定时任务', 'job', 100, '/system/job', 'JobPage', 'job:query', 1, 70, '定时任务'),
+       (180, '数据权限', 'data-scope', NULL, '/data-scope', 'DataScopePage', NULL, 1, 30, '数据权限'),
+       (181, '权限总览', 'data-scope-overview', 180, '/data-scope/overview', 'DataScopeOverviewPage',
         'data-scope:resolve', 1, 10, '权限总览'),
-       (182, '字段映射配置', 'data-scope-mapping', 180, '/system/data-scope/mapping', 'DataScopeMappingPage',
+       (182, '字段映射配置', 'data-scope-mapping', 180, '/data-scope/mapping', 'DataScopeMappingPage',
         'data-scope:rule:query', 1, 20, '字段映射配置'),
-       (183, '用户特例授权', 'data-scope-user', 180, '/system/data-scope/user', 'DataScopeUserPage',
+       (183, '用户特例授权', 'data-scope-user', 180, '/data-scope/user', 'DataScopeUserPage',
         'data-scope:user:query', 1, 30, '用户特例授权'),
+       (190, '系统监控', 'monitor', NULL, '/monitor', 'Layout', NULL, 1, 40, '系统监控'),
+       (191, '操作日志', 'oper-log', 190, '/monitor/oper-log', 'OperLogPage', 'log:query', 1, 10, '操作日志'),
+       (192, '登录日志', 'login-log', 190, '/monitor/login-log', 'LoginLogPage', 'login-log:query', 1, 20, '登录日志'),
        (200, '订单管理', 'order', NULL, '/orders', 'OrderPage', 'order:query', 1, 20, '订单管理')
-ON CONFLICT (id) DO UPDATE SET name       = EXCLUDED.name,
-                               code       = EXCLUDED.code,
-                               parent_id  = EXCLUDED.parent_id,
-                               path       = EXCLUDED.path,
-                               component  = EXCLUDED.component,
-                               permission = EXCLUDED.permission,
-                               status     = EXCLUDED.status,
-                               sort       = EXCLUDED.sort,
-                               remark     = EXCLUDED.remark;
+;
 
 INSERT INTO sys_user (id, user_name, nick_name, phone, email, password, status, dept_id, data_scope_type, data_scope_value,
                       sex, remark)
-VALUES (1, 'admin', '超级管理员', NULL, NULL,
-        'b38dce307683511d93ac894f91397a1b5747899bbca077b4cf01c9c31c4f33e0', 1, 1, 'ALL', NULL, 'M', '内置账号'),
-       (2, 'manager', '部门主管', NULL, NULL,
-        '826182ec96744b73ee254210a720573c494f1486d38715ae48802dc4818fb465', 1, 2,
-        'DEPT_AND_CHILD', NULL, 'M', '内置账号'),
-       (3, 'demo', '普通用户', NULL, NULL,
-        '2177cc1d2fee90fbc535546218a2537cdfd65ab76b4a6726c88f946d4786de72', 1, 2, 'SELF', NULL, 'F', '内置账号')
-ON CONFLICT (id) DO UPDATE SET user_name        = EXCLUDED.user_name,
-                               nick_name        = EXCLUDED.nick_name,
-                               phone            = EXCLUDED.phone,
-                               email            = EXCLUDED.email,
-                               password         = EXCLUDED.password,
-                               status           = EXCLUDED.status,
-                               dept_id          = EXCLUDED.dept_id,
-                               data_scope_type  = EXCLUDED.data_scope_type,
-                               data_scope_value = EXCLUDED.data_scope_value,
-                               sex              = EXCLUDED.sex,
-                               remark           = EXCLUDED.remark;
+VALUES (1, 'admin', '管理员', NULL, NULL,
+        'bb5446b87e58c601c59db53c17e4c11ef7e305e259697ec835e07e9735de7ff5', 1, 1, 'ALL', NULL, 'M',
+        '内置账号'),
+       (2, 'dev_mgr', '张研发', NULL, NULL,
+        'bb5446b87e58c601c59db53c17e4c11ef7e305e259697ec835e07e9735de7ff5', 1, 100, 'DEPT_AND_CHILD', NULL,
+        'M', '研发中心主管'),
+       (3, 'dev_user', '李工程', NULL, NULL,
+        'bb5446b87e58c601c59db53c17e4c11ef7e305e259697ec835e07e9735de7ff5', 1, 100, 'SELF', NULL, 'M',
+        '研发中心成员'),
+       (4, 'ops_mgr', '王运营', NULL, NULL,
+        'bb5446b87e58c601c59db53c17e4c11ef7e305e259697ec835e07e9735de7ff5', 1, 200, 'DEPT_AND_CHILD', NULL,
+        'M', '运营中心主管'),
+       (5, 'ops_user', '赵专员', NULL, NULL,
+        'bb5446b87e58c601c59db53c17e4c11ef7e305e259697ec835e07e9735de7ff5', 1, 200, 'SELF', NULL, 'F',
+        '运营中心成员'),
+       (6, 'test', '测试账号', NULL, NULL,
+        'bb5446b87e58c601c59db53c17e4c11ef7e305e259697ec835e07e9735de7ff5', 1, 100, 'SELF', NULL, 'M',
+        '测试账号')
+;
 
 INSERT INTO sys_user_role (user_id, role_id)
 VALUES (1, 1),
        (2, 2),
-       (3, 3)
-ON CONFLICT (user_id, role_id, is_deleted) DO NOTHING;
+       (3, 3),
+       (4, 2),
+       (5, 3),
+       (6, 3)
+;
 
 INSERT INTO sys_user_post (user_id, post_id)
 VALUES (1, 1),
-       (2, 1),
-       (3, 2)
-ON CONFLICT (user_id, post_id, is_deleted) DO NOTHING;
+       (2, 2),
+       (2, 4),
+       (3, 5),
+       (4, 2),
+       (4, 6),
+       (5, 7),
+       (6, 3)
+;
 
 INSERT INTO sys_role_permission (role_id, permission_id)
 VALUES (1, 1),
@@ -1153,6 +1147,12 @@ VALUES (1, 1),
        (1, 33),
        (1, 34),
        (1, 35),
+       (1, 36),
+       (1, 37),
+       (1, 38),
+       (1, 39),
+       (1, 40),
+       (1, 41),
        (1, 42),
        (1, 43),
        (1, 44),
@@ -1171,62 +1171,81 @@ VALUES (1, 1),
        (1, 57),
        (1, 58),
        (1, 59),
+       (1, 60),
+       (1, 61),
+       (1, 62),
+       (1, 63),
+       (1, 64),
+       (1, 65),
+       (1, 66),
+       (1, 67),
+       (1, 68),
+       (1, 69),
        (2, 1),
+       (2, 4),
+       (2, 5),
        (2, 8),
-       (2, 10),
-       (2, 16),
-       (2, 20),
-       (2, 24),
+       (2, 28),
+       (2, 29),
        (2, 56),
-       (2, 57),
-       (2, 58),
-       (2, 59),
-       (3, 1),
+       (2, 60),
+       (2, 61),
+       (2, 62),
+       (2, 63),
+       (2, 64),
+       (3, 28),
        (3, 56),
-       (3, 57),
-       (3, 58),
-       (3, 59)
-ON CONFLICT (role_id, permission_id, is_deleted) DO NOTHING;
+       (3, 60),
+       (3, 61)
+;
 
-INSERT INTO sys_role_menu (role_id, menu_id)
-VALUES (1, 100),
-       (1, 110),
-       (1, 120),
-       (1, 130),
-       (1, 140),
-       (1, 145),
-       (1, 150),
-       (1, 160),
-       (1, 170),
-       (1, 180),
-       (1, 181),
-       (1, 182),
-       (1, 183),
-       (1, 200),
-       (2, 100),
-       (2, 110),
-       (2, 140),
-       (2, 200),
-       (3, 200)
-ON CONFLICT (role_id, menu_id, is_deleted) DO NOTHING;
+INSERT INTO sys_role_menu (role_id, menu_id, data_scope_type)
+VALUES (1, 10, NULL),
+       (1, 11, NULL),
+       (1, 20, NULL),
+       (1, 21, NULL),
+       (1, 100, NULL),
+       (1, 110, NULL),
+       (1, 120, NULL),
+       (1, 130, NULL),
+       (1, 140, NULL),
+       (1, 145, NULL),
+       (1, 150, NULL),
+       (1, 160, NULL),
+       (1, 170, NULL),
+       (1, 180, NULL),
+       (1, 181, NULL),
+       (1, 182, NULL),
+       (1, 183, NULL),
+       (1, 190, NULL),
+       (1, 191, NULL),
+       (1, 192, NULL),
+       (1, 200, NULL),
+       (2, 10, NULL),
+       (2, 11, NULL),
+       (2, 20, NULL),
+       (2, 21, NULL),
+       (2, 100, NULL),
+       (2, 110, NULL),
+       (2, 160, 'DEPT'),
+       (2, 200, NULL),
+       (3, 10, NULL),
+       (3, 11, NULL),
+       (3, 20, NULL),
+       (3, 21, NULL),
+       (3, 100, NULL),
+       (3, 160, NULL),
+       (3, 200, NULL)
+;
 
 INSERT INTO sys_order (id, user_id, amount, create_time, update_time, create_by, create_dept, update_by, is_deleted, version, remark)
-VALUES (1, 1, 1999.00, '2026-02-01 09:12:00', '2026-02-01 09:12:00', 1, 1, 1, 0, 0, '入门套餐'),
-       (2, 2, 499.00, '2026-02-03 14:35:00', '2026-02-03 14:35:00', 2, 2, 2, 0, 0, '部门采购'),
-       (3, 3, 129.90, '2026-02-05 10:20:00', '2026-02-05 10:20:00', 3, 2, 3, 0, 0, '演示订单'),
-       (4, 3, 799.00, '2026-02-07 16:05:00', '2026-02-07 16:05:00', 3, 2, 3, 0, 0, '升级套餐'),
+VALUES (1, 2, 1999.00, '2026-02-01 09:12:00', '2026-02-01 09:12:00', 2, 100, 2, 0, 0, '研发采购'),
+       (2, 3, 499.00, '2026-02-03 14:35:00', '2026-02-03 14:35:00', 3, 100, 3, 0, 0, '研发材料'),
+       (3, 4, 129.90, '2026-02-05 10:20:00', '2026-02-05 10:20:00', 4, 200, 4, 0, 0, '运营投放'),
+       (4, 5, 799.00, '2026-02-07 16:05:00', '2026-02-07 16:05:00', 5, 200, 5, 0, 0, '渠道采购'),
        (5, 1, 2499.00, '2026-02-10 09:50:00', '2026-02-10 09:50:00', 1, 1, 1, 0, 0, '年度订阅'),
-       (6, 2, 89.00, '2026-02-12 11:15:00', '2026-02-12 11:15:00', 2, 2, 2, 0, 0, '补充采购')
-ON CONFLICT (id) DO UPDATE SET user_id     = EXCLUDED.user_id,
-                               amount      = EXCLUDED.amount,
-                               create_time = EXCLUDED.create_time,
-                               update_time = EXCLUDED.update_time,
-                               create_by   = EXCLUDED.create_by,
-                               create_dept = EXCLUDED.create_dept,
-                               update_by   = EXCLUDED.update_by,
-                               is_deleted  = EXCLUDED.is_deleted,
-                               version     = EXCLUDED.version,
-                               remark      = EXCLUDED.remark;
+       (6, 6, 89.00, '2026-02-12 11:15:00', '2026-02-12 11:15:00', 6, 100, 6, 0, 0, '测试订单')
+;
 
 SELECT setval('sys_dept_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_dept));
 SELECT setval('sys_post_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_post));

@@ -261,6 +261,12 @@ export interface UserQuery {
     deptId?: number | null;
 }
 
+export interface UserSearchQuery {
+    keyword?: string;
+    pageNum?: number;
+    pageSize?: number;
+}
+
 export interface UserCreatePayload {
     userName: string;
     nickName?: string;
@@ -376,6 +382,11 @@ export interface PostUpdatePayload {
 
 export async function listUsers(params: UserQuery): Promise<ApiResponse<PageResult<UserVO>>> {
     const response = await api.get<ApiResponse<PageResult<UserVO>>>("/users", {params});
+    return response.data;
+}
+
+export async function searchUsers(params: UserSearchQuery): Promise<ApiResponse<PageResult<UserVO>>> {
+    const response = await api.get<ApiResponse<PageResult<UserVO>>>("/users/search", {params});
     return response.data;
 }
 

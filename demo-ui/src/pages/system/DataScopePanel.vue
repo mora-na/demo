@@ -8,13 +8,13 @@
     </div>
 
     <el-tabs v-model="activeTab" class="data-scope-tabs">
-      <el-tab-pane :label="t('dataScope.tabs.overview')" name="overview">
+      <el-tab-pane :label="t('dataScope.tabs.overview')" name="overview" lazy>
         <DataScopeOverview/>
       </el-tab-pane>
-      <el-tab-pane :label="t('dataScope.tabs.mapping')" name="mapping">
+      <el-tab-pane :label="t('dataScope.tabs.mapping')" name="mapping" lazy>
         <DataScopeMapping/>
       </el-tab-pane>
-      <el-tab-pane :label="t('dataScope.tabs.user')" name="user">
+      <el-tab-pane :label="t('dataScope.tabs.user')" name="user" lazy>
         <DataScopeUserOverrides/>
       </el-tab-pane>
     </el-tabs>

@@ -42,7 +42,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Override
     public List<SysUser> selectUsers(SysUserQuery query) {
-        return baseMapper.selectList(Wrappers.query(userConverter.toEntity(query)));
+        return baseMapper.selectList(buildListQueryWrapper(query));
     }
 
     @Override
@@ -50,7 +50,58 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (page == null) {
             return new Page<>(1, 10);
         }
-        return baseMapper.selectPage(page, Wrappers.query(userConverter.toEntity(query)));
+        return baseMapper.selectPage(page, buildListQueryWrapper(query));
+    }
+
+    @Override
+    public IPage<SysUser> searchUsersPage(Page<SysUser> page, String keyword) {
+        if (page == null) {
+            return new Page<>(1, 10);
+        }
+        if (StringUtils.isBlank(keyword)) {
+            return page;
+        }
+        return baseMapper.selectPage(page,
+                Wrappers.lambdaQuery(SysUser.class)
+                        .like(SysUser::getUserName, keyword)
+                        .or()
+                        .like(SysUser::getNickName, keyword));
+    }
+
+    private com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysUser> buildListQueryWrapper(SysUserQuery query) {
+        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysUser> wrapper =
+                Wrappers.lambdaQuery(SysUser.class);
+        if (query == null) {
+            return wrapper;
+        }
+        if (query.getId() != null) {
+            wrapper.eq(SysUser::getId, query.getId());
+        }
+        if (StringUtils.isNotBlank(query.getUserName())) {
+            wrapper.like(SysUser::getUserName, query.getUserName());
+        }
+        if (StringUtils.isNotBlank(query.getNickName())) {
+            wrapper.like(SysUser::getNickName, query.getNickName());
+        }
+        if (StringUtils.isNotBlank(query.getPhone())) {
+            wrapper.eq(SysUser::getPhone, query.getPhone());
+        }
+        if (StringUtils.isNotBlank(query.getEmail())) {
+            wrapper.eq(SysUser::getEmail, query.getEmail());
+        }
+        if (StringUtils.isNotBlank(query.getSex())) {
+            wrapper.eq(SysUser::getSex, query.getSex());
+        }
+        if (StringUtils.isNotBlank(query.getRemark())) {
+            wrapper.like(SysUser::getRemark, query.getRemark());
+        }
+        if (query.getStatus() != null) {
+            wrapper.eq(SysUser::getStatus, query.getStatus());
+        }
+        if (query.getDeptId() != null) {
+            wrapper.eq(SysUser::getDeptId, query.getDeptId());
+        }
+        return wrapper;
     }
 
     @Override

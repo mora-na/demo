@@ -70,6 +70,21 @@ public class SysUserAdminController extends BaseController {
     }
 
     /**
+     * 用户关键字搜索（用户名/昵称）。
+     *
+     * @param keyword 关键字
+     * @return 用户分页列表
+     */
+    @GetMapping("/search")
+    @RequirePermission("user:query")
+    public CommonResult<PageResult<SysUserVO>> search(@RequestParam(value = "keyword", required = false) String keyword) {
+        if (StringUtils.isBlank(keyword)) {
+            return success(emptyPage());
+        }
+        return success(page(page -> userService.searchUsersPage(page, keyword), userViewService::toView));
+    }
+
+    /**
      * 查询用户详情。
      *
      * @param id 用户 ID

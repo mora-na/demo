@@ -311,6 +311,17 @@ export default {
             dataScope: "Data Scope"
         }
     },
+    monitorPanel: {
+        title: "System Monitor",
+        subtitle: "Runtime and login auditing.",
+        placeholder: "Select a monitor tab.",
+        tabs: {
+            operLog: "Operation Logs",
+            loginLog: "Login Logs"
+        },
+        emptyOper: "No operation logs yet",
+        emptyLogin: "No login logs yet"
+    },
     dataScope: {
         title: "Data Scope",
         subtitle: "Configure data visibility by role, menu, and user overrides.",

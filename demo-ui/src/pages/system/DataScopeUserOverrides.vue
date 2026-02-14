@@ -58,8 +58,9 @@
                   :disabled="editorMode === 'edit'"
                   filterable
                   remote
-                  :remote-method="fetchUserOptions"
                   :placeholder="t('dataScope.user.userPlaceholder')"
+                  :remote-method="handleUserSearch"
+                  @visible-change="handleUserDropdown"
               >
                 <el-option
                     v-for="user in userOptions"
@@ -130,9 +131,7 @@ import {useI18n} from "vue-i18n";
 import {
   createUserDataScope,
   deleteUserDataScope,
-  listMenus,
   listUserDataScopes,
-  listUsers,
   type MenuVO,
   updateUserDataScope,
   type UserDataScopeCreatePayload,
@@ -140,6 +139,7 @@ import {
   type UserDataScopeVO,
   type UserVO
 } from "../../api/system";
+import {loadDataScopeMenus, loadDataScopeUsers, searchDataScopeUsers} from "./dataScopeOptions";
 
 const {t} = useI18n();
 const rows = ref<UserDataScopeVO[]>([]);
@@ -169,16 +169,20 @@ const editorTitle = computed(() =>
 );
 
 async function fetchMenus() {
-  const result = await listMenus();
-  if (result?.code === 200 && result.data) {
-    permissionOptions.value = result.data.filter((menu) => !!menu.permission);
-  }
+  permissionOptions.value = await loadDataScopeMenus();
 }
 
-async function fetchUserOptions(query?: string) {
-  const result = await listUsers({pageNum: 1, pageSize: 50, userName: query});
-  if (result?.code === 200 && result.data) {
-    userOptions.value = result.data.data;
+async function fetchUserOptions() {
+  userOptions.value = await loadDataScopeUsers();
+}
+
+async function handleUserSearch(query: string) {
+  userOptions.value = await searchDataScopeUsers(query);
+}
+
+function handleUserDropdown(visible: boolean) {
+  if (visible && !userOptions.value.length) {
+    fetchUserOptions();
   }
 }
 

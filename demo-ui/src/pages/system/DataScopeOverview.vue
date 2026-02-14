@@ -8,7 +8,8 @@
           filterable
           remote
           clearable
-          :remote-method="fetchUserOptions"
+          :remote-method="handleUserSearch"
+          @visible-change="handleUserDropdown"
       >
         <el-option
             v-for="user in userOptions"
@@ -104,13 +105,12 @@ import {useI18n} from "vue-i18n";
 import {
   type DataScopeResolveMenuVO,
   type DataScopeResolveResponse,
-  listMenus,
-  listUsers,
   type MenuVO,
   resolveAllDataScope,
   resolveDataScope,
   type UserVO
 } from "../../api/system";
+import {loadDataScopeMenus, loadDataScopeUsers, searchDataScopeUsers} from "./dataScopeOptions";
 
 const {t} = useI18n();
 const selectedUserId = ref<number | null>(null);
@@ -131,21 +131,30 @@ const roleNames = computed(() => {
 });
 
 async function fetchMenuOptions() {
-  const result = await listMenus();
-  if (result?.code === 200 && result.data) {
-    permissionOptions.value = result.data.filter((menu) => !!menu.permission);
+  permissionOptions.value = await loadDataScopeMenus();
+}
+
+async function fetchUserOptions() {
+  userLoading.value = true;
+  try {
+    userOptions.value = await loadDataScopeUsers();
+  } finally {
+    userLoading.value = false;
   }
 }
 
-async function fetchUserOptions(query?: string) {
+async function handleUserSearch(query: string) {
   userLoading.value = true;
   try {
-    const result = await listUsers({pageNum: 1, pageSize: 50, userName: query});
-    if (result?.code === 200 && result.data) {
-      userOptions.value = result.data.data;
-    }
+    userOptions.value = await searchDataScopeUsers(query);
   } finally {
     userLoading.value = false;
+  }
+}
+
+function handleUserDropdown(visible: boolean) {
+  if (visible && !userOptions.value.length && !userLoading.value) {
+    fetchUserOptions();
   }
 }
 

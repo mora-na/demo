@@ -155,6 +155,13 @@
 
       <section class="console-main">
         <OrderManagementPanel v-if="isOrderGroup"/>
+        <MonitorPanel
+            v-else-if="isMonitorGroup"
+            :active-menu-id="activeMenuId"
+            :menus="activeChildren"
+            @menu-change="selectMenuById"
+        />
+        <DataScopePanel v-else-if="isDataScopeGroup" :active-code="activeMenuItem?.code"/>
         <template v-else-if="!isSystemGroup">
           <div class="main-hero">
             <div>
@@ -314,6 +321,8 @@ import {logout, type MenuTree, updateProfile} from "../api/auth";
 import {getUnreadNoticeCount, listMyNotices, markAllNoticesRead, markNoticeRead, type NoticeMyVO} from "../api/system";
 import {useAuthStore} from "../stores/auth";
 import SystemManagementPanel from "./system/SystemManagementPanel.vue";
+import DataScopePanel from "./system/DataScopePanel.vue";
+import MonitorPanel from "./monitor/MonitorPanel.vue";
 import OrderManagementPanel from "./order/OrderManagementPanel.vue";
 
 const emit = defineEmits<{ (e: "logout"): void }>();
@@ -387,6 +396,8 @@ const activeGroup = computed(() => {
   return findGroupById(source, activeMenuId.value) || source[0];
 });
 
+const activeMenuItem = computed(() => findMenuById(menuItems.value, activeMenuId.value));
+
 const activeChildren = computed(() => {
   if (!activeGroup.value) {
     return [];
@@ -403,6 +414,22 @@ const isSystemGroup = computed(() => {
     return false;
   }
   return group.code === "system" || (group.path ? group.path.startsWith("/system") : false);
+});
+
+const isDataScopeGroup = computed(() => {
+  const group = activeGroup.value;
+  if (!group) {
+    return false;
+  }
+  return group.code === "data-scope" || (group.path ? group.path.startsWith("/data-scope") : false);
+});
+
+const isMonitorGroup = computed(() => {
+  const group = activeGroup.value;
+  if (!group) {
+    return false;
+  }
+  return group.code === "monitor" || (group.path ? group.path.startsWith("/monitor") : false);
 });
 
 const isOrderGroup = computed(() => {
@@ -437,6 +464,42 @@ watch(
     () => [isSystemGroup.value, activeChildren.value, activeMenuId.value],
     () => {
       if (!isSystemGroup.value) {
+        return;
+      }
+      const children = activeChildren.value;
+      if (!children.length) {
+        return;
+      }
+      const activeId = activeMenuId.value;
+      if (activeId == null || !children.some((item) => item.id === activeId)) {
+        activeMenuId.value = children[0].id;
+      }
+    },
+    {immediate: true}
+);
+
+watch(
+    () => [isDataScopeGroup.value, activeChildren.value, activeMenuId.value],
+    () => {
+      if (!isDataScopeGroup.value) {
+        return;
+      }
+      const children = activeChildren.value;
+      if (!children.length) {
+        return;
+      }
+      const activeId = activeMenuId.value;
+      if (activeId == null || !children.some((item) => item.id === activeId)) {
+        activeMenuId.value = children[0].id;
+      }
+    },
+    {immediate: true}
+);
+
+watch(
+    () => [isMonitorGroup.value, activeChildren.value, activeMenuId.value],
+    () => {
+      if (!isMonitorGroup.value) {
         return;
       }
       const children = activeChildren.value;

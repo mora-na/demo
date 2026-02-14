@@ -311,6 +311,17 @@ export default {
             dataScope: "数据权限"
         }
     },
+    monitorPanel: {
+        title: "系统监控",
+        subtitle: "运行与登录审计。",
+        placeholder: "请选择系统监控子菜单。",
+        tabs: {
+            operLog: "操作日志",
+            loginLog: "登录日志"
+        },
+        emptyOper: "暂无操作日志",
+        emptyLogin: "暂无登录日志"
+    },
     dataScope: {
         title: "数据权限",
         subtitle: "按角色、菜单与用户特例配置数据范围。",
