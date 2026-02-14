@@ -293,7 +293,7 @@ security:
     # 是否启用数据范围控制
     enabled: true
     # 默认数据范围类型
-    default-type: DEPT_AND_CHILD
+    default-type: SELF
     # 数据范围来源
     source: db
     # 数据范围缓存时长（秒）

@@ -28,21 +28,21 @@
         @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="46"/>
-      <el-table-column :label="t('user.table.userName')" min-width="120" prop="userName" show-overflow-tooltip/>
-      <el-table-column :label="t('user.table.nickName')" min-width="120" prop="nickName" show-overflow-tooltip/>
-      <el-table-column :label="t('user.table.phone')" width="120" prop="phone" show-overflow-tooltip/>
-      <el-table-column :label="t('user.table.email')" min-width="160" prop="email" show-overflow-tooltip/>
-      <el-table-column :label="t('user.table.sex')" width="70">
+      <el-table-column :label="t('user.table.userName')" min-width="110" prop="userName" show-overflow-tooltip/>
+      <el-table-column :label="t('user.table.nickName')" min-width="110" prop="nickName" show-overflow-tooltip/>
+      <el-table-column :label="t('user.table.phone')" width="110" prop="phone" show-overflow-tooltip/>
+      <el-table-column :label="t('user.table.email')" min-width="140" prop="email" show-overflow-tooltip/>
+      <el-table-column :label="t('user.table.sex')" width="60">
         <template #default="{row}">
           {{ sexLabel(row.sex) }}
         </template>
       </el-table-column>
-      <el-table-column :label="t('user.table.dept')" prop="deptId" width="110">
+      <el-table-column :label="t('user.table.dept')" prop="deptId" width="90">
         <template #default="{row}">
           {{ deptName(row.deptId) }}
         </template>
       </el-table-column>
-      <el-table-column :label="t('user.table.status')" width="90">
+      <el-table-column :label="t('user.table.status')" width="80">
         <template #default="{row}">
           <el-switch
               :active-value="1"
@@ -52,12 +52,14 @@
           />
         </template>
       </el-table-column>
-      <el-table-column :label="t('user.table.action')" width="320">
+      <el-table-column :label="t('user.table.action')" width="380">
         <template #default="{row}">
           <div class="action-buttons">
             <el-button size="small" text @click="openEdit(row)">{{ t("user.table.edit") }}</el-button>
             <el-button size="small" text @click="openReset(row)">{{ t("user.table.resetPassword") }}</el-button>
             <el-button size="small" text @click="openRoles(row)">{{ t("user.table.assignRoles") }}</el-button>
+            <el-button size="small" text @click="openPosts(row)">{{ t("user.table.assignPosts") }}</el-button>
+            <el-button size="small" text @click="openDataScope(row)">{{ t("user.table.dataScope") }}</el-button>
             <el-button size="small" text type="danger" @click="removeUser(row)">{{ t("user.table.delete") }}</el-button>
           </div>
         </template>
@@ -179,6 +181,25 @@
       </template>
     </el-dialog>
 
+    <el-dialog v-model="postVisible" align-center :title="t('user.posts.title')" width="480px">
+      <el-form label-position="top">
+        <el-form-item :label="t('user.posts.list')">
+          <el-select v-model="selectedPostIds" multiple :placeholder="t('user.posts.placeholder')">
+            <el-option
+                v-for="post in posts"
+                :key="post.id"
+                :label="post.name"
+                :value="post.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="postVisible = false">{{ t("common.cancel") }}</el-button>
+        <el-button :loading="assigningPosts" type="primary" @click="savePosts">{{ t("common.save") }}</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog v-model="resetVisible" align-center :title="t('user.reset.title')" width="420px">
       <el-form label-position="top">
         <el-form-item :label="t('user.reset.newPassword')">
@@ -193,6 +214,95 @@
         <el-button :loading="resetting" type="primary" @click="saveReset">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="dataScopeVisible" align-center :title="t('user.dataScope.title')" width="760px">
+      <div class="data-scope-summary">
+        <div class="summary-item">
+          <span>{{ t('user.dataScope.user') }}</span>
+          <strong>{{ dataScopeUser?.userName }}</strong>
+        </div>
+        <div class="summary-item">
+          <span>{{ t('user.dataScope.dept') }}</span>
+          <strong>{{ dataScopeUserDept }}</strong>
+        </div>
+      </div>
+      <div class="data-scope-actions">
+        <el-button type="primary" @click="openDataScopeCreate">{{ t('user.dataScope.create') }}</el-button>
+      </div>
+      <el-table :data="dataScopeOverrides" size="small">
+        <el-table-column prop="menuName" :label="t('user.dataScope.menu')" min-width="160"/>
+        <el-table-column prop="scopeKey" :label="t('user.dataScope.scopeKey')" min-width="180"/>
+        <el-table-column prop="dataScopeType" :label="t('user.dataScope.scopeType')" min-width="120"/>
+        <el-table-column prop="dataScopeValue" :label="t('user.dataScope.scopeValue')" min-width="160"/>
+        <el-table-column :label="t('user.dataScope.action')" width="140">
+          <template #default="{row}">
+            <div class="action-buttons">
+              <el-button size="small" text @click="openDataScopeEdit(row)">{{ t('common.edit') }}</el-button>
+              <el-button size="small" text type="danger" @click="removeDataScope(row)">{{ t('common.delete') }}</el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="dataScopeVisible = false">{{ t("common.cancel") }}</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="dataScopeEditorVisible" align-center :title="dataScopeEditorTitle" width="560px">
+      <el-form :model="dataScopeForm" label-position="top">
+        <el-row :gutter="16">
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dataScope.scopeKey')">
+              <el-select v-model="dataScopeForm.scopeKey" :disabled="dataScopeEditorMode === 'edit'" filterable>
+                <el-option :label="t('user.dataScope.global')" value="*"/>
+                <el-option
+                    v-for="menu in menuOptions"
+                    :key="menu.permission"
+                    :label="`${menu.name} (${menu.permission})`"
+                    :value="menu.permission"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dataScope.scopeType')">
+              <el-select v-model="dataScopeForm.dataScopeType">
+                <el-option label="ALL" value="ALL"/>
+                <el-option label="DEPT" value="DEPT"/>
+                <el-option label="DEPT_AND_CHILD" value="DEPT_AND_CHILD"/>
+                <el-option label="CUSTOM_DEPT" value="CUSTOM_DEPT"/>
+                <el-option label="SELF" value="SELF"/>
+                <el-option label="NONE" value="NONE"/>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dataScope.scopeValue')">
+              <el-input v-model.trim="dataScopeForm.dataScopeValue"/>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item :label="t('user.dataScope.status')">
+              <el-select v-model="dataScopeForm.status">
+                <el-option :label="t('common.enabled')" :value="1"/>
+                <el-option :label="t('common.disabled')" :value="0"/>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24">
+            <el-form-item :label="t('user.dataScope.remark')">
+              <el-input v-model.trim="dataScopeForm.remark"/>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+      <template #footer>
+        <el-button @click="dataScopeEditorVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button :loading="dataScopeSaving" type="primary" @click="saveDataScope">
+          {{ t('common.save') }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -201,38 +311,62 @@ import {computed, onMounted, reactive, ref} from "vue";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {
+  assignUserPosts,
   assignUserRoles,
   createUser,
+  createUserDataScope,
   deleteUser,
+  deleteUserDataScope,
   deleteUsers,
   type DeptVO,
+  getUserDataScopeDetail,
+  getUserPostIds,
   getUserRoleIds,
   listDepts,
+  listMenus,
+  listPosts,
   listRoles,
   listUsers,
+  type MenuVO,
+  type PostVO,
   resetUserPassword,
   type RoleVO,
   updateUser,
+  updateUserDataScope,
   updateUserStatus,
   type UserCreatePayload,
+  type UserDataScopeCreatePayload,
+  type UserDataScopeUpdatePayload,
+  type UserDataScopeVO,
   type UserUpdatePayload,
   type UserVO
 } from "../../api/system";
 
 const users = ref<UserVO[]>([]);
 const roles = ref<RoleVO[]>([]);
+const posts = ref<PostVO[]>([]);
 const depts = ref<DeptVO[]>([]);
 const loading = ref(false);
 const saving = ref(false);
 const assigning = ref(false);
+const assigningPosts = ref(false);
 const resetting = ref(false);
 const editorVisible = ref(false);
 const roleVisible = ref(false);
+const postVisible = ref(false);
 const resetVisible = ref(false);
+const dataScopeVisible = ref(false);
+const dataScopeEditorVisible = ref(false);
+const dataScopeSaving = ref(false);
 const editorMode = ref<"create" | "edit">("create");
 const editorUserId = ref<number | null>(null);
 const selectedUserId = ref<number | null>(null);
 const selectedUserIds = ref<number[]>([]);
+const dataScopeEditorMode = ref<"create" | "edit">("create");
+const dataScopeEditId = ref<number | null>(null);
+const dataScopeUser = ref<UserVO | null>(null);
+const dataScopeOverrides = ref<UserDataScopeVO[]>([]);
+const menuOptions = ref<MenuVO[]>([]);
 const {t} = useI18n();
 
 const filters = reactive({
@@ -260,15 +394,35 @@ const form = reactive<UserCreatePayload & UserUpdatePayload>({
 });
 
 const selectedRoleIds = ref<number[]>([]);
+const selectedPostIds = ref<number[]>([]);
 
 const resetForm = reactive({
   newPassword: "",
   confirmPassword: ""
 });
 
+const dataScopeForm = reactive<UserDataScopeCreatePayload & UserDataScopeUpdatePayload & { scopeKey: string }>({
+  scopeKey: "*",
+  dataScopeType: "SELF",
+  dataScopeValue: "",
+  status: 1,
+  remark: ""
+});
+
 const editorTitle = computed(() =>
     editorMode.value === "create" ? t("user.dialog.createTitle") : t("user.dialog.editTitle")
 );
+
+const dataScopeEditorTitle = computed(() =>
+    dataScopeEditorMode.value === "create" ? t("user.dataScope.create") : t("user.dataScope.edit")
+);
+
+const dataScopeUserDept = computed(() => {
+  if (!dataScopeUser.value) {
+    return "-";
+  }
+  return deptName(dataScopeUser.value.deptId);
+});
 
 function getErrorMessage(error: unknown, fallback: string): string {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
@@ -326,10 +480,40 @@ async function fetchRoles() {
   }
 }
 
+async function fetchPosts() {
+  if (posts.value.length) {
+    return;
+  }
+  const result = await listPosts();
+  if (result?.code === 200 && result.data) {
+    posts.value = result.data;
+  }
+}
+
 async function fetchDepts() {
   const result = await listDepts();
   if (result?.code === 200 && result.data) {
     depts.value = result.data;
+  }
+}
+
+async function fetchMenuOptions() {
+  if (menuOptions.value.length) {
+    return;
+  }
+  const result = await listMenus();
+  if (result?.code === 200 && result.data) {
+    menuOptions.value = result.data.filter((menu) => !!menu.permission);
+  }
+}
+
+async function loadUserDataScopes(user: UserVO) {
+  dataScopeUser.value = user;
+  const result = await getUserDataScopeDetail(user.id);
+  if (result?.code === 200 && result.data) {
+    dataScopeOverrides.value = result.data.overrides || [];
+  } else {
+    ElMessage.error(result?.message || t("user.dataScope.loadFailed"));
   }
 }
 
@@ -459,6 +643,118 @@ async function openRoles(row: UserVO) {
   roleVisible.value = true;
 }
 
+async function openPosts(row: UserVO) {
+  selectedUserId.value = row.id;
+  await fetchPosts();
+  const result = await getUserPostIds(row.id);
+  if (result?.code === 200 && result.data) {
+    selectedPostIds.value = result.data;
+  } else {
+    selectedPostIds.value = [];
+  }
+  postVisible.value = true;
+}
+
+async function openDataScope(row: UserVO) {
+  dataScopeVisible.value = true;
+  await fetchMenuOptions();
+  await loadUserDataScopes(row);
+}
+
+function resetDataScopeForm() {
+  dataScopeForm.scopeKey = "*";
+  dataScopeForm.dataScopeType = "SELF";
+  dataScopeForm.dataScopeValue = "";
+  dataScopeForm.status = 1;
+  dataScopeForm.remark = "";
+}
+
+function openDataScopeCreate() {
+  dataScopeEditorMode.value = "create";
+  dataScopeEditId.value = null;
+  resetDataScopeForm();
+  dataScopeEditorVisible.value = true;
+}
+
+function openDataScopeEdit(row: UserDataScopeVO) {
+  dataScopeEditorMode.value = "edit";
+  dataScopeEditId.value = row.id;
+  dataScopeForm.scopeKey = row.scopeKey || "*";
+  dataScopeForm.dataScopeType = row.dataScopeType || "SELF";
+  dataScopeForm.dataScopeValue = row.dataScopeValue || "";
+  dataScopeForm.status = row.status ?? 1;
+  dataScopeForm.remark = row.remark || "";
+  dataScopeEditorVisible.value = true;
+}
+
+async function saveDataScope() {
+  if (!dataScopeUser.value) {
+    return;
+  }
+  if (!dataScopeForm.scopeKey) {
+    ElMessage.warning(t("user.dataScope.validate"));
+    return;
+  }
+  dataScopeSaving.value = true;
+  try {
+    if (dataScopeEditorMode.value === "create") {
+      const payload: UserDataScopeCreatePayload = {
+        scopeKey: dataScopeForm.scopeKey,
+        dataScopeType: dataScopeForm.dataScopeType,
+        dataScopeValue: dataScopeForm.dataScopeValue,
+        status: dataScopeForm.status,
+        remark: dataScopeForm.remark
+      };
+      const result = await createUserDataScope(dataScopeUser.value.id, payload);
+      if (result?.code === 200) {
+        ElMessage.success(t("common.saveSuccess"));
+        dataScopeEditorVisible.value = false;
+        await loadUserDataScopes(dataScopeUser.value);
+      } else {
+        ElMessage.error(result?.message || t("common.saveFailed"));
+      }
+    } else if (dataScopeEditId.value != null) {
+      const payload: UserDataScopeUpdatePayload = {
+        dataScopeType: dataScopeForm.dataScopeType,
+        dataScopeValue: dataScopeForm.dataScopeValue,
+        status: dataScopeForm.status,
+        remark: dataScopeForm.remark
+      };
+      const result = await updateUserDataScope(dataScopeEditId.value, payload);
+      if (result?.code === 200) {
+        ElMessage.success(t("common.saveSuccess"));
+        dataScopeEditorVisible.value = false;
+        await loadUserDataScopes(dataScopeUser.value);
+      } else {
+        ElMessage.error(result?.message || t("common.saveFailed"));
+      }
+    }
+  } finally {
+    dataScopeSaving.value = false;
+  }
+}
+
+async function removeDataScope(row: UserDataScopeVO) {
+  try {
+    await ElMessageBox.confirm(
+        t("user.dataScope.deleteConfirm", {name: row.menuName || row.scopeKey}),
+        t("common.confirmTitle"),
+        {type: "warning"}
+    );
+  } catch {
+    return;
+  }
+  const result = await deleteUserDataScope(row.id);
+  if (result?.code === 200) {
+    ElMessage.success(t("common.deleteSuccess"));
+    if (dataScopeUser.value) {
+      await loadUserDataScopes(dataScopeUser.value);
+    }
+  } else {
+    ElMessage.error(result?.message || t("common.deleteFailed"));
+  }
+}
+
 async function removeUser(row: UserVO) {
   try {
     await ElMessageBox.confirm(
@@ -518,6 +814,26 @@ async function saveRoles() {
     ElMessage.error(getErrorMessage(error, t("user.msg.rolesUpdateFailed")));
   } finally {
     assigning.value = false;
+  }
+}
+
+async function savePosts() {
+  if (selectedUserId.value == null) {
+    return;
+  }
+  assigningPosts.value = true;
+  try {
+    const result = await assignUserPosts(selectedUserId.value, selectedPostIds.value);
+    if (result?.code === 200) {
+      ElMessage.success(result?.message || t("user.msg.postsUpdated"));
+      postVisible.value = false;
+    } else {
+      ElMessage.error(result?.message || t("user.msg.postsUpdateFailed"));
+    }
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, t("user.msg.postsUpdateFailed")));
+  } finally {
+    assigningPosts.value = false;
   }
 }
 
@@ -625,5 +941,24 @@ onMounted(() => {
 
 .form-grid :deep(.el-form-item) {
   margin-bottom: 12px;
+}
+
+.data-scope-summary {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.summary-item {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.data-scope-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
 }
 </style>

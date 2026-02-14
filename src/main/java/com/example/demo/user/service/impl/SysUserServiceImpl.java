@@ -4,8 +4,12 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.auth.dto.UserProfileUpdateRequest;
 import com.example.demo.auth.service.PasswordService;
+import com.example.demo.datascope.entity.UserDataScope;
+import com.example.demo.datascope.service.UserDataScopeService;
 import com.example.demo.permission.entity.UserRole;
 import com.example.demo.permission.service.UserRoleService;
+import com.example.demo.post.entity.UserPost;
+import com.example.demo.post.service.UserPostService;
 import com.example.demo.user.converter.SysUserConverter;
 import com.example.demo.user.dto.SysUserCreateRequest;
 import com.example.demo.user.dto.SysUserQuery;
@@ -31,6 +35,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private final SysUserConverter userConverter;
     private final PasswordService passwordService;
     private final UserRoleService userRoleService;
+    private final UserPostService userPostService;
+    private final UserDataScopeService userDataScopeService;
 
     @Override
     public List<SysUser> selectUsers(SysUserQuery query) {
@@ -138,15 +144,61 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean updateDataScope(Long id, String dataScopeType, String dataScopeValue) {
+    public boolean assignPosts(Long id, List<Long> postIds) {
         if (id == null) {
             return false;
         }
+        userPostService.remove(Wrappers.lambdaQuery(UserPost.class).eq(UserPost::getUserId, id));
+        if (postIds == null || postIds.isEmpty()) {
+            return true;
+        }
+        List<UserPost> relations = postIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .map(postId -> {
+                    UserPost relation = new UserPost();
+                    relation.setUserId(id);
+                    relation.setPostId(postId);
+                    return relation;
+                })
+                .collect(Collectors.toList());
+        if (relations.isEmpty()) {
+            return true;
+        }
+        return userPostService.saveBatch(relations);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateDataScope(Long id, String dataScopeType, String dataScopeValue, String scopeKey) {
+        if (id == null) {
+            return false;
+        }
+        // 兼容旧字段：同步保存到 sys_user
         SysUser user = new SysUser();
         user.setId(id);
         user.setDataScopeType(dataScopeType);
         user.setDataScopeValue(dataScopeValue);
-        return updateById(user);
+        boolean updated = updateById(user);
+
+        String normalizedKey = (scopeKey == null || scopeKey.trim().isEmpty()) ? "*" : scopeKey.trim();
+        UserDataScope record = userDataScopeService.getOne(
+                com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserDataScope.class)
+                        .eq(UserDataScope::getUserId, id)
+                        .eq(UserDataScope::getScopeKey, normalizedKey)
+        );
+        if (record == null) {
+            record = new UserDataScope();
+            record.setUserId(id);
+            record.setScopeKey(normalizedKey);
+            record.setStatus(1);
+        }
+        record.setDataScopeType(dataScopeType);
+        record.setDataScopeValue(dataScopeValue);
+        if (record.getId() == null) {
+            return updated && userDataScopeService.save(record);
+        }
+        return updated && userDataScopeService.updateById(record);
     }
 
     @Override

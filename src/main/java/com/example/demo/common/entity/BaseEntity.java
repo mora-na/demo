@@ -43,6 +43,12 @@ public abstract class BaseEntity implements Serializable {
     private String createBy;
 
     /**
+     * 创建人所属部门ID（数据归属部门）。
+     */
+    @TableField(value = "create_dept", fill = FieldFill.INSERT)
+    private Long createDept;
+
+    /**
      * 更新人。
      */
     @TableField(value = "update_by", fill = FieldFill.INSERT_UPDATE)

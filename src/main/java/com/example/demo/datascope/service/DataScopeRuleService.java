@@ -20,5 +20,5 @@ public interface DataScopeRuleService extends IService<DataScopeRule> {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    Map<String, String> getEnabledTableColumnMap();
+    Map<String, DataScopeRule> getEnabledRules();
 }

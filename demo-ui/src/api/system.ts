@@ -38,6 +38,177 @@ export interface RoleVO {
     permissionIds?: number[];
 }
 
+export interface RoleMenuDataScopeItem {
+    menuId: number;
+    menuName?: string;
+    parentId?: number | null;
+    permission?: string;
+    dataScopeType?: string | null;
+    customDeptIds?: number[];
+}
+
+export interface RoleMenuDataScopeResponse {
+    roleId: number;
+    roleCode?: string;
+    roleName?: string;
+    defaultDataScopeType?: string;
+    defaultDataScopeValue?: string;
+    items: RoleMenuDataScopeItem[];
+}
+
+export interface RoleMenuDataScopeItemPayload {
+    menuId: number;
+    dataScopeType?: string | null;
+    customDeptIds?: number[];
+}
+
+export interface UserDataScopeVO {
+    id: number;
+    userId: number;
+    userName?: string;
+    nickName?: string;
+    deptId?: number | null;
+    deptName?: string;
+    scopeKey?: string;
+    menuName?: string;
+    permission?: string;
+    dataScopeType?: string;
+    dataScopeValue?: string;
+    status?: number;
+    remark?: string;
+    createTime?: string;
+}
+
+export interface UserDataScopeDetailResponse {
+    userId: number;
+    userName?: string;
+    nickName?: string;
+    deptId?: number | null;
+    deptName?: string;
+    overrides: UserDataScopeVO[];
+}
+
+export interface UserDataScopeCreatePayload {
+    scopeKey: string;
+    dataScopeType: string;
+    dataScopeValue?: string;
+    status?: number;
+    remark?: string;
+}
+
+export interface UserDataScopeUpdatePayload {
+    dataScopeType?: string;
+    dataScopeValue?: string;
+    status?: number;
+    remark?: string;
+}
+
+export interface UserDataScopeQuery {
+    pageNum?: number;
+    pageSize?: number;
+    userName?: string;
+    menuKeyword?: string;
+    status?: number;
+}
+
+export interface DataScopeRuleVO {
+    id: number;
+    scopeKey: string;
+    tableName: string;
+    tableAlias?: string;
+    deptColumn?: string | null;
+    userColumn?: string | null;
+    filterType?: number;
+    status?: number;
+    remark?: string;
+}
+
+export interface DataScopeRuleCreatePayload {
+    scopeKey: string;
+    tableName: string;
+    tableAlias?: string;
+    deptColumn?: string | null;
+    userColumn?: string | null;
+    filterType?: number;
+    status?: number;
+    remark?: string;
+}
+
+export interface DataScopeRuleUpdatePayload {
+    scopeKey?: string;
+    tableName?: string;
+    tableAlias?: string;
+    deptColumn?: string | null;
+    userColumn?: string | null;
+    filterType?: number;
+    status?: number;
+    remark?: string;
+}
+
+export interface DataScopeRuleQuery {
+    pageNum?: number;
+    pageSize?: number;
+    scopeKey?: string;
+    tableName?: string;
+}
+
+export interface DataScopeResolveResponse {
+    user?: {
+        id: number;
+        userName?: string;
+        nickName?: string;
+        deptId?: number | null;
+        deptName?: string;
+        posts?: string[];
+        roles?: Array<{
+            id: number;
+            code?: string;
+            name?: string;
+            dataScopeType?: string;
+            dataScopeValue?: string;
+        }>;
+    };
+    menu?: {
+        id?: number;
+        name?: string;
+        permission?: string;
+    };
+    layer3?: {
+        scopeKey?: string;
+        dataScopeType?: string;
+        dataScopeValue?: string;
+    };
+    roleScopes?: Array<{
+        roleId?: number;
+        roleCode?: string;
+        roleName?: string;
+        layer1Type?: string;
+        layer2Type?: string;
+        effectiveType?: string;
+        sourceLayer?: string;
+        customDeptIds?: number[];
+    }>;
+    mergedDeptIds?: number[];
+    includeSelf?: boolean;
+    finalScopeLabel?: string;
+    rule?: {
+        source?: string;
+        tableName?: string;
+        tableAlias?: string;
+        deptColumn?: string | null;
+        userColumn?: string | null;
+    };
+    sqlCondition?: string;
+}
+
+export interface DataScopeResolveMenuVO {
+    menuId: number;
+    menuName?: string;
+    permission?: string;
+    finalScopeLabel?: string;
+    sourceLayer?: string;
+}
+
 export interface PermissionVO {
     id: number;
     code: string;
@@ -63,6 +234,16 @@ export interface DeptVO {
     name: string;
     code?: string;
     parentId?: number | null;
+    status?: number;
+    sort?: number;
+    remark?: string;
+}
+
+export interface PostVO {
+    id: number;
+    name: string;
+    code?: string;
+    deptId?: number | null;
     status?: number;
     sort?: number;
     remark?: string;
@@ -175,6 +356,24 @@ export interface DeptUpdatePayload {
     remark?: string;
 }
 
+export interface PostCreatePayload {
+    name: string;
+    code?: string;
+    deptId: number;
+    status?: number;
+    sort?: number;
+    remark?: string;
+}
+
+export interface PostUpdatePayload {
+    name?: string;
+    code?: string;
+    deptId?: number | null;
+    status?: number;
+    sort?: number;
+    remark?: string;
+}
+
 export async function listUsers(params: UserQuery): Promise<ApiResponse<PageResult<UserVO>>> {
     const response = await api.get<ApiResponse<PageResult<UserVO>>>("/users", {params});
     return response.data;
@@ -187,6 +386,11 @@ export async function getUserDetail(id: number): Promise<ApiResponse<UserVO>> {
 
 export async function getUserRoleIds(id: number): Promise<ApiResponse<number[]>> {
     const response = await api.get<ApiResponse<number[]>>(`/users/${id}/roles`);
+    return response.data;
+}
+
+export async function getUserPostIds(id: number): Promise<ApiResponse<number[]>> {
+    const response = await api.get<ApiResponse<number[]>>(`/users/${id}/posts`);
     return response.data;
 }
 
@@ -227,6 +431,36 @@ export async function resetUserPassword(id: number, newPassword: string): Promis
 
 export async function assignUserRoles(id: number, roleIds: number[]): Promise<ApiResponse<void>> {
     const response = await api.put<ApiResponse<void>>(`/users/${id}/roles`, {roleIds});
+    return response.data;
+}
+
+export async function assignUserPosts(id: number, postIds: number[]): Promise<ApiResponse<void>> {
+    const response = await api.put<ApiResponse<void>>(`/users/${id}/posts`, {postIds});
+    return response.data;
+}
+
+export async function getUserDataScopeDetail(id: number): Promise<ApiResponse<UserDataScopeDetailResponse>> {
+    const response = await api.get<ApiResponse<UserDataScopeDetailResponse>>(`/users/${id}/data-scope`);
+    return response.data;
+}
+
+export async function createUserDataScope(id: number, payload: UserDataScopeCreatePayload): Promise<ApiResponse<UserDataScopeVO>> {
+    const response = await api.post<ApiResponse<UserDataScopeVO>>(`/users/${id}/data-scope`, payload);
+    return response.data;
+}
+
+export async function updateUserDataScope(scopeId: number, payload: UserDataScopeUpdatePayload): Promise<ApiResponse<void>> {
+    const response = await api.put<ApiResponse<void>>(`/users/data-scope/${scopeId}`, payload);
+    return response.data;
+}
+
+export async function deleteUserDataScope(scopeId: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/users/data-scope/${scopeId}`);
+    return response.data;
+}
+
+export async function listUserDataScopes(params: UserDataScopeQuery): Promise<ApiResponse<PageResult<UserDataScopeVO>>> {
+    const response = await api.get<ApiResponse<PageResult<UserDataScopeVO>>>(`/user-data-scope/list`, {params});
     return response.data;
 }
 
@@ -272,6 +506,21 @@ export async function getRoleMenuIds(id: number): Promise<ApiResponse<number[]>>
 
 export async function assignRoleMenus(id: number, menuIds: number[]): Promise<ApiResponse<void>> {
     const response = await api.put<ApiResponse<void>>(`/roles/${id}/menus`, {menuIds});
+    return response.data;
+}
+
+export async function getRoleMenuDataScope(id: number): Promise<ApiResponse<RoleMenuDataScopeResponse>> {
+    const response = await api.get<ApiResponse<RoleMenuDataScopeResponse>>(`/roles/${id}/menu-data-scope`);
+    return response.data;
+}
+
+export async function saveRoleMenuDataScope(id: number, items: RoleMenuDataScopeItemPayload[]): Promise<ApiResponse<void>> {
+    const response = await api.put<ApiResponse<void>>(`/roles/${id}/menu-data-scope`, {items});
+    return response.data;
+}
+
+export async function clearRoleMenuDataScope(roleId: number, menuId: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/roles/${roleId}/menu-data-scope/${menuId}`);
     return response.data;
 }
 
@@ -362,6 +611,36 @@ export async function deleteDept(id: number): Promise<ApiResponse<void>> {
 
 export async function deleteDepts(ids: number[]): Promise<ApiResponse<void>> {
     const response = await api.post<ApiResponse<void>>("/depts/batch-delete", ids);
+    return response.data;
+}
+
+export async function listPosts(): Promise<ApiResponse<PostVO[]>> {
+    const response = await api.get<ApiResponse<PostVO[]>>("/posts");
+    return response.data;
+}
+
+export async function createPost(payload: PostCreatePayload): Promise<ApiResponse<PostVO>> {
+    const response = await api.post<ApiResponse<PostVO>>("/posts", payload);
+    return response.data;
+}
+
+export async function updatePost(id: number, payload: PostUpdatePayload): Promise<ApiResponse<void>> {
+    const response = await api.put<ApiResponse<void>>(`/posts/${id}`, payload);
+    return response.data;
+}
+
+export async function updatePostStatus(id: number, status: number): Promise<ApiResponse<void>> {
+    const response = await api.put<ApiResponse<void>>(`/posts/${id}/status`, {status});
+    return response.data;
+}
+
+export async function deletePost(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/posts/${id}`);
+    return response.data;
+}
+
+export async function deletePosts(ids: number[]): Promise<ApiResponse<void>> {
+    const response = await api.post<ApiResponse<void>>("/posts/batch-delete", ids);
     return response.data;
 }
 
@@ -582,5 +861,39 @@ export async function listJobLogs(id: number, params: {
 
 export async function getJobLogDetail(logId: number): Promise<ApiResponse<JobLogDetailVO>> {
     const response = await api.get<ApiResponse<JobLogDetailVO>>(`/jobs/logs/${logId}`);
+    return response.data;
+}
+
+export async function listDataScopeRules(params: DataScopeRuleQuery): Promise<ApiResponse<PageResult<DataScopeRuleVO>>> {
+    const response = await api.get<ApiResponse<PageResult<DataScopeRuleVO>>>(`/data-scope-mapping/list`, {params});
+    return response.data;
+}
+
+export async function createDataScopeRule(payload: DataScopeRuleCreatePayload): Promise<ApiResponse<DataScopeRuleVO>> {
+    const response = await api.post<ApiResponse<DataScopeRuleVO>>(`/data-scope-mapping`, payload);
+    return response.data;
+}
+
+export async function updateDataScopeRule(id: number, payload: DataScopeRuleUpdatePayload): Promise<ApiResponse<void>> {
+    const response = await api.put<ApiResponse<void>>(`/data-scope-mapping/${id}`, payload);
+    return response.data;
+}
+
+export async function deleteDataScopeRule(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/data-scope-mapping/${id}`);
+    return response.data;
+}
+
+export async function resolveDataScope(userId: number, permission?: string): Promise<ApiResponse<DataScopeResolveResponse>> {
+    const response = await api.get<ApiResponse<DataScopeResolveResponse>>(`/data-scope/resolve`, {
+        params: {userId, permission}
+    });
+    return response.data;
+}
+
+export async function resolveAllDataScope(userId: number): Promise<ApiResponse<DataScopeResolveMenuVO[]>> {
+    const response = await api.get<ApiResponse<DataScopeResolveMenuVO[]>>(`/data-scope/resolve-all`, {
+        params: {userId}
+    });
     return response.data;
 }

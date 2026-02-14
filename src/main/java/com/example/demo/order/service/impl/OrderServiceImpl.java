@@ -2,6 +2,7 @@ package com.example.demo.order.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.demo.common.annotation.DataScope;
 import com.example.demo.order.entity.Order;
 import com.example.demo.order.mapper.OrderMapper;
 import com.example.demo.order.service.OrderService;
@@ -17,6 +18,7 @@ import java.util.List;
 public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements OrderService {
 
     @Override
+    @DataScope(permission = "biz:order:list")
     public List<Order> getOrderListByUserId(Long id) {
         if (id == null) {
             return java.util.Collections.emptyList();

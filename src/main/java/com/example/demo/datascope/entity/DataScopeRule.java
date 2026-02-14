@@ -26,29 +26,44 @@ public class DataScopeRule extends BaseEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 目标表名（小写匹配）。
-     *
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
+     * 数据范围标识（通常为菜单权限标识）。
+     */
+    @TableField("scope_key")
+    private String scopeKey;
+
+    /**
+     * 目标表名。
      */
     @TableField("table_name")
     private String tableName;
 
     /**
-     * 数据范围字段名（用于权限过滤）。
-     *
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
+     * 表别名（可选）。
      */
-    @TableField("column_name")
-    private String columnName;
+    @TableField("table_alias")
+    private String tableAlias;
 
     /**
-     * 是否启用：1-启用；0-禁用。
-     *
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
+     * 部门字段名。
      */
-    @TableField("enabled")
-    private Integer enabled;
+    @TableField("dept_column")
+    private String deptColumn;
+
+    /**
+     * 用户字段名。
+     */
+    @TableField("user_column")
+    private String userColumn;
+
+    /**
+     * 过滤方式：1=追加WHERE 2=EXISTS 3=JOIN。
+     */
+    @TableField("filter_type")
+    private Integer filterType;
+
+    /**
+     * 状态：1-启用；0-禁用。
+     */
+    @TableField("status")
+    private Integer status;
 }

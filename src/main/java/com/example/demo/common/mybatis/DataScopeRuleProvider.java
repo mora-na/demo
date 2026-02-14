@@ -1,5 +1,7 @@
 package com.example.demo.common.mybatis;
 
+import com.example.demo.datascope.entity.DataScopeRule;
+
 import java.util.Map;
 
 /**
@@ -17,5 +19,5 @@ public interface DataScopeRuleProvider {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    Map<String, String> getTableColumnMap();
+    Map<String, DataScopeRule> getRuleMap();
 }

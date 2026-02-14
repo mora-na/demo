@@ -1,5 +1,6 @@
 package com.example.demo.common.mybatis;
 
+import com.example.demo.datascope.entity.DataScopeRule;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +25,7 @@ public class NoopDataScopeRuleProvider implements DataScopeRuleProvider {
      * @date 2026/2/9
      */
     @Override
-    public Map<String, String> getTableColumnMap() {
+    public Map<String, DataScopeRule> getRuleMap() {
         return Collections.emptyMap();
     }
 }

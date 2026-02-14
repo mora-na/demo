@@ -34,59 +34,74 @@
           />
         </template>
       </el-table-column>
-      <el-table-column :label="t('role.table.action')" width="360">
+      <el-table-column :label="t('role.table.action')" width="420">
         <template #default="{row}">
           <div class="action-buttons">
             <el-button size="small" text @click="openEdit(row)">{{ t("role.table.edit") }}</el-button>
             <el-button size="small" text @click="openPermissions(row)">{{ t("role.table.assignPermissions") }}</el-button>
             <el-button size="small" text @click="openMenus(row)">{{ t("role.table.assignMenus") }}</el-button>
+            <el-button size="small" text @click="openMenuScopes(row)">{{ t("role.table.menuDataScope") }}</el-button>
             <el-button size="small" text type="danger" @click="removeRole(row)">{{ t("role.table.delete") }}</el-button>
           </div>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="editorVisible" :title="editorTitle" align-center width="640px">
-      <el-form :model="form" label-position="top">
-        <el-row :gutter="16" class="form-grid">
-          <el-col :xs="24" :sm="12">
-            <el-form-item :label="t('role.dialog.code')">
-              <el-input v-model.trim="form.code"/>
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :sm="12">
-            <el-form-item :label="t('role.dialog.name')">
-              <el-input v-model.trim="form.name"/>
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :sm="12">
-            <el-form-item :label="t('role.dialog.status')">
-              <el-select v-model="form.status" :placeholder="t('role.dialog.statusPlaceholder')">
-                <el-option :value="1" :label="t('role.dialog.statusEnabled')"/>
-                <el-option :value="0" :label="t('role.dialog.statusDisabled')"/>
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :sm="12">
+    <el-dialog v-model="editorVisible" :title="editorTitle" align-center width="720px">
+      <el-tabs v-model="editorTab">
+        <el-tab-pane :label="t('role.tabs.basic')" name="basic">
+          <el-form :model="form" label-position="top">
+            <el-row :gutter="16" class="form-grid">
+              <el-col :xs="24" :sm="12">
+                <el-form-item :label="t('role.dialog.code')">
+                  <el-input v-model.trim="form.code"/>
+                </el-form-item>
+              </el-col>
+              <el-col :xs="24" :sm="12">
+                <el-form-item :label="t('role.dialog.name')">
+                  <el-input v-model.trim="form.name"/>
+                </el-form-item>
+              </el-col>
+              <el-col :xs="24" :sm="12">
+                <el-form-item :label="t('role.dialog.status')">
+                  <el-select v-model="form.status" :placeholder="t('role.dialog.statusPlaceholder')">
+                    <el-option :value="1" :label="t('role.dialog.statusEnabled')"/>
+                    <el-option :value="0" :label="t('role.dialog.statusDisabled')"/>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form>
+        </el-tab-pane>
+        <el-tab-pane :label="t('role.tabs.dataScope')" name="scope">
+          <el-form label-position="top">
             <el-form-item :label="t('role.dialog.dataScopeType')">
-              <el-select v-model="form.dataScopeType" :placeholder="t('role.dialog.dataScopePlaceholder')">
-                <el-option :label="t('role.scope.all')" value="ALL"/>
-                <el-option :label="t('role.scope.dept')" value="DEPT"/>
-                <el-option :label="t('role.scope.deptAndChild')" value="DEPT_AND_CHILD"/>
-                <el-option :label="t('role.scope.custom')" value="CUSTOM"/>
-                <el-option :label="t('role.scope.customDept')" value="CUSTOM_DEPT"/>
-                <el-option :label="t('role.scope.self')" value="SELF"/>
-                <el-option :label="t('role.scope.none')" value="NONE"/>
-              </el-select>
+              <el-radio-group v-model="form.dataScopeType" class="scope-group">
+                <el-radio value="ALL">{{ t('role.scope.all') }}</el-radio>
+                <el-radio value="DEPT_AND_CHILD">{{ t('role.scope.deptAndChild') }}</el-radio>
+                <el-radio value="DEPT">{{ t('role.scope.dept') }}</el-radio>
+                <el-radio value="CUSTOM_DEPT">{{ t('role.scope.customDept') }}</el-radio>
+                <el-radio value="SELF">{{ t('role.scope.self') }}</el-radio>
+                <el-radio value="NONE">{{ t('role.scope.none') }}</el-radio>
+              </el-radio-group>
             </el-form-item>
-          </el-col>
-          <el-col :xs="24">
-            <el-form-item :label="t('role.dialog.dataScopeValue')">
-              <el-input v-model.trim="form.dataScopeValue" :placeholder="t('role.dialog.dataScopeValuePlaceholder')"/>
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
+            <div v-if="isCustomScope" class="custom-dept">
+              <div class="custom-title">{{ t('role.dialog.customDept') }}</div>
+              <el-tree
+                  ref="deptTreeRef"
+                  :data="deptTree"
+                  :props="{label: 'name', children: 'children'}"
+                  node-key="id"
+                  show-checkbox
+              />
+            </div>
+          </el-form>
+        </el-tab-pane>
+        <el-tab-pane :label="t('role.tabs.menuScope')" name="menu-scope">
+          <div class="menu-scope-note">{{ t('role.menuScope.hint') }}</div>
+          <el-button @click="openMenuScopesByTab">{{ t('role.menuScope.open') }}</el-button>
+        </el-tab-pane>
+      </el-tabs>
       <template #footer>
         <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
         <el-button :loading="saving" type="primary" @click="saveRole">{{ t("common.save") }}</el-button>
@@ -125,6 +140,61 @@
         <el-button :loading="assigningMenus" type="primary" @click="saveMenus">{{ t("common.save") }}</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="menuScopeVisible" align-center :title="t('role.menuScope.title')" width="860px">
+      <div class="menu-scope-layout">
+        <div class="menu-scope-tree">
+          <el-tree
+              ref="menuScopeTreeRef"
+              :data="menuScopeTree"
+              :props="{label: 'name', children: 'children'}"
+              node-key="id"
+              highlight-current
+              @node-click="handleMenuScopeSelect"
+          />
+        </div>
+        <div class="menu-scope-config">
+          <div v-if="activeMenuScopeItem" class="menu-scope-card">
+            <div class="menu-scope-title">{{ activeMenuScopeItem.menuName }}</div>
+            <div class="menu-scope-sub">{{ activeMenuScopeItem.permission || '-' }}</div>
+            <el-form label-position="top">
+              <el-form-item :label="t('role.menuScope.scopeType')">
+                <el-radio-group v-model="menuScopeForm.dataScopeType">
+                  <el-radio value="INHERIT">{{ t('role.menuScope.inherit') }}</el-radio>
+                  <el-radio value="ALL">{{ t('role.scope.all') }}</el-radio>
+                  <el-radio value="DEPT_AND_CHILD">{{ t('role.scope.deptAndChild') }}</el-radio>
+                  <el-radio value="DEPT">{{ t('role.scope.dept') }}</el-radio>
+                  <el-radio value="CUSTOM_DEPT">{{ t('role.scope.customDept') }}</el-radio>
+                  <el-radio value="SELF">{{ t('role.scope.self') }}</el-radio>
+                  <el-radio value="NONE">{{ t('role.scope.none') }}</el-radio>
+                </el-radio-group>
+              </el-form-item>
+              <div v-if="isMenuScopeCustom" class="custom-dept">
+                <div class="custom-title">{{ t('role.dialog.customDept') }}</div>
+                <el-tree
+                    ref="menuDeptTreeRef"
+                    :data="deptTree"
+                    :props="{label: 'name', children: 'children'}"
+                    node-key="id"
+                    show-checkbox
+                />
+              </div>
+            </el-form>
+            <div class="menu-scope-actions">
+              <el-button @click="clearMenuScope">{{ t('role.menuScope.clear') }}</el-button>
+              <el-button type="primary" @click="applyMenuScope">{{ t('role.menuScope.apply') }}</el-button>
+            </div>
+          </div>
+          <el-empty v-else :description="t('role.menuScope.empty')"/>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="menuScopeVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button :loading="menuScopeSaving" type="primary" @click="saveMenuScopes">
+          {{ t('common.save') }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -138,15 +208,21 @@ import {
   createRole,
   deleteRole,
   deleteRoles,
+  type DeptVO,
+  getRoleMenuDataScope,
   getRoleMenuIds,
+  listDepts,
   listMenus,
   listPermissions,
   listRoles,
   type MenuVO,
   type PermissionVO,
   type RoleCreatePayload,
+  type RoleMenuDataScopeItem,
+  type RoleMenuDataScopeItemPayload,
   type RoleUpdatePayload,
   type RoleVO,
+  saveRoleMenuDataScope,
   updateRole,
   updateRoleStatus
 } from "../../api/system";
@@ -156,13 +232,18 @@ const roles = ref<RoleVO[]>([]);
 const permissions = ref<PermissionVO[]>([]);
 const menus = ref<MenuVO[]>([]);
 const menuTree = ref<TreeNode<MenuVO>[]>([]);
+const depts = ref<DeptVO[]>([]);
+const deptTree = ref<TreeNode<DeptVO>[]>([]);
 const loading = ref(false);
 const saving = ref(false);
 const assigning = ref(false);
 const assigningMenus = ref(false);
+const menuScopeSaving = ref(false);
 const editorVisible = ref(false);
 const permissionVisible = ref(false);
 const menuVisible = ref(false);
+const menuScopeVisible = ref(false);
+const editorTab = ref("basic");
 const editorMode = ref<"create" | "edit">("create");
 const editorRoleId = ref<number | null>(null);
 const selectedRoleId = ref<number | null>(null);
@@ -176,6 +257,18 @@ type MenuTreeRef = {
 };
 
 const menuTreeRef = ref<MenuTreeRef | null>(null);
+const deptTreeRef = ref<MenuTreeRef | null>(null);
+
+const menuScopeRoleId = ref<number | null>(null);
+const menuScopeItems = ref<RoleMenuDataScopeItem[]>([]);
+const menuScopeTree = ref<TreeNode<any>[]>([]);
+const menuScopeTreeRef = ref<MenuTreeRef | null>(null);
+const menuScopeActiveMenuId = ref<number | null>(null);
+const menuDeptTreeRef = ref<MenuTreeRef | null>(null);
+const menuScopeForm = reactive<{ dataScopeType: string; customDeptIds: number[] }>({
+  dataScopeType: "INHERIT",
+  customDeptIds: []
+});
 
 const form = reactive<RoleCreatePayload & RoleUpdatePayload>({
   code: "",
@@ -189,9 +282,34 @@ const editorTitle = computed(() =>
     editorMode.value === "create" ? t("role.dialog.createTitle") : t("role.dialog.editTitle")
 );
 
+const isCustomScope = computed(() => {
+  return form.dataScopeType === "CUSTOM_DEPT" || form.dataScopeType === "CUSTOM";
+});
+
+const activeMenuScopeItem = computed(() => {
+  if (menuScopeActiveMenuId.value == null) {
+    return null;
+  }
+  return menuScopeItems.value.find((item) => item.menuId === menuScopeActiveMenuId.value) || null;
+});
+
+const isMenuScopeCustom = computed(() => {
+  return menuScopeForm.dataScopeType === "CUSTOM_DEPT" || menuScopeForm.dataScopeType === "CUSTOM";
+});
+
 function getErrorMessage(error: unknown, fallback: string): string {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err?.response?.data?.message || err?.message || fallback;
+}
+
+function parseDeptIds(value?: string): number[] {
+  if (!value) {
+    return [];
+  }
+  return value
+      .split(",")
+      .map((item) => Number(item.trim()))
+      .filter((item) => Number.isFinite(item));
 }
 
 function handleSelectionChange(rows: RoleVO[]) {
@@ -232,11 +350,22 @@ async function fetchMenus() {
   }
 }
 
+async function fetchDepts() {
+  if (depts.value.length) {
+    return;
+  }
+  const result = await listDepts();
+  if (result?.code === 200 && result.data) {
+    depts.value = result.data;
+    deptTree.value = buildTree(result.data);
+  }
+}
+
 function resetFormState() {
   form.code = "";
   form.name = "";
   form.status = 1;
-  form.dataScopeType = "";
+  form.dataScopeType = "SELF";
   form.dataScopeValue = "";
 }
 
@@ -244,6 +373,8 @@ function openCreate() {
   editorMode.value = "create";
   editorRoleId.value = null;
   resetFormState();
+  editorTab.value = "basic";
+  fetchDepts().then(() => nextTick(() => deptTreeRef.value?.setCheckedKeys([])));
   editorVisible.value = true;
 }
 
@@ -254,8 +385,13 @@ function openEdit(role: RoleVO) {
   form.code = role.code;
   form.name = role.name;
   form.status = role.status ?? 1;
-  form.dataScopeType = role.dataScopeType || "";
+  form.dataScopeType = role.dataScopeType || "SELF";
   form.dataScopeValue = role.dataScopeValue || "";
+  editorTab.value = "basic";
+  fetchDepts().then(() => {
+    const deptIds = parseDeptIds(form.dataScopeValue);
+    nextTick(() => deptTreeRef.value?.setCheckedKeys(deptIds));
+  });
   editorVisible.value = true;
 }
 
@@ -263,6 +399,13 @@ async function saveRole() {
   if (!form.code || !form.name) {
     ElMessage.warning(t("role.msg.validateForm"));
     return;
+  }
+  if (isCustomScope.value) {
+    const tree = deptTreeRef.value;
+    const checked = tree?.getCheckedKeys(false) as number[] | undefined;
+    form.dataScopeValue = (checked || []).join(",");
+  } else {
+    form.dataScopeValue = "";
   }
   saving.value = true;
   try {
@@ -375,6 +518,138 @@ async function saveMenus() {
   }
 }
 
+async function openMenuScopes(role: RoleVO) {
+  await fetchMenus();
+  await fetchDepts();
+  menuScopeRoleId.value = role.id;
+  menuScopeVisible.value = true;
+  await loadMenuScope(role.id);
+}
+
+function openMenuScopesByTab() {
+  if (editorRoleId.value == null) {
+    ElMessage.warning(t("role.menuScope.needRole"));
+    return;
+  }
+  const role = roles.value.find((item) => item.id === editorRoleId.value);
+  if (!role) {
+    ElMessage.warning(t("role.menuScope.needRole"));
+    return;
+  }
+  openMenuScopes(role);
+}
+
+async function loadMenuScope(roleId: number) {
+  menuScopeItems.value = [];
+  menuScopeTree.value = [];
+  menuScopeActiveMenuId.value = null;
+  menuScopeForm.dataScopeType = "INHERIT";
+  menuScopeForm.customDeptIds = [];
+  const result = await getRoleMenuDataScope(roleId);
+  if (result?.code === 200 && result.data) {
+    const items = result.data.items || [];
+    menuScopeItems.value = items;
+    const treeSource = items.map((item) => ({
+      id: item.menuId,
+      menuId: item.menuId,
+      name: item.menuName || "",
+      parentId: item.parentId ?? null,
+      permission: item.permission,
+      dataScopeType: item.dataScopeType,
+      customDeptIds: item.customDeptIds || []
+    }));
+    menuScopeTree.value = buildTree(treeSource);
+    const firstLeaf = items.find((item) => !!item.permission);
+    if (firstLeaf) {
+      menuScopeActiveMenuId.value = firstLeaf.menuId;
+      syncMenuScopeForm(firstLeaf);
+    }
+  }
+}
+
+function handleMenuScopeSelect(node: { menuId?: number; permission?: string }) {
+  if (!node || !node.menuId) {
+    return;
+  }
+  const target = menuScopeItems.value.find((item) => item.menuId === node.menuId) || null;
+  if (!target || !target.permission) {
+    menuScopeActiveMenuId.value = null;
+    return;
+  }
+  menuScopeActiveMenuId.value = target.menuId;
+  syncMenuScopeForm(target);
+}
+
+function syncMenuScopeForm(item: RoleMenuDataScopeItem) {
+  menuScopeForm.dataScopeType = item.dataScopeType || "INHERIT";
+  menuScopeForm.customDeptIds = item.customDeptIds ? [...item.customDeptIds] : [];
+  nextTick(() => {
+    menuDeptTreeRef.value?.setCheckedKeys(menuScopeForm.customDeptIds || []);
+  });
+}
+
+function applyMenuScope() {
+  if (!activeMenuScopeItem.value) {
+    return;
+  }
+  const menuId = activeMenuScopeItem.value.menuId;
+  const type = menuScopeForm.dataScopeType;
+  let customDeptIds: number[] = [];
+  if (isMenuScopeCustom.value) {
+    const tree = menuDeptTreeRef.value;
+    const checked = tree?.getCheckedKeys(false) as number[] | undefined;
+    customDeptIds = checked || [];
+  }
+  updateMenuScopeItem(menuId, type, customDeptIds);
+}
+
+function clearMenuScope() {
+  if (!activeMenuScopeItem.value) {
+    return;
+  }
+  updateMenuScopeItem(activeMenuScopeItem.value.menuId, "INHERIT", []);
+  syncMenuScopeForm(activeMenuScopeItem.value);
+}
+
+function updateMenuScopeItem(menuId: number, type: string, customDeptIds: number[]) {
+  const items = menuScopeItems.value;
+  const index = items.findIndex((item) => item.menuId === menuId);
+  if (index < 0) {
+    return;
+  }
+  items[index] = {
+    ...items[index],
+    dataScopeType: type === "INHERIT" ? null : type,
+    customDeptIds: type === "CUSTOM_DEPT" || type === "CUSTOM" ? customDeptIds : []
+  };
+  menuScopeItems.value = [...items];
+}
+
+async function saveMenuScopes() {
+  if (menuScopeRoleId.value == null) {
+    return;
+  }
+  menuScopeSaving.value = true;
+  try {
+    const payload: RoleMenuDataScopeItemPayload[] = menuScopeItems.value
+        .filter((item) => !!item.permission)
+        .map((item) => ({
+          menuId: item.menuId,
+          dataScopeType: item.dataScopeType || undefined,
+          customDeptIds: item.customDeptIds || []
+        }));
+    const result = await saveRoleMenuDataScope(menuScopeRoleId.value, payload);
+    if (result?.code === 200) {
+      ElMessage.success(t("common.saveSuccess"));
+      menuScopeVisible.value = false;
+    } else {
+      ElMessage.error(result?.message || t("common.saveFailed"));
+    }
+  } finally {
+    menuScopeSaving.value = false;
+  }
+}
+
 async function removeRole(role: RoleVO) {
   try {
     await ElMessageBox.confirm(
@@ -419,6 +694,7 @@ async function removeRoles() {
 
 onMounted(() => {
   fetchRoles();
+  fetchDepts();
 });
 </script>
 
@@ -465,5 +741,71 @@ onMounted(() => {
 
 .form-grid :deep(.el-form-item) {
   margin-bottom: 12px;
+}
+
+.scope-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.custom-dept {
+  margin-top: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.custom-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.menu-scope-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+}
+
+.menu-scope-tree {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  padding: 8px;
+  min-height: 360px;
+}
+
+.menu-scope-card {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 360px;
+}
+
+.menu-scope-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.menu-scope-sub {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.menu-scope-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.menu-scope-note {
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+@media (max-width: 860px) {
+  .menu-scope-layout {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

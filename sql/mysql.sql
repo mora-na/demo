@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS sys_user
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
     update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
@@ -35,6 +36,7 @@ CREATE TABLE IF NOT EXISTS sys_dept
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
     update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
@@ -44,6 +46,28 @@ CREATE TABLE IF NOT EXISTS sys_dept
     KEY idx_sys_dept_parent (parent_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='部门表';
+
+CREATE TABLE IF NOT EXISTS sys_post
+(
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    name VARCHAR(128) NOT NULL COMMENT '岗位名称',
+    code VARCHAR(64) COMMENT '岗位编码（唯一）',
+    dept_id BIGINT NOT NULL COMMENT '所属部门ID',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    sort INT NOT NULL DEFAULT 0 COMMENT '排序',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_post_code (code, is_deleted),
+    KEY idx_sys_post_dept (dept_id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='岗位表';
 
 CREATE TABLE IF NOT EXISTS sys_role
 (
@@ -56,6 +80,7 @@ CREATE TABLE IF NOT EXISTS sys_role
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
     update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
@@ -74,6 +99,7 @@ CREATE TABLE IF NOT EXISTS sys_permission
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
     update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
@@ -97,6 +123,7 @@ CREATE TABLE IF NOT EXISTS sys_menu
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
     update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
@@ -115,6 +142,7 @@ CREATE TABLE IF NOT EXISTS sys_role_permission
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
     update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
@@ -131,9 +159,11 @@ CREATE TABLE IF NOT EXISTS sys_role_menu
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     role_id BIGINT NOT NULL COMMENT '角色ID',
     menu_id BIGINT NOT NULL COMMENT '菜单ID',
+    data_scope_type VARCHAR(32) COMMENT '菜单级数据范围类型',
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
     update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
@@ -145,6 +175,28 @@ CREATE TABLE IF NOT EXISTS sys_role_menu
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='角色-菜单关联表';
 
+CREATE TABLE IF NOT EXISTS sys_role_menu_dept
+(
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    role_id BIGINT NOT NULL COMMENT '角色ID',
+    menu_id BIGINT NOT NULL COMMENT '菜单ID',
+    dept_id BIGINT NOT NULL COMMENT '部门ID',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_role_menu_dept_role_menu_dept (role_id, menu_id, dept_id, is_deleted),
+    KEY idx_sys_role_menu_dept_role (role_id),
+    KEY idx_sys_role_menu_dept_menu (menu_id),
+    KEY idx_sys_role_menu_dept_dept (dept_id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='角色-菜单-部门关联表';
+
 CREATE TABLE IF NOT EXISTS sys_user_role
 (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
@@ -153,6 +205,7 @@ CREATE TABLE IF NOT EXISTS sys_user_role
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
     update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
@@ -164,21 +217,69 @@ CREATE TABLE IF NOT EXISTS sys_user_role
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='用户-角色关联表';
 
-CREATE TABLE IF NOT EXISTS sys_data_scope_rule
+CREATE TABLE IF NOT EXISTS sys_user_data_scope
 (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    table_name VARCHAR(64) NOT NULL COMMENT '目标表名（小写匹配）',
-    column_name VARCHAR(64) NOT NULL COMMENT '数据范围字段名',
-    enabled TINYINT NOT NULL DEFAULT 1 COMMENT '是否启用：1-启用，0-禁用',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    scope_key VARCHAR(200) NOT NULL COMMENT '数据范围标识（通常为菜单权限标识）',
+    data_scope_type VARCHAR(32) COMMENT '数据范围类型',
+    data_scope_value VARCHAR(512) COMMENT '数据范围值（自定义部门ID列表）',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
     update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
     remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_sys_data_scope_rule_table (table_name, is_deleted)
+    UNIQUE KEY uk_sys_user_data_scope_user_key (user_id, scope_key, is_deleted),
+    KEY idx_sys_user_data_scope_user (user_id),
+    KEY idx_sys_user_data_scope_key (scope_key)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='用户数据范围覆盖表';
+
+CREATE TABLE IF NOT EXISTS sys_user_post
+(
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    post_id BIGINT NOT NULL COMMENT '岗位ID',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_user_post_user_post (user_id, post_id, is_deleted),
+    KEY idx_sys_user_post_user (user_id),
+    KEY idx_sys_user_post_post (post_id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='用户-岗位关联表';
+
+CREATE TABLE IF NOT EXISTS sys_data_scope_rule
+(
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    scope_key VARCHAR(200) NOT NULL COMMENT '唯一标识，通常=菜单权限标识',
+    table_name VARCHAR(100) NOT NULL COMMENT '业务表名',
+    table_alias VARCHAR(20) DEFAULT '' COMMENT '表别名',
+    dept_column VARCHAR(100) DEFAULT 'create_dept' COMMENT '部门字段名',
+    user_column VARCHAR(100) DEFAULT 'create_by' COMMENT '用户字段名',
+    filter_type TINYINT DEFAULT 1 COMMENT '1=追加WHERE 2=追加EXISTS子查询 3=JOIN过滤',
+    status TINYINT DEFAULT 1 COMMENT '0=禁用 1=启用',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
+    update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_data_scope_rule_key (scope_key)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='数据范围规则表';
 
@@ -190,6 +291,7 @@ CREATE TABLE IF NOT EXISTS sys_order
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
     update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
@@ -220,6 +322,7 @@ CREATE TABLE IF NOT EXISTS sys_notice
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
     update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     created_name VARCHAR(64) COMMENT '创建人名称',
     is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
@@ -240,6 +343,7 @@ CREATE TABLE IF NOT EXISTS sys_notice_recipient
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
     update_by VARCHAR(64) DEFAULT NULL COMMENT '更新人',
     is_deleted TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
@@ -480,6 +584,19 @@ ON DUPLICATE KEY UPDATE name      = VALUES(name),
                         sort      = VALUES(sort),
                         remark    = VALUES(remark);
 
+INSERT INTO sys_post (id, name, code, dept_id, status, sort, remark)
+VALUES (1, '部门主管', 'MANAGER', 1, 1, 0, '部门主管岗位'),
+       (2, '普通员工', 'STAFF', 1, 1, 10, '普通员工岗位'),
+       (3, '研发经理', 'RD_MANAGER', 2, 1, 0, '研发部门岗位'),
+       (4, '研发工程师', 'RD_ENGINEER', 2, 1, 10, '研发工程师岗位'),
+       (5, '运营专员', 'OPS_STAFF', 3, 1, 10, '运营岗位')
+ON DUPLICATE KEY UPDATE name    = VALUES(name),
+                        code    = VALUES(code),
+                        dept_id = VALUES(dept_id),
+                        status  = VALUES(status),
+                        sort    = VALUES(sort),
+                        remark  = VALUES(remark);
+
 INSERT INTO sys_role (id, code, name, status, data_scope_type, data_scope_value)
 VALUES (1, 'admin', '系统管理员', 1, 'ALL', NULL),
        (2, 'manager', '部门主管', 1, 'DEPT_AND_CHILD', NULL),
@@ -530,7 +647,21 @@ VALUES (1, 'user:query', '用户查询', 1),
        (38, 'menu:delete', '菜单删除', 1),
        (39, 'dept:delete', '部门删除', 1),
        (40, 'permission:delete', '权限删除', 1),
-       (41, 'notice:delete', '通知删除', 1)
+       (41, 'notice:delete', '通知删除', 1),
+       (42, 'post:query', '岗位查询', 1),
+       (43, 'post:create', '岗位创建', 1),
+       (44, 'post:update', '岗位更新', 1),
+       (45, 'post:disable', '岗位停用', 1),
+       (46, 'post:delete', '岗位删除', 1),
+       (47, 'user:post:assign', '分配岗位', 1),
+       (48, 'role:menu:data-scope', '菜单数据范围', 1),
+       (49, 'data-scope:resolve', '数据权限总览', 1),
+       (50, 'data-scope:rule:query', '字段映射查询', 1),
+       (51, 'data-scope:rule:create', '字段映射创建', 1),
+       (52, 'data-scope:rule:update', '字段映射更新', 1),
+       (53, 'data-scope:rule:delete', '字段映射删除', 1),
+       (54, 'data-scope:user:query', '用户数据范围查询', 1),
+       (55, 'data-scope:user:manage', '用户数据范围管理', 1)
 ON DUPLICATE KEY UPDATE name   = VALUES(name),
                         status = VALUES(status);
 
@@ -540,10 +671,18 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (120, '角色管理', 'role', 100, '/system/roles', 'RolePage', 'role:query', 1, 20, '角色管理'),
        (130, '菜单管理', 'menu', 100, '/system/menus', 'MenuPage', 'menu:query', 1, 30, '菜单管理'),
        (140, '部门管理', 'dept', 100, '/system/depts', 'DeptPage', 'dept:query', 1, 40, '部门管理'),
+       (145, '岗位管理', 'post', 100, '/system/posts', 'PostPage', 'post:query', 1, 45, '岗位管理'),
        (150, '权限管理', 'permission', 100, '/system/permissions', 'PermissionPage', 'permission:query', 1, 50,
         '权限管理'),
        (160, '系统通知', 'notice', 100, '/system/notices', 'NoticePage', 'notice:query', 1, 60, '系统通知'),
-       (170, '定时任务', 'job', 100, '/system/jobs', 'JobPage', 'job:query', 1, 70, '定时任务')
+       (170, '定时任务', 'job', 100, '/system/jobs', 'JobPage', 'job:query', 1, 70, '定时任务'),
+       (180, '数据权限', 'data-scope', 100, '/system/data-scope', 'DataScopePage', NULL, 1, 80, '数据权限'),
+       (181, '权限总览', 'data-scope-overview', 180, '/system/data-scope/overview', 'DataScopeOverviewPage',
+        'data-scope:resolve', 1, 10, '权限总览'),
+       (182, '字段映射配置', 'data-scope-mapping', 180, '/system/data-scope/mapping', 'DataScopeMappingPage',
+        'data-scope:rule:query', 1, 20, '字段映射配置'),
+       (183, '用户特例授权', 'data-scope-user', 180, '/system/data-scope/user', 'DataScopeUserPage',
+        'data-scope:user:query', 1, 30, '用户特例授权')
 ON DUPLICATE KEY UPDATE name       = VALUES(name),
                         parent_id  = VALUES(parent_id),
                         path       = VALUES(path),
@@ -577,6 +716,12 @@ INSERT INTO sys_user_role (user_id, role_id)
 VALUES (1, 1),
        (2, 2),
        (3, 3)
+ON DUPLICATE KEY UPDATE user_id = VALUES(user_id);
+
+INSERT INTO sys_user_post (user_id, post_id)
+VALUES (1, 1),
+       (2, 1),
+       (3, 2)
 ON DUPLICATE KEY UPDATE user_id = VALUES(user_id);
 
 INSERT INTO sys_role_permission (role_id, permission_id)
@@ -615,6 +760,20 @@ VALUES (1, 1),
        (1, 33),
        (1, 34),
        (1, 35),
+       (1, 42),
+       (1, 43),
+       (1, 44),
+       (1, 45),
+       (1, 46),
+       (1, 47),
+       (1, 48),
+       (1, 49),
+       (1, 50),
+       (1, 51),
+       (1, 52),
+       (1, 53),
+       (1, 54),
+       (1, 55),
        (2, 1),
        (2, 8),
        (2, 10),
@@ -630,9 +789,14 @@ VALUES (1, 100),
        (1, 120),
        (1, 130),
        (1, 140),
+       (1, 145),
        (1, 150),
        (1, 160),
        (1, 170),
+       (1, 180),
+       (1, 181),
+       (1, 182),
+       (1, 183),
        (2, 100),
        (2, 110),
        (2, 140),

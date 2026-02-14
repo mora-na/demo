@@ -20,4 +20,10 @@ public class SysUserDataScopeRequest {
 
     @Size(max = 512)
     private String dataScopeValue;
+
+    /**
+     * 数据范围标识（通常为菜单权限标识）。为空时视为全局覆盖。
+     */
+    @Size(max = 200)
+    private String scopeKey;
 }

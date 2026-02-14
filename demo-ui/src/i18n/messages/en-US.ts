@@ -9,6 +9,17 @@ export default {
         entry: "Entry point",
         cancel: "Cancel",
         save: "Save",
+        search: "Search",
+        edit: "Edit",
+        delete: "Delete",
+        enabled: "Enabled",
+        disabled: "Disabled",
+        yes: "Yes",
+        no: "No",
+        saveSuccess: "Saved",
+        saveFailed: "Save failed",
+        deleteSuccess: "Deleted",
+        deleteFailed: "Delete failed",
         confirmTitle: "Confirmation",
         missingToken: "Missing login token",
         profileLoadFailed: "Failed to load user profile"
@@ -293,9 +304,126 @@ export default {
             role: "Roles",
             menu: "Menus",
             dept: "Departments",
+            post: "Posts",
             permission: "Permissions",
             notice: "Notices",
-            job: "Scheduled Jobs"
+            job: "Scheduled Jobs",
+            dataScope: "Data Scope"
+        }
+    },
+    dataScope: {
+        title: "Data Scope",
+        subtitle: "Configure data visibility by role, menu, and user overrides.",
+        tabs: {
+            overview: "Overview",
+            mapping: "Field Mapping",
+            user: "User Overrides"
+        },
+        overview: {
+            userPlaceholder: "Select user",
+            menuPlaceholder: "Select menu (optional)",
+            search: "Search",
+            userInfo: "User Info",
+            userName: "User",
+            dept: "Department",
+            posts: "Posts",
+            roles: "Roles",
+            result: "Result",
+            finalScope: "Final scope",
+            deptIds: "Dept IDs",
+            includeSelf: "Include self",
+            sql: "SQL condition",
+            table: {
+                menu: "Menu",
+                permission: "Permission",
+                scope: "Final scope",
+                source: "Layer"
+            },
+            empty: "Select a user to query",
+            userRequired: "Please select a user",
+            loadFailed: "Failed to load data scope"
+        },
+        mapping: {
+            scopeKey: "Permission key",
+            tableName: "Table name",
+            tableAlias: "Alias",
+            deptColumn: "Dept column",
+            userColumn: "User column",
+            status: "Status",
+            action: "Actions",
+            create: "New mapping",
+            edit: "Edit mapping",
+            validate: "Fill permission key and table name",
+            loadFailed: "Failed to load mappings",
+            deleteConfirm: "Delete mapping {key}?"
+        },
+        user: {
+            userName: "User",
+            menuKeyword: "Menu/permission",
+            statusPlaceholder: "Status",
+            create: "New override",
+            edit: "Edit override",
+            user: "User",
+            dept: "Department",
+            menu: "Menu",
+            scopeKey: "Permission key",
+            scopeType: "Scope type",
+            scopeValue: "Scope value",
+            status: "Status",
+            remark: "Remark",
+            action: "Actions",
+            userPlaceholder: "Select user",
+            global: "Global override",
+            validate: "Select user and permission key",
+            loadFailed: "Failed to load overrides",
+            deleteConfirm: "Delete override for {name}?"
+        }
+    },
+    post: {
+        title: "Post Management",
+        subtitle: "Maintain posts and their departments.",
+        create: "New post",
+        filter: {
+            delete: "Delete selected"
+        },
+        table: {
+            name: "Name",
+            code: "Code",
+            dept: "Department",
+            sort: "Sort",
+            status: "Status",
+            action: "Actions",
+            edit: "Edit",
+            delete: "Delete"
+        },
+        dialog: {
+            createTitle: "New post",
+            editTitle: "Edit post",
+            name: "Name",
+            code: "Code",
+            dept: "Department",
+            deptPlaceholder: "Select",
+            sort: "Sort",
+            status: "Status",
+            statusPlaceholder: "Select",
+            statusEnabled: "Enabled",
+            statusDisabled: "Disabled",
+            remark: "Remark"
+        },
+        msg: {
+            loadFailed: "Failed to load posts",
+            createSuccess: "Created",
+            createFailed: "Create failed",
+            updateSuccess: "Updated",
+            updateFailed: "Update failed",
+            saveFailed: "Save failed",
+            statusUpdateFailed: "Failed to update status",
+            validateName: "Enter post name",
+            deleteConfirm: "Delete post {name}?",
+            batchDeleteConfirm: "Delete the selected {count} posts?",
+            deleteSuccess: "Deleted",
+            deleteFailed: "Delete failed",
+            deleteEmpty: "Select posts to delete"
         }
     },
     dept: {
@@ -454,7 +582,13 @@ export default {
             edit: "Edit",
             assignPermissions: "Assign permissions",
             assignMenus: "Assign menus",
+            menuDataScope: "Menu scope",
             delete: "Delete"
+        },
+        tabs: {
+            basic: "Basic",
+            dataScope: "Data scope",
+            menuScope: "Menu-level scope"
         },
         dialog: {
             createTitle: "New role",
@@ -468,7 +602,8 @@ export default {
             dataScopeType: "Data scope type",
             dataScopePlaceholder: "Select",
             dataScopeValue: "Data scope value",
-            dataScopeValuePlaceholder: "Comma-separated IDs"
+            dataScopeValuePlaceholder: "Comma-separated IDs",
+            customDept: "Select custom departments"
         },
         scope: {
             all: "All",
@@ -486,6 +621,17 @@ export default {
         },
         menus: {
             title: "Assign menus"
+        },
+        menuScope: {
+            title: "Menu data scope",
+            hint: "Configure only menus that need special scope; others inherit role defaults.",
+            open: "Open config",
+            scopeType: "Data scope",
+            inherit: "Inherit role default",
+            clear: "Clear",
+            apply: "Apply to menu",
+            empty: "Select a menu",
+            needRole: "Save role before configuring menu scope"
         },
         msg: {
             loadFailed: "Failed to load roles",
@@ -530,6 +676,8 @@ export default {
             edit: "Edit",
             resetPassword: "Reset password",
             assignRoles: "Assign roles",
+            assignPosts: "Assign posts",
+            dataScope: "Data scope",
             delete: "Delete"
         },
         dialog: {
@@ -565,6 +713,24 @@ export default {
             self: "Self only",
             none: "No access"
         },
+        dataScope: {
+            title: "User Data Scope",
+            user: "User",
+            dept: "Department",
+            create: "New scope",
+            menu: "Menu",
+            scopeKey: "Permission key",
+            scopeType: "Scope type",
+            scopeValue: "Scope value",
+            status: "Status",
+            remark: "Remark",
+            action: "Actions",
+            global: "Global override",
+            validate: "Select permission key",
+            loadFailed: "Failed to load user scopes",
+            deleteConfirm: "Delete scope for {name}?",
+            edit: "Edit scope"
+        },
         sex: {
             male: "Male",
             female: "Female",
@@ -573,6 +739,11 @@ export default {
         roles: {
             title: "Assign roles",
             list: "Role list",
+            placeholder: "Select"
+        },
+        posts: {
+            title: "Assign posts",
+            list: "Post list",
             placeholder: "Select"
         },
         reset: {
@@ -590,6 +761,8 @@ export default {
             statusUpdateFailed: "Failed to update status",
             rolesUpdated: "Roles updated",
             rolesUpdateFailed: "Failed to update roles",
+            postsUpdated: "Posts updated",
+            postsUpdateFailed: "Failed to update posts",
             passwordReset: "Password reset",
             passwordResetFailed: "Failed to reset password",
             validateUserName: "Enter username",

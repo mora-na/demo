@@ -2,8 +2,15 @@ package com.example.demo.permission.controller;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.common.model.CommonResult;
+import com.example.demo.common.mybatis.DataScopeType;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.datascope.dto.RoleMenuDataScopeBatchRequest;
+import com.example.demo.datascope.dto.RoleMenuDataScopeItemRequest;
+import com.example.demo.datascope.dto.RoleMenuDataScopeItemVO;
+import com.example.demo.datascope.dto.RoleMenuDataScopeResponse;
+import com.example.demo.datascope.entity.RoleMenuDept;
+import com.example.demo.datascope.service.RoleMenuDeptService;
 import com.example.demo.menu.dto.RoleMenuAssignRequest;
 import com.example.demo.menu.entity.Menu;
 import com.example.demo.menu.entity.RoleMenu;
@@ -25,10 +32,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +52,7 @@ public class RoleAdminController extends BaseController {
     private final PermissionService permissionService;
     private final RoleMenuService roleMenuService;
     private final MenuService menuService;
+    private final RoleMenuDeptService roleMenuDeptService;
     private final UserRoleService userRoleService;
 
     /**
@@ -255,6 +260,154 @@ public class RoleAdminController extends BaseController {
         return success();
     }
 
+    /**
+     * 获取角色菜单级数据范围配置。
+     */
+    @GetMapping("/{id}/menu-data-scope")
+    @RequirePermission("role:menu:data-scope")
+    public CommonResult<RoleMenuDataScopeResponse> getMenuDataScope(@PathVariable Long id) {
+        Role role = roleService.getById(id);
+        if (role == null) {
+            return error(404, i18n("role.not.found"));
+        }
+        List<RoleMenu> roleMenus = roleMenuService.list(Wrappers.lambdaQuery(RoleMenu.class)
+                .eq(RoleMenu::getRoleId, id));
+        if (roleMenus == null || roleMenus.isEmpty()) {
+            RoleMenuDataScopeResponse response = new RoleMenuDataScopeResponse();
+            response.setRoleId(role.getId());
+            response.setRoleCode(role.getCode());
+            response.setRoleName(role.getName());
+            response.setDefaultDataScopeType(role.getDataScopeType());
+            response.setDefaultDataScopeValue(role.getDataScopeValue());
+            response.setItems(Collections.emptyList());
+            return success(response);
+        }
+        List<Long> menuIds = roleMenus.stream()
+                .map(RoleMenu::getMenuId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, Menu> menuMap = menuService.listByIds(menuIds).stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Menu::getId, menu -> menu, (a, b) -> a));
+
+        Map<Long, List<Long>> customDeptMap = new HashMap<>();
+        List<RoleMenuDept> customDeptRelations = roleMenuDeptService.list(
+                Wrappers.lambdaQuery(RoleMenuDept.class).eq(RoleMenuDept::getRoleId, id));
+        if (customDeptRelations != null) {
+            for (RoleMenuDept relation : customDeptRelations) {
+                if (relation == null || relation.getMenuId() == null || relation.getDeptId() == null) {
+                    continue;
+                }
+                customDeptMap.computeIfAbsent(relation.getMenuId(), key -> new ArrayList<>()).add(relation.getDeptId());
+            }
+        }
+
+        List<RoleMenuDataScopeItemVO> items = new ArrayList<>();
+        for (RoleMenu roleMenu : roleMenus) {
+            if (roleMenu == null) {
+                continue;
+            }
+            Menu menu = menuMap.get(roleMenu.getMenuId());
+            if (menu == null) {
+                continue;
+            }
+            RoleMenuDataScopeItemVO item = new RoleMenuDataScopeItemVO();
+            item.setMenuId(menu.getId());
+            item.setMenuName(menu.getName());
+            item.setParentId(menu.getParentId());
+            item.setPermission(menu.getPermission());
+            item.setDataScopeType(roleMenu.getDataScopeType());
+            item.setCustomDeptIds(customDeptMap.getOrDefault(menu.getId(), Collections.emptyList()));
+            items.add(item);
+        }
+
+        RoleMenuDataScopeResponse response = new RoleMenuDataScopeResponse();
+        response.setRoleId(role.getId());
+        response.setRoleCode(role.getCode());
+        response.setRoleName(role.getName());
+        response.setDefaultDataScopeType(role.getDataScopeType());
+        response.setDefaultDataScopeValue(role.getDataScopeValue());
+        response.setItems(items);
+        return success(response);
+    }
+
+    /**
+     * 批量保存角色菜单级数据范围配置。
+     */
+    @PutMapping("/{id}/menu-data-scope")
+    @RequirePermission("role:menu:data-scope")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> saveMenuDataScope(@PathVariable Long id,
+                                                @Valid @RequestBody RoleMenuDataScopeBatchRequest request) {
+        Role role = roleService.getById(id);
+        if (role == null) {
+            return error(404, i18n("role.not.found"));
+        }
+        if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+            return success();
+        }
+        for (RoleMenuDataScopeItemRequest item : request.getItems()) {
+            if (item == null || item.getMenuId() == null) {
+                continue;
+            }
+            RoleMenu relation = roleMenuService.getOne(Wrappers.lambdaQuery(RoleMenu.class)
+                    .eq(RoleMenu::getRoleId, id)
+                    .eq(RoleMenu::getMenuId, item.getMenuId()));
+            if (relation == null) {
+                return error(400, i18n("role.menu.not.found"));
+            }
+            String normalizedType = normalizeMenuScopeType(item.getDataScopeType());
+            roleMenuService.update(Wrappers.lambdaUpdate(RoleMenu.class)
+                    .eq(RoleMenu::getRoleId, id)
+                    .eq(RoleMenu::getMenuId, item.getMenuId())
+                    .set(RoleMenu::getDataScopeType, normalizedType));
+            roleMenuDeptService.remove(Wrappers.lambdaQuery(RoleMenuDept.class)
+                    .eq(RoleMenuDept::getRoleId, id)
+                    .eq(RoleMenuDept::getMenuId, item.getMenuId()));
+            if (isCustomScope(normalizedType)) {
+                List<RoleMenuDept> relations = Optional.ofNullable(item.getCustomDeptIds())
+                        .orElse(Collections.emptyList())
+                        .stream()
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .map(deptId -> {
+                            RoleMenuDept relationItem = new RoleMenuDept();
+                            relationItem.setRoleId(id);
+                            relationItem.setMenuId(item.getMenuId());
+                            relationItem.setDeptId(deptId);
+                            return relationItem;
+                        })
+                        .collect(Collectors.toList());
+                if (!relations.isEmpty()) {
+                    roleMenuDeptService.saveBatch(relations);
+                }
+            }
+        }
+        return success();
+    }
+
+    /**
+     * 清除指定菜单的角色数据范围配置。
+     */
+    @DeleteMapping("/{roleId}/menu-data-scope/{menuId}")
+    @RequirePermission("role:menu:data-scope")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult<Void> clearMenuDataScope(@PathVariable Long roleId, @PathVariable Long menuId) {
+        Role role = roleService.getById(roleId);
+        if (role == null) {
+            return error(404, i18n("role.not.found"));
+        }
+        roleMenuService.update(Wrappers.lambdaUpdate(RoleMenu.class)
+                .eq(RoleMenu::getRoleId, roleId)
+                .eq(RoleMenu::getMenuId, menuId)
+                .set(RoleMenu::getDataScopeType, null));
+        roleMenuDeptService.remove(Wrappers.lambdaQuery(RoleMenuDept.class)
+                .eq(RoleMenuDept::getRoleId, roleId)
+                .eq(RoleMenuDept::getMenuId, menuId));
+        return success();
+    }
+
     @DeleteMapping("/{id}")
     @RequirePermission("role:delete")
     @Transactional(rollbackFor = Exception.class)
@@ -338,6 +491,32 @@ public class RoleAdminController extends BaseController {
      */
     private boolean isValidStatus(Integer status) {
         return status != null && (status == 0 || status == 1);
+    }
+
+    private String normalizeMenuScopeType(String raw) {
+        if (StringUtils.isBlank(raw)) {
+            return null;
+        }
+        String normalized = raw.trim().toUpperCase(Locale.ROOT);
+        if ("INHERIT".equals(normalized) || "DEFAULT".equals(normalized)) {
+            return null;
+        }
+        switch (normalized) {
+            case DataScopeType.ALL:
+            case DataScopeType.DEPT:
+            case DataScopeType.DEPT_AND_CHILD:
+            case DataScopeType.CUSTOM_DEPT:
+            case DataScopeType.CUSTOM:
+            case DataScopeType.SELF:
+            case DataScopeType.NONE:
+                return normalized;
+            default:
+                return null;
+        }
+    }
+
+    private boolean isCustomScope(String type) {
+        return DataScopeType.CUSTOM_DEPT.equals(type) || DataScopeType.CUSTOM.equals(type);
     }
 
     /**

@@ -16,9 +16,14 @@
       <RoleManagement v-else-if="activeMenuCode === 'role'"/>
       <MenuManagement v-else-if="activeMenuCode === 'menu'"/>
       <DeptManagement v-else-if="activeMenuCode === 'dept'"/>
+      <PostManagement v-else-if="activeMenuCode === 'post'"/>
       <PermissionManagement v-else-if="activeMenuCode === 'permission'"/>
       <NoticeManagement v-else-if="activeMenuCode === 'notice'"/>
       <JobManagement v-else-if="activeMenuCode === 'job'"/>
+      <DataScopePanel
+          v-else-if="activeMenuCode === 'data-scope' || activeMenuCode.startsWith('data-scope')"
+          :active-code="activeMenuCode"
+      />
       <div v-else class="system-placeholder">{{ t("systemPanel.placeholder") }}</div>
     </div>
   </section>
@@ -32,9 +37,11 @@ import UserManagement from "./UserManagement.vue";
 import RoleManagement from "./RoleManagement.vue";
 import MenuManagement from "./MenuManagement.vue";
 import DeptManagement from "./DeptManagement.vue";
+import PostManagement from "./PostManagement.vue";
 import PermissionManagement from "./PermissionManagement.vue";
 import NoticeManagement from "./NoticeManagement.vue";
 import JobManagement from "./JobManagement.vue";
+import DataScopePanel from "./DataScopePanel.vue";
 
 const props = defineProps<{
   menus: MenuTree[];
@@ -69,12 +76,16 @@ function menuLabel(menu: MenuTree) {
       return t("systemPanel.tabs.menu");
     case "dept":
       return t("systemPanel.tabs.dept");
+    case "post":
+      return t("systemPanel.tabs.post");
     case "permission":
       return t("systemPanel.tabs.permission");
     case "notice":
       return t("systemPanel.tabs.notice");
     case "job":
       return t("systemPanel.tabs.job");
+    case "data-scope":
+      return t("systemPanel.tabs.dataScope");
     default:
       return menu.name;
   }

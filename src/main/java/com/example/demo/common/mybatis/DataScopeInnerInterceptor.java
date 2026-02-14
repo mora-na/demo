@@ -3,11 +3,13 @@ package com.example.demo.common.mybatis;
 import com.baomidou.mybatisplus.extension.plugins.inner.InnerInterceptor;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.datascope.entity.DataScopeRule;
+import com.example.demo.datascope.service.DataScopeEvaluator;
 import lombok.Getter;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
-import net.sf.jsqlparser.expression.StringValue;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
@@ -22,6 +24,7 @@ import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
+import org.springframework.util.StringUtils;
 
 import java.sql.Connection;
 import java.util.*;
@@ -36,8 +39,12 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
 
     // Guard against recursive rule loading that can exhaust the connection pool.
     private static final ThreadLocal<Boolean> LOADING_RULES = new ThreadLocal<>();
+    private static final String DEFAULT_DEPT_COLUMN = "create_dept";
+    private static final String DEFAULT_USER_COLUMN = "create_by";
+
     private final DataScopeProperties properties;
     private final DataScopeRuleProvider ruleProvider;
+    private final DataScopeEvaluator evaluator;
 
     /**
      * 构建数据权限拦截器。
@@ -47,9 +54,12 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    public DataScopeInnerInterceptor(DataScopeProperties properties, DataScopeRuleProvider ruleProvider) {
+    public DataScopeInnerInterceptor(DataScopeProperties properties,
+                                     DataScopeRuleProvider ruleProvider,
+                                     DataScopeEvaluator evaluator) {
         this.properties = properties;
         this.ruleProvider = ruleProvider;
+        this.evaluator = evaluator;
     }
 
     /**
@@ -73,6 +83,10 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
         if (user == null) {
             return;
         }
+        DataScopeContextHolder.DataScopeRequest scopeRequest = DataScopeContextHolder.get();
+        if (scopeRequest == null || !StringUtils.hasText(scopeRequest.getScopeKey())) {
+            return;
+        }
         BoundSql boundSql = statementHandler.getBoundSql();
         if (boundSql == null) {
             return;
@@ -81,21 +95,22 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
         if (sql == null || sql.trim().isEmpty()) {
             return;
         }
-        String dataScopeType = normalizeType(user.getDataScopeType(), properties.getDefaultType());
-        if (DataScopeType.ALL.equals(dataScopeType)) {
+        DataScopeEvaluator.FinalScope finalScope = evaluator == null
+                ? DataScopeEvaluator.FinalScope.none()
+                : evaluator.resolve(user, scopeRequest.getScopeKey());
+        if (finalScope.isAll()) {
             return;
         }
-        Map<String, String> tableColumnMap;
+        Map<String, DataScopeRule> ruleMap;
         try {
             LOADING_RULES.set(true);
-            tableColumnMap = ruleProvider == null ? null : ruleProvider.getTableColumnMap();
+            ruleMap = ruleProvider == null ? null : ruleProvider.getRuleMap();
         } finally {
             LOADING_RULES.remove();
         }
-        if (tableColumnMap == null || tableColumnMap.isEmpty()) {
-            return;
-        }
-        String rewritten = rewriteSql(sql, dataScopeType, user, tableColumnMap);
+        DataScopeRule rule = ruleMap == null ? null : ruleMap.get(scopeRequest.getScopeKey());
+        EffectiveRule effectiveRule = buildEffectiveRule(rule, scopeRequest);
+        String rewritten = rewriteSql(sql, finalScope, user, effectiveRule, scopeRequest);
         if (rewritten != null && !rewritten.equals(sql)) {
             MetaObject metaObject = SystemMetaObject.forObject(boundSql);
             metaObject.setValue("sql", rewritten);
@@ -106,17 +121,21 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
      * 解析并重写 SQL，失败时降级为原 SQL。
      *
      * @param sql            原始 SQL
-     * @param dataScopeType  数据范围类型
+     * @param finalScope     最终数据范围
      * @param user           当前用户
-     * @param tableColumnMap 表->字段 映射
+     * @param rule           生效规则
      * @return 重写后的 SQL
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private String rewriteSql(String sql, String dataScopeType, AuthUser user, Map<String, String> tableColumnMap) {
+    private String rewriteSql(String sql,
+                              DataScopeEvaluator.FinalScope finalScope,
+                              AuthUser user,
+                              EffectiveRule rule,
+                              DataScopeContextHolder.DataScopeRequest scopeRequest) {
         try {
             Statement statement = CCJSqlParserUtil.parse(sql);
-            boolean changed = applyDataScope(statement, dataScopeType, user, tableColumnMap);
+            boolean changed = applyDataScope(statement, finalScope, user, rule, scopeRequest);
             if (!changed) {
                 return sql;
             }
@@ -130,23 +149,26 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
      * 在不同语句类型上应用数据权限。
      *
      * @param statement      SQL 语句对象
-     * @param dataScopeType  数据范围类型
+     * @param finalScope     最终数据范围
      * @param user           当前用户
-     * @param tableColumnMap 表->字段 映射
+     * @param rule           生效规则
      * @return true 表示发生了改写
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private boolean applyDataScope(Statement statement, String dataScopeType, AuthUser user,
-                                   Map<String, String> tableColumnMap) {
+    private boolean applyDataScope(Statement statement,
+                                   DataScopeEvaluator.FinalScope finalScope,
+                                   AuthUser user,
+                                   EffectiveRule rule,
+                                   DataScopeContextHolder.DataScopeRequest scopeRequest) {
         if (statement instanceof Select) {
-            return applySelect((Select) statement, dataScopeType, user, tableColumnMap);
+            return applySelect((Select) statement, finalScope, user, rule, scopeRequest);
         }
         if (statement instanceof Update) {
-            return applyUpdate((Update) statement, dataScopeType, user, tableColumnMap);
+            return applyUpdate((Update) statement, finalScope, user, rule, scopeRequest);
         }
         if (statement instanceof Delete) {
-            return applyDelete((Delete) statement, dataScopeType, user, tableColumnMap);
+            return applyDelete((Delete) statement, finalScope, user, rule, scopeRequest);
         }
         return false;
     }
@@ -155,37 +177,40 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
      * 在 SELECT 语句上递归应用数据权限。
      *
      * @param select         Select 语句
-     * @param dataScopeType  数据范围类型
+     * @param finalScope     最终数据范围
      * @param user           当前用户
-     * @param tableColumnMap 表->字段 映射
+     * @param rule           生效规则
      * @return true 表示发生了改写
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private boolean applySelect(Select select, String dataScopeType, AuthUser user,
-                                Map<String, String> tableColumnMap) {
+    private boolean applySelect(Select select,
+                                DataScopeEvaluator.FinalScope finalScope,
+                                AuthUser user,
+                                EffectiveRule rule,
+                                DataScopeContextHolder.DataScopeRequest scopeRequest) {
         if (select == null) {
             return false;
         }
         boolean changed = false;
         if (select.getWithItemsList() != null) {
             for (WithItem withItem : select.getWithItemsList()) {
-                changed |= applySelect(withItem, dataScopeType, user, tableColumnMap);
+                changed |= applySelect(withItem, finalScope, user, rule, scopeRequest);
             }
         }
         if (select instanceof PlainSelect) {
-            return changed | applyPlainSelect((PlainSelect) select, dataScopeType, user, tableColumnMap);
+            return changed | applyPlainSelect((PlainSelect) select, finalScope, user, rule, scopeRequest);
         }
         if (select instanceof SetOperationList) {
             for (Select subSelect : ((SetOperationList) select).getSelects()) {
-                changed |= applySelect(subSelect, dataScopeType, user, tableColumnMap);
+                changed |= applySelect(subSelect, finalScope, user, rule, scopeRequest);
             }
             return changed;
         }
         if (select instanceof ParenthesedSelect) {
             Select inner = ((ParenthesedSelect) select).getSelect();
             if (inner != null) {
-                changed |= applySelect(inner, dataScopeType, user, tableColumnMap);
+                changed |= applySelect(inner, finalScope, user, rule, scopeRequest);
             }
             return changed;
         }
@@ -196,24 +221,31 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
      * 在普通 SELECT 上拼接 WHERE 数据权限条件。
      *
      * @param select         PlainSelect
-     * @param dataScopeType  数据范围类型
+     * @param finalScope     最终数据范围
      * @param user           当前用户
-     * @param tableColumnMap 表->字段 映射
+     * @param rule           生效规则
      * @return true 表示发生了改写
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private boolean applyPlainSelect(PlainSelect select, String dataScopeType, AuthUser user,
-                                     Map<String, String> tableColumnMap) {
+    private boolean applyPlainSelect(PlainSelect select,
+                                     DataScopeEvaluator.FinalScope finalScope,
+                                     AuthUser user,
+                                     EffectiveRule rule,
+                                     DataScopeContextHolder.DataScopeRequest scopeRequest) {
         boolean changed = false;
-        changed |= applyFromItem(select.getFromItem(), dataScopeType, user, tableColumnMap);
+        changed |= applyFromItem(select.getFromItem(), finalScope, user, rule, scopeRequest);
         if (select.getJoins() != null) {
             for (Join join : select.getJoins()) {
-                changed |= applyFromItem(join.getRightItem(), dataScopeType, user, tableColumnMap);
+                changed |= applyFromItem(join.getRightItem(), finalScope, user, rule, scopeRequest);
             }
         }
-        List<TableRef> tableRefs = collectTableRefs(select.getFromItem(), select.getJoins(), tableColumnMap);
-        Expression condition = buildCombinedCondition(tableRefs, dataScopeType, user);
+        if (!matchesRule(select.getFromItem(), select.getJoins(), rule, scopeRequest)) {
+            return changed;
+        }
+        String deptQualifier = resolveQualifier(select.getFromItem(), scopeRequest.getDeptAlias(), rule.getTableAlias());
+        String userQualifier = resolveQualifier(select.getFromItem(), scopeRequest.getUserAlias(), rule.getTableAlias());
+        Expression condition = buildCondition(finalScope, user, rule, deptQualifier, userQualifier);
         if (condition == null) {
             return changed;
         }
@@ -229,23 +261,25 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
      * 在 UPDATE 语句上拼接 WHERE 数据权限条件。
      *
      * @param update         Update 语句
-     * @param dataScopeType  数据范围类型
+     * @param finalScope     最终数据范围
      * @param user           当前用户
-     * @param tableColumnMap 表->字段 映射
+     * @param rule           生效规则
      * @return true 表示发生了改写
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private boolean applyUpdate(Update update, String dataScopeType, AuthUser user,
-                                Map<String, String> tableColumnMap) {
-        List<TableRef> tableRefs = new ArrayList<>();
-        if (update.getTable() != null) {
-            addTableRef(update.getTable(), tableRefs, tableColumnMap);
+    private boolean applyUpdate(Update update,
+                                DataScopeEvaluator.FinalScope finalScope,
+                                AuthUser user,
+                                EffectiveRule rule,
+                                DataScopeContextHolder.DataScopeRequest scopeRequest) {
+        Table table = update.getTable();
+        if (!matchesRule(table, rule, scopeRequest)) {
+            return false;
         }
-        for (Table table : extractTables(update)) {
-            addTableRef(table, tableRefs, tableColumnMap);
-        }
-        Expression condition = buildCombinedCondition(tableRefs, dataScopeType, user);
+        String deptQualifier = resolveQualifier(table, scopeRequest.getDeptAlias(), rule.getTableAlias());
+        String userQualifier = resolveQualifier(table, scopeRequest.getUserAlias(), rule.getTableAlias());
+        Expression condition = buildCondition(finalScope, user, rule, deptQualifier, userQualifier);
         if (condition == null) {
             return false;
         }
@@ -261,23 +295,25 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
      * 在 DELETE 语句上拼接 WHERE 数据权限条件。
      *
      * @param delete         Delete 语句
-     * @param dataScopeType  数据范围类型
+     * @param finalScope     最终数据范围
      * @param user           当前用户
-     * @param tableColumnMap 表->字段 映射
+     * @param rule           生效规则
      * @return true 表示发生了改写
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private boolean applyDelete(Delete delete, String dataScopeType, AuthUser user,
-                                Map<String, String> tableColumnMap) {
-        List<TableRef> tableRefs = new ArrayList<>();
-        if (delete.getTable() != null) {
-            addTableRef(delete.getTable(), tableRefs, tableColumnMap);
+    private boolean applyDelete(Delete delete,
+                                DataScopeEvaluator.FinalScope finalScope,
+                                AuthUser user,
+                                EffectiveRule rule,
+                                DataScopeContextHolder.DataScopeRequest scopeRequest) {
+        Table table = delete.getTable();
+        if (!matchesRule(table, rule, scopeRequest)) {
+            return false;
         }
-        for (Table table : extractTables(delete)) {
-            addTableRef(table, tableRefs, tableColumnMap);
-        }
-        Expression condition = buildCombinedCondition(tableRefs, dataScopeType, user);
+        String deptQualifier = resolveQualifier(table, scopeRequest.getDeptAlias(), rule.getTableAlias());
+        String userQualifier = resolveQualifier(table, scopeRequest.getUserAlias(), rule.getTableAlias());
+        Expression condition = buildCondition(finalScope, user, rule, deptQualifier, userQualifier);
         if (condition == null) {
             return false;
         }
@@ -293,25 +329,28 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
      * 递归处理 FROM 子项中的子查询。
      *
      * @param fromItem       FromItem
-     * @param dataScopeType  数据范围类型
+     * @param finalScope     最终数据范围
      * @param user           当前用户
-     * @param tableColumnMap 表->字段 映射
+     * @param rule           生效规则
      * @return true 表示发生了改写
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private boolean applyFromItem(FromItem fromItem, String dataScopeType, AuthUser user,
-                                  Map<String, String> tableColumnMap) {
+    private boolean applyFromItem(FromItem fromItem,
+                                  DataScopeEvaluator.FinalScope finalScope,
+                                  AuthUser user,
+                                  EffectiveRule rule,
+                                  DataScopeContextHolder.DataScopeRequest scopeRequest) {
         if (fromItem instanceof ParenthesedSelect) {
             Select inner = ((ParenthesedSelect) fromItem).getSelect();
-            return applySelect(inner, dataScopeType, user, tableColumnMap);
+            return applySelect(inner, finalScope, user, rule, scopeRequest);
         }
         if (fromItem instanceof ParenthesedFromItem) {
             ParenthesedFromItem parenthesed = (ParenthesedFromItem) fromItem;
-            boolean changed = applyFromItem(parenthesed.getFromItem(), dataScopeType, user, tableColumnMap);
+            boolean changed = applyFromItem(parenthesed.getFromItem(), finalScope, user, rule, scopeRequest);
             if (parenthesed.getJoins() != null) {
                 for (Join join : parenthesed.getJoins()) {
-                    changed |= applyFromItem(join.getRightItem(), dataScopeType, user, tableColumnMap);
+                    changed |= applyFromItem(join.getRightItem(), finalScope, user, rule, scopeRequest);
                 }
             }
             return changed;
@@ -320,284 +359,196 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
     }
 
     /**
-     * 反射读取语句中的表集合（JSqlParser 差异兼容）。
-     *
-     * @param statement Select/Update/Delete 语句
-     * @return 表列表
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
+     * 判断当前查询是否匹配规则。
      */
-    private List<Table> extractTables(Object statement) {
-        try {
-            java.lang.reflect.Method method = statement.getClass().getMethod("getTables");
-            Object value = method.invoke(statement);
-            if (value instanceof List) {
-                List<?> list = (List<?>) value;
-                List<Table> tables = new ArrayList<>();
-                for (Object item : list) {
-                    if (item instanceof Table) {
-                        tables.add((Table) item);
-                    }
-                }
-                return tables;
-            }
-        } catch (Exception ignore) {
+    private boolean matchesRule(FromItem fromItem, List<Join> joins, EffectiveRule rule,
+                                DataScopeContextHolder.DataScopeRequest scopeRequest) {
+        if (rule == null) {
+            return false;
         }
-        return Collections.emptyList();
+        if (!StringUtils.hasText(rule.getTableName()) && !StringUtils.hasText(rule.getTableAlias())) {
+            return true;
+        }
+        List<Table> tables = collectTables(fromItem, joins);
+        if (tables.isEmpty()) {
+            return false;
+        }
+        String expectedAlias = normalizeName(rule.getTableAlias());
+        String expectedTable = normalizeName(rule.getTableName());
+        for (Table table : tables) {
+            if (table == null) {
+                continue;
+            }
+            if (StringUtils.hasText(expectedAlias)) {
+                String alias = table.getAlias() == null ? null : table.getAlias().getName();
+                if (expectedAlias.equalsIgnoreCase(normalizeName(alias))) {
+                    return true;
+                }
+            }
+            if (StringUtils.hasText(expectedTable)) {
+                String name = normalizeName(table.getName());
+                String full = normalizeName(table.getFullyQualifiedName());
+                if (expectedTable.equalsIgnoreCase(name) || expectedTable.equalsIgnoreCase(full)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
-    /**
-     * 收集 FROM/Join 中的表引用列表。
-     *
-     * @param fromItem       FromItem
-     * @param joins          Join 列表
-     * @param tableColumnMap 表->字段 映射
-     * @return 表引用列表
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    private List<TableRef> collectTableRefs(FromItem fromItem, List<Join> joins,
-                                            Map<String, String> tableColumnMap) {
-        List<TableRef> refs = new ArrayList<>();
-        collectTableRefsFromItem(fromItem, refs, tableColumnMap);
+    private boolean matchesRule(Table table, EffectiveRule rule, DataScopeContextHolder.DataScopeRequest scopeRequest) {
+        if (rule == null) {
+            return false;
+        }
+        if (table == null) {
+            return false;
+        }
+        String expectedAlias = normalizeName(rule.getTableAlias());
+        String expectedTable = normalizeName(rule.getTableName());
+        if (!StringUtils.hasText(expectedAlias) && !StringUtils.hasText(expectedTable)) {
+            return true;
+        }
+        if (StringUtils.hasText(expectedAlias)) {
+            String alias = table.getAlias() == null ? null : table.getAlias().getName();
+            if (expectedAlias.equalsIgnoreCase(normalizeName(alias))) {
+                return true;
+            }
+        }
+        if (StringUtils.hasText(expectedTable)) {
+            String name = normalizeName(table.getName());
+            String full = normalizeName(table.getFullyQualifiedName());
+            return expectedTable.equalsIgnoreCase(name) || expectedTable.equalsIgnoreCase(full);
+        }
+        return false;
+    }
+
+    private List<Table> collectTables(FromItem fromItem, List<Join> joins) {
+        List<Table> tables = new ArrayList<>();
+        collectTablesFromItem(fromItem, tables);
         if (joins != null) {
             for (Join join : joins) {
-                collectTableRefsFromItem(join.getRightItem(), refs, tableColumnMap);
+                collectTablesFromItem(join.getRightItem(), tables);
             }
         }
-        return refs;
+        return tables;
     }
 
-    /**
-     * 从 FromItem 递归提取表引用。
-     *
-     * @param fromItem       FromItem
-     * @param refs           表引用结果集
-     * @param tableColumnMap 表->字段 映射
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    private void collectTableRefsFromItem(FromItem fromItem, List<TableRef> refs,
-                                          Map<String, String> tableColumnMap) {
+    private void collectTablesFromItem(FromItem fromItem, List<Table> tables) {
         if (fromItem instanceof Table) {
-            addTableRef((Table) fromItem, refs, tableColumnMap);
+            tables.add((Table) fromItem);
             return;
         }
         if (fromItem instanceof ParenthesedFromItem) {
             ParenthesedFromItem parenthesed = (ParenthesedFromItem) fromItem;
-            collectTableRefsFromItem(parenthesed.getFromItem(), refs, tableColumnMap);
+            collectTablesFromItem(parenthesed.getFromItem(), tables);
             if (parenthesed.getJoins() != null) {
                 for (Join join : parenthesed.getJoins()) {
-                    collectTableRefsFromItem(join.getRightItem(), refs, tableColumnMap);
+                    collectTablesFromItem(join.getRightItem(), tables);
                 }
             }
         }
     }
 
-    /**
-     * 添加表引用及其数据权限列映射。
-     *
-     * @param table          表对象
-     * @param refs           表引用结果集
-     * @param tableColumnMap 表->字段 映射
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    private void addTableRef(Table table, List<TableRef> refs, Map<String, String> tableColumnMap) {
-        if (table == null) {
-            return;
+    private String resolveQualifier(FromItem fromItem, String preferredAlias, String ruleAlias) {
+        if (StringUtils.hasText(preferredAlias)) {
+            return preferredAlias;
         }
-        String tableName = normalizeName(table.getName());
-        String fullName = normalizeName(table.getFullyQualifiedName());
-        String column = lookupColumn(tableColumnMap, tableName, fullName);
-        if (column == null) {
-            return;
+        if (StringUtils.hasText(ruleAlias)) {
+            return ruleAlias;
         }
-        String qualifier = table.getAlias() == null ? table.getName() : table.getAlias().getName();
-        refs.add(new TableRef(table.getName(), qualifier, column));
-    }
-
-    /**
-     * 组合多个表的权限条件为 AND 表达式。
-     *
-     * @param tableRefs     表引用列表
-     * @param dataScopeType 数据范围类型
-     * @param user          当前用户
-     * @return 组合条件，若无需限制返回 null
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    private Expression buildCombinedCondition(List<TableRef> tableRefs, String dataScopeType, AuthUser user) {
-        if (tableRefs == null || tableRefs.isEmpty()) {
-            return null;
-        }
-        List<Expression> expressions = new ArrayList<>();
-        for (TableRef ref : tableRefs) {
-            Expression condition = buildCondition(dataScopeType, ref, user);
-            if (condition != null) {
-                expressions.add(condition);
+        if (fromItem instanceof Table) {
+            Table table = (Table) fromItem;
+            if (table.getAlias() != null) {
+                return table.getAlias().getName();
             }
+            return table.getName();
         }
-        if (expressions.isEmpty()) {
-            return null;
-        }
-        Expression combined = expressions.get(0);
-        for (int i = 1; i < expressions.size(); i++) {
-            combined = new AndExpression(combined, expressions.get(i));
-        }
-        return combined;
+        return null;
     }
 
-    /**
-     * 构建单表的数据权限条件表达式。
-     *
-     * @param dataScopeType 数据范围类型
-     * @param ref           表引用
-     * @param user          当前用户
-     * @return 条件表达式，若无需限制返回 null
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    private Expression buildCondition(String dataScopeType, TableRef ref, AuthUser user) {
-        if (DataScopeType.NONE.equals(dataScopeType)) {
+    private String resolveQualifier(Table table, String preferredAlias, String ruleAlias) {
+        if (StringUtils.hasText(preferredAlias)) {
+            return preferredAlias;
+        }
+        if (StringUtils.hasText(ruleAlias)) {
+            return ruleAlias;
+        }
+        if (table == null) {
+            return null;
+        }
+        if (table.getAlias() != null) {
+            return table.getAlias().getName();
+        }
+        return table.getName();
+    }
+
+    private Expression buildCondition(DataScopeEvaluator.FinalScope finalScope,
+                                      AuthUser user,
+                                      EffectiveRule rule,
+                                      String deptQualifier,
+                                      String userQualifier) {
+        if (finalScope == null || finalScope.isNone()) {
             return new EqualsTo(new LongValue(1), new LongValue(0));
         }
-        if (DataScopeType.SELF.equals(dataScopeType)) {
-            if (user.getId() == null) {
-                return new EqualsTo(new LongValue(1), new LongValue(0));
-            }
-            return new EqualsTo(ref.toColumn(), new LongValue(user.getId()));
+        if (finalScope.isAll()) {
+            return null;
         }
-        if (DataScopeType.DEPT.equals(dataScopeType)) {
-            if (user.getDeptId() == null) {
-                return new EqualsTo(new LongValue(1), new LongValue(0));
-            }
-            return new EqualsTo(ref.toColumn(), new LongValue(user.getDeptId()));
+        String deptColumn = rule.getDeptColumn();
+        String userColumn = rule.getUserColumn();
+        boolean hasDeptColumn = StringUtils.hasText(deptColumn);
+        boolean hasUserColumn = StringUtils.hasText(userColumn);
+
+        Set<Long> deptIds = finalScope.getDeptIds();
+        boolean needSelf = finalScope.isSelf();
+        if (!hasDeptColumn && deptIds != null && !deptIds.isEmpty()) {
+            needSelf = true;
         }
-        if (DataScopeType.DEPT_AND_CHILD.equals(dataScopeType)
-                || DataScopeType.CUSTOM_DEPT.equals(dataScopeType)
-                || DataScopeType.CUSTOM.equals(dataScopeType)) {
-            String value = user.getDataScopeValue();
-            if (value == null || value.trim().isEmpty()) {
-                return new EqualsTo(new LongValue(1), new LongValue(0));
-            }
-            List<Expression> values = parseValues(value);
-            if (values.isEmpty()) {
-                return new EqualsTo(new LongValue(1), new LongValue(0));
-            }
-            InExpression in = new InExpression();
-            in.setLeftExpression(ref.toColumn());
-            in.setRightExpression(new ExpressionList<>(values));
-            return in;
+        Expression deptExpr = null;
+        if (hasDeptColumn && deptIds != null && !deptIds.isEmpty()) {
+            Column deptCol = toColumn(deptQualifier, deptColumn);
+            deptExpr = buildDeptExpression(deptIds, deptCol);
         }
-        return null;
+        Expression userExpr = null;
+        if (needSelf && hasUserColumn && user.getId() != null) {
+            Column userCol = toColumn(userQualifier, userColumn);
+            userExpr = new EqualsTo(userCol, new LongValue(user.getId()));
+        }
+        if (deptExpr == null && userExpr == null) {
+            return new EqualsTo(new LongValue(1), new LongValue(0));
+        }
+        if (deptExpr != null && userExpr != null) {
+            return new OrExpression(deptExpr, userExpr);
+        }
+        return deptExpr != null ? deptExpr : userExpr;
     }
 
-    /**
-     * 解析自定义数据范围值为表达式集合。
-     *
-     * @param value 逗号分隔的值
-     * @return 表达式列表
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    private List<Expression> parseValues(String value) {
-        String[] tokens = value.split(",");
+    private Expression buildDeptExpression(Set<Long> deptIds, Column column) {
+        if (deptIds == null || deptIds.isEmpty()) {
+            return new EqualsTo(new LongValue(1), new LongValue(0));
+        }
+        if (deptIds.size() == 1) {
+            Long only = deptIds.iterator().next();
+            return new EqualsTo(column, new LongValue(only));
+        }
         List<Expression> values = new ArrayList<>();
-        for (String token : tokens) {
-            String trimmed = trimQuotes(token);
-            if (trimmed.isEmpty()) {
-                continue;
-            }
-            if (isNumeric(trimmed)) {
-                values.add(new LongValue(trimmed));
-                continue;
-            }
-            if (isSafeToken(trimmed)) {
-                values.add(new StringValue(trimmed));
+        for (Long id : deptIds) {
+            if (id != null) {
+                values.add(new LongValue(id));
             }
         }
-        return values;
+        InExpression in = new InExpression();
+        in.setLeftExpression(column);
+        in.setRightExpression(new ExpressionList<>(values));
+        return in;
     }
 
-    /**
-     * 去除字符串两侧单引号并裁剪空白。
-     *
-     * @param token 原始值
-     * @return 处理后的值
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    private String trimQuotes(String token) {
-        if (token == null) {
-            return "";
+    private Column toColumn(String qualifier, String columnName) {
+        Column columnRef = new Column();
+        columnRef.setColumnName(columnName);
+        if (StringUtils.hasText(qualifier)) {
+            columnRef.setTable(new Table(qualifier));
         }
-        String trimmed = token.trim();
-        if (trimmed.length() >= 2 && trimmed.startsWith("'") && trimmed.endsWith("'")) {
-            return trimmed.substring(1, trimmed.length() - 1).trim();
-        }
-        return trimmed;
-    }
-
-    /**
-     * 判断字符串是否为纯数字。
-     *
-     * @param value 值
-     * @return true 表示纯数字
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    private boolean isNumeric(String value) {
-        if (value == null || value.isEmpty()) {
-            return false;
-        }
-        for (int i = 0; i < value.length(); i++) {
-            if (!Character.isDigit(value.charAt(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * 判断自定义 token 是否为安全字符集。
-     *
-     * @param value token 值
-     * @return true 表示安全
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    private boolean isSafeToken(String value) {
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (!(Character.isLetterOrDigit(c) || c == '_' || c == '-')) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * 查询表名对应的数据权限列。
-     *
-     * @param tableColumnMap 表->字段 映射
-     * @param name           表名
-     * @param fullName       全名
-     * @return 列名，未命中返回 null
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    private String lookupColumn(Map<String, String> tableColumnMap, String name, String fullName) {
-        if (name != null) {
-            String column = tableColumnMap.get(name);
-            if (column != null) {
-                return column;
-            }
-        }
-        if (fullName != null) {
-            return tableColumnMap.get(fullName);
-        }
-        return null;
+        return columnRef;
     }
 
     /**
@@ -613,67 +564,83 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
     }
 
     /**
-     * 规范化数据范围类型，空值时回退默认类型。
-     *
-     * @param value    数据范围类型
-     * @param fallback 默认类型
-     * @return 规范化后的类型
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
+     * 规则缺省值补全。
      */
-    private String normalizeType(String value, String fallback) {
-        String candidate = value;
-        if (candidate == null || candidate.trim().isEmpty()) {
-            candidate = fallback;
+    private EffectiveRule buildEffectiveRule(DataScopeRule rule, DataScopeContextHolder.DataScopeRequest request) {
+        EffectiveRule effective = new EffectiveRule();
+        boolean hasRule = rule != null;
+        if (rule != null) {
+            effective.setTableName(rule.getTableName());
+            effective.setTableAlias(rule.getTableAlias());
+            effective.setDeptColumn(rule.getDeptColumn());
+            effective.setUserColumn(rule.getUserColumn());
+            effective.setFilterType(rule.getFilterType());
+            effective.setStatus(rule.getStatus());
         }
-        if (candidate == null) {
-            return DataScopeType.ALL;
+        if (!hasRule) {
+            if (!StringUtils.hasText(effective.getDeptColumn())) {
+                effective.setDeptColumn(DEFAULT_DEPT_COLUMN);
+            }
+            if (!StringUtils.hasText(effective.getUserColumn())) {
+                effective.setUserColumn(DEFAULT_USER_COLUMN);
+            }
+        } else {
+            if (!StringUtils.hasText(effective.getDeptColumn())) {
+                effective.setDeptColumn(null);
+            }
+            if (!StringUtils.hasText(effective.getUserColumn())) {
+                effective.setUserColumn(null);
+            }
         }
-        return candidate.trim().toUpperCase(Locale.ROOT);
+        if (effective.getFilterType() == null) {
+            effective.setFilterType(1);
+        }
+        if (!StringUtils.hasText(effective.getTableAlias()) && request != null) {
+            if (StringUtils.hasText(request.getDeptAlias())) {
+                effective.setTableAlias(request.getDeptAlias());
+            } else if (StringUtils.hasText(request.getUserAlias())) {
+                effective.setTableAlias(request.getUserAlias());
+            }
+        }
+        return effective;
     }
 
-    /**
-     * 表引用与权限字段映射容器。
-     *
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-    private static final class TableRef {
+    private static final class EffectiveRule {
         @Getter
-        private final String table;
-        private final String qualifier;
-        private final String column;
+        private String tableName;
+        @Getter
+        private String tableAlias;
+        @Getter
+        private String deptColumn;
+        @Getter
+        private String userColumn;
+        @Getter
+        private Integer filterType;
+        @Getter
+        private Integer status;
 
-        /**
-         * 构建表引用。
-         *
-         * @param table     表名
-         * @param qualifier 表别名或限定名
-         * @param column    权限字段
-         * @author GPT-5.2-codex(high)
-         * @date 2026/2/9
-         */
-        private TableRef(String table, String qualifier, String column) {
-            this.table = table;
-            this.qualifier = qualifier;
-            this.column = column;
+        private void setTableName(String tableName) {
+            this.tableName = tableName;
         }
 
-        /**
-         * 生成带别名的列引用。
-         *
-         * @return Column 引用
-         * @author GPT-5.2-codex(high)
-         * @date 2026/2/9
-         */
-        private Column toColumn() {
-            Column columnRef = new Column();
-            columnRef.setColumnName(column);
-            if (qualifier != null && !qualifier.isEmpty()) {
-                columnRef.setTable(new Table(qualifier));
-            }
-            return columnRef;
+        private void setTableAlias(String tableAlias) {
+            this.tableAlias = tableAlias;
         }
 
+        private void setDeptColumn(String deptColumn) {
+            this.deptColumn = deptColumn;
+        }
+
+        private void setUserColumn(String userColumn) {
+            this.userColumn = userColumn;
+        }
+
+        private void setFilterType(Integer filterType) {
+            this.filterType = filterType;
+        }
+
+        private void setStatus(Integer status) {
+            this.status = status;
+        }
     }
 }

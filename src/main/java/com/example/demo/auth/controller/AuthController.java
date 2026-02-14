@@ -35,6 +35,7 @@ public class AuthController extends BaseController {
     private final SysUserService userService;
     private final LoginAttemptService loginAttemptService;
     private final UserProfileService userProfileService;
+    private final com.example.demo.datascope.service.DataScopeProfileService dataScopeProfileService;
 
     /**
      * 生成验证码并返回验证码 ID 与图片数据。
@@ -100,6 +101,10 @@ public class AuthController extends BaseController {
         authUser.setDeptId(user.getDeptId());
         authUser.setDataScopeType(user.getDataScopeType());
         authUser.setDataScopeValue(user.getDataScopeValue());
+        com.example.demo.datascope.model.DataScopeProfile profile = dataScopeProfileService.buildProfile(user);
+        authUser.setDeptTreeIds(profile.getDeptTreeIds());
+        authUser.setRoleDataScopes(profile.getRoleDataScopes());
+        authUser.setUserScopeOverrides(profile.getUserScopeOverrides());
         LoginResponse loginResponse = tokenService.issueToken(authUser);
         response.setHeader("Authorization", "Bearer " + loginResponse.getToken());
         return success(loginResponse);

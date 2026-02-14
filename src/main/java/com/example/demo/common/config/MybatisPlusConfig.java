@@ -31,14 +31,15 @@ public class MybatisPlusConfig {
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor(SqlGuardProperties properties,
                                                          DataScopeProperties dataScopeProperties,
-                                                         DataScopeRuleProvider dataScopeRuleProvider) {
+                                                         DataScopeRuleProvider dataScopeRuleProvider,
+                                                         com.example.demo.datascope.service.DataScopeEvaluator evaluator) {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
         if (properties.isEnabled()) {
             interceptor.addInnerInterceptor(new SqlGuardInnerInterceptor(properties));
         }
         if (dataScopeProperties.isEnabled()) {
-            interceptor.addInnerInterceptor(new DataScopeInnerInterceptor(dataScopeProperties, dataScopeRuleProvider));
+            interceptor.addInnerInterceptor(new DataScopeInnerInterceptor(dataScopeProperties, dataScopeRuleProvider, evaluator));
         }
         return interceptor;
     }

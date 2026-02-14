@@ -22,7 +22,7 @@ public class DataScopeProperties {
 
     private String source = "db";
 
-    private String defaultType = DataScopeType.ALL;
+    private String defaultType = DataScopeType.SELF;
 
     private long cacheSeconds = 0;
 

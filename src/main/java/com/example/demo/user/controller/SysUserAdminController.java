@@ -5,9 +5,19 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.model.PageResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.datascope.dto.UserDataScopeCreateRequest;
+import com.example.demo.datascope.dto.UserDataScopeDetailResponse;
+import com.example.demo.datascope.dto.UserDataScopeUpdateRequest;
+import com.example.demo.datascope.dto.UserDataScopeVO;
+import com.example.demo.datascope.entity.UserDataScope;
+import com.example.demo.datascope.service.UserDataScopeService;
 import com.example.demo.dept.service.DeptService;
+import com.example.demo.menu.entity.Menu;
+import com.example.demo.menu.service.MenuService;
 import com.example.demo.permission.entity.UserRole;
 import com.example.demo.permission.service.UserRoleService;
+import com.example.demo.post.entity.UserPost;
+import com.example.demo.post.service.UserPostService;
 import com.example.demo.user.converter.SysUserConverter;
 import com.example.demo.user.dto.*;
 import com.example.demo.user.entity.SysUser;
@@ -20,7 +30,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 用户后台管理接口，覆盖创建、更新、状态、角色与数据范围的维护操作。
@@ -38,8 +51,11 @@ public class SysUserAdminController extends BaseController {
     private final SysUserConverter userConverter;
     private final SysUserViewService userViewService;
     private final UserRoleService userRoleService;
+    private final UserPostService userPostService;
     private final DeptService deptService;
     private final PasswordService passwordService;
+    private final UserDataScopeService userDataScopeService;
+    private final MenuService menuService;
 
     /**
      * 获取用户列表。
@@ -90,6 +106,29 @@ public class SysUserAdminController extends BaseController {
                 .distinct()
                 .collect(java.util.stream.Collectors.toList());
         return success(roleIds);
+    }
+
+    /**
+     * 查询用户已分配岗位 ID 列表。
+     *
+     * @param id 用户 ID
+     * @return 岗位 ID 列表
+     */
+    @GetMapping("/{id}/posts")
+    @RequirePermission("user:query")
+    public CommonResult<java.util.List<Long>> userPostIds(@PathVariable Long id) {
+        if (userService.getById(id) == null) {
+            return error(404, i18n("user.not.found"));
+        }
+        java.util.List<Long> postIds = userPostService.list(
+                        com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserPost.class)
+                                .eq(UserPost::getUserId, id))
+                .stream()
+                .map(UserPost::getPostId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+        return success(postIds);
     }
 
     @PostMapping
@@ -188,16 +227,159 @@ public class SysUserAdminController extends BaseController {
         return success();
     }
 
+    @PutMapping("/{id}/posts")
+    @RequirePermission("user:post:assign")
+    public CommonResult<Void> assignPosts(@PathVariable Long id, @Valid @RequestBody SysUserPostAssignRequest request) {
+        if (userService.getById(id) == null) {
+            return error(404, i18n("user.not.found"));
+        }
+        if (!userService.assignPosts(id, request.getPostIds())) {
+            return error(500, i18n("user.posts.assign.failed"));
+        }
+        return success();
+    }
+
     @PutMapping("/{id}/data-scope")
     @RequirePermission("user:data-scope:set")
     public CommonResult<Void> updateDataScope(@PathVariable Long id, @Valid @RequestBody SysUserDataScopeRequest request) {
         if (userService.getById(id) == null) {
             return error(404, i18n("user.not.found"));
         }
-        if (!userService.updateDataScope(id, request.getDataScopeType(), request.getDataScopeValue())) {
+        if (!userService.updateDataScope(id, request.getDataScopeType(), request.getDataScopeValue(), request.getScopeKey())) {
             return error(500, i18n("user.data.scope.update.failed"));
         }
         return success();
+    }
+
+    @GetMapping("/{id}/data-scope")
+    @RequirePermission("data-scope:user:query")
+    public CommonResult<UserDataScopeDetailResponse> listUserDataScopes(@PathVariable Long id) {
+        SysUser user = userService.getById(id);
+        if (user == null) {
+            return error(404, i18n("user.not.found"));
+        }
+        UserDataScopeDetailResponse response = new UserDataScopeDetailResponse();
+        response.setUserId(user.getId());
+        response.setUserName(user.getUserName());
+        response.setNickName(user.getNickName());
+        response.setDeptId(user.getDeptId());
+        if (user.getDeptId() != null) {
+            com.example.demo.dept.entity.Dept dept = deptService.getById(user.getDeptId());
+            response.setDeptName(dept == null ? null : dept.getName());
+        }
+        List<UserDataScope> overrides = userDataScopeService.list(
+                com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserDataScope.class)
+                        .eq(UserDataScope::getUserId, id));
+        response.setOverrides(toUserDataScopeVOs(overrides));
+        return success(response);
+    }
+
+    @PostMapping("/{id}/data-scope")
+    @RequirePermission("data-scope:user:manage")
+    public CommonResult<UserDataScopeVO> createUserDataScope(@PathVariable Long id,
+                                                             @Valid @RequestBody UserDataScopeCreateRequest request) {
+        if (userService.getById(id) == null) {
+            return error(404, i18n("user.not.found"));
+        }
+        String scopeKey = normalizeScopeKey(request.getScopeKey());
+        UserDataScope existing = userDataScopeService.getOne(
+                com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserDataScope.class)
+                        .eq(UserDataScope::getUserId, id)
+                        .eq(UserDataScope::getScopeKey, scopeKey));
+        if (existing != null) {
+            return error(400, i18n("data.scope.user.exists"));
+        }
+        UserDataScope record = new UserDataScope();
+        record.setUserId(id);
+        record.setScopeKey(scopeKey);
+        record.setDataScopeType(request.getDataScopeType());
+        record.setDataScopeValue(request.getDataScopeValue());
+        record.setStatus(request.getStatus() == null ? 1 : request.getStatus());
+        record.setRemark(request.getRemark());
+        userDataScopeService.save(record);
+        return success(toUserDataScopeVO(record));
+    }
+
+    @PutMapping("/data-scope/{scopeId}")
+    @RequirePermission("data-scope:user:manage")
+    public CommonResult<Void> updateUserDataScope(@PathVariable Long scopeId,
+                                                  @Valid @RequestBody UserDataScopeUpdateRequest request) {
+        UserDataScope existing = userDataScopeService.getById(scopeId);
+        if (existing == null) {
+            return error(404, i18n("data.scope.user.not.found"));
+        }
+        UserDataScope record = new UserDataScope();
+        record.setId(scopeId);
+        record.setDataScopeType(request.getDataScopeType());
+        record.setDataScopeValue(request.getDataScopeValue());
+        record.setStatus(request.getStatus());
+        record.setRemark(request.getRemark());
+        if (!userDataScopeService.updateById(record)) {
+            return error(500, i18n("common.update.failed"));
+        }
+        return success();
+    }
+
+    @DeleteMapping("/data-scope/{scopeId}")
+    @RequirePermission("data-scope:user:manage")
+    public CommonResult<Void> deleteUserDataScope(@PathVariable Long scopeId) {
+        if (userDataScopeService.getById(scopeId) == null) {
+            return error(404, i18n("data.scope.user.not.found"));
+        }
+        if (!userDataScopeService.removeById(scopeId)) {
+            return error(500, i18n("common.delete.failed"));
+        }
+        return success();
+    }
+
+    private String normalizeScopeKey(String scopeKey) {
+        if (StringUtils.isBlank(scopeKey)) {
+            return "*";
+        }
+        String trimmed = scopeKey.trim();
+        return trimmed.isEmpty() ? "*" : trimmed;
+    }
+
+    private List<UserDataScopeVO> toUserDataScopeVOs(List<UserDataScope> overrides) {
+        if (overrides == null || overrides.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return overrides.stream()
+                .filter(Objects::nonNull)
+                .map(this::toUserDataScopeVO)
+                .collect(Collectors.toList());
+    }
+
+    private UserDataScopeVO toUserDataScopeVO(UserDataScope entity) {
+        UserDataScopeVO vo = new UserDataScopeVO();
+        vo.setId(entity.getId());
+        vo.setUserId(entity.getUserId());
+        vo.setScopeKey(entity.getScopeKey());
+        vo.setDataScopeType(entity.getDataScopeType());
+        vo.setDataScopeValue(entity.getDataScopeValue());
+        vo.setStatus(entity.getStatus());
+        vo.setRemark(entity.getRemark());
+        vo.setCreateTime(entity.getCreateTime());
+        SysUser user = entity.getUserId() == null ? null : userService.getById(entity.getUserId());
+        if (user != null) {
+            vo.setUserName(user.getUserName());
+            vo.setNickName(user.getNickName());
+            vo.setDeptId(user.getDeptId());
+            vo.setDeptName(user.getDeptId() == null ? null : deptService.getById(user.getDeptId()).getName());
+        }
+        if (StringUtils.isNotBlank(entity.getScopeKey()) && !"*".equals(entity.getScopeKey())) {
+            Menu menu = menuService.getOne(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(Menu.class)
+                    .eq(Menu::getPermission, entity.getScopeKey()));
+            if (menu != null) {
+                vo.setMenuName(menu.getName());
+                vo.setPermission(menu.getPermission());
+            }
+        }
+        if ("*".equals(entity.getScopeKey())) {
+            vo.setMenuName("全局覆盖");
+            vo.setPermission("*");
+        }
+        return vo;
     }
 
     @DeleteMapping("/{id}")
@@ -209,6 +391,8 @@ public class SysUserAdminController extends BaseController {
         }
         userRoleService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserRole.class)
                 .eq(UserRole::getUserId, id));
+        userPostService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserPost.class)
+                .eq(UserPost::getUserId, id));
         if (!userService.removeById(id)) {
             return error(500, i18n("common.delete.failed"));
         }
@@ -231,6 +415,8 @@ public class SysUserAdminController extends BaseController {
         }
         userRoleService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserRole.class)
                 .in(UserRole::getUserId, uniqueIds));
+        userPostService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserPost.class)
+                .in(UserPost::getUserId, uniqueIds));
         if (!userService.removeByIds(uniqueIds)) {
             return error(500, i18n("common.delete.failed"));
         }

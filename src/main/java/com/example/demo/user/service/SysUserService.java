@@ -31,7 +31,9 @@ public interface SysUserService extends IService<SysUser> {
 
     boolean assignRoles(Long id, List<Long> roleIds);
 
-    boolean updateDataScope(Long id, String dataScopeType, String dataScopeValue);
+    boolean assignPosts(Long id, List<Long> postIds);
+
+    boolean updateDataScope(Long id, String dataScopeType, String dataScopeValue, String scopeKey);
 
     boolean updateSelfProfile(Long id, UserProfileUpdateRequest request, String newPassword);
 }

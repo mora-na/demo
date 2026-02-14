@@ -28,22 +28,17 @@ public class DataScopeRuleServiceImpl extends ServiceImpl<DataScopeRuleMapper, D
      * @date 2026/2/9
      */
     @Override
-    public Map<String, String> getEnabledTableColumnMap() {
+    public Map<String, DataScopeRule> getEnabledRules() {
         List<DataScopeRule> rules = baseMapper.selectEnabledRules();
-        Map<String, String> map = new HashMap<>();
+        Map<String, DataScopeRule> map = new HashMap<>();
         if (rules == null || rules.isEmpty()) {
             return map;
         }
         for (DataScopeRule rule : rules) {
-            if (rule == null) {
+            if (rule == null || rule.getScopeKey() == null) {
                 continue;
             }
-            String table = rule.getTableName();
-            String column = rule.getColumnName();
-            if (table == null || column == null) {
-                continue;
-            }
-            map.put(table.trim().toLowerCase(), column);
+            map.put(rule.getScopeKey().trim(), rule);
         }
         return map;
     }

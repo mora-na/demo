@@ -1,174 +1,142 @@
-# 后端数据范围机制说明（详解）
+# 数据范围设计说明（3层架构）
 
-本文档解释数据范围（Data Scope）在项目中的**完整生效链路**、**数据过滤细节**、**配置项**与**常见问题**，适用于排查“为什么数据被过滤/未过滤”的问题。
+本说明覆盖新的数据范围（Data Scope）设计与执行流程，包含三层优先级、映射配置、SQL 过滤规则以及特殊场景处理。
 
-## 1. 生效链路（从登录到 SQL）
+## 目标
 
-### 1.1 用户上下文加载
+- 以“角色默认 → 角色×菜单 → 用户覆盖”的三层模型表达数据范围。
+- 同一层级多角色合并为**并集（最大范围）**。
+- 缺省行为清晰、可预测；无配置时使用约定字段 `create_dept` / `create_by`。
+- 读写解耦：写入时自动记录归属字段，读取时自动拼接过滤条件。
 
-请求进入后，`AuthTokenFilter` 会解析 token 并加载数据库用户，然后调用 `DataScopeResolver` 计算最终数据范围：
+## 三层架构（纵向优先级）
 
-- `AuthTokenFilter`：`src/main/java/com/example/demo/auth/web/AuthTokenFilter.java`
-- `DataScopeResolver`：`src/main/java/com/example/demo/datascope/service/DataScopeResolver.java`
+优先级从高到低：
 
-最终会把数据范围写入 `AuthUser`：
+1. **Layer 3：用户级覆盖**（`sys_user_data_scope`）  
+   - 只要存在用户级覆盖，则直接使用（最高优先级）。
+2. **Layer 2：角色×菜单级**（`sys_role_menu.data_scope_type` + `sys_role_menu_dept`）  
+   - 同一角色在不同菜单下可有不同数据范围。
+3. **Layer 1：角色默认级**（`sys_role.data_scope_type`）  
+   - 角色全局数据范围基线。
 
-- `dataScopeType`
-- `dataScopeValue`
+兜底规则：
+- 用户没有任何角色 → 仅本人（SELF）。
 
-> 注意：登录接口返回的 token 里有 `dataScopeType/value`，但**每次请求会再次根据角色/部门实时计算**并覆盖。
+## 横向合并（多角色并集）
 
-### 1.2 SQL 过滤生效
+当用户有多个角色时，在**同一层级**内取并集（最大范围）：
 
-MyBatis-Plus 拦截器在 SQL 预编译前对 SQL 进行重写，注入数据范围条件：
+- 任一角色为 **ALL** → 直接放行全部数据。
+- 其他范围合并为**可见部门集合 + 是否包含本人**。
 
-- `MybatisPlusConfig`：注册 `DataScopeInnerInterceptor`
-- `DataScopeInnerInterceptor`：在 `beforePrepare` 中重写 SQL
+## 数据范围类型
 
-即 **SELECT / UPDATE / DELETE** 都会被过滤。
+使用字符串枚举（全大写）：
 
-## 2. 数据范围如何计算（DataScopeResolver）
+- `ALL`：全部数据  
+- `DEPT`：本部门  
+- `DEPT_AND_CHILD`：本部门及子部门  
+- `CUSTOM_DEPT` / `CUSTOM`：自定义部门  
+- `SELF`：仅本人  
+- `NONE`：无可见数据
 
-入口：`DataScopeResolver.resolve(SysUser user)`
+## 数据模型
 
-角色/用户数据范围的规则（优先级从高到低）：
+### Layer 1：角色默认范围
+- 表：`sys_role`
+- 字段：`data_scope_type`, `data_scope_value`（CUSTOM_DEPT 时存部门 ID 列表）
 
-1. **任一角色=ALL** → `ALL`
-2. **角色包含 DEPT / DEPT_AND_CHILD / CUSTOM_DEPT** → 合并部门 ID → `CUSTOM_DEPT`
-3. **角色包含 SELF** → `SELF`
-4. **角色包含 NONE 或可见范围为空** → `NONE`
-5. **以上都没有** → 回退用户自身配置（`user.dataScopeType/value`），若为空则用默认值
+### Layer 2：角色×菜单范围
+- 表：`sys_role_menu`
+  - 字段：`data_scope_type`（覆盖角色默认）
+- 表：`sys_role_menu_dept`
+  - 角色 × 菜单 × 部门 的自定义部门集合
 
-组合规则说明：
+### Layer 3：用户覆盖
+- 表：`sys_user_data_scope`
+  - 字段：`scope_key`（菜单权限标识，或 `*` 表示全局覆盖）
+  - `data_scope_type`, `data_scope_value`
 
-- `DEPT_AND_CHILD`：通过部门树展开当前部门及子部门
-- `DEPT`：仅当前部门
-- `CUSTOM_DEPT`：角色配置的部门 ID 列表
-- 最终统一落为 `CUSTOM_DEPT` 并写入 `dataScopeValue`（逗号分隔 ID 列表）
+### 字段映射配置（表 → 部门/用户字段）
+表：`sys_data_scope_rule`
 
-## 3. SQL 过滤细节（DataScopeInnerInterceptor）
+关键字段：
+- `scope_key`：映射标识（通常为菜单权限标识，如 `biz:order:list`）
+- `table_name`：目标表
+- `table_alias`：表别名（可选）
+- `dept_column`：部门字段名（可为 NULL）
+- `user_column`：用户字段名（可为 NULL）
+- `filter_type`：过滤方式（当前实现为追加 WHERE，其他值保留扩展）
 
-### 3.1 过滤条件生成
+无配置时默认字段：
+- `dept_column = create_dept`
+- `user_column = create_by`
 
-对每个匹配的表，生成条件：
+## 登录时预加载（避免每次查库）
 
-- `NONE` → `1 = 0`
-- `SELF` → `{column} = userId`
-- `DEPT` → `{column} = deptId`
-- `CUSTOM/CUSTOM_DEPT/DEPT_AND_CHILD` → `{column} IN (dataScopeValue)`
+登录成功后装配并写入 `AuthUser`：
 
-多个表的条件会 **AND** 组合。
+- `deptTreeIds`：当前部门及子部门集合  
+- `roleDataScopes`：每个角色的默认范围 + 菜单级覆盖  
+- `userScopeOverrides`：用户级覆盖（scope_key → 覆盖配置）
 
-### 3.2 关键理解：范围类型 + 字段映射共同决定过滤
+> 这样每次请求只需读取缓存中的登录上下文即可完成计算。
 
-数据范围的最终限制由两部分组合而成：
+## 读取阶段（SELECT）过滤流程
 
-- **范围类型**（ALL / DEPT_AND_CHILD / DEPT / SELF ...）决定“用什么值去过滤”  
-- **表字段映射**（`sys_data_scope_rule.column_name` 或 `table-column-map`）决定“用哪一列过滤”
+1. **方法标注** `@DataScope` → 将 `scopeKey` 写入线程上下文  
+2. **字段映射** 优先查 `sys_data_scope_rule`  
+   - 无配置 → 使用默认字段 `create_dept` / `create_by`  
+3. **计算最终范围**  
+   - Layer3 → Layer2 → Layer1 → 兜底 SELF  
+   - 多角色并集  
+4. **SQL 拼接条件**  
 
-因此需要保证**列语义与范围类型取值一致**：
-
-| 范围类型 | 过滤值 | 适合映射到的字段语义 |
-|---|---|---|
-| SELF | 当前用户 ID | `owner_id` / `user_id` |
-| DEPT / DEPT_AND_CHILD / CUSTOM_DEPT | 部门 ID 集合 | `dept_id` / `org_id` |
-
-例子：
-
-- 范围类型：`DEPT_AND_CHILD`
-- 映射字段：`biz_order.dept_id`
-- 实际过滤：`biz_order.dept_id IN (用户部门及子部门)`
-
-如果误把 `biz_order` 映射到 `owner_id`，则会变成：
-
+示例：
 ```
-biz_order.owner_id IN (部门ID集合)
-```
-
-这会导致语义错误与数据误过滤。
-
-### 3.2 表与字段映射
-
-拦截器仅对 **配置了数据范围字段**的表生效（表名匹配 + 字段名）：
-
-- 规则来源：`DataScopeRuleProvider`
-  - `db`：来自 `sys_data_scope_rule`
-  - `config`：来自 `security.data-scope.table-column-map`
-
-如果某表未配置映射，则 **不会增加数据范围条件**。
-
-### 3.3 SQL 重写失败时
-
-`DataScopeInnerInterceptor` 使用 JSqlParser 解析 SQL。解析失败会返回原 SQL，即：
-
-> **解析失败 = 不过滤**
-
-建议在复杂 SQL 场景下关注日志或逐步简化 SQL。
-
-## 4. 配置项（application.yml）
-
-```yaml
-security:
-  data-scope:
-    enabled: true
-    default-type: DEPT_AND_CHILD
-    source: db                # db | config
-    cache-seconds: 180
-    # source=config 时生效
-    table-column-map:
-      sys_user: dept_id
-      sys_dept: id
+WHERE (
+    o.create_dept IN ( ...合并后的部门集合... )
+    OR o.create_by = #{userId}
+)
 ```
 
-### source = db
+> 不加 `@DataScope` 则不做数据过滤（用于系统级操作/全量查询）。
 
-使用数据库表 `sys_data_scope_rule`：
+## 特殊场景
 
-| 字段 | 说明 |
-|------|------|
-| table_name | 目标表名（小写匹配） |
-| column_name | 数据范围字段名 |
-| enabled | 1=启用 |
+### 仅按用户过滤（无部门概念）
+若 `dept_column` 为 NULL：
+- 只按 `user_column` 过滤  
+- DEPT/DEPT_AND_CHILD 自动退化为 SELF
 
-### source = config
+### 字段配置错误
+- `dept_column` / `user_column` 指向不存在的列 → 数据库执行时抛错  
+- 该错误不会被拦截吞掉，便于及时定位配置问题
 
-使用 `table-column-map` 直接映射（适合小项目或无需动态管理）。
+### 多归属维度的业务表
+用 `scope_key` 实现“同一表不同过滤维度”：
 
-## 5. 常见问题与排查
+```
+INSERT INTO sys_data_scope_rule (scope_key, table_name, table_alias, dept_column, user_column, remark) VALUES
+('biz:ticket:created',  'biz_ticket', 't', 'create_dept',   'create_by',   '我创建的工单'),
+('biz:ticket:assigned', 'biz_ticket', 't', 'assignee_dept', 'assignee_id', '我负责的工单');
+```
 
-### 5.1 数据未过滤
+## 写入阶段（自动归属字段）
 
-常见原因：
+所有业务表继承 `BaseEntity`：
+- `create_by` / `create_dept` 自动填充
+- `create_dept` 是数据归属部门（快照），不依赖后续部门变更
 
-- `security.data-scope.enabled=false`
-- `table-column-map` 没配置/`sys_data_scope_rule` 为空
-- 用户最终 `dataScopeType=ALL`
-- SQL 解析失败（JSqlParser 不支持）
+## 推荐落地规范
 
-### 5.2 数据全为空
+- 新建业务表：直接用 `create_by` / `create_dept`（零配置）
+- 历史表/第三方表：在 `sys_data_scope_rule` 里补映射
+- 仅按用户过滤的表：`dept_column` 设为 NULL
 
-可能原因：
+## 关键结论
 
-- `dataScopeType=NONE`
-- `deptId` 为空
-- `dataScopeValue` 为空或非法
-- 角色只配置了 DEPT/DEPT_AND_CHILD，但用户没有部门
-
-### 5.3 多表查询过滤太严格
-
-SQL 中多个表都配置了数据范围字段时，条件会 **AND** 组合，可能过窄。  
-建议：
-
-- 仅给“业务主表”配置数据范围字段
-- 其他表不配置字段映射
-
-## 6. 关键代码入口（索引）
-
-- `AuthTokenFilter`：认证后写入用户数据范围  
-  `src/main/java/com/example/demo/auth/web/AuthTokenFilter.java`
-- `DataScopeResolver`：角色/部门范围计算  
-  `src/main/java/com/example/demo/datascope/service/DataScopeResolver.java`
-- `DataScopeInnerInterceptor`：SQL 过滤  
-  `src/main/java/com/example/demo/common/mybatis/DataScopeInnerInterceptor.java`
-- `DbDataScopeRuleProvider` / `ConfigDataScopeRuleProvider`：规则来源  
-  `src/main/java/com/example/demo/common/mybatis/`
+- 数据范围以**用户覆盖 > 角色×菜单 > 角色默认**为准  
+- 同层多角色合并为**并集**  
+- 无配置时自动走默认字段，不需要额外维护  

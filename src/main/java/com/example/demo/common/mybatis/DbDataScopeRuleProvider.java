@@ -1,6 +1,7 @@
 package com.example.demo.common.mybatis;
 
 import com.example.demo.common.cache.CacheTool;
+import com.example.demo.datascope.entity.DataScopeRule;
 import com.example.demo.datascope.service.DataScopeRuleService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -51,17 +52,17 @@ public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
      * @date 2026/2/9
      */
     @Override
-    public Map<String, String> getTableColumnMap() {
+    public Map<String, DataScopeRule> getRuleMap() {
         long ttlSeconds = properties.getCacheSeconds();
         if (ttlSeconds <= 0) {
             return safeMap(fetchRules());
         }
         CacheTool cacheTool = cacheToolProvider.getIfAvailable();
-        Map<String, String> cached = readCache(cacheTool);
+        Map<String, DataScopeRule> cached = readCache(cacheTool);
         if (cached != null) {
             return cached;
         }
-        Map<String, String> fresh = safeMap(fetchRules());
+        Map<String, DataScopeRule> fresh = safeMap(fetchRules());
         if (cacheTool != null) {
             cacheTool.set(DATA_SCOPE_RULE_KEY, fresh, Duration.ofSeconds(ttlSeconds));
         }
@@ -75,12 +76,12 @@ public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private Map<String, String> fetchRules() {
+    private Map<String, DataScopeRule> fetchRules() {
         DataScopeRuleService service = dataScopeRuleServiceProvider.getIfAvailable();
         if (service == null) {
             return Collections.emptyMap();
         }
-        return service.getEnabledTableColumnMap();
+        return service.getEnabledRules();
     }
 
     /**
@@ -91,7 +92,7 @@ public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private Map<String, String> safeMap(Map<String, String> map) {
+    private Map<String, DataScopeRule> safeMap(Map<String, DataScopeRule> map) {
         if (map == null || map.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -106,7 +107,7 @@ public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
      * @date 2026/2/9
      */
     @SuppressWarnings("unchecked")
-    private Map<String, String> readCache(CacheTool cacheTool) {
+    private Map<String, DataScopeRule> readCache(CacheTool cacheTool) {
         if (cacheTool == null) {
             return null;
         }
@@ -115,7 +116,7 @@ public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
             return null;
         }
         if (value instanceof Map) {
-            return new HashMap<>((Map<String, String>) value);
+            return new HashMap<>((Map<String, DataScopeRule>) value);
         }
         return null;
     }

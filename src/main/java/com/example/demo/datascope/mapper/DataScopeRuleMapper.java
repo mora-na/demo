@@ -21,6 +21,7 @@ public interface DataScopeRuleMapper extends BaseMapper<DataScopeRule> {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    @Select("select id, table_name, column_name, enabled from sys_data_scope_rule where enabled = 1 and is_deleted = 0")
+    @Select("select id, scope_key, table_name, table_alias, dept_column, user_column, filter_type, status "
+            + "from sys_data_scope_rule where status = 1 and is_deleted = 0")
     List<DataScopeRule> selectEnabledRules();
 }

@@ -36,4 +36,10 @@ public class RoleMenu extends BaseEntity implements Serializable {
      */
     @TableField("menu_id")
     private Long menuId;
+
+    /**
+     * 菜单级数据范围类型（Layer2）。
+     */
+    @TableField("data_scope_type")
+    private String dataScopeType;
 }

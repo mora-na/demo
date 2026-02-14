@@ -8,7 +8,6 @@ import com.example.demo.auth.support.AuthTokenResolver;
 import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
-import com.example.demo.datascope.service.DataScopeResolver;
 import com.example.demo.user.entity.SysUser;
 import com.example.demo.user.service.SysUserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +43,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private final CommonExcludePathsProperties commonExcludePaths;
     private final TokenService tokenService;
     private final SysUserService userService;
-    private final DataScopeResolver dataScopeResolver;
     private final I18nService i18nService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
@@ -110,9 +108,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         user.setUserName(dbUser.getUserName());
         user.setNickName(dbUser.getNickName());
         user.setDeptId(dbUser.getDeptId());
-        DataScopeResolver.DataScopeResult dataScope = dataScopeResolver.resolve(dbUser);
-        user.setDataScopeType(dataScope.getType());
-        user.setDataScopeValue(dataScope.getValue());
         AuthContext.set(user);
         try {
             filterChain.doFilter(request, response);

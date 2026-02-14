@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS sys_user
     create_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by        VARCHAR(64),
+    create_dept BIGINT,
     update_by        VARCHAR(64),
     is_deleted       SMALLINT     NOT NULL DEFAULT 0,
     version          INT          NOT NULL DEFAULT 0,
@@ -27,6 +28,7 @@ COMMENT ON COLUMN sys_user.id IS '主键ID';
 COMMENT ON COLUMN sys_user.create_time IS '创建时间';
 COMMENT ON COLUMN sys_user.update_time IS '更新时间';
 COMMENT ON COLUMN sys_user.create_by IS '创建人';
+COMMENT ON COLUMN sys_user.create_dept IS '创建人所属部门ID（数据归属部门）';
 COMMENT ON COLUMN sys_user.update_by IS '更新人';
 COMMENT ON COLUMN sys_user.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_user.version IS '乐观锁版本号';
@@ -55,6 +57,7 @@ CREATE TABLE IF NOT EXISTS sys_dept
     create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
+    create_dept BIGINT,
     update_by   VARCHAR(64),
     is_deleted  SMALLINT     NOT NULL DEFAULT 0,
     version     INT          NOT NULL DEFAULT 0,
@@ -68,6 +71,7 @@ COMMENT ON COLUMN sys_dept.id IS '主键ID';
 COMMENT ON COLUMN sys_dept.create_time IS '创建时间';
 COMMENT ON COLUMN sys_dept.update_time IS '更新时间';
 COMMENT ON COLUMN sys_dept.create_by IS '创建人';
+COMMENT ON COLUMN sys_dept.create_dept IS '创建人所属部门ID（数据归属部门）';
 COMMENT ON COLUMN sys_dept.update_by IS '更新人';
 COMMENT ON COLUMN sys_dept.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_dept.version IS '乐观锁版本号';
@@ -77,6 +81,43 @@ COMMENT ON COLUMN sys_dept.code IS '部门编码（唯一）';
 COMMENT ON COLUMN sys_dept.parent_id IS '上级部门ID';
 COMMENT ON COLUMN sys_dept.status IS '状态：1-启用，0-禁用';
 COMMENT ON COLUMN sys_dept.sort IS '排序';
+
+CREATE SEQUENCE IF NOT EXISTS sys_post_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_post
+(
+    id          BIGINT PRIMARY KEY    DEFAULT nextval('sys_post_id_seq'),
+    name        VARCHAR(128) NOT NULL,
+    code        VARCHAR(64),
+    dept_id     BIGINT       NOT NULL,
+    status      SMALLINT     NOT NULL DEFAULT 1,
+    sort        INTEGER      NOT NULL DEFAULT 0,
+    create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by   VARCHAR(64),
+    create_dept BIGINT,
+    update_by   VARCHAR(64),
+    is_deleted  SMALLINT     NOT NULL DEFAULT 0,
+    version     INT          NOT NULL DEFAULT 0,
+    remark      VARCHAR(500)
+);
+ALTER SEQUENCE sys_post_id_seq OWNED BY sys_post.id;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_post_code ON sys_post (code, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_post_dept ON sys_post (dept_id);
+COMMENT ON TABLE sys_post IS '岗位表';
+COMMENT ON COLUMN sys_post.id IS '主键ID';
+COMMENT ON COLUMN sys_post.create_time IS '创建时间';
+COMMENT ON COLUMN sys_post.update_time IS '更新时间';
+COMMENT ON COLUMN sys_post.create_by IS '创建人';
+COMMENT ON COLUMN sys_post.create_dept IS '创建人所属部门ID（数据归属部门）';
+COMMENT ON COLUMN sys_post.update_by IS '更新人';
+COMMENT ON COLUMN sys_post.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
+COMMENT ON COLUMN sys_post.version IS '乐观锁版本号';
+COMMENT ON COLUMN sys_post.remark IS '备注';
+COMMENT ON COLUMN sys_post.name IS '岗位名称';
+COMMENT ON COLUMN sys_post.code IS '岗位编码（唯一）';
+COMMENT ON COLUMN sys_post.dept_id IS '所属部门ID';
+COMMENT ON COLUMN sys_post.status IS '状态：1-启用，0-禁用';
+COMMENT ON COLUMN sys_post.sort IS '排序';
 
 CREATE SEQUENCE IF NOT EXISTS sys_role_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_role
@@ -90,6 +131,7 @@ CREATE TABLE IF NOT EXISTS sys_role
     create_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by        VARCHAR(64),
+    create_dept BIGINT,
     update_by        VARCHAR(64),
     is_deleted       SMALLINT     NOT NULL DEFAULT 0,
     version          INT          NOT NULL DEFAULT 0,
@@ -102,6 +144,7 @@ COMMENT ON COLUMN sys_role.id IS '主键ID';
 COMMENT ON COLUMN sys_role.create_time IS '创建时间';
 COMMENT ON COLUMN sys_role.update_time IS '更新时间';
 COMMENT ON COLUMN sys_role.create_by IS '创建人';
+COMMENT ON COLUMN sys_role.create_dept IS '创建人所属部门ID（数据归属部门）';
 COMMENT ON COLUMN sys_role.update_by IS '更新人';
 COMMENT ON COLUMN sys_role.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_role.version IS '乐观锁版本号';
@@ -122,6 +165,7 @@ CREATE TABLE IF NOT EXISTS sys_permission
     create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
+    create_dept BIGINT,
     update_by   VARCHAR(64),
     is_deleted  SMALLINT     NOT NULL DEFAULT 0,
     version     INT          NOT NULL DEFAULT 0,
@@ -134,6 +178,7 @@ COMMENT ON COLUMN sys_permission.id IS '主键ID';
 COMMENT ON COLUMN sys_permission.create_time IS '创建时间';
 COMMENT ON COLUMN sys_permission.update_time IS '更新时间';
 COMMENT ON COLUMN sys_permission.create_by IS '创建人';
+COMMENT ON COLUMN sys_permission.create_dept IS '创建人所属部门ID（数据归属部门）';
 COMMENT ON COLUMN sys_permission.update_by IS '更新人';
 COMMENT ON COLUMN sys_permission.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_permission.version IS '乐观锁版本号';
@@ -157,6 +202,7 @@ CREATE TABLE IF NOT EXISTS sys_menu
     create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
+    create_dept BIGINT,
     update_by   VARCHAR(64),
     is_deleted  SMALLINT     NOT NULL DEFAULT 0,
     version     INT          NOT NULL DEFAULT 0,
@@ -170,6 +216,7 @@ COMMENT ON COLUMN sys_menu.id IS '主键ID';
 COMMENT ON COLUMN sys_menu.create_time IS '创建时间';
 COMMENT ON COLUMN sys_menu.update_time IS '更新时间';
 COMMENT ON COLUMN sys_menu.create_by IS '创建人';
+COMMENT ON COLUMN sys_menu.create_dept IS '创建人所属部门ID（数据归属部门）';
 COMMENT ON COLUMN sys_menu.update_by IS '更新人';
 COMMENT ON COLUMN sys_menu.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_menu.version IS '乐观锁版本号';
@@ -192,6 +239,7 @@ CREATE TABLE IF NOT EXISTS sys_role_permission
     create_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by     VARCHAR(64),
+    create_dept BIGINT,
     update_by     VARCHAR(64),
     is_deleted    SMALLINT  NOT NULL DEFAULT 0,
     version       INT       NOT NULL DEFAULT 0,
@@ -206,6 +254,7 @@ COMMENT ON COLUMN sys_role_permission.id IS '主键ID';
 COMMENT ON COLUMN sys_role_permission.create_time IS '创建时间';
 COMMENT ON COLUMN sys_role_permission.update_time IS '更新时间';
 COMMENT ON COLUMN sys_role_permission.create_by IS '创建人';
+COMMENT ON COLUMN sys_role_permission.create_dept IS '创建人所属部门ID（数据归属部门）';
 COMMENT ON COLUMN sys_role_permission.update_by IS '更新人';
 COMMENT ON COLUMN sys_role_permission.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_role_permission.version IS '乐观锁版本号';
@@ -219,9 +268,11 @@ CREATE TABLE IF NOT EXISTS sys_role_menu
     id          BIGINT PRIMARY KEY DEFAULT nextval('sys_role_menu_id_seq'),
     role_id     BIGINT    NOT NULL,
     menu_id     BIGINT    NOT NULL,
+    data_scope_type VARCHAR(32),
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
+    create_dept BIGINT,
     update_by   VARCHAR(64),
     is_deleted  SMALLINT  NOT NULL DEFAULT 0,
     version     INT       NOT NULL DEFAULT 0,
@@ -236,12 +287,49 @@ COMMENT ON COLUMN sys_role_menu.id IS '主键ID';
 COMMENT ON COLUMN sys_role_menu.create_time IS '创建时间';
 COMMENT ON COLUMN sys_role_menu.update_time IS '更新时间';
 COMMENT ON COLUMN sys_role_menu.create_by IS '创建人';
+COMMENT ON COLUMN sys_role_menu.create_dept IS '创建人所属部门ID（数据归属部门）';
 COMMENT ON COLUMN sys_role_menu.update_by IS '更新人';
 COMMENT ON COLUMN sys_role_menu.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_role_menu.version IS '乐观锁版本号';
 COMMENT ON COLUMN sys_role_menu.remark IS '备注';
 COMMENT ON COLUMN sys_role_menu.role_id IS '角色ID';
 COMMENT ON COLUMN sys_role_menu.menu_id IS '菜单ID';
+COMMENT ON COLUMN sys_role_menu.data_scope_type IS '菜单级数据范围类型';
+
+CREATE SEQUENCE IF NOT EXISTS sys_role_menu_dept_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_role_menu_dept
+(
+    id          BIGINT PRIMARY KEY DEFAULT nextval('sys_role_menu_dept_id_seq'),
+    role_id     BIGINT    NOT NULL,
+    menu_id     BIGINT    NOT NULL,
+    dept_id     BIGINT    NOT NULL,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by   VARCHAR(64),
+    create_dept BIGINT,
+    update_by   VARCHAR(64),
+    is_deleted  SMALLINT  NOT NULL DEFAULT 0,
+    version     INT       NOT NULL DEFAULT 0,
+    remark      VARCHAR(500)
+);
+ALTER SEQUENCE sys_role_menu_dept_id_seq OWNED BY sys_role_menu_dept.id;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_menu_dept_role_menu_dept ON sys_role_menu_dept (role_id, menu_id, dept_id, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_role_menu_dept_role ON sys_role_menu_dept (role_id);
+CREATE INDEX IF NOT EXISTS idx_sys_role_menu_dept_menu ON sys_role_menu_dept (menu_id);
+CREATE INDEX IF NOT EXISTS idx_sys_role_menu_dept_dept ON sys_role_menu_dept (dept_id);
+COMMENT ON TABLE sys_role_menu_dept IS '角色-菜单-部门关联表';
+COMMENT ON COLUMN sys_role_menu_dept.id IS '主键ID';
+COMMENT ON COLUMN sys_role_menu_dept.create_time IS '创建时间';
+COMMENT ON COLUMN sys_role_menu_dept.update_time IS '更新时间';
+COMMENT ON COLUMN sys_role_menu_dept.create_by IS '创建人';
+COMMENT ON COLUMN sys_role_menu_dept.create_dept IS '创建人所属部门ID（数据归属部门）';
+COMMENT ON COLUMN sys_role_menu_dept.update_by IS '更新人';
+COMMENT ON COLUMN sys_role_menu_dept.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
+COMMENT ON COLUMN sys_role_menu_dept.version IS '乐观锁版本号';
+COMMENT ON COLUMN sys_role_menu_dept.remark IS '备注';
+COMMENT ON COLUMN sys_role_menu_dept.role_id IS '角色ID';
+COMMENT ON COLUMN sys_role_menu_dept.menu_id IS '菜单ID';
+COMMENT ON COLUMN sys_role_menu_dept.dept_id IS '部门ID';
 
 CREATE SEQUENCE IF NOT EXISTS sys_user_role_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_user_role
@@ -252,6 +340,7 @@ CREATE TABLE IF NOT EXISTS sys_user_role
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
+    create_dept BIGINT,
     update_by   VARCHAR(64),
     is_deleted  SMALLINT  NOT NULL DEFAULT 0,
     version     INT       NOT NULL DEFAULT 0,
@@ -266,6 +355,7 @@ COMMENT ON COLUMN sys_user_role.id IS '主键ID';
 COMMENT ON COLUMN sys_user_role.create_time IS '创建时间';
 COMMENT ON COLUMN sys_user_role.update_time IS '更新时间';
 COMMENT ON COLUMN sys_user_role.create_by IS '创建人';
+COMMENT ON COLUMN sys_user_role.create_dept IS '创建人所属部门ID（数据归属部门）';
 COMMENT ON COLUMN sys_user_role.update_by IS '更新人';
 COMMENT ON COLUMN sys_user_role.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_user_role.version IS '乐观锁版本号';
@@ -273,35 +363,115 @@ COMMENT ON COLUMN sys_user_role.remark IS '备注';
 COMMENT ON COLUMN sys_user_role.user_id IS '用户ID';
 COMMENT ON COLUMN sys_user_role.role_id IS '角色ID';
 
+CREATE SEQUENCE IF NOT EXISTS sys_user_data_scope_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_user_data_scope
+(
+    id               BIGINT PRIMARY KEY DEFAULT nextval('sys_user_data_scope_id_seq'),
+    user_id          BIGINT    NOT NULL,
+    scope_key        VARCHAR(200) NOT NULL,
+    data_scope_type  VARCHAR(32),
+    data_scope_value VARCHAR(512),
+    status           SMALLINT  NOT NULL DEFAULT 1,
+    create_time      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by        VARCHAR(64),
+    create_dept      BIGINT,
+    update_by        VARCHAR(64),
+    is_deleted       SMALLINT  NOT NULL DEFAULT 0,
+    version          INT       NOT NULL DEFAULT 0,
+    remark           VARCHAR(500)
+);
+ALTER SEQUENCE sys_user_data_scope_id_seq OWNED BY sys_user_data_scope.id;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_data_scope_user_key ON sys_user_data_scope (user_id, scope_key, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_user_data_scope_user ON sys_user_data_scope (user_id);
+CREATE INDEX IF NOT EXISTS idx_sys_user_data_scope_key ON sys_user_data_scope (scope_key);
+COMMENT ON TABLE sys_user_data_scope IS '用户数据范围覆盖表';
+COMMENT ON COLUMN sys_user_data_scope.id IS '主键ID';
+COMMENT ON COLUMN sys_user_data_scope.create_time IS '创建时间';
+COMMENT ON COLUMN sys_user_data_scope.update_time IS '更新时间';
+COMMENT ON COLUMN sys_user_data_scope.create_by IS '创建人';
+COMMENT ON COLUMN sys_user_data_scope.create_dept IS '创建人所属部门ID（数据归属部门）';
+COMMENT ON COLUMN sys_user_data_scope.update_by IS '更新人';
+COMMENT ON COLUMN sys_user_data_scope.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
+COMMENT ON COLUMN sys_user_data_scope.version IS '乐观锁版本号';
+COMMENT ON COLUMN sys_user_data_scope.remark IS '备注';
+COMMENT ON COLUMN sys_user_data_scope.user_id IS '用户ID';
+COMMENT ON COLUMN sys_user_data_scope.scope_key IS '数据范围标识';
+COMMENT ON COLUMN sys_user_data_scope.data_scope_type IS '数据范围类型';
+COMMENT ON COLUMN sys_user_data_scope.data_scope_value IS '数据范围值（自定义部门ID列表）';
+COMMENT ON COLUMN sys_user_data_scope.status IS '状态：1-启用，0-禁用';
+
+CREATE SEQUENCE IF NOT EXISTS sys_user_post_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_user_post
+(
+    id          BIGINT PRIMARY KEY DEFAULT nextval('sys_user_post_id_seq'),
+    user_id     BIGINT     NOT NULL,
+    post_id     BIGINT     NOT NULL,
+    create_time TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by   VARCHAR(64),
+    create_dept BIGINT,
+    update_by   VARCHAR(64),
+    is_deleted  SMALLINT   NOT NULL DEFAULT 0,
+    version     INT        NOT NULL DEFAULT 0,
+    remark      VARCHAR(500)
+);
+ALTER SEQUENCE sys_user_post_id_seq OWNED BY sys_user_post.id;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_post_user_post ON sys_user_post (user_id, post_id, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_user_post_user ON sys_user_post (user_id);
+CREATE INDEX IF NOT EXISTS idx_sys_user_post_post ON sys_user_post (post_id);
+COMMENT ON TABLE sys_user_post IS '用户-岗位关联表';
+COMMENT ON COLUMN sys_user_post.id IS '主键ID';
+COMMENT ON COLUMN sys_user_post.create_time IS '创建时间';
+COMMENT ON COLUMN sys_user_post.update_time IS '更新时间';
+COMMENT ON COLUMN sys_user_post.create_by IS '创建人';
+COMMENT ON COLUMN sys_user_post.create_dept IS '创建人所属部门ID（数据归属部门）';
+COMMENT ON COLUMN sys_user_post.update_by IS '更新人';
+COMMENT ON COLUMN sys_user_post.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
+COMMENT ON COLUMN sys_user_post.version IS '乐观锁版本号';
+COMMENT ON COLUMN sys_user_post.remark IS '备注';
+COMMENT ON COLUMN sys_user_post.user_id IS '用户ID';
+COMMENT ON COLUMN sys_user_post.post_id IS '岗位ID';
+
 CREATE SEQUENCE IF NOT EXISTS sys_data_scope_rule_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_data_scope_rule
 (
-    id          BIGINT PRIMARY KEY   DEFAULT nextval('sys_data_scope_rule_id_seq'),
-    table_name  VARCHAR(64) NOT NULL,
-    column_name VARCHAR(64) NOT NULL,
-    enabled     SMALLINT    NOT NULL DEFAULT 1,
-    create_time TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by   VARCHAR(64),
-    update_by   VARCHAR(64),
-    is_deleted  SMALLINT    NOT NULL DEFAULT 0,
-    version     INT         NOT NULL DEFAULT 0,
-    remark      VARCHAR(500)
+    id           BIGINT PRIMARY KEY DEFAULT nextval('sys_data_scope_rule_id_seq'),
+    scope_key    VARCHAR(200) NOT NULL,
+    table_name   VARCHAR(100) NOT NULL,
+    table_alias  VARCHAR(20)  DEFAULT '',
+    dept_column  VARCHAR(100) DEFAULT 'create_dept',
+    user_column  VARCHAR(100) DEFAULT 'create_by',
+    filter_type  SMALLINT     DEFAULT 1,
+    status       SMALLINT     DEFAULT 1,
+    create_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by    VARCHAR(64),
+    create_dept  BIGINT,
+    update_by    VARCHAR(64),
+    is_deleted   SMALLINT     NOT NULL DEFAULT 0,
+    version      INT          NOT NULL DEFAULT 0,
+    remark       VARCHAR(500)
 );
 ALTER SEQUENCE sys_data_scope_rule_id_seq OWNED BY sys_data_scope_rule.id;
-CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_data_scope_rule_table ON sys_data_scope_rule (table_name, is_deleted);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_data_scope_rule_key ON sys_data_scope_rule (scope_key);
 COMMENT ON TABLE sys_data_scope_rule IS '数据范围规则表';
 COMMENT ON COLUMN sys_data_scope_rule.id IS '主键ID';
 COMMENT ON COLUMN sys_data_scope_rule.create_time IS '创建时间';
 COMMENT ON COLUMN sys_data_scope_rule.update_time IS '更新时间';
 COMMENT ON COLUMN sys_data_scope_rule.create_by IS '创建人';
+COMMENT ON COLUMN sys_data_scope_rule.create_dept IS '创建人所属部门ID（数据归属部门）';
 COMMENT ON COLUMN sys_data_scope_rule.update_by IS '更新人';
 COMMENT ON COLUMN sys_data_scope_rule.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_data_scope_rule.version IS '乐观锁版本号';
 COMMENT ON COLUMN sys_data_scope_rule.remark IS '备注';
-COMMENT ON COLUMN sys_data_scope_rule.table_name IS '目标表名（小写匹配）';
-COMMENT ON COLUMN sys_data_scope_rule.column_name IS '数据范围字段名';
-COMMENT ON COLUMN sys_data_scope_rule.enabled IS '是否启用：1-启用，0-禁用';
+COMMENT ON COLUMN sys_data_scope_rule.scope_key IS '唯一标识，通常=菜单权限标识';
+COMMENT ON COLUMN sys_data_scope_rule.table_name IS '业务表名';
+COMMENT ON COLUMN sys_data_scope_rule.table_alias IS '表别名';
+COMMENT ON COLUMN sys_data_scope_rule.dept_column IS '部门字段名';
+COMMENT ON COLUMN sys_data_scope_rule.user_column IS '用户字段名';
+COMMENT ON COLUMN sys_data_scope_rule.filter_type IS '过滤方式';
+COMMENT ON COLUMN sys_data_scope_rule.status IS '状态：0-禁用 1-启用';
 
 CREATE SEQUENCE IF NOT EXISTS sys_order_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_order
@@ -312,6 +482,7 @@ CREATE TABLE IF NOT EXISTS sys_order
     create_time TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
+    create_dept BIGINT,
     update_by   VARCHAR(64),
     is_deleted  SMALLINT       NOT NULL DEFAULT 0,
     version     INT            NOT NULL DEFAULT 0,
@@ -324,6 +495,7 @@ COMMENT ON COLUMN sys_order.id IS '主键ID';
 COMMENT ON COLUMN sys_order.create_time IS '创建时间';
 COMMENT ON COLUMN sys_order.update_time IS '更新时间';
 COMMENT ON COLUMN sys_order.create_by IS '创建人';
+COMMENT ON COLUMN sys_order.create_dept IS '创建人所属部门ID（数据归属部门）';
 COMMENT ON COLUMN sys_order.update_by IS '更新人';
 COMMENT ON COLUMN sys_order.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_order.version IS '乐观锁版本号';
@@ -356,6 +528,7 @@ CREATE TABLE IF NOT EXISTS sys_notice
     create_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by    VARCHAR(64),
+    create_dept BIGINT,
     update_by    VARCHAR(64),
     created_name VARCHAR(64),
     is_deleted   SMALLINT     NOT NULL DEFAULT 0,
@@ -369,6 +542,7 @@ COMMENT ON COLUMN sys_notice.id IS '主键ID';
 COMMENT ON COLUMN sys_notice.create_time IS '创建时间';
 COMMENT ON COLUMN sys_notice.update_time IS '更新时间';
 COMMENT ON COLUMN sys_notice.create_by IS '创建人';
+COMMENT ON COLUMN sys_notice.create_dept IS '创建人所属部门ID（数据归属部门）';
 COMMENT ON COLUMN sys_notice.update_by IS '更新人';
 COMMENT ON COLUMN sys_notice.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_notice.version IS '乐观锁版本号';
@@ -390,6 +564,7 @@ CREATE TABLE IF NOT EXISTS sys_notice_recipient
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by   VARCHAR(64),
+    create_dept BIGINT,
     update_by   VARCHAR(64),
     is_deleted  SMALLINT  NOT NULL DEFAULT 0,
     version     INT       NOT NULL DEFAULT 0,
@@ -406,6 +581,7 @@ COMMENT ON COLUMN sys_notice_recipient.id IS '主键ID';
 COMMENT ON COLUMN sys_notice_recipient.create_time IS '创建时间';
 COMMENT ON COLUMN sys_notice_recipient.update_time IS '更新时间';
 COMMENT ON COLUMN sys_notice_recipient.create_by IS '创建人';
+COMMENT ON COLUMN sys_notice_recipient.create_dept IS '创建人所属部门ID（数据归属部门）';
 COMMENT ON COLUMN sys_notice_recipient.update_by IS '更新人';
 COMMENT ON COLUMN sys_notice_recipient.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_notice_recipient.version IS '乐观锁版本号';
@@ -672,6 +848,13 @@ CREATE TRIGGER trg_sys_dept_update_time
     FOR EACH ROW
 EXECUTE FUNCTION fn_sys_update_time();
 
+DROP TRIGGER IF EXISTS trg_sys_post_update_time ON sys_post;
+CREATE TRIGGER trg_sys_post_update_time
+    BEFORE UPDATE
+    ON sys_post
+    FOR EACH ROW
+EXECUTE FUNCTION fn_sys_update_time();
+
 DROP TRIGGER IF EXISTS trg_sys_role_update_time ON sys_role;
 CREATE TRIGGER trg_sys_role_update_time
     BEFORE UPDATE
@@ -707,10 +890,31 @@ CREATE TRIGGER trg_sys_role_menu_update_time
     FOR EACH ROW
 EXECUTE FUNCTION fn_sys_update_time();
 
+DROP TRIGGER IF EXISTS trg_sys_role_menu_dept_update_time ON sys_role_menu_dept;
+CREATE TRIGGER trg_sys_role_menu_dept_update_time
+    BEFORE UPDATE
+    ON sys_role_menu_dept
+    FOR EACH ROW
+EXECUTE FUNCTION fn_sys_update_time();
+
 DROP TRIGGER IF EXISTS trg_sys_user_role_update_time ON sys_user_role;
 CREATE TRIGGER trg_sys_user_role_update_time
     BEFORE UPDATE
     ON sys_user_role
+    FOR EACH ROW
+EXECUTE FUNCTION fn_sys_update_time();
+
+DROP TRIGGER IF EXISTS trg_sys_user_post_update_time ON sys_user_post;
+CREATE TRIGGER trg_sys_user_post_update_time
+    BEFORE UPDATE
+    ON sys_user_post
+    FOR EACH ROW
+EXECUTE FUNCTION fn_sys_update_time();
+
+DROP TRIGGER IF EXISTS trg_sys_user_data_scope_update_time ON sys_user_data_scope;
+CREATE TRIGGER trg_sys_user_data_scope_update_time
+    BEFORE UPDATE
+    ON sys_user_data_scope
     FOR EACH ROW
 EXECUTE FUNCTION fn_sys_update_time();
 
@@ -753,6 +957,19 @@ ON CONFLICT (id) DO UPDATE SET name      = EXCLUDED.name,
                                status    = EXCLUDED.status,
                                sort      = EXCLUDED.sort,
                                remark    = EXCLUDED.remark;
+
+INSERT INTO sys_post (id, name, code, dept_id, status, sort, remark)
+VALUES (1, '部门主管', 'MANAGER', 1, 1, 0, '部门主管岗位'),
+       (2, '普通员工', 'STAFF', 1, 1, 10, '普通员工岗位'),
+       (3, '研发经理', 'RD_MANAGER', 2, 1, 0, '研发部门岗位'),
+       (4, '研发工程师', 'RD_ENGINEER', 2, 1, 10, '研发工程师岗位'),
+       (5, '运营专员', 'OPS_STAFF', 3, 1, 10, '运营岗位')
+ON CONFLICT (id) DO UPDATE SET name    = EXCLUDED.name,
+                               code    = EXCLUDED.code,
+                               dept_id = EXCLUDED.dept_id,
+                               status  = EXCLUDED.status,
+                               sort    = EXCLUDED.sort,
+                               remark  = EXCLUDED.remark;
 
 INSERT INTO sys_role (id, code, name, status, data_scope_type, data_scope_value)
 VALUES (1, 'admin', '系统管理员', 1, 'ALL', NULL),
@@ -805,7 +1022,21 @@ VALUES (1, 'user:query', '用户查询', 1),
        (38, 'menu:delete', '菜单删除', 1),
        (39, 'dept:delete', '部门删除', 1),
        (40, 'permission:delete', '权限删除', 1),
-       (41, 'notice:delete', '通知删除', 1)
+       (41, 'notice:delete', '通知删除', 1),
+       (42, 'post:query', '岗位查询', 1),
+       (43, 'post:create', '岗位创建', 1),
+       (44, 'post:update', '岗位更新', 1),
+       (45, 'post:disable', '岗位停用', 1),
+       (46, 'post:delete', '岗位删除', 1),
+       (47, 'user:post:assign', '分配岗位', 1),
+       (48, 'role:menu:data-scope', '菜单数据范围', 1),
+       (49, 'data-scope:resolve', '数据权限总览', 1),
+       (50, 'data-scope:rule:query', '字段映射查询', 1),
+       (51, 'data-scope:rule:create', '字段映射创建', 1),
+       (52, 'data-scope:rule:update', '字段映射更新', 1),
+       (53, 'data-scope:rule:delete', '字段映射删除', 1),
+       (54, 'data-scope:user:query', '用户数据范围查询', 1),
+       (55, 'data-scope:user:manage', '用户数据范围管理', 1)
 ON CONFLICT (id) DO UPDATE SET code   = EXCLUDED.code,
                                name   = EXCLUDED.name,
                                status = EXCLUDED.status;
@@ -816,10 +1047,18 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (120, '角色管理', 'role', 100, '/system/roles', 'RolePage', 'role:query', 1, 20, '角色管理'),
        (130, '菜单管理', 'menu', 100, '/system/menus', 'MenuPage', 'menu:query', 1, 30, '菜单管理'),
        (140, '部门管理', 'dept', 100, '/system/depts', 'DeptPage', 'dept:query', 1, 40, '部门管理'),
+       (145, '岗位管理', 'post', 100, '/system/posts', 'PostPage', 'post:query', 1, 45, '岗位管理'),
        (150, '权限管理', 'permission', 100, '/system/permissions', 'PermissionPage', 'permission:query', 1, 50,
         '权限管理'),
        (160, '系统通知', 'notice', 100, '/system/notices', 'NoticePage', 'notice:query', 1, 60, '系统通知'),
-       (170, '定时任务', 'job', 100, '/system/jobs', 'JobPage', 'job:query', 1, 70, '定时任务')
+       (170, '定时任务', 'job', 100, '/system/jobs', 'JobPage', 'job:query', 1, 70, '定时任务'),
+       (180, '数据权限', 'data-scope', 100, '/system/data-scope', 'DataScopePage', NULL, 1, 80, '数据权限'),
+       (181, '权限总览', 'data-scope-overview', 180, '/system/data-scope/overview', 'DataScopeOverviewPage',
+        'data-scope:resolve', 1, 10, '权限总览'),
+       (182, '字段映射配置', 'data-scope-mapping', 180, '/system/data-scope/mapping', 'DataScopeMappingPage',
+        'data-scope:rule:query', 1, 20, '字段映射配置'),
+       (183, '用户特例授权', 'data-scope-user', 180, '/system/data-scope/user', 'DataScopeUserPage',
+        'data-scope:user:query', 1, 30, '用户特例授权')
 ON CONFLICT (id) DO UPDATE SET name       = EXCLUDED.name,
                                code       = EXCLUDED.code,
                                parent_id  = EXCLUDED.parent_id,
@@ -857,6 +1096,12 @@ VALUES (1, 1),
        (3, 3)
 ON CONFLICT (user_id, role_id, is_deleted) DO NOTHING;
 
+INSERT INTO sys_user_post (user_id, post_id)
+VALUES (1, 1),
+       (2, 1),
+       (3, 2)
+ON CONFLICT (user_id, post_id, is_deleted) DO NOTHING;
+
 INSERT INTO sys_role_permission (role_id, permission_id)
 VALUES (1, 1),
        (1, 2),
@@ -893,6 +1138,20 @@ VALUES (1, 1),
        (1, 33),
        (1, 34),
        (1, 35),
+       (1, 42),
+       (1, 43),
+       (1, 44),
+       (1, 45),
+       (1, 46),
+       (1, 47),
+       (1, 48),
+       (1, 49),
+       (1, 50),
+       (1, 51),
+       (1, 52),
+       (1, 53),
+       (1, 54),
+       (1, 55),
        (2, 1),
        (2, 8),
        (2, 10),
@@ -908,9 +1167,14 @@ VALUES (1, 100),
        (1, 120),
        (1, 130),
        (1, 140),
+       (1, 145),
        (1, 150),
        (1, 160),
        (1, 170),
+       (1, 180),
+       (1, 181),
+       (1, 182),
+       (1, 183),
        (2, 100),
        (2, 110),
        (2, 140),
@@ -919,13 +1183,17 @@ VALUES (1, 100),
 ON CONFLICT (role_id, menu_id, is_deleted) DO NOTHING;
 
 SELECT setval('sys_dept_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_dept));
+SELECT setval('sys_post_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_post));
 SELECT setval('sys_role_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_role));
 SELECT setval('sys_permission_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_permission));
 SELECT setval('sys_menu_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_menu));
 SELECT setval('sys_user_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_user));
 SELECT setval('sys_role_permission_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_role_permission));
 SELECT setval('sys_role_menu_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_role_menu));
+SELECT setval('sys_role_menu_dept_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_role_menu_dept));
 SELECT setval('sys_user_role_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_user_role));
+SELECT setval('sys_user_data_scope_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_user_data_scope));
+SELECT setval('sys_user_post_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_user_post));
 SELECT setval('sys_order_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_order));
 SELECT setval('sys_notice_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_notice));
 SELECT setval('sys_notice_recipient_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_notice_recipient));

@@ -9,6 +9,17 @@ export default {
         entry: "功能入口",
         cancel: "取消",
         save: "保存",
+        search: "搜索",
+        edit: "编辑",
+        delete: "删除",
+        enabled: "启用",
+        disabled: "停用",
+        yes: "是",
+        no: "否",
+        saveSuccess: "保存成功",
+        saveFailed: "保存失败",
+        deleteSuccess: "删除成功",
+        deleteFailed: "删除失败",
         confirmTitle: "提示",
         missingToken: "缺少登录令牌",
         profileLoadFailed: "用户信息加载失败"
@@ -293,9 +304,126 @@ export default {
             role: "角色管理",
             menu: "菜单管理",
             dept: "部门管理",
+            post: "岗位管理",
             permission: "权限管理",
             notice: "系统通知",
-            job: "定时任务"
+            job: "定时任务",
+            dataScope: "数据权限"
+        }
+    },
+    dataScope: {
+        title: "数据权限",
+        subtitle: "按角色、菜单与用户特例配置数据范围。",
+        tabs: {
+            overview: "权限总览",
+            mapping: "字段映射配置",
+            user: "用户特例授权"
+        },
+        overview: {
+            userPlaceholder: "选择用户",
+            menuPlaceholder: "选择菜单（可选）",
+            search: "查询",
+            userInfo: "用户信息",
+            userName: "用户",
+            dept: "部门",
+            posts: "岗位",
+            roles: "角色",
+            result: "解析结果",
+            finalScope: "最终范围",
+            deptIds: "部门集合",
+            includeSelf: "包含本人",
+            sql: "SQL 条件",
+            table: {
+                menu: "菜单",
+                permission: "权限标识",
+                scope: "最终范围",
+                source: "生效层级"
+            },
+            empty: "请选择用户后查询",
+            userRequired: "请先选择用户",
+            loadFailed: "加载解析失败"
+        },
+        mapping: {
+            scopeKey: "权限标识",
+            tableName: "业务表名",
+            tableAlias: "表别名",
+            deptColumn: "部门字段",
+            userColumn: "用户字段",
+            status: "状态",
+            action: "操作",
+            create: "新增映射",
+            edit: "编辑映射",
+            validate: "请填写权限标识与表名",
+            loadFailed: "加载字段映射失败",
+            deleteConfirm: "确认删除 {key} 的映射吗？"
+        },
+        user: {
+            userName: "用户",
+            menuKeyword: "菜单/权限",
+            statusPlaceholder: "状态",
+            create: "新增特例",
+            edit: "编辑特例",
+            user: "用户",
+            dept: "部门",
+            menu: "菜单",
+            scopeKey: "权限标识",
+            scopeType: "范围类型",
+            scopeValue: "范围值",
+            status: "状态",
+            remark: "备注",
+            action: "操作",
+            userPlaceholder: "选择用户",
+            global: "全局覆盖",
+            validate: "请选择用户和权限标识",
+            loadFailed: "加载用户特例失败",
+            deleteConfirm: "确认删除 {name} 的特例吗？"
+        }
+    },
+    post: {
+        title: "岗位管理",
+        subtitle: "维护岗位与所属部门关系。",
+        create: "新增岗位",
+        filter: {
+            delete: "批量删除"
+        },
+        table: {
+            name: "名称",
+            code: "编码",
+            dept: "所属部门",
+            sort: "排序",
+            status: "状态",
+            action: "操作",
+            edit: "编辑",
+            delete: "删除"
+        },
+        dialog: {
+            createTitle: "新增岗位",
+            editTitle: "编辑岗位",
+            name: "名称",
+            code: "编码",
+            dept: "所属部门",
+            deptPlaceholder: "请选择",
+            sort: "排序",
+            status: "状态",
+            statusPlaceholder: "请选择",
+            statusEnabled: "启用",
+            statusDisabled: "禁用",
+            remark: "备注"
+        },
+        msg: {
+            loadFailed: "加载岗位失败",
+            createSuccess: "创建成功",
+            createFailed: "创建失败",
+            updateSuccess: "更新成功",
+            updateFailed: "更新失败",
+            saveFailed: "保存失败",
+            statusUpdateFailed: "状态更新失败",
+            validateName: "请输入岗位名称",
+            deleteConfirm: "确认删除岗位 {name}？",
+            batchDeleteConfirm: "确认删除选中的 {count} 个岗位？",
+            deleteSuccess: "删除成功",
+            deleteFailed: "删除失败",
+            deleteEmpty: "请先选择要删除的岗位"
         }
     },
     dept: {
@@ -454,7 +582,13 @@ export default {
             edit: "编辑",
             assignPermissions: "分配权限",
             assignMenus: "分配菜单",
+            menuDataScope: "菜单范围",
             delete: "删除"
+        },
+        tabs: {
+            basic: "基本信息",
+            dataScope: "数据范围",
+            menuScope: "菜单级数据范围"
         },
         dialog: {
             createTitle: "新增角色",
@@ -468,7 +602,8 @@ export default {
             dataScopeType: "数据范围类型",
             dataScopePlaceholder: "请选择",
             dataScopeValue: "数据范围值",
-            dataScopeValuePlaceholder: "逗号分隔 ID"
+            dataScopeValuePlaceholder: "逗号分隔 ID",
+            customDept: "选择自定义部门"
         },
         scope: {
             all: "全部",
@@ -486,6 +621,17 @@ export default {
         },
         menus: {
             title: "分配菜单"
+        },
+        menuScope: {
+            title: "菜单级数据范围配置",
+            hint: "仅对需要特殊控制的菜单设置范围，未配置则继承角色默认范围。",
+            open: "打开配置",
+            scopeType: "数据范围",
+            inherit: "继承角色默认",
+            clear: "清除配置",
+            apply: "应用到该菜单",
+            empty: "请选择一个菜单",
+            needRole: "请先保存角色再配置菜单范围"
         },
         msg: {
             loadFailed: "加载角色失败",
@@ -530,6 +676,8 @@ export default {
             edit: "编辑",
             resetPassword: "重置密码",
             assignRoles: "分配角色",
+            assignPosts: "分配岗位",
+            dataScope: "数据范围",
             delete: "删除"
         },
         dialog: {
@@ -565,6 +713,24 @@ export default {
             self: "仅本人",
             none: "无权限"
         },
+        dataScope: {
+            title: "用户数据范围",
+            user: "用户",
+            dept: "部门",
+            create: "新增范围",
+            menu: "菜单",
+            scopeKey: "权限标识",
+            scopeType: "范围类型",
+            scopeValue: "范围值",
+            status: "状态",
+            remark: "备注",
+            action: "操作",
+            global: "全局覆盖",
+            validate: "请选择权限标识",
+            loadFailed: "加载用户范围失败",
+            deleteConfirm: "确认删除 {name} 的范围吗？",
+            edit: "编辑范围"
+        },
         sex: {
             male: "男",
             female: "女",
@@ -573,6 +739,11 @@ export default {
         roles: {
             title: "分配角色",
             list: "角色列表",
+            placeholder: "请选择"
+        },
+        posts: {
+            title: "分配岗位",
+            list: "岗位列表",
             placeholder: "请选择"
         },
         reset: {
@@ -590,6 +761,8 @@ export default {
             statusUpdateFailed: "状态更新失败",
             rolesUpdated: "角色已更新",
             rolesUpdateFailed: "角色更新失败",
+            postsUpdated: "岗位已更新",
+            postsUpdateFailed: "岗位更新失败",
             passwordReset: "密码已重置",
             passwordResetFailed: "密码重置失败",
             validateUserName: "请输入用户名",

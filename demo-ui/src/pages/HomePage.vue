@@ -291,6 +291,7 @@ import {
   BarChart3,
   Bell,
   BookOpen,
+  Briefcase,
   Building2,
   Circle,
   Folder,
@@ -465,6 +466,23 @@ watch(
     }
 );
 
+watch(
+    () => authStore.token,
+    (token, prevToken) => {
+      if (!token) {
+        stopNoticeStream();
+        unreadCount.value = 0;
+        noticeItems.value = [];
+        return;
+      }
+      if (token !== prevToken) {
+        startNoticeStream();
+        refreshUnreadCount();
+      }
+    },
+    {immediate: true}
+);
+
 function selectMenu(menu: MenuTree) {
   if (menu?.id == null) {
     return;
@@ -517,10 +535,12 @@ const MENU_ICON_MAP: Record<string, Component> = {
   home: Home,
   dashboard: LayoutDashboard,
   system: Settings2,
+  "data-scope": Shield,
   user: Users,
   role: Shield,
   menu: LayoutList,
   dept: Building2,
+  post: Briefcase,
   permission: KeyRound,
   notice: Bell,
   job: Timer,
@@ -1026,7 +1046,6 @@ onMounted(async () => {
   navDrawerReady.value = true;
   await loadProfile();
   await refreshUnreadCount();
-  startNoticeStream();
 });
 
 onUnmounted(() => {

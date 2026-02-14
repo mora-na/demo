@@ -21,9 +21,11 @@ public class AutoFillMetaObjectHandler implements MetaObjectHandler {
     public void insertFill(MetaObject metaObject) {
         LocalDateTime now = LocalDateTime.now();
         String userKey = resolveUserKey();
+        Long deptId = resolveDeptId();
         strictInsertFill(metaObject, "createTime", LocalDateTime.class, now);
         strictInsertFill(metaObject, "updateTime", LocalDateTime.class, now);
         strictInsertFill(metaObject, "createBy", String.class, userKey);
+        strictInsertFill(metaObject, "createDept", Long.class, deptId);
         strictInsertFill(metaObject, "updateBy", String.class, userKey);
         strictInsertFill(metaObject, "isDeleted", Integer.class, 0);
         strictInsertFill(metaObject, "version", Integer.class, 0);
@@ -46,5 +48,13 @@ public class AutoFillMetaObjectHandler implements MetaObjectHandler {
             return String.valueOf(user.getId());
         }
         return user.getUserName();
+    }
+
+    private Long resolveDeptId() {
+        AuthUser user = AuthContext.get();
+        if (user == null) {
+            return null;
+        }
+        return user.getDeptId();
     }
 }

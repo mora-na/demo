@@ -1,5 +1,6 @@
 package com.example.demo.common.mybatis;
 
+import com.example.demo.datascope.entity.DataScopeRule;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -38,17 +39,25 @@ public class ConfigDataScopeRuleProvider implements DataScopeRuleProvider {
      * @date 2026/2/9
      */
     @Override
-    public Map<String, String> getTableColumnMap() {
+    public Map<String, DataScopeRule> getRuleMap() {
         Map<String, String> map = properties.getTableColumnMap();
         if (map == null || map.isEmpty()) {
             return Collections.emptyMap();
         }
-        Map<String, String> normalized = new HashMap<>();
+        Map<String, DataScopeRule> normalized = new HashMap<>();
         for (Map.Entry<String, String> entry : map.entrySet()) {
             if (entry.getKey() == null || entry.getValue() == null) {
                 continue;
             }
-            normalized.put(entry.getKey().trim().toLowerCase(), entry.getValue());
+            String scopeKey = entry.getKey().trim();
+            DataScopeRule rule = new DataScopeRule();
+            rule.setScopeKey(scopeKey);
+            rule.setTableName(scopeKey);
+            rule.setDeptColumn(entry.getValue().trim());
+            rule.setUserColumn("create_by");
+            rule.setFilterType(1);
+            rule.setStatus(1);
+            normalized.put(scopeKey, rule);
         }
         return normalized;
     }
