@@ -6,15 +6,15 @@
         <div class="module-sub">{{ t("user.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-input v-model.trim="filters.userName" clearable :placeholder="t('user.filter.userNamePlaceholder')"/>
-        <el-input v-model.trim="filters.nickName" clearable :placeholder="t('user.filter.nickNamePlaceholder')"/>
-        <el-select v-model="filters.status" clearable :placeholder="t('user.filter.statusPlaceholder')" style="width: 120px">
+        <el-input v-model.trim="filters.userName" clearable size="small" :placeholder="t('user.filter.userNamePlaceholder')"/>
+        <el-input v-model.trim="filters.nickName" clearable size="small" :placeholder="t('user.filter.nickNamePlaceholder')"/>
+        <el-select v-model="filters.status" clearable size="small" :placeholder="t('user.filter.statusPlaceholder')" style="width: 120px">
           <el-option :value="1" :label="t('user.dialog.statusEnabled')"/>
           <el-option :value="0" :label="t('user.dialog.statusDisabled')"/>
         </el-select>
-        <el-button @click="handleSearch">{{ t("user.filter.search") }}</el-button>
-        <el-button type="primary" @click="openCreate">{{ t("user.filter.create") }}</el-button>
-        <el-button v-if="selectedUserIds.length" type="danger" @click="removeUsers">
+        <el-button size="small" @click="handleSearch">{{ t("user.filter.search") }}</el-button>
+        <el-button size="small" type="primary" @click="openCreate">{{ t("user.filter.create") }}</el-button>
+        <el-button v-if="selectedUserIds.length" size="small" type="danger" @click="removeUsers">
           {{ t("user.filter.delete") }}
         </el-button>
       </div>
@@ -52,7 +52,7 @@
           />
         </template>
       </el-table-column>
-      <el-table-column :label="t('user.table.action')" width="380">
+      <el-table-column :label="t('user.table.action')" width="360" class-name="action-cell">
         <template #default="{row}">
           <div class="action-buttons">
             <el-button size="small" text @click="openEdit(row)">{{ t("user.table.edit") }}</el-button>
@@ -890,6 +890,7 @@ onMounted(() => {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 .module-title {
@@ -904,20 +905,52 @@ onMounted(() => {
 
 .module-actions {
   display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  flex-wrap: wrap;
+  overflow-x: visible;
   gap: 8px;
   align-items: center;
+  justify-content: flex-end;
+  flex: 1 1 520px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .module-actions :deep(.el-input),
 .module-actions :deep(.el-select) {
-  width: 150px;
-  flex: 0 0 auto;
+  width: 130px;
+  flex: 1 1 130px;
 }
 
 .module-actions :deep(.el-button) {
   flex: 0 0 auto;
+  padding: 0 10px;
+  height: 28px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .module-actions {
+    justify-content: flex-start;
+  }
+
+  .module-actions :deep(.el-input),
+  .module-actions :deep(.el-select) {
+    width: 120px;
+    flex-basis: 120px;
+  }
+}
+
+@media (max-width: 640px) {
+  .module-actions :deep(.el-input),
+  .module-actions :deep(.el-select) {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .module-actions :deep(.el-button) {
+    flex: 1 1 auto;
+  }
 }
 
 .module-footer {
@@ -930,13 +963,29 @@ onMounted(() => {
   gap: 4px;
   flex-wrap: nowrap;
   align-items: center;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
 }
 
 .action-buttons :deep(.el-button) {
-  padding: 0 6px;
-  min-height: 22px;
-  font-size: 12px;
+  padding: 0 4px;
+  min-height: 20px;
+  height: 20px;
+  font-size: 11px;
   white-space: nowrap;
+}
+
+.action-cell :deep(.cell) {
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 0 6px;
+}
+
+.action-buttons::-webkit-scrollbar {
+  height: 0;
 }
 
 .form-grid :deep(.el-form-item) {

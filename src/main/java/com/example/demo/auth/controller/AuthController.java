@@ -8,15 +8,21 @@ import com.example.demo.auth.support.AuthTokenResolver;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequireLogin;
+import com.example.demo.dept.entity.Dept;
+import com.example.demo.dept.service.DeptService;
+import com.example.demo.log.event.LoginLogEvent;
+import com.example.demo.log.support.IpUtils;
 import com.example.demo.user.entity.SysUser;
 import com.example.demo.user.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 
 /**
  * 认证接口控制器，处理验证码、登录与登出流程。
@@ -36,6 +42,8 @@ public class AuthController extends BaseController {
     private final LoginAttemptService loginAttemptService;
     private final UserProfileService userProfileService;
     private final com.example.demo.datascope.service.DataScopeProfileService dataScopeProfileService;
+    private final DeptService deptService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 生成验证码并返回验证码 ID 与图片数据。
@@ -60,37 +68,55 @@ public class AuthController extends BaseController {
                                              HttpServletResponse response) {
         final String credentialError = i18n("auth.login.credential.error");
         if (request == null) {
+            publishLoginLog(null, null, SysLoginLogType.LOGIN, LoginStatus.FAIL,
+                    i18n("auth.login.request.empty"), httpRequest);
             return error(400, i18n("auth.login.request.empty"));
         }
         if (StringUtils.isBlank(request.getUserName()) || StringUtils.isBlank(request.getPassword())) {
+            publishLoginLog(request.getUserName(), null, SysLoginLogType.LOGIN, LoginStatus.FAIL,
+                    credentialError, httpRequest);
             return error(401, credentialError);
         }
         if (loginAttemptService.isLocked(request.getUserName(), httpRequest)) {
             long remaining = loginAttemptService.getRemainingLockSeconds(request.getUserName(), httpRequest);
+            publishLoginLog(request.getUserName(), null, SysLoginLogType.LOGIN, LoginStatus.FAIL,
+                    i18n("auth.login.locked", remaining), httpRequest);
             return error(429, i18n("auth.login.locked", remaining));
         }
         if (StringUtils.isBlank(request.getCaptchaId()) || StringUtils.isBlank(request.getCaptchaCode())) {
+            publishLoginLog(request.getUserName(), null, SysLoginLogType.LOGIN, LoginStatus.FAIL,
+                    i18n("auth.login.captcha.empty"), httpRequest);
             return error(400, i18n("auth.login.captcha.empty"));
         }
         if (!captchaService.verify(request.getCaptchaId(), request.getCaptchaCode())) {
+            publishLoginLog(request.getUserName(), null, SysLoginLogType.LOGIN, LoginStatus.FAIL,
+                    i18n("auth.login.captcha.invalid"), httpRequest);
             return error(401, i18n("auth.login.captcha.invalid"));
         }
         SysUser user = userService.getByUserName(request.getUserName());
         if (user == null) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
+            publishLoginLog(request.getUserName(), null, SysLoginLogType.LOGIN, LoginStatus.FAIL,
+                    credentialError, httpRequest);
             return error(401, credentialError);
         }
         if (user.getStatus() != null && user.getStatus().equals(SysUser.STATUS_DISABLED)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
+            publishLoginLog(request.getUserName(), user.getId(), SysLoginLogType.LOGIN, LoginStatus.FAIL,
+                    credentialError, httpRequest);
             return error(401, credentialError);
         }
         String rawPassword = passwordService.decodeTransportPassword(request.getPassword());
         if (StringUtils.isBlank(rawPassword)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
+            publishLoginLog(request.getUserName(), user.getId(), SysLoginLogType.LOGIN, LoginStatus.FAIL,
+                    credentialError, httpRequest);
             return error(401, credentialError);
         }
         if (!passwordService.matches(rawPassword, user.getPassword())) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
+            publishLoginLog(request.getUserName(), user.getId(), SysLoginLogType.LOGIN, LoginStatus.FAIL,
+                    credentialError, httpRequest);
             return error(401, credentialError);
         }
         loginAttemptService.clearFailures(request.getUserName(), httpRequest);
@@ -99,6 +125,12 @@ public class AuthController extends BaseController {
         authUser.setUserName(user.getUserName());
         authUser.setNickName(user.getNickName());
         authUser.setDeptId(user.getDeptId());
+        if (user.getDeptId() != null) {
+            Dept dept = deptService.getById(user.getDeptId());
+            if (dept != null) {
+                authUser.setDeptName(dept.getName());
+            }
+        }
         authUser.setDataScopeType(user.getDataScopeType());
         authUser.setDataScopeValue(user.getDataScopeValue());
         com.example.demo.datascope.model.DataScopeProfile profile = dataScopeProfileService.buildProfile(user);
@@ -107,6 +139,8 @@ public class AuthController extends BaseController {
         authUser.setUserScopeOverrides(profile.getUserScopeOverrides());
         LoginResponse loginResponse = tokenService.issueToken(authUser);
         response.setHeader("Authorization", "Bearer " + loginResponse.getToken());
+        publishLoginLog(user.getUserName(), user.getId(), SysLoginLogType.LOGIN, LoginStatus.SUCCESS,
+                i18n("auth.login.success"), httpRequest);
         return success(loginResponse);
     }
 
@@ -127,7 +161,14 @@ public class AuthController extends BaseController {
         if (StringUtils.isBlank(token)) {
             return error(400, i18n("auth.logout.token.empty"));
         }
+        AuthUser loginUser = tokenService.verifyToken(token);
         tokenService.revoke(token);
+        publishLoginLog(loginUser == null ? null : loginUser.getUserName(),
+                loginUser == null ? null : loginUser.getId(),
+                SysLoginLogType.LOGOUT,
+                LoginStatus.SUCCESS,
+                i18n("auth.logout.success"),
+                request);
         return success(i18n("auth.logout.success"));
     }
 
@@ -189,5 +230,38 @@ public class AuthController extends BaseController {
             return error(500, i18n("common.update.failed"));
         }
         return success();
+    }
+
+    private void publishLoginLog(String userName,
+                                 Long userId,
+                                 int loginType,
+                                 int status,
+                                 String message,
+                                 HttpServletRequest request) {
+        if (eventPublisher == null) {
+            return;
+        }
+        String ip = IpUtils.getClientIp(request);
+        String ua = request == null ? null : request.getHeader("User-Agent");
+        eventPublisher.publishEvent(new LoginLogEvent(
+                userName,
+                userId,
+                loginType,
+                status,
+                message,
+                ip,
+                ua,
+                LocalDateTime.now()
+        ));
+    }
+
+    private static final class SysLoginLogType {
+        private static final int LOGIN = 1;
+        private static final int LOGOUT = 2;
+    }
+
+    private static final class LoginStatus {
+        private static final int FAIL = 0;
+        private static final int SUCCESS = 1;
     }
 }

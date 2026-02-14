@@ -659,6 +659,94 @@ COMMENT ON COLUMN sys_job_log.start_time IS '开始时间';
 COMMENT ON COLUMN sys_job_log.end_time IS '结束时间';
 COMMENT ON COLUMN sys_job_log.duration_ms IS '耗时毫秒';
 
+CREATE SEQUENCE IF NOT EXISTS sys_oper_log_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_oper_log
+(
+    id             BIGINT PRIMARY KEY DEFAULT nextval('sys_oper_log_id_seq'),
+    user_id        BIGINT,
+    user_name      VARCHAR(64),
+    dept_id        BIGINT,
+    dept_name      VARCHAR(128),
+    title          VARCHAR(128),
+    operation      VARCHAR(256),
+    business_type  SMALLINT     NOT NULL DEFAULT 0,
+    method         VARCHAR(255),
+    request_method VARCHAR(16),
+    oper_url       VARCHAR(512),
+    oper_ip        VARCHAR(128),
+    oper_location  VARCHAR(255),
+    oper_param     TEXT,
+    oper_result    TEXT,
+    before_data    TEXT,
+    after_data     TEXT,
+    status         SMALLINT     NOT NULL DEFAULT 1,
+    error_msg      VARCHAR(2000),
+    cost_time      BIGINT       NOT NULL DEFAULT 0,
+    oper_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+ALTER SEQUENCE sys_oper_log_id_seq OWNED BY sys_oper_log.id;
+CREATE INDEX IF NOT EXISTS idx_sys_oper_log_user ON sys_oper_log (user_id);
+CREATE INDEX IF NOT EXISTS idx_sys_oper_log_type ON sys_oper_log (business_type);
+CREATE INDEX IF NOT EXISTS idx_sys_oper_log_status ON sys_oper_log (status);
+CREATE INDEX IF NOT EXISTS idx_sys_oper_log_time ON sys_oper_log (oper_time);
+COMMENT ON TABLE sys_oper_log IS '操作日志表';
+COMMENT ON COLUMN sys_oper_log.id IS '主键ID';
+COMMENT ON COLUMN sys_oper_log.user_id IS '操作人ID';
+COMMENT ON COLUMN sys_oper_log.user_name IS '操作人账号';
+COMMENT ON COLUMN sys_oper_log.dept_id IS '部门ID';
+COMMENT ON COLUMN sys_oper_log.dept_name IS '部门名称';
+COMMENT ON COLUMN sys_oper_log.title IS '模块标题';
+COMMENT ON COLUMN sys_oper_log.operation IS '操作描述';
+COMMENT ON COLUMN sys_oper_log.business_type IS '业务类型';
+COMMENT ON COLUMN sys_oper_log.method IS '请求方法';
+COMMENT ON COLUMN sys_oper_log.request_method IS 'HTTP方法';
+COMMENT ON COLUMN sys_oper_log.oper_url IS '请求URL';
+COMMENT ON COLUMN sys_oper_log.oper_ip IS '操作IP';
+COMMENT ON COLUMN sys_oper_log.oper_location IS 'IP归属地';
+COMMENT ON COLUMN sys_oper_log.oper_param IS '请求参数';
+COMMENT ON COLUMN sys_oper_log.oper_result IS '返回结果';
+COMMENT ON COLUMN sys_oper_log.before_data IS '操作前数据';
+COMMENT ON COLUMN sys_oper_log.after_data IS '操作后数据';
+COMMENT ON COLUMN sys_oper_log.status IS '操作状态';
+COMMENT ON COLUMN sys_oper_log.error_msg IS '错误信息';
+COMMENT ON COLUMN sys_oper_log.cost_time IS '耗时毫秒';
+COMMENT ON COLUMN sys_oper_log.oper_time IS '操作时间';
+
+CREATE SEQUENCE IF NOT EXISTS sys_login_log_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_login_log
+(
+    id             BIGINT PRIMARY KEY DEFAULT nextval('sys_login_log_id_seq'),
+    user_id        BIGINT,
+    user_name      VARCHAR(64),
+    login_ip       VARCHAR(128),
+    login_location VARCHAR(255),
+    browser        VARCHAR(128),
+    os             VARCHAR(128),
+    device_type    VARCHAR(64),
+    login_type     SMALLINT     NOT NULL DEFAULT 1,
+    status         SMALLINT     NOT NULL DEFAULT 1,
+    msg            VARCHAR(500),
+    login_time     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+ALTER SEQUENCE sys_login_log_id_seq OWNED BY sys_login_log.id;
+CREATE INDEX IF NOT EXISTS idx_sys_login_log_user ON sys_login_log (user_name);
+CREATE INDEX IF NOT EXISTS idx_sys_login_log_time ON sys_login_log (login_time);
+CREATE INDEX IF NOT EXISTS idx_sys_login_log_ip ON sys_login_log (login_ip);
+CREATE INDEX IF NOT EXISTS idx_sys_login_log_status ON sys_login_log (status);
+COMMENT ON TABLE sys_login_log IS '登录日志表';
+COMMENT ON COLUMN sys_login_log.id IS '主键ID';
+COMMENT ON COLUMN sys_login_log.user_id IS '用户ID';
+COMMENT ON COLUMN sys_login_log.user_name IS '登录账号';
+COMMENT ON COLUMN sys_login_log.login_ip IS '登录IP';
+COMMENT ON COLUMN sys_login_log.login_location IS 'IP归属地';
+COMMENT ON COLUMN sys_login_log.browser IS '浏览器';
+COMMENT ON COLUMN sys_login_log.os IS '操作系统';
+COMMENT ON COLUMN sys_login_log.device_type IS '设备类型';
+COMMENT ON COLUMN sys_login_log.login_type IS '类型 1=登录 2=登出';
+COMMENT ON COLUMN sys_login_log.status IS '状态 0=失败 1=成功';
+COMMENT ON COLUMN sys_login_log.msg IS '提示消息';
+COMMENT ON COLUMN sys_login_log.login_time IS '登录时间';
+
 create table if not exists sys_quartz_job_details
 (
     sched_name        varchar(120) not null,
@@ -1264,3 +1352,5 @@ SELECT setval('sys_notice_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_notice)
 SELECT setval('sys_notice_recipient_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_notice_recipient));
 SELECT setval('sys_job_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_job));
 SELECT setval('sys_job_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_job_log));
+SELECT setval('sys_oper_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_oper_log));
+SELECT setval('sys_login_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_login_log));

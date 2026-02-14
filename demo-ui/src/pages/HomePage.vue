@@ -368,7 +368,7 @@ const navDrawerVisible = ref(true);
 const navDrawerReady = ref(false);
 const MENU_STORAGE_KEY = "demo.activeMenuId";
 const NAV_DRAWER_STORAGE_KEY = "demo.navDrawerOpen";
-const expandedGroupIds = ref<number[]>([]);
+const expandedGroupId = ref<number | null>(null);
 
 const menuTotal = computed(() => countMenuItems(menuItems.value));
 const filteredMenuTree = computed(() => {
@@ -576,16 +576,15 @@ function handleGroupClick(menu: MenuTree) {
 }
 
 function toggleGroup(id: number) {
-  const current = expandedGroupIds.value;
-  if (current.includes(id)) {
-    expandedGroupIds.value = current.filter((item) => item !== id);
+  if (expandedGroupId.value === id) {
+    expandedGroupId.value = null;
     return;
   }
-  expandedGroupIds.value = [...current, id];
+  expandedGroupId.value = id;
 }
 
 function isGroupExpanded(group: MenuTree) {
-  return expandedGroupIds.value.includes(group.id);
+  return expandedGroupId.value === group.id;
 }
 
 function selectMenuById(id: number) {

@@ -15,6 +15,6 @@ import javax.validation.constraints.Size;
 public class SysUserResetPasswordRequest {
 
     @NotBlank
-    @Size(min = 6, max = 128)
+    @Size(min = 6, max = 256)
     private String newPassword;
 }

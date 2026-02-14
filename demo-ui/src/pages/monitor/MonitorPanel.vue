@@ -12,14 +12,8 @@
     </el-tabs>
 
     <div class="system-body">
-      <el-empty
-          v-if="activeMenuCode === 'oper-log'"
-          :description="t('monitorPanel.emptyOper')"
-      />
-      <el-empty
-          v-else-if="activeMenuCode === 'login-log'"
-          :description="t('monitorPanel.emptyLogin')"
-      />
+      <OperLogTable v-if="activeMenuCode === 'oper-log'"/>
+      <LoginLogTable v-else-if="activeMenuCode === 'login-log'"/>
       <div v-else class="system-placeholder">{{ t("monitorPanel.placeholder") }}</div>
     </div>
   </section>
@@ -29,6 +23,8 @@
 import {computed, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import type {MenuTree} from "../../api/auth";
+import OperLogTable from "./OperLogTable.vue";
+import LoginLogTable from "./LoginLogTable.vue";
 
 const props = defineProps<{
   menus: MenuTree[];

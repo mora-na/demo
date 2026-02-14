@@ -249,6 +249,67 @@ export interface PostVO {
     remark?: string;
 }
 
+export interface OperLog {
+    id: number;
+    userId?: number | null;
+    userName?: string;
+    deptId?: number | null;
+    deptName?: string;
+    title?: string;
+    operation?: string;
+    businessType?: number;
+    method?: string;
+    requestMethod?: string;
+    operUrl?: string;
+    operIp?: string;
+    operLocation?: string;
+    operParam?: string;
+    operResult?: string;
+    beforeData?: string;
+    afterData?: string;
+    status?: number;
+    errorMsg?: string;
+    costTime?: number;
+    operTime?: string;
+}
+
+export interface LoginLog {
+    id: number;
+    userId?: number | null;
+    userName?: string;
+    loginIp?: string;
+    loginLocation?: string;
+    browser?: string;
+    os?: string;
+    deviceType?: string;
+    loginType?: number;
+    status?: number;
+    msg?: string;
+    loginTime?: string;
+}
+
+export interface OperLogQuery {
+    pageNum?: number;
+    pageSize?: number;
+    userName?: string;
+    title?: string;
+    status?: number;
+    businessType?: number;
+    beginTime?: string;
+    endTime?: string;
+}
+
+export interface LoginLogQuery {
+    pageNum?: number;
+    pageSize?: number;
+    userName?: string;
+    loginIp?: string;
+    status?: number;
+    loginType?: number;
+    beginTime?: string;
+    endTime?: string;
+}
+
 export interface UserQuery {
     pageNum?: number;
     pageSize?: number;
@@ -517,6 +578,26 @@ export async function getRoleMenuIds(id: number): Promise<ApiResponse<number[]>>
 
 export async function assignRoleMenus(id: number, menuIds: number[]): Promise<ApiResponse<void>> {
     const response = await api.put<ApiResponse<void>>(`/roles/${id}/menus`, {menuIds});
+    return response.data;
+}
+
+export async function listOperLogs(params: OperLogQuery): Promise<ApiResponse<PageResult<OperLog>>> {
+    const response = await api.get<ApiResponse<PageResult<OperLog>>>("/logs/oper", {params});
+    return response.data;
+}
+
+export async function listLoginLogs(params: LoginLogQuery): Promise<ApiResponse<PageResult<LoginLog>>> {
+    const response = await api.get<ApiResponse<PageResult<LoginLog>>>("/logs/login", {params});
+    return response.data;
+}
+
+export async function deleteOperLog(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/logs/oper/${id}`);
+    return response.data;
+}
+
+export async function deleteLoginLog(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/logs/login/${id}`);
     return response.data;
 }
 

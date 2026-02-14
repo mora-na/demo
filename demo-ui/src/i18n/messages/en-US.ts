@@ -318,9 +318,86 @@ export default {
         tabs: {
             operLog: "Operation Logs",
             loginLog: "Login Logs"
+        }
+    },
+    operLog: {
+        title: "Operation Logs",
+        subtitle: "Audit backend actions and API behavior.",
+        filter: {
+            user: "Operator",
+            title: "Module",
+            type: "Type",
+            status: "Status",
+            begin: "Start time",
+            end: "End time",
+            reset: "Reset"
         },
-        emptyOper: "No operation logs yet",
-        emptyLogin: "No login logs yet"
+        table: {
+            time: "Time",
+            user: "Operator",
+            title: "Module",
+            operation: "Operation",
+            type: "Type",
+            method: "Method",
+            ip: "IP",
+            status: "Status",
+            cost: "Cost",
+            error: "Error"
+        },
+        type: {
+            other: "Other",
+            insert: "Create",
+            update: "Update",
+            delete: "Delete",
+            grant: "Grant",
+            export: "Export",
+            import: "Import",
+            forceLogout: "Force logout",
+            clean: "Clean"
+        },
+        status: {
+            success: "Success",
+            fail: "Failed"
+        },
+        msg: {
+            loadFailed: "Failed to load operation logs"
+        }
+    },
+    loginLog: {
+        title: "Login Logs",
+        subtitle: "Track login, logout, and exceptions.",
+        filter: {
+            user: "Account",
+            ip: "IP",
+            type: "Type",
+            status: "Status",
+            begin: "Start time",
+            end: "End time",
+            reset: "Reset"
+        },
+        table: {
+            time: "Time",
+            user: "Account",
+            type: "Type",
+            status: "Status",
+            ip: "IP",
+            location: "Location",
+            browser: "Browser",
+            os: "OS",
+            device: "Device",
+            msg: "Message"
+        },
+        type: {
+            login: "Login",
+            logout: "Logout"
+        },
+        status: {
+            success: "Success",
+            fail: "Failed"
+        },
+        msg: {
+            loadFailed: "Failed to load login logs"
+        }
     },
     dataScope: {
         title: "Data Scope",

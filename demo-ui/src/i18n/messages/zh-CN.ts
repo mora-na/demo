@@ -318,9 +318,86 @@ export default {
         tabs: {
             operLog: "操作日志",
             loginLog: "登录日志"
+        }
+    },
+    operLog: {
+        title: "操作日志",
+        subtitle: "记录后台操作与接口行为。",
+        filter: {
+            user: "操作人",
+            title: "模块",
+            type: "类型",
+            status: "状态",
+            begin: "开始时间",
+            end: "结束时间",
+            reset: "重置"
         },
-        emptyOper: "暂无操作日志",
-        emptyLogin: "暂无登录日志"
+        table: {
+            time: "时间",
+            user: "操作人",
+            title: "模块",
+            operation: "操作",
+            type: "类型",
+            method: "方法",
+            ip: "IP",
+            status: "状态",
+            cost: "耗时",
+            error: "异常"
+        },
+        type: {
+            other: "其他",
+            insert: "新增",
+            update: "修改",
+            delete: "删除",
+            grant: "授权",
+            export: "导出",
+            import: "导入",
+            forceLogout: "强退",
+            clean: "清空"
+        },
+        status: {
+            success: "成功",
+            fail: "失败"
+        },
+        msg: {
+            loadFailed: "操作日志加载失败"
+        }
+    },
+    loginLog: {
+        title: "登录日志",
+        subtitle: "记录登录、登出与异常行为。",
+        filter: {
+            user: "账号",
+            ip: "IP",
+            type: "类型",
+            status: "状态",
+            begin: "开始时间",
+            end: "结束时间",
+            reset: "重置"
+        },
+        table: {
+            time: "时间",
+            user: "账号",
+            type: "类型",
+            status: "状态",
+            ip: "IP",
+            location: "归属地",
+            browser: "浏览器",
+            os: "系统",
+            device: "设备",
+            msg: "提示"
+        },
+        type: {
+            login: "登录",
+            logout: "登出"
+        },
+        status: {
+            success: "成功",
+            fail: "失败"
+        },
+        msg: {
+            loadFailed: "登录日志加载失败"
+        }
     },
     dataScope: {
         title: "数据权限",

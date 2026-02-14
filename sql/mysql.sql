@@ -400,6 +400,59 @@ CREATE TABLE IF NOT EXISTS sys_job_log
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='定时任务日志表';
 
+CREATE TABLE IF NOT EXISTS sys_oper_log
+(
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    user_id BIGINT COMMENT '操作人ID',
+    user_name VARCHAR(64) COMMENT '操作人账号',
+    dept_id BIGINT COMMENT '部门ID',
+    dept_name VARCHAR(128) COMMENT '部门名称',
+    title VARCHAR(128) COMMENT '模块标题',
+    operation VARCHAR(256) COMMENT '操作描述',
+    business_type TINYINT NOT NULL DEFAULT 0 COMMENT '业务类型',
+    method VARCHAR(255) COMMENT '请求方法',
+    request_method VARCHAR(16) COMMENT 'HTTP方法',
+    oper_url VARCHAR(512) COMMENT '请求URL',
+    oper_ip VARCHAR(128) COMMENT '操作IP',
+    oper_location VARCHAR(255) COMMENT 'IP归属地',
+    oper_param TEXT COMMENT '请求参数',
+    oper_result TEXT COMMENT '返回结果',
+    before_data TEXT COMMENT '操作前数据',
+    after_data TEXT COMMENT '操作后数据',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '操作状态',
+    error_msg VARCHAR(2000) COMMENT '错误信息',
+    cost_time BIGINT NOT NULL DEFAULT 0 COMMENT '耗时毫秒',
+    oper_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+    PRIMARY KEY (id),
+    KEY idx_sys_oper_log_user (user_id),
+    KEY idx_sys_oper_log_type (business_type),
+    KEY idx_sys_oper_log_status (status),
+    KEY idx_sys_oper_log_time (oper_time)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='操作日志表';
+
+CREATE TABLE IF NOT EXISTS sys_login_log
+(
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    user_id BIGINT COMMENT '用户ID',
+    user_name VARCHAR(64) COMMENT '登录账号',
+    login_ip VARCHAR(128) COMMENT '登录IP',
+    login_location VARCHAR(255) COMMENT 'IP归属地',
+    browser VARCHAR(128) COMMENT '浏览器',
+    os VARCHAR(128) COMMENT '操作系统',
+    device_type VARCHAR(64) COMMENT '设备类型',
+    login_type TINYINT NOT NULL DEFAULT 1 COMMENT '类型 1=登录 2=登出',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态 0=失败 1=成功',
+    msg VARCHAR(500) COMMENT '提示消息',
+    login_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '登录时间',
+    PRIMARY KEY (id),
+    KEY idx_sys_login_log_user (user_name),
+    KEY idx_sys_login_log_time (login_time),
+    KEY idx_sys_login_log_ip (login_ip),
+    KEY idx_sys_login_log_status (status)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='登录日志表';
+
 create table if not exists sys_quartz_job_details
 (
     sched_name        varchar(120) not null,
