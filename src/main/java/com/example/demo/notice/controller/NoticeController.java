@@ -188,10 +188,17 @@ public class NoticeController extends BaseController {
         if (noticeService.getById(id) == null) {
             return error(404, i18n("notice.not.found"));
         }
+        List<Long> affectedUserIds = noticeRecipientService.listUserIdsByNoticeIds(
+                java.util.Collections.singletonList(id));
         noticeRecipientService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(NoticeRecipient.class)
                 .eq(NoticeRecipient::getNoticeId, id));
         if (!noticeService.removeById(id)) {
             return error(500, i18n("common.delete.failed"));
+        }
+        if (!affectedUserIds.isEmpty()) {
+            java.util.Map<Long, Long> unreadCounts = noticeRecipientService.countUnreadByUserIds(affectedUserIds);
+            noticeStreamService.pushUnreadCounts(affectedUserIds, unreadCounts,
+                    java.util.Collections.singletonList(id));
         }
         return success();
     }
@@ -210,10 +217,15 @@ public class NoticeController extends BaseController {
         if (uniqueIds.isEmpty()) {
             return success();
         }
+        List<Long> affectedUserIds = noticeRecipientService.listUserIdsByNoticeIds(uniqueIds);
         noticeRecipientService.remove(com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(NoticeRecipient.class)
                 .in(NoticeRecipient::getNoticeId, uniqueIds));
         if (!noticeService.removeByIds(uniqueIds)) {
             return error(500, i18n("common.delete.failed"));
+        }
+        if (!affectedUserIds.isEmpty()) {
+            java.util.Map<Long, Long> unreadCounts = noticeRecipientService.countUnreadByUserIds(affectedUserIds);
+            noticeStreamService.pushUnreadCounts(affectedUserIds, unreadCounts, uniqueIds);
         }
         return success();
     }

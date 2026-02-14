@@ -647,6 +647,7 @@ function mapLatestToNotice(item: Record<string, any>): NoticeMyVO {
 
 function applyNoticePayload(payload: any) {
   let updated = false;
+  const hasUnreadCount = payload && typeof payload.unreadCount === "number";
   if (payload && typeof payload.unreadCount === "number") {
     unreadCount.value = payload.unreadCount;
     updated = true;
@@ -661,7 +662,7 @@ function applyNoticePayload(payload: any) {
     noticeItems.value = payload.latestNotices.map(mapLatestToNotice);
     updated = true;
   }
-  return updated;
+  return {updated, hasUnreadCount};
 }
 
 function startNoticeStream() {
@@ -683,15 +684,18 @@ function startNoticeStream() {
   const handlePayloadEvent = (event: MessageEvent) => {
     markNoticeStreamAlive();
     let updated = false;
+    let hasUnreadCount = false;
     if (event?.data) {
       try {
         const payload = JSON.parse(event.data);
-        updated = applyNoticePayload(payload);
+        const result = applyNoticePayload(payload);
+        updated = result.updated;
+        hasUnreadCount = result.hasUnreadCount;
       } catch {
         // ignore parse errors
       }
     }
-    if (!updated) {
+    if (!hasUnreadCount) {
       refreshUnreadCount();
     }
     if (noticeVisible.value) {

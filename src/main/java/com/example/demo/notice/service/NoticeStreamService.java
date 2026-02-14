@@ -53,9 +53,7 @@ public class NoticeStreamService {
         if (latestNotices != null && latestLimit() > 0) {
             latestCache.put(userId, buildLatestDeque(latestNotices));
         }
-        if (unreadCount != null || (latestNotices != null && !latestNotices.isEmpty())) {
-            sendInitEvent(userId, emitter, unreadCount);
-        }
+        sendInitEvent(userId, emitter, unreadCount);
         return emitter;
     }
 
@@ -72,7 +70,7 @@ public class NoticeStreamService {
                 continue;
             }
             List<NoticeLatestVO> latestSnapshot = updateLatestCache(userId, notice);
-            Long unreadCount = unreadCounts == null ? null : unreadCounts.get(userId);
+            Long unreadCount = unreadCounts == null ? 0L : unreadCounts.getOrDefault(userId, 0L);
             NoticePushPayload payload = new NoticePushPayload(
                     notice.getId(),
                     notice.getTitle(),
@@ -88,6 +86,46 @@ public class NoticeStreamService {
                     emitter.send(SseEmitter.event().name("notice").data(payload));
                 } catch (IOException ex) {
                     log.debug("Failed to push notice to user {}, removing emitter.", userId, ex);
+                    removeEmitter(userId, emitter);
+                }
+            }
+        }
+    }
+
+    public void pushUnreadCounts(Collection<Long> userIds, Map<Long, Long> unreadCounts, Collection<Long> removedNoticeIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return;
+        }
+        Set<Long> removedIds = removedNoticeIds == null || removedNoticeIds.isEmpty()
+                ? Collections.emptySet()
+                : new HashSet<>(removedNoticeIds);
+        for (Long userId : userIds) {
+            if (userId == null) {
+                continue;
+            }
+            List<SseEmitter> userEmitters = emitters.get(userId);
+            if (userEmitters == null || userEmitters.isEmpty()) {
+                continue;
+            }
+            List<NoticeLatestVO> latestSnapshot = removedIds.isEmpty()
+                    ? latestSnapshot(userId)
+                    : removeFromLatestCache(userId, removedIds);
+            Long unreadCount = unreadCounts == null ? 0L : unreadCounts.getOrDefault(userId, 0L);
+            NoticePushPayload payload = new NoticePushPayload(
+                    null,
+                    null,
+                    null,
+                    null,
+                    unreadCount,
+                    latestSnapshot,
+                    null,
+                    null
+            );
+            for (SseEmitter emitter : userEmitters) {
+                try {
+                    emitter.send(SseEmitter.event().name("notice").data(payload));
+                } catch (IOException ex) {
+                    log.debug("Failed to push notice update to user {}, removing emitter.", userId, ex);
                     removeEmitter(userId, emitter);
                 }
             }
@@ -126,12 +164,13 @@ public class NoticeStreamService {
 
     private void sendInitEvent(Long userId, SseEmitter emitter, Long unreadCount) {
         List<NoticeLatestVO> latestSnapshot = latestLimit() > 0 ? latestSnapshot(userId) : new ArrayList<>();
+        Long safeUnreadCount = unreadCount == null ? 0L : unreadCount;
         NoticePushPayload payload = new NoticePushPayload(
                 null,
                 null,
                 null,
                 null,
-                unreadCount,
+                safeUnreadCount,
                 latestSnapshot,
                 properties.getHeartbeatIntervalMillis(),
                 properties.getHeartbeatTimeoutMillis()
@@ -205,6 +244,23 @@ public class NoticeStreamService {
             return new ArrayList<>();
         }
         synchronized (deque) {
+            return new ArrayList<>(deque);
+        }
+    }
+
+    private List<NoticeLatestVO> removeFromLatestCache(Long userId, Set<Long> removedNoticeIds) {
+        if (userId == null || removedNoticeIds == null || removedNoticeIds.isEmpty()) {
+            return latestSnapshot(userId);
+        }
+        if (latestLimit() <= 0) {
+            return new ArrayList<>();
+        }
+        Deque<NoticeLatestVO> deque = latestCache.get(userId);
+        if (deque == null || deque.isEmpty()) {
+            return new ArrayList<>();
+        }
+        synchronized (deque) {
+            deque.removeIf(item -> item != null && removedNoticeIds.contains(item.getId()));
             return new ArrayList<>(deque);
         }
     }

@@ -34,6 +34,21 @@ public interface NoticeRecipientMapper extends BaseMapper<NoticeRecipient> {
         }
     }
 
+    static Object getFirst(Map<String, Object> row, String... keys) {
+        if (row == null || row.isEmpty() || keys == null || keys.length == 0) {
+            return null;
+        }
+        for (String key : keys) {
+            if (key == null) {
+                continue;
+            }
+            if (row.containsKey(key)) {
+                return row.get(key);
+            }
+        }
+        return null;
+    }
+
     default List<NoticeReadStat> selectReadStats(List<Long> noticeIds) {
         if (noticeIds == null || noticeIds.isEmpty()) {
             return Collections.emptyList();
@@ -50,9 +65,9 @@ public interface NoticeRecipientMapper extends BaseMapper<NoticeRecipient> {
                 continue;
             }
             NoticeReadStat stat = new NoticeReadStat();
-            stat.setNoticeId(toLong(row.getOrDefault("noticeId", row.get("notice_id"))));
-            stat.setTotalCount(toLong(row.getOrDefault("totalCount", row.get("totalcount"))));
-            stat.setReadCount(toLong(row.getOrDefault("readCount", row.get("readcount"))));
+            stat.setNoticeId(toLong(getFirst(row, "noticeId", "noticeid", "notice_id", "NOTICE_ID", "NOTICEID")));
+            stat.setTotalCount(toLong(getFirst(row, "totalCount", "totalcount", "total_count", "TOTAL_COUNT", "TOTALCOUNT")));
+            stat.setReadCount(toLong(getFirst(row, "readCount", "readcount", "read_count", "READ_COUNT", "READCOUNT")));
             stats.add(stat);
         }
         return stats;
@@ -95,8 +110,8 @@ public interface NoticeRecipientMapper extends BaseMapper<NoticeRecipient> {
                 continue;
             }
             NoticeUnreadCount count = new NoticeUnreadCount();
-            count.setUserId(toLong(row.getOrDefault("userId", row.get("user_id"))));
-            count.setUnreadCount(toLong(row.getOrDefault("unreadCount", row.get("unreadcount"))));
+            count.setUserId(toLong(getFirst(row, "userId", "userid", "user_id", "USER_ID", "USERID")));
+            count.setUnreadCount(toLong(getFirst(row, "unreadCount", "unreadcount", "unread_count", "UNREAD_COUNT", "UNREADCOUNT")));
             results.add(count);
         }
         return results;
