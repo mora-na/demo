@@ -22,6 +22,7 @@ public class AuthConstants {
     private Password password = new Password();
     private Profile profile = new Profile();
     private LoginLog loginLog = new LoginLog();
+    private Security security = new Security();
     private Controller controller = new Controller();
 
     @Data
@@ -191,6 +192,43 @@ public class AuthConstants {
         private int typeLogout = DEFAULT_TYPE_LOGOUT;
         private int statusFail = DEFAULT_STATUS_FAIL;
         private int statusSuccess = DEFAULT_STATUS_SUCCESS;
+    }
+
+    @Data
+    public static class Security {
+
+        private LoginAnomaly loginAnomaly = new LoginAnomaly();
+        private OperationConfirm operationConfirm = new OperationConfirm();
+
+        @Data
+        public static class LoginAnomaly {
+            public static final String DEFAULT_UNKNOWN_VALUE = "-";
+            public static final String DEFAULT_DEVICE_SEPARATOR = " | ";
+            public static final String DEFAULT_MAIL_SEND_FAILED_LOG_TEMPLATE = "send login anomaly mail failed, userId={}, email={}";
+
+            private String unknownValue = DEFAULT_UNKNOWN_VALUE;
+            private String deviceSeparator = DEFAULT_DEVICE_SEPARATOR;
+            private String mailSendFailedLogTemplate = DEFAULT_MAIL_SEND_FAILED_LOG_TEMPLATE;
+        }
+
+        @Data
+        public static class OperationConfirm {
+            public static final String DEFAULT_CODE_KEY_PREFIX = "auth:operation:confirm:code:";
+            public static final String DEFAULT_ATTEMPT_KEY_PREFIX = "auth:operation:confirm:attempt:";
+            public static final String DEFAULT_COOLDOWN_KEY_PREFIX = "auth:operation:confirm:cooldown:";
+            public static final String DEFAULT_TICKET_KEY_PREFIX = "auth:operation:confirm:ticket:";
+            public static final String DEFAULT_KEY_SEPARATOR = ":";
+            public static final String DEFAULT_ACTION_KEY_REGEX = "^[A-Za-z0-9:_-]{2,64}$";
+            public static final String DEFAULT_CODE_DIGITS = "0123456789";
+
+            private String codeKeyPrefix = DEFAULT_CODE_KEY_PREFIX;
+            private String attemptKeyPrefix = DEFAULT_ATTEMPT_KEY_PREFIX;
+            private String cooldownKeyPrefix = DEFAULT_COOLDOWN_KEY_PREFIX;
+            private String ticketKeyPrefix = DEFAULT_TICKET_KEY_PREFIX;
+            private String keySeparator = DEFAULT_KEY_SEPARATOR;
+            private String actionKeyRegex = DEFAULT_ACTION_KEY_REGEX;
+            private String codeDigits = DEFAULT_CODE_DIGITS;
+        }
     }
 
     @Data

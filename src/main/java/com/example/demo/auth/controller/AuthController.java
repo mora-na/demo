@@ -42,6 +42,8 @@ public class AuthController extends BaseController {
     private final PasswordPolicyService passwordPolicyService;
     private final SysUserService userService;
     private final LoginAttemptService loginAttemptService;
+    private final LoginAnomalyAlertService loginAnomalyAlertService;
+    private final OperationConfirmService operationConfirmService;
     private final UserProfileService userProfileService;
     private final com.example.demo.datascope.service.DataScopeProfileService dataScopeProfileService;
     private final DeptService deptService;
@@ -154,6 +156,9 @@ public class AuthController extends BaseController {
         loginResponse.setPasswordExpireDays(passwordPolicyService.getExpireDays());
         AuthConstants.Token tokenConstants = systemConstants.getToken();
         response.setHeader(tokenConstants.getAuthorizationHeader(), tokenConstants.getBearerPrefix() + loginResponse.getToken());
+        String loginIp = IpUtils.getClientIp(httpRequest);
+        String loginUserAgent = httpRequest == null ? null : httpRequest.getHeader(systemConstants.getProfile().getUserAgentHeader());
+        loginAnomalyAlertService.checkAndNotify(user, loginIp, loginUserAgent, LocalDateTime.now());
         publishLoginLog(user.getUserName(), user.getId(), loginType, loginSuccessStatus,
                 i18n("auth.login.success"), httpRequest);
         return success(loginResponse);
@@ -248,6 +253,53 @@ public class AuthController extends BaseController {
             return error(controllerConstants.getInternalServerErrorCode(), i18n("common.update.failed"));
         }
         return success();
+    }
+
+    /**
+     * 发送敏感操作邮箱验证码。
+     *
+     * @param request 请求参数
+     * @return 通用响应
+     */
+    @PostMapping("/security/operation-confirm/send")
+    @RequireLogin
+    public CommonResult<Void> sendOperationConfirmCode(@Valid @RequestBody OperationConfirmSendRequest request) {
+        OperationConfirmService.SendCodeResult result = operationConfirmService.sendCode(
+                AuthContext.get(),
+                request == null ? null : request.getActionKey(),
+                request == null ? null : request.getActionLabel()
+        );
+        if (!result.isSuccess()) {
+            if ("auth.operation.confirm.send.too.frequent".equals(result.getMessageKey())) {
+                return error(result.getCode(), i18n(result.getMessageKey(), result.getRetryAfterSeconds()));
+            }
+            return error(result.getCode(), i18n(result.getMessageKey()));
+        }
+        return success(i18n(result.getMessageKey()));
+    }
+
+    /**
+     * 校验敏感操作邮箱验证码，成功后返回短期票据。
+     *
+     * @param request 请求参数
+     * @return 校验结果与票据
+     */
+    @PostMapping("/security/operation-confirm/verify")
+    @RequireLogin
+    public CommonResult<OperationConfirmVerifyResponse> verifyOperationConfirmCode(
+            @Valid @RequestBody OperationConfirmVerifyRequest request) {
+        OperationConfirmService.VerifyCodeResult result = operationConfirmService.verifyCode(
+                AuthContext.get(),
+                request == null ? null : request.getActionKey(),
+                request == null ? null : request.getCode()
+        );
+        if (!result.isSuccess()) {
+            return error(result.getCode(), i18n(result.getMessageKey()));
+        }
+        OperationConfirmVerifyResponse response = new OperationConfirmVerifyResponse();
+        response.setTicket(result.getTicket());
+        response.setExpiresAt(result.getExpiresAt());
+        return success(i18n(result.getMessageKey()), response);
     }
 
     private void publishLoginLog(String userName,

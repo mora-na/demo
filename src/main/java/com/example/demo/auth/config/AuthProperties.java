@@ -29,6 +29,8 @@ public class AuthProperties {
 
     private Filter filter = new Filter();
 
+    private Security security = new Security();
+
     /**
      * JWT 配置，定义密钥与过期时间。
      *
@@ -120,5 +122,71 @@ public class AuthProperties {
         private List<String> excludePaths = new ArrayList<>(
                 Arrays.asList("/auth/**", "/error")
         );
+    }
+
+    /**
+     * 认证安全增强配置。
+     *
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/15
+     */
+    @Data
+    public static class Security {
+
+        private LoginAnomaly loginAnomaly = new LoginAnomaly();
+
+        private OperationConfirm operationConfirm = new OperationConfirm();
+
+        @Data
+        public static class LoginAnomaly {
+            /**
+             * 是否启用异地/设备变更告警。
+             */
+            private boolean enabled = true;
+            /**
+             * 是否在 IP 变化时触发告警。
+             */
+            private boolean notifyOnIpChange = true;
+            /**
+             * 是否在设备指纹变化时触发告警。
+             */
+            private boolean notifyOnDeviceChange = true;
+            /**
+             * 告警邮件主题（不含 notify.mail.subject-prefix）。
+             */
+            private String mailSubject = "登录安全提醒";
+        }
+
+        @Data
+        public static class OperationConfirm {
+            /**
+             * 是否启用敏感操作邮箱二次确认。
+             */
+            private boolean enabled = true;
+            /**
+             * 验证码位数。
+             */
+            private int codeLength = 6;
+            /**
+             * 验证码有效期（秒）。
+             */
+            private int codeTtlSeconds = 300;
+            /**
+             * 发送冷却期（秒）。
+             */
+            private int resendIntervalSeconds = 60;
+            /**
+             * 单个验证码最大校验失败次数。
+             */
+            private int maxVerifyAttempts = 5;
+            /**
+             * 校验成功后票据有效期（秒）。
+             */
+            private int ticketTtlSeconds = 900;
+            /**
+             * 二次确认邮件主题（不含 notify.mail.subject-prefix）。
+             */
+            private String mailSubject = "敏感操作确认验证码";
+        }
     }
 }
