@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>log</artifactId>
+    <name>demo-log</name>
 
     <dependencies>
         <dependency>

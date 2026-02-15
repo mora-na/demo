@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>auth</artifactId>
+    <name>demo-auth</name>
 
     <dependencies>
         <dependency>

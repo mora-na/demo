@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>order</artifactId>
+    <name>demo-order</name>
 
     <dependencies>
         <dependency>

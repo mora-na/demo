@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>job</artifactId>
+    <name>demo-job</name>
 
     <dependencies>
         <dependency>

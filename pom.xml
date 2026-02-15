@@ -14,8 +14,8 @@
     <groupId>com.example</groupId>
     <artifactId>parent</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>parent</name>
-    <description>multi-module parent</description>
+    <name>demo</name>
+    <description>demo multi-module parent</description>
     <packaging>pom</packaging>
 
     <modules>

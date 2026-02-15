@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>notice</artifactId>
+    <name>demo-notice</name>
 
     <dependencies>
         <dependency>

@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>common</artifactId>
+    <name>demo-common</name>
     <packaging>pom</packaging>
 
     <modules>

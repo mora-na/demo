@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>system</artifactId>
-    <name>system</name>
+    <name>demo-system</name>
     <description>demo system domain module</description>
 
     <dependencies>
