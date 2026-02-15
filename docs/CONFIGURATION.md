@@ -785,6 +785,16 @@
 | `common.constants.cache.memory-cleanup-thread-prefix` | `cache-cleanup` | 内存缓存清理线程名前缀。 |
 | `common.constants.cache.db-cleanup-thread-prefix` | `cache-db-cleanup` | 数据库缓存清理线程名前缀。 |
 
+### Auth 业务配置（auth.password）
+
+- 用于控制密码传输、强度、首次登录改密与过期策略。
+- 默认值定义在 `src/main/java/com/example/demo/auth/config/AuthProperties.java`，可在配置文件通过 `auth.password.*` 覆盖。
+
+| 配置键                                         | 默认值    | 说明                                               |
+|---------------------------------------------|--------|--------------------------------------------------|
+| `auth.password.force-change-on-first-login` | `true` | 是否启用首次登录强制修改密码。启用时，新建用户/管理员重置密码后需要先改密才能继续访问业务接口。 |
+| `auth.password.expire-days`                 | `120`  | 密码过期天数。`<=0` 表示不启用过期策略；大于 0 时，超过该天数会强制先改密。       |
+
 ### Auth 模块常量覆盖（auth.constants）
 
 - 默认值集中定义在 `src/main/java/com/example/demo/auth/config/AuthConstants.java`。
@@ -793,30 +803,36 @@
 
 **Auth Token / Filter**
 
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `auth.constants.token.authorization-header` | `Authorization` | 主令牌请求头名。 |
-| `auth.constants.token.fallback-token-header` | `X-Auth-Token` | 备用令牌请求头名。 |
-| `auth.constants.token.query-token-parameter` | `token` | Query 参数传递令牌时的参数名。 |
-| `auth.constants.token.bearer-prefix` | `Bearer ` | Bearer 前缀（含空格）。 |
-| `auth.constants.token.token-type` | `Bearer` | 登录响应中的 `tokenType`。 |
-| `auth.constants.token.jwt-header-alg-key` | `alg` | JWT Header 算法字段名。 |
-| `auth.constants.token.jwt-header-type-key` | `typ` | JWT Header 类型字段名。 |
-| `auth.constants.token.jwt-header-alg-value` | `HS256` | JWT Header 算法字段值。 |
-| `auth.constants.token.jwt-header-type-value` | `JWT` | JWT Header 类型字段值。 |
-| `auth.constants.token.jwt-claim-subject` | `sub` | JWT Subject Claim 键名。 |
-| `auth.constants.token.jwt-claim-user-id` | `uid` | JWT 用户 ID Claim 键名。 |
-| `auth.constants.token.jwt-claim-issued-at` | `iat` | JWT 签发时间 Claim 键名。 |
-| `auth.constants.token.jwt-claim-expires-at` | `exp` | JWT 过期时间 Claim 键名。 |
-| `auth.constants.token.jwt-claim-jwt-id` | `jti` | JWT 唯一 ID Claim 键名。 |
-| `auth.constants.token.sign-algorithm` | `HmacSHA256` | JWT 签名算法。 |
-| `auth.constants.token.store-key-prefix` | `auth:token:` | TokenStore 缓存键前缀。 |
-| `auth.constants.filter.options-method` | `OPTIONS` | AuthTokenFilter 放行的预检方法。 |
-| `auth.constants.filter.token-missing-message-key` | `auth.token.missing` | 缺失令牌消息键。 |
-| `auth.constants.filter.token-invalid-message-key` | `auth.token.invalid` | 无效令牌消息键。 |
-| `auth.constants.filter.user-invalid-message-key` | `auth.user.invalid` | 用户信息无效消息键。 |
-| `auth.constants.filter.user-not-found-message-key` | `auth.user.not.found` | 用户不存在消息键。 |
-| `auth.constants.filter.user-disabled-message-key` | `auth.user.disabled` | 用户被禁用消息键。 |
+| 配置键                                                          | 默认值                             | 说明                       |
+|--------------------------------------------------------------|---------------------------------|--------------------------|
+| `auth.constants.token.authorization-header`                  | `Authorization`                 | 主令牌请求头名。                 |
+| `auth.constants.token.fallback-token-header`                 | `X-Auth-Token`                  | 备用令牌请求头名。                |
+| `auth.constants.token.query-token-parameter`                 | `token`                         | Query 参数传递令牌时的参数名。       |
+| `auth.constants.token.bearer-prefix`                         | `Bearer `                       | Bearer 前缀（含空格）。          |
+| `auth.constants.token.token-type`                            | `Bearer`                        | 登录响应中的 `tokenType`。      |
+| `auth.constants.token.jwt-header-alg-key`                    | `alg`                           | JWT Header 算法字段名。        |
+| `auth.constants.token.jwt-header-type-key`                   | `typ`                           | JWT Header 类型字段名。        |
+| `auth.constants.token.jwt-header-alg-value`                  | `HS256`                         | JWT Header 算法字段值。        |
+| `auth.constants.token.jwt-header-type-value`                 | `JWT`                           | JWT Header 类型字段值。        |
+| `auth.constants.token.jwt-claim-subject`                     | `sub`                           | JWT Subject Claim 键名。    |
+| `auth.constants.token.jwt-claim-user-id`                     | `uid`                           | JWT 用户 ID Claim 键名。      |
+| `auth.constants.token.jwt-claim-issued-at`                   | `iat`                           | JWT 签发时间 Claim 键名。       |
+| `auth.constants.token.jwt-claim-expires-at`                  | `exp`                           | JWT 过期时间 Claim 键名。       |
+| `auth.constants.token.jwt-claim-jwt-id`                      | `jti`                           | JWT 唯一 ID Claim 键名。      |
+| `auth.constants.token.sign-algorithm`                        | `HmacSHA256`                    | JWT 签名算法。                |
+| `auth.constants.token.store-key-prefix`                      | `auth:token:`                   | TokenStore 缓存键前缀。        |
+| `auth.constants.filter.options-method`                       | `OPTIONS`                       | AuthTokenFilter 放行的预检方法。 |
+| `auth.constants.filter.token-missing-message-key`            | `auth.token.missing`            | 缺失令牌消息键。                 |
+| `auth.constants.filter.token-invalid-message-key`            | `auth.token.invalid`            | 无效令牌消息键。                 |
+| `auth.constants.filter.user-invalid-message-key`             | `auth.user.invalid`             | 用户信息无效消息键。               |
+| `auth.constants.filter.user-not-found-message-key`           | `auth.user.not.found`           | 用户不存在消息键。                |
+| `auth.constants.filter.user-disabled-message-key`            | `auth.user.disabled`            | 用户被禁用消息键。                |
+| `auth.constants.filter.password-change-required-message-key` | `auth.password.change.required` | 强制改密时拦截返回的消息键。           |
+| `auth.constants.filter.password-change-profile-path`         | `/auth/profile`                 | 强制改密状态下允许访问的个人信息接口路径。    |
+| `auth.constants.filter.password-change-logout-path`          | `/auth/logout`                  | 强制改密状态下允许访问的登出接口路径。      |
+| `auth.constants.filter.get-method`                           | `GET`                           | 强制改密白名单路径匹配的 GET 方法名。    |
+| `auth.constants.filter.put-method`                           | `PUT`                           | 强制改密白名单路径匹配的 PUT 方法名。    |
+| `auth.constants.filter.post-method`                          | `POST`                          | 强制改密白名单路径匹配的 POST 方法名。   |
 
 **Auth Captcha / Login Attempt**
 
@@ -908,4 +924,3 @@
 - 默认 profile：`dev`，可用 `SPRING_PROFILES_ACTIVE` 覆盖。
 - 数据库脚本：`sql/mysql.sql`、`sql/postgresql.sql`。
 - Druid 监控：`spring.datasource.druid.stat-view-servlet.*`。
-

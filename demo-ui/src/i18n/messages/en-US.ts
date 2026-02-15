@@ -70,6 +70,7 @@ export default {
             fillAll: "Please complete all fields.",
             loginFailed: "Login failed",
             profileLoadFailed: "Failed to load user profile",
+            passwordChangeRequired: "Your account must change password before continuing.",
             welcomeUser: "Welcome, {name}!"
         }
     },
@@ -125,10 +126,12 @@ export default {
             newPassword: "New password",
             confirmPassword: "Confirm new password",
             note: "Leave blank if you don't want to change the password.",
+            forceNote: "Security policy requires this account to change password first.",
             msg: {
                 noChanges: "No changes to save",
                 fillPassword: "Complete all password fields",
                 confirmMismatch: "New passwords do not match",
+                forcePasswordRequired: "You must change password before continuing",
                 saveFailed: "Failed to update profile",
                 saveSuccess: "Profile updated"
             }

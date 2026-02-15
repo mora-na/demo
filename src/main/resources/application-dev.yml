@@ -72,6 +72,10 @@ auth:
     strong-min-length: 8
     # 强密码校验正则（为空则使用默认组合校验）
     strong-pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d]).{8,}$"
+    # 首次登录是否强制修改密码
+    force-change-on-first-login: true
+    # 密码过期天数（<=0 表示不启用过期策略）
+    expire-days: 120
   # 登录失败限制配置
   login-limit:
     # 是否启用登录失败限制

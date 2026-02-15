@@ -1,58 +1,23 @@
 <template>
   <el-config-provider :locale="elementLocale">
-    <div :class="{ 'page--home': currentView === 'home' }" class="page">
+    <div :class="{ 'page--home': isHomeRoute }" class="page">
       <div class="halo"></div>
-      <LoginPage
-          v-if="currentView === 'login'"
-          :transport-mode="transportMode"
-          @login-success="handleLoginSuccess"
-      />
-      <HomePage v-else-if="currentView === 'home'" @logout="handleLogout"/>
-      <div v-else class="boot">{{ t("app.checking") }}</div>
+      <router-view/>
     </div>
   </el-config-provider>
 </template>
 
 <script lang="ts" setup>
-import {computed, onMounted, ref} from "vue";
+import {computed} from "vue";
 import {useI18n} from "vue-i18n";
 import enUS from "element-plus/es/locale/lang/en";
 import zhCN from "element-plus/es/locale/lang/zh-cn";
-import {useAuthStore} from "./stores/auth";
-import HomePage from "./pages/HomePage.vue";
-import LoginPage from "./pages/LoginPage.vue";
+import {useRoute} from "vue-router";
 
-const authStore = useAuthStore();
-const currentView = ref<"checking" | "login" | "home">("checking");
-const transportMode = (import.meta.env.VITE_PASSWORD_TRANSPORT_MODE || "plain").toUpperCase();
-const {locale, t} = useI18n();
+const {locale} = useI18n();
+const route = useRoute();
 const elementLocale = computed(() => (locale.value === "en-US" ? enUS : zhCN));
-
-function handleLoginSuccess() {
-  currentView.value = "home";
-}
-
-function handleLogout() {
-  currentView.value = "login";
-}
-
-onMounted(async () => {
-  if (!authStore.token) {
-    currentView.value = "login";
-    return;
-  }
-  try {
-    const result = await authStore.loadProfile();
-    if (result.ok) {
-      currentView.value = "home";
-      return;
-    }
-  } catch {
-    // Swallow errors and fall back to login.
-  }
-  authStore.clearSession();
-  currentView.value = "login";
-});
+const isHomeRoute = computed(() => route.path.startsWith("/home"));
 </script>
 
 <style scoped>
@@ -112,19 +77,6 @@ onMounted(async () => {
   transform: translateY(-20%) rotate(-10deg);
   z-index: 0;
   animation: drift 18s ease-in-out infinite;
-}
-
-.boot {
-  position: relative;
-  z-index: 1;
-  font-size: 14px;
-  color: var(--muted);
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(18, 18, 18, 0.08);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(12px);
-  padding: 16px 22px;
-  border-radius: 999px;
 }
 
 @keyframes drift {

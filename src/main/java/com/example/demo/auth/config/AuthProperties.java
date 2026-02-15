@@ -83,6 +83,14 @@ public class AuthProperties {
         private boolean strongCheckEnabled = false;
         private int strongMinLength = 8;
         private String strongPattern = "";
+        /**
+         * 是否在首次登录时强制修改密码。
+         */
+        private boolean forceChangeOnFirstLogin = true;
+        /**
+         * 密码过期天数，<=0 表示不启用过期策略。
+         */
+        private int expireDays = 120;
     }
 
     /**

@@ -64,18 +64,30 @@ public class AuthConstants {
     @Data
     public static class Filter {
         public static final String DEFAULT_OPTIONS_METHOD = "OPTIONS";
+        public static final String DEFAULT_GET_METHOD = "GET";
+        public static final String DEFAULT_POST_METHOD = "POST";
+        public static final String DEFAULT_PUT_METHOD = "PUT";
         public static final String DEFAULT_TOKEN_MISSING_MESSAGE_KEY = "auth.token.missing";
         public static final String DEFAULT_TOKEN_INVALID_MESSAGE_KEY = "auth.token.invalid";
         public static final String DEFAULT_USER_INVALID_MESSAGE_KEY = "auth.user.invalid";
         public static final String DEFAULT_USER_NOT_FOUND_MESSAGE_KEY = "auth.user.not.found";
         public static final String DEFAULT_USER_DISABLED_MESSAGE_KEY = "auth.user.disabled";
+        public static final String DEFAULT_PASSWORD_CHANGE_REQUIRED_MESSAGE_KEY = "auth.password.change.required";
+        public static final String DEFAULT_PASSWORD_CHANGE_PROFILE_PATH = "/auth/profile";
+        public static final String DEFAULT_PASSWORD_CHANGE_LOGOUT_PATH = "/auth/logout";
 
         private String optionsMethod = DEFAULT_OPTIONS_METHOD;
+        private String getMethod = DEFAULT_GET_METHOD;
+        private String postMethod = DEFAULT_POST_METHOD;
+        private String putMethod = DEFAULT_PUT_METHOD;
         private String tokenMissingMessageKey = DEFAULT_TOKEN_MISSING_MESSAGE_KEY;
         private String tokenInvalidMessageKey = DEFAULT_TOKEN_INVALID_MESSAGE_KEY;
         private String userInvalidMessageKey = DEFAULT_USER_INVALID_MESSAGE_KEY;
         private String userNotFoundMessageKey = DEFAULT_USER_NOT_FOUND_MESSAGE_KEY;
         private String userDisabledMessageKey = DEFAULT_USER_DISABLED_MESSAGE_KEY;
+        private String passwordChangeRequiredMessageKey = DEFAULT_PASSWORD_CHANGE_REQUIRED_MESSAGE_KEY;
+        private String passwordChangeProfilePath = DEFAULT_PASSWORD_CHANGE_PROFILE_PATH;
+        private String passwordChangeLogoutPath = DEFAULT_PASSWORD_CHANGE_LOGOUT_PATH;
     }
 
     @Data

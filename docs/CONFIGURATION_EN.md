@@ -785,6 +785,17 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 | `common.constants.cache.memory-cleanup-thread-prefix` | `cache-cleanup` | Memory-cache cleanup thread name prefix. |
 | `common.constants.cache.db-cleanup-thread-prefix` | `cache-db-cleanup` | DB-cache cleanup thread name prefix. |
 
+### Auth Runtime Settings (`auth.password`)
+
+- Controls password transport/strength plus first-login and expiration policies.
+- Defaults are defined in `src/main/java/com/example/demo/auth/config/AuthProperties.java` and can be overridden via
+  `auth.password.*`.
+
+| Key                                         | Default | Description                                                                                                                                                    |
+|---------------------------------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `auth.password.force-change-on-first-login` | `true`  | Enables mandatory password change on first login. When enabled, newly created users and admin-reset users must change password before accessing business APIs. |
+| `auth.password.expire-days`                 | `120`   | Password expiration window in days. `<=0` disables expiration policy; values `>0` require password update after the configured age.                            |
+
 ### Auth Constants Override (`auth.constants`)
 
 - Default values are centralized in `src/main/java/com/example/demo/auth/config/AuthConstants.java`.
@@ -793,30 +804,36 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 
 **Auth Token / Filter**
 
-| Key | Default | Description |
-|---|---|---|
-| `auth.constants.token.authorization-header` | `Authorization` | Primary auth token request header. |
-| `auth.constants.token.fallback-token-header` | `X-Auth-Token` | Fallback auth token request header. |
-| `auth.constants.token.query-token-parameter` | `token` | Query parameter name used for token passing. |
-| `auth.constants.token.bearer-prefix` | `Bearer ` | Bearer prefix (including trailing space). |
-| `auth.constants.token.token-type` | `Bearer` | `tokenType` in login response payload. |
-| `auth.constants.token.jwt-header-alg-key` | `alg` | JWT header algorithm key name. |
-| `auth.constants.token.jwt-header-type-key` | `typ` | JWT header type key name. |
-| `auth.constants.token.jwt-header-alg-value` | `HS256` | JWT header algorithm value. |
-| `auth.constants.token.jwt-header-type-value` | `JWT` | JWT header type value. |
-| `auth.constants.token.jwt-claim-subject` | `sub` | JWT subject claim key. |
-| `auth.constants.token.jwt-claim-user-id` | `uid` | JWT user-id claim key. |
-| `auth.constants.token.jwt-claim-issued-at` | `iat` | JWT issued-at claim key. |
-| `auth.constants.token.jwt-claim-expires-at` | `exp` | JWT expires-at claim key. |
-| `auth.constants.token.jwt-claim-jwt-id` | `jti` | JWT id claim key. |
-| `auth.constants.token.sign-algorithm` | `HmacSHA256` | JWT signing algorithm. |
-| `auth.constants.token.store-key-prefix` | `auth:token:` | TokenStore cache key prefix. |
-| `auth.constants.filter.options-method` | `OPTIONS` | Method bypassed by `AuthTokenFilter` (preflight). |
-| `auth.constants.filter.token-missing-message-key` | `auth.token.missing` | i18n key for missing token. |
-| `auth.constants.filter.token-invalid-message-key` | `auth.token.invalid` | i18n key for invalid token. |
-| `auth.constants.filter.user-invalid-message-key` | `auth.user.invalid` | i18n key for invalid user payload. |
-| `auth.constants.filter.user-not-found-message-key` | `auth.user.not.found` | i18n key for non-existing user. |
-| `auth.constants.filter.user-disabled-message-key` | `auth.user.disabled` | i18n key for disabled user. |
+| Key                                                          | Default                         | Description                                                          |
+|--------------------------------------------------------------|---------------------------------|----------------------------------------------------------------------|
+| `auth.constants.token.authorization-header`                  | `Authorization`                 | Primary auth token request header.                                   |
+| `auth.constants.token.fallback-token-header`                 | `X-Auth-Token`                  | Fallback auth token request header.                                  |
+| `auth.constants.token.query-token-parameter`                 | `token`                         | Query parameter name used for token passing.                         |
+| `auth.constants.token.bearer-prefix`                         | `Bearer `                       | Bearer prefix (including trailing space).                            |
+| `auth.constants.token.token-type`                            | `Bearer`                        | `tokenType` in login response payload.                               |
+| `auth.constants.token.jwt-header-alg-key`                    | `alg`                           | JWT header algorithm key name.                                       |
+| `auth.constants.token.jwt-header-type-key`                   | `typ`                           | JWT header type key name.                                            |
+| `auth.constants.token.jwt-header-alg-value`                  | `HS256`                         | JWT header algorithm value.                                          |
+| `auth.constants.token.jwt-header-type-value`                 | `JWT`                           | JWT header type value.                                               |
+| `auth.constants.token.jwt-claim-subject`                     | `sub`                           | JWT subject claim key.                                               |
+| `auth.constants.token.jwt-claim-user-id`                     | `uid`                           | JWT user-id claim key.                                               |
+| `auth.constants.token.jwt-claim-issued-at`                   | `iat`                           | JWT issued-at claim key.                                             |
+| `auth.constants.token.jwt-claim-expires-at`                  | `exp`                           | JWT expires-at claim key.                                            |
+| `auth.constants.token.jwt-claim-jwt-id`                      | `jti`                           | JWT id claim key.                                                    |
+| `auth.constants.token.sign-algorithm`                        | `HmacSHA256`                    | JWT signing algorithm.                                               |
+| `auth.constants.token.store-key-prefix`                      | `auth:token:`                   | TokenStore cache key prefix.                                         |
+| `auth.constants.filter.options-method`                       | `OPTIONS`                       | Method bypassed by `AuthTokenFilter` (preflight).                    |
+| `auth.constants.filter.token-missing-message-key`            | `auth.token.missing`            | i18n key for missing token.                                          |
+| `auth.constants.filter.token-invalid-message-key`            | `auth.token.invalid`            | i18n key for invalid token.                                          |
+| `auth.constants.filter.user-invalid-message-key`             | `auth.user.invalid`             | i18n key for invalid user payload.                                   |
+| `auth.constants.filter.user-not-found-message-key`           | `auth.user.not.found`           | i18n key for non-existing user.                                      |
+| `auth.constants.filter.user-disabled-message-key`            | `auth.user.disabled`            | i18n key for disabled user.                                          |
+| `auth.constants.filter.password-change-required-message-key` | `auth.password.change.required` | i18n key returned when password must be changed first.               |
+| `auth.constants.filter.password-change-profile-path`         | `/auth/profile`                 | Profile path allowed during forced password-change state.            |
+| `auth.constants.filter.password-change-logout-path`          | `/auth/logout`                  | Logout path allowed during forced password-change state.             |
+| `auth.constants.filter.get-method`                           | `GET`                           | GET method token used by forced password-change allowlist matching.  |
+| `auth.constants.filter.put-method`                           | `PUT`                           | PUT method token used by forced password-change allowlist matching.  |
+| `auth.constants.filter.post-method`                          | `POST`                          | POST method token used by forced password-change allowlist matching. |
 
 **Auth Captcha / Login Attempt**
 
@@ -908,4 +925,3 @@ Impact on development:
 - Default profile: `dev` (override with `SPRING_PROFILES_ACTIVE`).
 - DB scripts: `sql/mysql.sql`, `sql/postgresql.sql`.
 - Druid monitor: `spring.datasource.druid.stat-view-servlet.*`.
-

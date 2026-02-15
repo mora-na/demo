@@ -4,6 +4,7 @@ import com.example.demo.auth.config.AuthConstants;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.auth.service.PasswordPolicyService;
 import com.example.demo.auth.service.TokenService;
 import com.example.demo.auth.support.AuthTokenResolver;
 import com.example.demo.common.config.CommonConstants;
@@ -44,6 +45,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private final AuthProperties authProperties;
     private final CommonExcludePathsProperties commonExcludePaths;
     private final TokenService tokenService;
+    private final PasswordPolicyService passwordPolicyService;
     private final SysUserService userService;
     private final I18nService i18nService;
     private final AuthConstants authConstants;
@@ -111,6 +113,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             writeForbidden(response, i18nService.getMessage(request, filterConstants.getUserDisabledMessageKey()));
             return;
         }
+        if (passwordPolicyService.isPasswordChangeRequired(dbUser)
+                && !isPasswordChangeAllowedPath(request, filterConstants)) {
+            writeForbidden(response, i18nService.getMessage(request, filterConstants.getPasswordChangeRequiredMessageKey()));
+            return;
+        }
         user.setUserName(dbUser.getUserName());
         user.setNickName(dbUser.getNickName());
         user.setDeptId(dbUser.getDeptId());
@@ -150,5 +157,17 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         response.setContentType(commonConstants.getHttp().getJsonContentType());
         CommonResult<Object> result = CommonResult.error(status, message);
         response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
+    }
+
+    private boolean isPasswordChangeAllowedPath(HttpServletRequest request, AuthConstants.Filter filterConstants) {
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+        boolean profilePath = pathMatcher.match(filterConstants.getPasswordChangeProfilePath(), path);
+        boolean logoutPath = pathMatcher.match(filterConstants.getPasswordChangeLogoutPath(), path);
+        if (profilePath) {
+            return filterConstants.getGetMethod().equalsIgnoreCase(method)
+                    || filterConstants.getPutMethod().equalsIgnoreCase(method);
+        }
+        return logoutPath && filterConstants.getPostMethod().equalsIgnoreCase(method);
     }
 }

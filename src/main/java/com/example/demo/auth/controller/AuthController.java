@@ -39,6 +39,7 @@ public class AuthController extends BaseController {
     private final CaptchaService captchaService;
     private final TokenService tokenService;
     private final PasswordService passwordService;
+    private final PasswordPolicyService passwordPolicyService;
     private final SysUserService userService;
     private final LoginAttemptService loginAttemptService;
     private final UserProfileService userProfileService;
@@ -144,7 +145,13 @@ public class AuthController extends BaseController {
         authUser.setDeptTreeIds(profile.getDeptTreeIds());
         authUser.setRoleDataScopes(profile.getRoleDataScopes());
         authUser.setUserScopeOverrides(profile.getUserScopeOverrides());
+        boolean firstLoginForceChange = passwordPolicyService.isFirstLoginForceChange(user);
+        boolean passwordExpired = passwordPolicyService.isPasswordExpired(user);
         LoginResponse loginResponse = tokenService.issueToken(authUser);
+        loginResponse.setFirstLoginForceChange(firstLoginForceChange);
+        loginResponse.setPasswordExpired(passwordExpired);
+        loginResponse.setPasswordChangeRequired(firstLoginForceChange || passwordExpired);
+        loginResponse.setPasswordExpireDays(passwordPolicyService.getExpireDays());
         AuthConstants.Token tokenConstants = systemConstants.getToken();
         response.setHeader(tokenConstants.getAuthorizationHeader(), tokenConstants.getBearerPrefix() + loginResponse.getToken());
         publishLoginLog(user.getUserName(), user.getId(), loginType, loginSuccessStatus,

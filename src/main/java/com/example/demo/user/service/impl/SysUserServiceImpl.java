@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.dto.UserProfileUpdateRequest;
 import com.example.demo.auth.service.PasswordService;
 import com.example.demo.common.annotation.DataScope;
@@ -27,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -38,6 +40,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
     private final SysUserConverter userConverter;
     private final PasswordService passwordService;
+    private final AuthProperties authProperties;
     private final UserRoleService userRoleService;
     private final UserPostService userPostService;
     private final UserDataScopeService userDataScopeService;
@@ -167,6 +170,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setDataScopeType(request.getDataScopeType());
         user.setDataScopeValue(request.getDataScopeValue());
         user.setPassword(passwordService.encode(request.getPassword()));
+        user.setPasswordUpdatedAt(LocalDateTime.now());
+        user.setForcePasswordChange(authProperties.getPassword().isForceChangeOnFirstLogin()
+                ? SysUser.FORCE_PASSWORD_CHANGE_YES
+                : SysUser.FORCE_PASSWORD_CHANGE_NO);
         save(user);
         return user;
     }
@@ -214,6 +221,10 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         SysUser user = new SysUser();
         user.setId(id);
         user.setPassword(passwordService.encode(newPassword));
+        user.setPasswordUpdatedAt(LocalDateTime.now());
+        user.setForcePasswordChange(authProperties.getPassword().isForceChangeOnFirstLogin()
+                ? SysUser.FORCE_PASSWORD_CHANGE_YES
+                : SysUser.FORCE_PASSWORD_CHANGE_NO);
         return updateById(user);
     }
 
@@ -331,6 +342,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setRemark(request.getRemark());
         if (StringUtils.isNotBlank(newPassword)) {
             user.setPassword(passwordService.encode(newPassword));
+            user.setPasswordUpdatedAt(LocalDateTime.now());
+            user.setForcePasswordChange(SysUser.FORCE_PASSWORD_CHANGE_NO);
         }
         return updateById(user);
     }

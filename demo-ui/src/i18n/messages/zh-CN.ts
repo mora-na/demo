@@ -70,6 +70,7 @@ export default {
             fillAll: "请填写所有字段。",
             loginFailed: "登录失败",
             profileLoadFailed: "用户信息加载失败",
+            passwordChangeRequired: "当前账号需要先修改密码，请先完成密码更新。",
             welcomeUser: "欢迎，{name}！"
         }
     },
@@ -125,10 +126,12 @@ export default {
             newPassword: "新密码",
             confirmPassword: "确认新密码",
             note: "不修改密码可留空。",
+            forceNote: "因安全策略要求，当前账号必须先完成密码修改。",
             msg: {
                 noChanges: "没有需要保存的修改",
                 fillPassword: "请完整填写密码修改字段",
                 confirmMismatch: "两次输入的新密码不一致",
+                forcePasswordRequired: "当前登录必须先修改密码",
                 saveFailed: "资料更新失败",
                 saveSuccess: "资料已更新"
             }

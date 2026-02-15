@@ -44,13 +44,18 @@ public class UserProfileService {
     private final MenuService menuService;
     private final PermissionProperties permissionProperties;
     private final SysUserService userService;
+    private final PasswordPolicyService passwordPolicyService;
 
     public UserProfileResponse buildProfile(AuthUser authUser) {
         UserProfileResponse response = new UserProfileResponse();
         if (authUser == null || authUser.getId() == null) {
             return response;
         }
-        response.setUser(toProfileInfo(authUser));
+        SysUser user = userService.getById(authUser.getId());
+        response.setUser(toProfileInfo(authUser, user));
+        response.setPasswordExpired(passwordPolicyService.isPasswordExpired(user));
+        response.setFirstLoginForceChange(passwordPolicyService.isFirstLoginForceChange(user));
+        response.setPasswordChangeRequired(response.isPasswordExpired() || response.isFirstLoginForceChange());
         List<Role> roles = loadRoles(authUser.getId());
         response.setRoles(toRoleCodes(roles));
         response.setPermissions(loadPermissions(authUser));
@@ -58,10 +63,9 @@ public class UserProfileService {
         return response;
     }
 
-    private UserProfileInfo toProfileInfo(AuthUser authUser) {
+    private UserProfileInfo toProfileInfo(AuthUser authUser, SysUser user) {
         UserProfileInfo info = new UserProfileInfo();
         info.setId(authUser.getId());
-        SysUser user = userService.getById(authUser.getId());
         if (user != null) {
             info.setUserName(user.getUserName());
             info.setNickName(user.getNickName());

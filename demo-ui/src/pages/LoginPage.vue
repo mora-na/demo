@@ -111,13 +111,14 @@
 import {onMounted, reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
 import {useI18n} from "vue-i18n";
+import {useRouter} from "vue-router";
 import {fetchCaptcha, login} from "../api/auth";
 import {useAuthStore} from "../stores/auth";
 
 defineProps<{ transportMode: string }>();
-const emit = defineEmits<{ (e: "login-success"): void }>();
 
 const authStore = useAuthStore();
+const router = useRouter();
 const {t} = useI18n();
 const tokenTtlHours = 2;
 
@@ -163,13 +164,17 @@ async function handleSubmit() {
   try {
     const result = await login({...form});
     if (result?.code === 200 && result.data?.token) {
-      authStore.setSession(result.data.token, form.userName);
+      const requirePasswordChange = Boolean(result.data.passwordChangeRequired);
+      authStore.setSession(result.data.token, form.userName, requirePasswordChange);
       const profileResult = await authStore.loadProfile(true);
       if (!profileResult.ok) {
         ElMessage.warning(profileResult.message || t("login.msg.profileLoadFailed"));
       }
+      if (authStore.passwordChangeRequired) {
+        ElMessage.warning(t("login.msg.passwordChangeRequired"));
+      }
       ElMessage.success(t("login.msg.welcomeUser", {name: form.userName}));
-      emit("login-success");
+      await router.replace({name: "home"});
       form.password = "";
       form.captchaCode = "";
     } else {

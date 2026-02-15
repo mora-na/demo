@@ -19,4 +19,20 @@ public class LoginResponse {
     private String tokenType;
     private long expiresAt;
     private AuthUser user;
+    /**
+     * 是否需要强制修改密码。
+     */
+    private boolean passwordChangeRequired;
+    /**
+     * 是否因密码已过期而触发强制修改。
+     */
+    private boolean passwordExpired;
+    /**
+     * 是否因首次登录策略触发强制修改。
+     */
+    private boolean firstLoginForceChange;
+    /**
+     * 密码过期天数配置（<=0 表示不启用）。
+     */
+    private Integer passwordExpireDays;
 }

@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS sys_user
     phone VARCHAR(32) COMMENT '手机号码',
     email VARCHAR(128) COMMENT '用户邮箱',
     password VARCHAR(128) NOT NULL COMMENT '登录密码（加密存储）',
+    password_updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '密码最近修改时间',
+    force_password_change TINYINT  NOT NULL DEFAULT 1 COMMENT '是否必须修改密码：1-是，0-否',
     status TINYINT NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
     dept_id BIGINT COMMENT '部门ID',
     data_scope_type VARCHAR(32) COMMENT '数据范围类型：ALL全量/SELF仅本人/CUSTOM自定义/NONE无数据',
@@ -21,7 +23,10 @@ CREATE TABLE IF NOT EXISTS sys_user
     remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_user_user_name (user_name, is_deleted),
-    KEY idx_sys_user_dept (dept_id)
+    KEY idx_sys_user_dept (dept_id),
+    KEY idx_sys_user_status_dept_deleted (status, dept_id, is_deleted),
+    KEY idx_sys_user_phone_deleted (phone, is_deleted),
+    KEY idx_sys_user_email_deleted (email, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统用户表';
 
@@ -65,7 +70,8 @@ CREATE TABLE IF NOT EXISTS sys_post
     remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_post_code (code, is_deleted),
-    KEY idx_sys_post_dept (dept_id)
+    KEY idx_sys_post_dept (dept_id),
+    KEY idx_sys_post_dept_status_deleted (dept_id, status, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='岗位表';
 
@@ -86,7 +92,8 @@ CREATE TABLE IF NOT EXISTS sys_role
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
     remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_sys_role_code (code, is_deleted)
+    UNIQUE KEY uk_sys_role_code (code, is_deleted),
+    KEY idx_sys_role_status_deleted (status, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='角色表';
 
@@ -105,7 +112,8 @@ CREATE TABLE IF NOT EXISTS sys_permission
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
     remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_sys_permission_code (code, is_deleted)
+    UNIQUE KEY uk_sys_permission_code (code, is_deleted),
+    KEY idx_sys_permission_status_deleted (status, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='权限表';
 
@@ -125,7 +133,8 @@ CREATE TABLE IF NOT EXISTS sys_dict_type
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
     remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_sys_dict_type (dict_type, is_deleted)
+    UNIQUE KEY uk_sys_dict_type (dict_type, is_deleted),
+    KEY idx_sys_dict_type_status_deleted_sort (status, is_deleted, sort, id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='字典类型表';
 
@@ -147,7 +156,8 @@ CREATE TABLE IF NOT EXISTS sys_dict_data
     remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_dict_data (dict_type, dict_value, is_deleted),
-    KEY idx_sys_dict_data_type (dict_type)
+    KEY idx_sys_dict_data_type (dict_type),
+    KEY idx_sys_dict_data_type_status_deleted_sort (dict_type, status, is_deleted, sort, id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='字典数据表';
 
@@ -172,7 +182,10 @@ CREATE TABLE IF NOT EXISTS sys_menu
     remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_menu_code (code, is_deleted),
-    KEY idx_sys_menu_parent (parent_id)
+    KEY idx_sys_menu_parent (parent_id),
+    KEY idx_sys_menu_parent_status_deleted_sort (parent_id, status, is_deleted, sort, id),
+    KEY idx_sys_menu_permission_deleted (permission, is_deleted),
+    KEY idx_sys_menu_status_deleted_sort (status, is_deleted, sort, id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='菜单表';
 
@@ -192,7 +205,8 @@ CREATE TABLE IF NOT EXISTS sys_role_permission
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_role_permission_role_perm (role_id, permission_id, is_deleted),
     KEY idx_sys_role_permission_role (role_id),
-    KEY idx_sys_role_permission_perm (permission_id)
+    KEY idx_sys_role_permission_perm (permission_id),
+    KEY idx_sys_role_permission_perm_deleted (permission_id, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='角色-权限关联表';
 
@@ -213,7 +227,8 @@ CREATE TABLE IF NOT EXISTS sys_role_menu
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_role_menu_role_menu (role_id, menu_id, is_deleted),
     KEY idx_sys_role_menu_role (role_id),
-    KEY idx_sys_role_menu_menu (menu_id)
+    KEY idx_sys_role_menu_menu (menu_id),
+    KEY idx_sys_role_menu_menu_deleted (menu_id, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='角色-菜单关联表';
 
@@ -255,7 +270,8 @@ CREATE TABLE IF NOT EXISTS sys_user_role
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_user_role_user_role (user_id, role_id, is_deleted),
     KEY idx_sys_user_role_user (user_id),
-    KEY idx_sys_user_role_role (role_id)
+    KEY idx_sys_user_role_role (role_id),
+    KEY idx_sys_user_role_role_deleted (role_id, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='用户-角色关联表';
 
@@ -278,7 +294,9 @@ CREATE TABLE IF NOT EXISTS sys_user_data_scope
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_user_data_scope_user_key (user_id, scope_key, is_deleted),
     KEY idx_sys_user_data_scope_user (user_id),
-    KEY idx_sys_user_data_scope_key (scope_key)
+    KEY idx_sys_user_data_scope_key (scope_key),
+    KEY idx_sys_user_data_scope_user_status_deleted (user_id, status, is_deleted),
+    KEY idx_sys_user_data_scope_scope_status_deleted (scope_key, status, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='用户数据范围覆盖表';
 
@@ -321,7 +339,8 @@ CREATE TABLE IF NOT EXISTS sys_data_scope_rule
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
     remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_sys_data_scope_rule_key (scope_key)
+    UNIQUE KEY uk_sys_data_scope_rule_key (scope_key),
+    KEY idx_sys_data_scope_rule_status_deleted (status, is_deleted)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='数据范围规则表';
 
@@ -344,7 +363,9 @@ CREATE TABLE IF NOT EXISTS sys_order
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
     remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
-    KEY idx_sys_order_user (user_id)
+    KEY idx_sys_order_user (user_id),
+    KEY idx_sys_order_user_deleted_create_time (user_id, is_deleted, create_time, id),
+    KEY idx_sys_order_user_deleted_amount (user_id, is_deleted, amount)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='订单表';
 
@@ -355,7 +376,8 @@ CREATE TABLE IF NOT EXISTS sys_cache
     value_class VARCHAR(255) COMMENT '值类型名称',
     expire_at   BIGINT COMMENT '过期时间（毫秒时间戳）',
     PRIMARY KEY (cache_key),
-    KEY idx_sys_cache_expire_at (expire_at)
+    KEY idx_sys_cache_expire_at (expire_at),
+    KEY idx_sys_cache_expire_at_key (expire_at, cache_key)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='缓存表';
 
@@ -376,7 +398,9 @@ CREATE TABLE IF NOT EXISTS sys_notice
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
     remark VARCHAR(500) DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
-    KEY idx_sys_notice_create_time (create_time)
+    KEY idx_sys_notice_create_time (create_time),
+    KEY idx_sys_notice_deleted_create_time (is_deleted, create_time, id),
+    KEY idx_sys_notice_scope_deleted_create_time (scope_type, is_deleted, create_time, id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统通知表';
 
@@ -400,7 +424,9 @@ CREATE TABLE IF NOT EXISTS sys_notice_recipient
     KEY idx_sys_notice_recipient_notice (notice_id),
     KEY idx_sys_notice_recipient_user (user_id),
     KEY idx_sys_notice_recipient_read (read_status),
-    KEY idx_sys_notice_recipient_user_read (user_id, read_status, is_deleted)
+    KEY idx_sys_notice_recipient_user_read (user_id, read_status, is_deleted),
+    KEY idx_sys_notice_recipient_user_deleted_notice (user_id, is_deleted, notice_id),
+    KEY idx_sys_notice_recipient_notice_deleted_read_time (notice_id, is_deleted, read_status, read_time, user_id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统通知接收表';
 
@@ -421,7 +447,8 @@ CREATE TABLE IF NOT EXISTS sys_job
     remark VARCHAR(255) COMMENT '备注',
     PRIMARY KEY (id),
     KEY idx_sys_job_status (status),
-    KEY idx_sys_job_handler (handler_name)
+    KEY idx_sys_job_handler (handler_name),
+    KEY idx_sys_job_status_id (status, id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='定时任务表';
 
@@ -439,7 +466,8 @@ CREATE TABLE IF NOT EXISTS sys_job_log
     duration_ms BIGINT COMMENT '耗时毫秒',
     PRIMARY KEY (id),
     KEY idx_sys_job_log_job (job_id),
-    KEY idx_sys_job_log_start (start_time)
+    KEY idx_sys_job_log_start (start_time),
+    KEY idx_sys_job_log_job_start_id (job_id, start_time, id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='定时任务日志表';
 
@@ -470,7 +498,8 @@ CREATE TABLE IF NOT EXISTS sys_oper_log
     KEY idx_sys_oper_log_user (user_id),
     KEY idx_sys_oper_log_type (business_type),
     KEY idx_sys_oper_log_status (status),
-    KEY idx_sys_oper_log_time (oper_time)
+    KEY idx_sys_oper_log_time (oper_time),
+    KEY idx_sys_oper_log_status_type_time (status, business_type, oper_time, id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='操作日志表';
 
@@ -492,7 +521,8 @@ CREATE TABLE IF NOT EXISTS sys_login_log
     KEY idx_sys_login_log_user (user_name),
     KEY idx_sys_login_log_time (login_time),
     KEY idx_sys_login_log_ip (login_ip),
-    KEY idx_sys_login_log_status (status)
+    KEY idx_sys_login_log_status (status),
+    KEY idx_sys_login_log_status_type_time (status, login_type, login_time, id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='登录日志表';
 

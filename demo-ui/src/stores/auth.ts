@@ -13,13 +13,15 @@ export const useAuthStore = defineStore("auth", () => {
     const roles = ref<string[]>([]);
     const permissions = ref<string[]>([]);
     const menus = ref<MenuTree[]>([]);
+    const passwordChangeRequired = ref(false);
     const profileLoaded = ref(false);
 
     const isAuthenticated = computed(() => Boolean(token.value));
 
-    function setSession(newToken: string, name: string) {
+    function setSession(newToken: string, name: string, requirePasswordChange = false) {
         token.value = newToken;
         userName.value = name;
+        passwordChangeRequired.value = requirePasswordChange;
         localStorage.setItem(TOKEN_KEY, newToken);
         localStorage.setItem(USER_KEY, name);
     }
@@ -31,6 +33,7 @@ export const useAuthStore = defineStore("auth", () => {
         roles.value = [];
         permissions.value = [];
         menus.value = [];
+        passwordChangeRequired.value = false;
         profileLoaded.value = false;
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
@@ -49,6 +52,7 @@ export const useAuthStore = defineStore("auth", () => {
             roles.value = result.data.roles || [];
             permissions.value = result.data.permissions || [];
             menus.value = result.data.menus || [];
+            passwordChangeRequired.value = Boolean(result.data.passwordChangeRequired);
             profileLoaded.value = true;
             if (result.data.user?.userName) {
                 userName.value = result.data.user.userName;
@@ -66,6 +70,7 @@ export const useAuthStore = defineStore("auth", () => {
         roles,
         permissions,
         menus,
+        passwordChangeRequired,
         profileLoaded,
         isAuthenticated,
         setSession,

@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS sys_user
     phone            VARCHAR(32),
     email            VARCHAR(128),
     password         VARCHAR(128) NOT NULL,
+    password_updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    force_password_change SMALLINT  NOT NULL DEFAULT 1,
     status           SMALLINT     NOT NULL DEFAULT 1,
     dept_id          BIGINT,
     data_scope_type  VARCHAR(32),
@@ -38,12 +40,17 @@ COMMENT ON COLUMN sys_user.nick_name IS '昵称';
 COMMENT ON COLUMN sys_user.phone IS '手机号码';
 COMMENT ON COLUMN sys_user.email IS '用户邮箱';
 COMMENT ON COLUMN sys_user.password IS '登录密码（加密存储）';
+COMMENT ON COLUMN sys_user.password_updated_at IS '密码最近修改时间';
+COMMENT ON COLUMN sys_user.force_password_change IS '是否必须修改密码：1-是，0-否';
 COMMENT ON COLUMN sys_user.status IS '状态：1-启用，0-禁用';
 COMMENT ON COLUMN sys_user.dept_id IS '部门ID';
 COMMENT ON COLUMN sys_user.data_scope_type IS '数据范围类型：ALL全量/SELF仅本人/CUSTOM自定义/NONE无数据';
 COMMENT ON COLUMN sys_user.data_scope_value IS '数据范围值，CUSTOM时存储自定义范围内容（如ID列表）';
 COMMENT ON COLUMN sys_user.sex IS '性别';
 CREATE INDEX IF NOT EXISTS idx_sys_user_dept ON sys_user (dept_id);
+CREATE INDEX IF NOT EXISTS idx_sys_user_status_dept_deleted ON sys_user (status, dept_id, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_user_phone_deleted ON sys_user (phone, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_user_email_deleted ON sys_user (email, is_deleted);
 
 CREATE SEQUENCE IF NOT EXISTS sys_dept_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_dept
@@ -103,6 +110,7 @@ CREATE TABLE IF NOT EXISTS sys_post
 ALTER SEQUENCE sys_post_id_seq OWNED BY sys_post.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_post_code ON sys_post (code, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_post_dept ON sys_post (dept_id);
+CREATE INDEX IF NOT EXISTS idx_sys_post_dept_status_deleted ON sys_post (dept_id, status, is_deleted);
 COMMENT ON TABLE sys_post IS '岗位表';
 COMMENT ON COLUMN sys_post.id IS '主键ID';
 COMMENT ON COLUMN sys_post.create_time IS '创建时间';
@@ -139,6 +147,7 @@ CREATE TABLE IF NOT EXISTS sys_role
 );
 ALTER SEQUENCE sys_role_id_seq OWNED BY sys_role.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_code ON sys_role (code, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_role_status_deleted ON sys_role (status, is_deleted);
 COMMENT ON TABLE sys_role IS '角色表';
 COMMENT ON COLUMN sys_role.id IS '主键ID';
 COMMENT ON COLUMN sys_role.create_time IS '创建时间';
@@ -173,6 +182,7 @@ CREATE TABLE IF NOT EXISTS sys_permission
 );
 ALTER SEQUENCE sys_permission_id_seq OWNED BY sys_permission.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_permission_code ON sys_permission (code, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_permission_status_deleted ON sys_permission (status, is_deleted);
 COMMENT ON TABLE sys_permission IS '权限表';
 COMMENT ON COLUMN sys_permission.id IS '主键ID';
 COMMENT ON COLUMN sys_permission.create_time IS '创建时间';
@@ -206,6 +216,7 @@ CREATE TABLE IF NOT EXISTS sys_dict_type
 );
 ALTER SEQUENCE sys_dict_type_id_seq OWNED BY sys_dict_type.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_dict_type ON sys_dict_type (dict_type, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_dict_type_status_deleted_sort ON sys_dict_type (status, is_deleted, sort, id);
 COMMENT ON TABLE sys_dict_type IS '字典类型表';
 COMMENT ON COLUMN sys_dict_type.id IS '主键ID';
 COMMENT ON COLUMN sys_dict_type.dict_type IS '字典类型（唯一）';
@@ -242,6 +253,7 @@ CREATE TABLE IF NOT EXISTS sys_dict_data
 ALTER SEQUENCE sys_dict_data_id_seq OWNED BY sys_dict_data.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_dict_data ON sys_dict_data (dict_type, dict_value, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_dict_data_type ON sys_dict_data (dict_type);
+CREATE INDEX IF NOT EXISTS idx_sys_dict_data_type_status_deleted_sort ON sys_dict_data (dict_type, status, is_deleted, sort, id);
 COMMENT ON TABLE sys_dict_data IS '字典数据表';
 COMMENT ON COLUMN sys_dict_data.id IS '主键ID';
 COMMENT ON COLUMN sys_dict_data.dict_type IS '字典类型';
@@ -282,6 +294,9 @@ CREATE TABLE IF NOT EXISTS sys_menu
 ALTER SEQUENCE sys_menu_id_seq OWNED BY sys_menu.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_menu_code ON sys_menu (code, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_menu_parent ON sys_menu (parent_id);
+CREATE INDEX IF NOT EXISTS idx_sys_menu_parent_status_deleted_sort ON sys_menu (parent_id, status, is_deleted, sort, id);
+CREATE INDEX IF NOT EXISTS idx_sys_menu_permission_deleted ON sys_menu (permission, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_menu_status_deleted_sort ON sys_menu (status, is_deleted, sort, id);
 COMMENT ON TABLE sys_menu IS '菜单表';
 COMMENT ON COLUMN sys_menu.id IS '主键ID';
 COMMENT ON COLUMN sys_menu.create_time IS '创建时间';
@@ -320,6 +335,7 @@ ALTER SEQUENCE sys_role_permission_id_seq OWNED BY sys_role_permission.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_permission_role_perm ON sys_role_permission (role_id, permission_id, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_role_permission_role ON sys_role_permission (role_id);
 CREATE INDEX IF NOT EXISTS idx_sys_role_permission_perm ON sys_role_permission (permission_id);
+CREATE INDEX IF NOT EXISTS idx_sys_role_permission_perm_deleted ON sys_role_permission (permission_id, is_deleted);
 COMMENT ON TABLE sys_role_permission IS '角色-权限关联表';
 COMMENT ON COLUMN sys_role_permission.id IS '主键ID';
 COMMENT ON COLUMN sys_role_permission.create_time IS '创建时间';
@@ -353,6 +369,7 @@ ALTER SEQUENCE sys_role_menu_id_seq OWNED BY sys_role_menu.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_menu_role_menu ON sys_role_menu (role_id, menu_id, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_role_menu_role ON sys_role_menu (role_id);
 CREATE INDEX IF NOT EXISTS idx_sys_role_menu_menu ON sys_role_menu (menu_id);
+CREATE INDEX IF NOT EXISTS idx_sys_role_menu_menu_deleted ON sys_role_menu (menu_id, is_deleted);
 COMMENT ON TABLE sys_role_menu IS '角色-菜单关联表';
 COMMENT ON COLUMN sys_role_menu.id IS '主键ID';
 COMMENT ON COLUMN sys_role_menu.create_time IS '创建时间';
@@ -421,6 +438,7 @@ ALTER SEQUENCE sys_user_role_id_seq OWNED BY sys_user_role.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_role_user_role ON sys_user_role (user_id, role_id, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_user_role_user ON sys_user_role (user_id);
 CREATE INDEX IF NOT EXISTS idx_sys_user_role_role ON sys_user_role (role_id);
+CREATE INDEX IF NOT EXISTS idx_sys_user_role_role_deleted ON sys_user_role (role_id, is_deleted);
 COMMENT ON TABLE sys_user_role IS '用户-角色关联表';
 COMMENT ON COLUMN sys_user_role.id IS '主键ID';
 COMMENT ON COLUMN sys_user_role.create_time IS '创建时间';
@@ -456,6 +474,8 @@ ALTER SEQUENCE sys_user_data_scope_id_seq OWNED BY sys_user_data_scope.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_data_scope_user_key ON sys_user_data_scope (user_id, scope_key, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_user_data_scope_user ON sys_user_data_scope (user_id);
 CREATE INDEX IF NOT EXISTS idx_sys_user_data_scope_key ON sys_user_data_scope (scope_key);
+CREATE INDEX IF NOT EXISTS idx_sys_user_data_scope_user_status_deleted ON sys_user_data_scope (user_id, status, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_user_data_scope_scope_status_deleted ON sys_user_data_scope (scope_key, status, is_deleted);
 COMMENT ON TABLE sys_user_data_scope IS '用户数据范围覆盖表';
 COMMENT ON COLUMN sys_user_data_scope.id IS '主键ID';
 COMMENT ON COLUMN sys_user_data_scope.create_time IS '创建时间';
@@ -526,6 +546,7 @@ CREATE TABLE IF NOT EXISTS sys_data_scope_rule
 );
 ALTER SEQUENCE sys_data_scope_rule_id_seq OWNED BY sys_data_scope_rule.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_data_scope_rule_key ON sys_data_scope_rule (scope_key);
+CREATE INDEX IF NOT EXISTS idx_sys_data_scope_rule_status_deleted ON sys_data_scope_rule (status, is_deleted);
 COMMENT ON TABLE sys_data_scope_rule IS '数据范围规则表';
 COMMENT ON COLUMN sys_data_scope_rule.id IS '主键ID';
 COMMENT ON COLUMN sys_data_scope_rule.create_time IS '创建时间';
@@ -566,6 +587,8 @@ CREATE TABLE IF NOT EXISTS sys_order
 );
 ALTER SEQUENCE sys_order_id_seq OWNED BY sys_order.id;
 CREATE INDEX IF NOT EXISTS idx_sys_order_user ON sys_order (user_id);
+CREATE INDEX IF NOT EXISTS idx_sys_order_user_deleted_create_time ON sys_order (user_id, is_deleted, create_time, id);
+CREATE INDEX IF NOT EXISTS idx_sys_order_user_deleted_amount ON sys_order (user_id, is_deleted, amount);
 COMMENT ON TABLE sys_order IS '订单表';
 COMMENT ON COLUMN sys_order.id IS '主键ID';
 COMMENT ON COLUMN sys_order.create_time IS '创建时间';
@@ -587,6 +610,7 @@ CREATE TABLE IF NOT EXISTS sys_cache
     expire_at   BIGINT
 );
 CREATE INDEX IF NOT EXISTS idx_sys_cache_expire_at ON sys_cache (expire_at);
+CREATE INDEX IF NOT EXISTS idx_sys_cache_expire_at_key ON sys_cache (expire_at, cache_key);
 COMMENT ON TABLE sys_cache IS '缓存表';
 COMMENT ON COLUMN sys_cache.cache_key IS '缓存键';
 COMMENT ON COLUMN sys_cache.cache_value IS '缓存内容（JSON）';
@@ -613,6 +637,8 @@ CREATE TABLE IF NOT EXISTS sys_notice
 );
 ALTER SEQUENCE sys_notice_id_seq OWNED BY sys_notice.id;
 CREATE INDEX IF NOT EXISTS idx_sys_notice_create_time ON sys_notice (create_time);
+CREATE INDEX IF NOT EXISTS idx_sys_notice_deleted_create_time ON sys_notice (is_deleted, create_time, id);
+CREATE INDEX IF NOT EXISTS idx_sys_notice_scope_deleted_create_time ON sys_notice (scope_type, is_deleted, create_time, id);
 COMMENT ON TABLE sys_notice IS '系统通知表';
 COMMENT ON COLUMN sys_notice.id IS '主键ID';
 COMMENT ON COLUMN sys_notice.create_time IS '创建时间';
@@ -652,6 +678,8 @@ CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_notice ON sys_notice_recipie
 CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_user ON sys_notice_recipient (user_id);
 CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_read ON sys_notice_recipient (read_status);
 CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_user_read ON sys_notice_recipient (user_id, read_status, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_user_deleted_notice ON sys_notice_recipient (user_id, is_deleted, notice_id);
+CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_notice_deleted_read_time ON sys_notice_recipient (notice_id, is_deleted, read_status, read_time, user_id);
 COMMENT ON TABLE sys_notice_recipient IS '系统通知接收表';
 COMMENT ON COLUMN sys_notice_recipient.id IS '主键ID';
 COMMENT ON COLUMN sys_notice_recipient.create_time IS '创建时间';
@@ -687,6 +715,7 @@ CREATE TABLE IF NOT EXISTS sys_job
 ALTER SEQUENCE sys_job_id_seq OWNED BY sys_job.id;
 CREATE INDEX IF NOT EXISTS idx_sys_job_status ON sys_job (status);
 CREATE INDEX IF NOT EXISTS idx_sys_job_handler ON sys_job (handler_name);
+CREATE INDEX IF NOT EXISTS idx_sys_job_status_id ON sys_job (status, id);
 COMMENT ON TABLE sys_job IS '定时任务表';
 COMMENT ON COLUMN sys_job.id IS '主键ID';
 COMMENT ON COLUMN sys_job.name IS '任务名称';
@@ -719,6 +748,7 @@ CREATE TABLE IF NOT EXISTS sys_job_log
 ALTER SEQUENCE sys_job_log_id_seq OWNED BY sys_job_log.id;
 CREATE INDEX IF NOT EXISTS idx_sys_job_log_job ON sys_job_log (job_id);
 CREATE INDEX IF NOT EXISTS idx_sys_job_log_start ON sys_job_log (start_time);
+CREATE INDEX IF NOT EXISTS idx_sys_job_log_job_start_id ON sys_job_log (job_id, start_time, id);
 COMMENT ON TABLE sys_job_log IS '定时任务日志表';
 COMMENT ON COLUMN sys_job_log.id IS '主键ID';
 COMMENT ON COLUMN sys_job_log.job_id IS '任务ID';
@@ -761,6 +791,7 @@ CREATE INDEX IF NOT EXISTS idx_sys_oper_log_user ON sys_oper_log (user_id);
 CREATE INDEX IF NOT EXISTS idx_sys_oper_log_type ON sys_oper_log (business_type);
 CREATE INDEX IF NOT EXISTS idx_sys_oper_log_status ON sys_oper_log (status);
 CREATE INDEX IF NOT EXISTS idx_sys_oper_log_time ON sys_oper_log (oper_time);
+CREATE INDEX IF NOT EXISTS idx_sys_oper_log_status_type_time ON sys_oper_log (status, business_type, oper_time, id);
 COMMENT ON TABLE sys_oper_log IS '操作日志表';
 COMMENT ON COLUMN sys_oper_log.id IS '主键ID';
 COMMENT ON COLUMN sys_oper_log.user_id IS '操作人ID';
@@ -805,6 +836,7 @@ CREATE INDEX IF NOT EXISTS idx_sys_login_log_user ON sys_login_log (user_name);
 CREATE INDEX IF NOT EXISTS idx_sys_login_log_time ON sys_login_log (login_time);
 CREATE INDEX IF NOT EXISTS idx_sys_login_log_ip ON sys_login_log (login_ip);
 CREATE INDEX IF NOT EXISTS idx_sys_login_log_status ON sys_login_log (status);
+CREATE INDEX IF NOT EXISTS idx_sys_login_log_status_type_time ON sys_login_log (status, login_type, login_time, id);
 COMMENT ON TABLE sys_login_log IS '登录日志表';
 COMMENT ON COLUMN sys_login_log.id IS '主键ID';
 COMMENT ON COLUMN sys_login_log.user_id IS '用户ID';

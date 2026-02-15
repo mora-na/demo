@@ -55,7 +55,12 @@ public class TokenService {
         payload.put(tokenConstants.getJwtClaimJwtId(), UUID.randomUUID().toString());
         String token = createToken(payload, getSecret());
         tokenStore.save(token, user, expireAt);
-        return new LoginResponse(token, tokenConstants.getTokenType(), expireAt, user);
+        LoginResponse response = new LoginResponse();
+        response.setToken(token);
+        response.setTokenType(tokenConstants.getTokenType());
+        response.setExpiresAt(expireAt);
+        response.setUser(user);
+        return response;
     }
 
     /**

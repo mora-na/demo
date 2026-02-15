@@ -24,4 +24,19 @@ public class UserProfileResponse implements Serializable {
     private List<String> permissions;
 
     private List<MenuTreeVO> menus;
+
+    /**
+     * 是否需要强制修改密码。
+     */
+    private boolean passwordChangeRequired;
+
+    /**
+     * 是否命中密码过期策略。
+     */
+    private boolean passwordExpired;
+
+    /**
+     * 是否命中首次登录强制改密策略。
+     */
+    private boolean firstLoginForceChange;
 }

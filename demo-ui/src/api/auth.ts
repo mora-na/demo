@@ -15,6 +15,12 @@ export interface LoginPayload {
 
 export interface LoginData {
     token: string;
+    tokenType?: string;
+    expiresAt?: number;
+    passwordChangeRequired?: boolean;
+    passwordExpired?: boolean;
+    firstLoginForceChange?: boolean;
+    passwordExpireDays?: number;
 }
 
 export interface UpdateProfilePayload {
@@ -58,6 +64,9 @@ export interface UserProfileResponse {
     roles: string[];
     permissions: string[];
     menus: MenuTree[];
+    passwordChangeRequired?: boolean;
+    passwordExpired?: boolean;
+    firstLoginForceChange?: boolean;
 }
 
 export interface LogoutPayload {

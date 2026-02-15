@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 用户实体，映射 sys_user 表并承载基础导出字段定义。
@@ -26,6 +27,8 @@ public class SysUser extends BaseEntity implements Serializable {
 
     public static final int STATUS_ENABLED = 1;
     public static final int STATUS_DISABLED = 0;
+    public static final int FORCE_PASSWORD_CHANGE_YES = 1;
+    public static final int FORCE_PASSWORD_CHANGE_NO = 0;
     private static final long serialVersionUID = 1L;
     /**
      * 用户名（唯一）
@@ -60,6 +63,18 @@ public class SysUser extends BaseEntity implements Serializable {
      */
     @TableField("password")
     private String password;
+
+    /**
+     * 密码最近修改时间。
+     */
+    @TableField("password_updated_at")
+    private LocalDateTime passwordUpdatedAt;
+
+    /**
+     * 是否要求用户修改密码：1-是；0-否。
+     */
+    @TableField("force_password_change")
+    private Integer forcePasswordChange;
 
     /**
      * 状态：1-启用；0-禁用

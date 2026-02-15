@@ -156,7 +156,13 @@
       </header>
 
       <section class="console-main">
-        <OrderManagementPanel v-if="isOrderGroup"/>
+        <div v-if="passwordPolicyLock" class="main-hero">
+          <div>
+            <h1>{{ t("home.profile.title") }}</h1>
+            <p>{{ t("home.profile.forceNote") }}</p>
+          </div>
+        </div>
+        <OrderManagementPanel v-else-if="isOrderGroup"/>
         <MonitorPanel
             v-else-if="isMonitorGroup"
             :active-menu-id="activeMenuId"
@@ -218,7 +224,15 @@
       </section>
     </div>
 
-    <el-dialog v-model="settingsVisible" :title="t('home.profile.title')" align-center width="560px">
+    <el-dialog
+        v-model="settingsVisible"
+        :close-on-click-modal="!passwordPolicyLock"
+        :close-on-press-escape="!passwordPolicyLock"
+        :show-close="!passwordPolicyLock"
+        :title="t('home.profile.title')"
+        align-center
+        width="560px"
+    >
       <el-form :model="profileForm" label-position="top">
         <el-row :gutter="16" class="profile-grid">
           <el-col :xs="24" :sm="12">
@@ -268,10 +282,10 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <div class="profile-note">{{ t("home.profile.note") }}</div>
+        <div class="profile-note">{{ passwordPolicyLock ? t("home.profile.forceNote") : t("home.profile.note") }}</div>
       </el-form>
       <template #footer>
-        <el-button @click="settingsVisible = false">{{ t("common.cancel") }}</el-button>
+        <el-button v-if="!passwordPolicyLock" @click="settingsVisible = false">{{ t("common.cancel") }}</el-button>
         <el-button :loading="savingProfile" type="primary" @click="handleProfileSave">
           {{ t("common.save") }}
         </el-button>
@@ -288,6 +302,9 @@
         <el-button @click="noticeDetailVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+    <div aria-hidden="true" class="route-anchor">
+      <router-view/>
+    </div>
   </main>
 </template>
 
@@ -296,6 +313,7 @@ import type {Component} from "vue";
 import {computed, onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {ElMessage} from "element-plus";
 import {useI18n} from "vue-i18n";
+import {useRoute, useRouter} from "vue-router";
 import {
   Activity,
   BarChart3,
@@ -328,11 +346,14 @@ import DataScopePanel from "./system/DataScopePanel.vue";
 import MonitorPanel from "./monitor/MonitorPanel.vue";
 import OrderManagementPanel from "./order/OrderManagementPanel.vue";
 
-const emit = defineEmits<{ (e: "logout"): void }>();
-
 const authStore = useAuthStore();
+const route = useRoute();
+const router = useRouter();
 const dictStore = useDictStore();
 const {t} = useI18n();
+const passwordPolicyLock = computed(
+    () => Boolean(authStore.passwordChangeRequired)
+);
 const displayName = computed(
     () => authStore.profile?.nickName || authStore.profile?.userName || authStore.userName || t("common.userFallback")
 );
@@ -372,6 +393,8 @@ const navDrawerVisible = ref(true);
 const navDrawerReady = ref(false);
 const MENU_STORAGE_KEY = "demo.activeMenuId";
 const NAV_DRAWER_STORAGE_KEY = "demo.navDrawerOpen";
+const HOME_GROUP_ROUTE_NAME = "home-group";
+const HOME_MENU_ROUTE_NAME = "home-menu";
 const expandedGroupId = ref<number | null>(null);
 
 const menuTotal = computed(() => countMenuItems(menuItems.value));
@@ -387,17 +410,15 @@ const submenuCount = computed(() => Math.max(menuTotal.value - menuGroupCount.va
 const roleCount = computed(() => authStore.roles.length);
 const permissionCount = computed(() => authStore.permissions.length);
 
-const activeMenuSource = computed(() => (menuQuery.value.trim() ? filteredMenuTree.value : menuItems.value));
-
 const activeGroup = computed(() => {
-  const source = activeMenuSource.value;
-  if (!source.length) {
+  const items = menuItems.value;
+  if (!items.length) {
     return null;
   }
   if (activeMenuId.value == null) {
-    return source[0];
+    return items[0];
   }
-  return findGroupById(source, activeMenuId.value) || source[0];
+  return findGroupById(items, activeMenuId.value) || items[0];
 });
 
 const activeMenuItem = computed(() => findMenuById(menuItems.value, activeMenuId.value));
@@ -449,82 +470,11 @@ const roleSummary = computed(() =>
 );
 
 watch(
-    menuItems,
-    (items) => {
-      if (!items.length || activeMenuId.value != null) {
-        return;
-      }
-      const stored = readStoredMenuId();
-      if (stored != null && findMenuById(items, stored)) {
-        activeMenuId.value = stored;
-        return;
-      }
-      activeMenuId.value = items[0].id;
-    },
-    {immediate: true}
-);
-
-watch(
-    () => [isSystemGroup.value, activeChildren.value, activeMenuId.value],
+    () => [menuItems.value, route.params.groupCode, route.params.menuCode, route.name],
     () => {
-      if (!isSystemGroup.value) {
-        return;
-      }
-      const children = activeChildren.value;
-      if (!children.length) {
-        return;
-      }
-      const activeId = activeMenuId.value;
-      if (activeId == null || !children.some((item) => item.id === activeId)) {
-        activeMenuId.value = children[0].id;
-      }
+      void syncMenuRouteState();
     },
     {immediate: true}
-);
-
-watch(
-    () => [isDataScopeGroup.value, activeChildren.value, activeMenuId.value],
-    () => {
-      if (!isDataScopeGroup.value) {
-        return;
-      }
-      const children = activeChildren.value;
-      if (!children.length) {
-        return;
-      }
-      const activeId = activeMenuId.value;
-      if (activeId == null || !children.some((item) => item.id === activeId)) {
-        activeMenuId.value = children[0].id;
-      }
-    },
-    {immediate: true}
-);
-
-watch(
-    () => [isMonitorGroup.value, activeChildren.value, activeMenuId.value],
-    () => {
-      if (!isMonitorGroup.value) {
-        return;
-      }
-      const children = activeChildren.value;
-      if (!children.length) {
-        return;
-      }
-      const activeId = activeMenuId.value;
-      if (activeId == null || !children.some((item) => item.id === activeId)) {
-        activeMenuId.value = children[0].id;
-      }
-    },
-    {immediate: true}
-);
-
-watch(
-    () => activeMenuId.value,
-    (value) => {
-      if (value != null) {
-        storeMenuId(value);
-      }
-    }
 );
 
 watch(
@@ -535,8 +485,24 @@ watch(
 );
 
 watch(
+    () => passwordPolicyLock.value,
+    (locked, prevLocked) => {
+      if (locked) {
+        return;
+      }
+      if (prevLocked) {
+        void dictStore.loadAll();
+        refreshUnreadCount();
+      }
+    }
+);
+
+watch(
     () => noticeVisible.value,
     (visible) => {
+      if (passwordPolicyLock.value) {
+        return;
+      }
       if (visible) {
         loadMyNotices();
         refreshUnreadCount();
@@ -545,15 +511,17 @@ watch(
 );
 
 watch(
-    () => authStore.token,
-    (token, prevToken) => {
-      if (!token) {
+    () => [authStore.token, passwordPolicyLock.value],
+    ([token, locked], previous) => {
+      const prevToken = previous ? previous[0] : undefined;
+      const prevLocked = previous ? previous[1] : undefined;
+      if (!token || locked) {
         stopNoticeStream();
         unreadCount.value = 0;
         noticeItems.value = [];
         return;
       }
-      if (token !== prevToken) {
+      if (token !== prevToken || locked !== prevLocked) {
         startNoticeStream();
         refreshUnreadCount();
       }
@@ -561,12 +529,199 @@ watch(
     {immediate: true}
 );
 
-function selectMenu(menu: MenuTree) {
+let syncingMenuRoute = false;
+
+function normalizeRouteParam(value: unknown): string {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return typeof raw === "string" ? raw.trim() : "";
+}
+
+function menuRouteCode(menu: MenuTree): string {
+  const code = menu.code?.trim();
+  if (code) {
+    return code;
+  }
+  return String(menu.id);
+}
+
+function codesMatch(menu: MenuTree, code: string): boolean {
+  return menuRouteCode(menu).toLowerCase() === code.toLowerCase();
+}
+
+function findGroupByCode(items: MenuTree[], code: string): MenuTree | null {
+  for (const item of items) {
+    if (codesMatch(item, code)) {
+      return item;
+    }
+  }
+  return null;
+}
+
+function findChildByCode(group: MenuTree, code: string): MenuTree | null {
+  const children = group.children || [];
+  for (const child of children) {
+    if (codesMatch(child, code)) {
+      return child;
+    }
+  }
+  return null;
+}
+
+function resolveStoredMenuForGroup(group: MenuTree): MenuTree | null {
+  const storedId = readStoredMenuId();
+  if (storedId == null) {
+    return null;
+  }
+  if (!group.children?.length) {
+    return group.id === storedId ? group : null;
+  }
+  return group.children.find((item) => item.id === storedId) || null;
+}
+
+function getDefaultSelection(items: MenuTree[]): { group: MenuTree; menu: MenuTree } | null {
+  if (!items.length) {
+    return null;
+  }
+  const storedId = readStoredMenuId();
+  if (storedId != null) {
+    const storedMenu = findMenuById(items, storedId);
+    if (storedMenu) {
+      const storedGroup = findGroupById(items, storedMenu.id);
+      if (storedGroup) {
+        if (storedGroup.children?.length) {
+          const child = storedGroup.children.find((item) => item.id === storedMenu.id) || storedGroup.children[0];
+          if (child) {
+            return {group: storedGroup, menu: child};
+          }
+        }
+        return {group: storedGroup, menu: storedGroup};
+      }
+    }
+  }
+  const firstGroup = items[0];
+  if (firstGroup.children?.length) {
+    return {group: firstGroup, menu: firstGroup.children[0]};
+  }
+  return {group: firstGroup, menu: firstGroup};
+}
+
+function resolveSelectionFromRoute(
+    items: MenuTree[],
+    groupCode: string,
+    menuCode: string
+): { group: MenuTree; menu: MenuTree } | null {
+  if (!items.length) {
+    return null;
+  }
+  if (!groupCode) {
+    return getDefaultSelection(items);
+  }
+  const group = findGroupByCode(items, groupCode);
+  if (!group) {
+    return getDefaultSelection(items);
+  }
+  if (!group.children?.length) {
+    return {group, menu: group};
+  }
+  if (menuCode) {
+    const child = findChildByCode(group, menuCode);
+    if (child) {
+      return {group, menu: child};
+    }
+  }
+  const storedChild = resolveStoredMenuForGroup(group);
+  if (storedChild) {
+    return {group, menu: storedChild};
+  }
+  return {group, menu: group.children[0]};
+}
+
+function buildHomeRouteTarget(selection: { group: MenuTree; menu: MenuTree }) {
+  const groupCode = menuRouteCode(selection.group);
+  if (selection.group.children?.length) {
+    return {
+      name: HOME_MENU_ROUTE_NAME,
+      params: {
+        groupCode,
+        menuCode: menuRouteCode(selection.menu)
+      }
+    };
+  }
+  return {
+    name: HOME_GROUP_ROUTE_NAME,
+    params: {
+      groupCode
+    }
+  };
+}
+
+function isCurrentHomeRoute(target: { name: string; params: { groupCode: string; menuCode?: string } }): boolean {
+  if (route.name !== target.name) {
+    return false;
+  }
+  if (normalizeRouteParam(route.params.groupCode) !== target.params.groupCode) {
+    return false;
+  }
+  const targetMenuCode = target.params.menuCode || "";
+  return normalizeRouteParam(route.params.menuCode) === targetMenuCode;
+}
+
+async function syncMenuRouteState() {
+  if (syncingMenuRoute) {
+    return;
+  }
+  const items = menuItems.value;
+  if (!items.length) {
+    activeMenuId.value = null;
+    expandedGroupId.value = null;
+    return;
+  }
+  const groupCode = normalizeRouteParam(route.params.groupCode);
+  const menuCode = normalizeRouteParam(route.params.menuCode);
+  const selection = resolveSelectionFromRoute(items, groupCode, menuCode);
+  if (!selection) {
+    activeMenuId.value = null;
+    expandedGroupId.value = null;
+    return;
+  }
+  activeMenuId.value = selection.menu.id;
+  expandedGroupId.value = selection.group.id;
+  storeMenuId(selection.menu.id);
+  const target = buildHomeRouteTarget(selection);
+  if (!isCurrentHomeRoute(target)) {
+    syncingMenuRoute = true;
+    try {
+      await router.replace(target);
+    } finally {
+      syncingMenuRoute = false;
+    }
+  }
+}
+
+function routeToMenu(menu: MenuTree) {
+  const group = findGroupById(menuItems.value, menu.id);
+  if (!group) {
+    return null;
+  }
+  if (!group.children?.length) {
+    return buildHomeRouteTarget({group, menu: group});
+  }
+  const selectedChild = group.children.find((item) => item.id === menu.id) || group.children[0];
+  if (!selectedChild) {
+    return null;
+  }
+  return buildHomeRouteTarget({group, menu: selectedChild});
+}
+
+async function selectMenu(menu: MenuTree) {
   if (menu?.id == null) {
     return;
   }
-  activeMenuId.value = menu.id;
-  storeMenuId(menu.id);
+  const target = routeToMenu(menu);
+  if (!target || isCurrentHomeRoute(target)) {
+    return;
+  }
+  await router.push(target);
 }
 
 function handleGroupClick(menu: MenuTree) {
@@ -576,7 +731,7 @@ function handleGroupClick(menu: MenuTree) {
   if (menu.children?.length) {
     toggleGroup(menu.id);
   }
-  selectMenu(menu);
+  void selectMenu(menu);
 }
 
 function toggleGroup(id: number) {
@@ -592,20 +747,15 @@ function isGroupExpanded(group: MenuTree) {
 }
 
 function selectMenuById(id: number) {
-  activeMenuId.value = id;
-  storeMenuId(id);
+  const menu = findMenuById(menuItems.value, id);
+  if (!menu) {
+    return;
+  }
+  void selectMenu(menu);
 }
 
 function toggleNav() {
   navDrawerVisible.value = !navDrawerVisible.value;
-}
-
-function menuInitial(name?: string) {
-  if (!name) {
-    return "•";
-  }
-  const trimmed = name.trim();
-  return trimmed ? trimmed.slice(0, 1) : "•";
 }
 
 const MENU_ICON_MAP: Record<string, Component> = {
@@ -665,6 +815,10 @@ function formatDateTime(value?: string) {
 }
 
 async function refreshUnreadCount() {
+  if (passwordPolicyLock.value) {
+    unreadCount.value = 0;
+    return;
+  }
   if (!authStore.token) {
     unreadCount.value = 0;
     return;
@@ -744,6 +898,9 @@ function applyNoticePayload(payload: any) {
 }
 
 function startNoticeStream() {
+  if (passwordPolicyLock.value) {
+    return;
+  }
   stopNoticeStream();
   const token = authStore.token;
   if (!token) {
@@ -817,6 +974,10 @@ function stopNoticeStream() {
 }
 
 async function loadMyNotices() {
+  if (passwordPolicyLock.value) {
+    noticeItems.value = [];
+    return;
+  }
   if (noticeLoading.value) {
     return;
   }
@@ -879,7 +1040,12 @@ async function handleMarkAllRead() {
 }
 
 async function openSettings() {
-  await authStore.loadProfile(true);
+  try {
+    await authStore.loadProfile(true);
+  } catch (error) {
+    ElMessage.error(getErrorMessage(error, t("home.profile.msg.saveFailed")));
+    return;
+  }
   const profile = authStore.profile;
   profileForm.userName = profile?.userName || authStore.userName || "";
   profileForm.nickName = profile?.nickName || "";
@@ -916,6 +1082,10 @@ async function handleProfileSave() {
     ElMessage.warning(t("home.profile.msg.noChanges"));
     return;
   }
+  if (passwordPolicyLock.value && !wantsPasswordChange) {
+    ElMessage.warning(t("home.profile.msg.forcePasswordRequired"));
+    return;
+  }
 
   if (wantsPasswordChange) {
     if (!profileForm.oldPassword || !profileForm.newPassword || !profileForm.confirmPassword) {
@@ -941,7 +1111,9 @@ async function handleProfileSave() {
     if (result?.code === 200) {
       ElMessage.success(result?.message || t("home.profile.msg.saveSuccess"));
       await authStore.loadProfile(true);
-      settingsVisible.value = false;
+      if (!authStore.passwordChangeRequired) {
+        settingsVisible.value = false;
+      }
     } else {
       ElMessage.error(result?.message || t("home.profile.msg.saveFailed"));
     }
@@ -1088,6 +1260,8 @@ async function loadProfile() {
     if (!result.ok) {
       ElMessage.warning(result.message || t("home.msg.profileLoadFailed"));
     }
+  } catch (error) {
+    ElMessage.warning(getErrorMessage(error, t("home.msg.profileLoadFailed")));
   } finally {
     loadingProfile.value = false;
   }
@@ -1100,7 +1274,7 @@ async function handleLogout() {
   const token = authStore.token;
   if (!token) {
     authStore.clearSession();
-    emit("logout");
+    await router.replace({name: "login"});
     return;
   }
   loggingOut.value = true;
@@ -1109,7 +1283,7 @@ async function handleLogout() {
     if (result?.code === 200) {
       ElMessage.success(result?.message || t("home.msg.logoutSuccess"));
       authStore.clearSession();
-      emit("logout");
+      await router.replace({name: "login"});
     } else {
       ElMessage.error(result?.message || t("home.msg.logoutFailed"));
     }
@@ -1127,6 +1301,10 @@ onMounted(async () => {
   }
   navDrawerReady.value = true;
   await loadProfile();
+  if (passwordPolicyLock.value) {
+    await openSettings();
+    return;
+  }
   void dictStore.loadAll();
   await refreshUnreadCount();
 });
@@ -1147,6 +1325,10 @@ onUnmounted(() => {
   min-height: calc(100vh - 16px);
   display: flex;
   gap: 8px;
+}
+
+.route-anchor {
+  display: none;
 }
 
 .console-drawer {
