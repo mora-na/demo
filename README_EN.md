@@ -133,6 +133,16 @@ npm run dev
 - Constant governance: module magic values are centralized in `*Constants` and bound via `@ConfigurationProperties`.
 - Full configurable keys and defaults: `docs/CONFIGURATION_EN.md`.
 
+### Performance Optimizations
+
+- Data-scope preloading on login: `deptTreeIds`, `roleDataScopes`, and `userScopeOverrides` are preloaded into auth
+  context after login, so query-time scope resolution uses in-memory profile data instead of rebuilding scope profile on
+  each query.
+- Batch dict translation: before response serialization, dict types required by `@DictLabel` are collected and preloaded
+  in batch; serialization then resolves labels from request-local maps to avoid row-by-row repeated lookups.
+- SSE heartbeat keepalive: notice stream sends periodic heartbeat events to reduce idle disconnects on browsers/proxies,
+  and exposes heartbeat settings in the init event for client-side timeout/reconnect logic.
+
 ### Mail-backed Security Scenarios
 
 - Email is sent in these cases:
@@ -162,6 +172,16 @@ npm run dev
 
 - Permission checks: `security.permission.*`.
 - Menu permissions are derived from `sys_menu.permission`.
+
+### Notice SSE Keepalive
+
+- SSE endpoint: `GET /notices/stream`.
+- Init event: `init`, includes `heartbeatIntervalMillis` and `heartbeatTimeoutMillis` for client timeout handling.
+- Heartbeat event: `ping`, pushed by server at `notice.sse.heartbeat-interval-millis`.
+- Key configs:
+  - `notice.sse.heartbeat-interval-millis` (default `60000`)
+  - `notice.sse.heartbeat-timeout-millis` (default `180000`)
+  - `notice.sse.latest-limit` (default `5`)
 
 ### Data Scope
 

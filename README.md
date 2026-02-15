@@ -130,6 +130,13 @@ npm run dev
 - 常量治理：模块内部魔法值已收敛到各自 `*Constants`，通过 `@ConfigurationProperties` 支持配置覆盖。
 - 详细可覆盖项与默认值见：`docs/CONFIGURATION.md`。
 
+### 性能优化要点
+
+- 数据权限计算前移：登录成功时预加载 `deptTreeIds`、`roleDataScopes`、`userScopeOverrides`
+  到认证上下文，查询阶段直接基于上下文计算最终范围，避免每次查询重复装配数据权限画像。
+- 字典翻译批量化：响应序列化前会批量收集 `@DictLabel` 需要的字典类型并预取，翻译阶段优先使用请求级上下文映射，减少逐条翻译带来的重复查询与重复遍历。
+- SSE 心跳保活：通知流会按固定间隔推送心跳事件，降低代理层/浏览器空闲断连概率，并在初始化事件中下发心跳参数供前端断线重连判断。
+
 ### 邮件能力（安全场景）
 
 - 当前会触发邮件发送的场景：
@@ -156,6 +163,16 @@ npm run dev
 
 - 权限校验由 `security.permission.*` 控制。
 - 菜单权限来源于 `sys_menu.permission`。
+
+### 通知 SSE 保活
+
+- SSE 接口：`GET /notices/stream`。
+- 初始化事件：`init`，包含 `heartbeatIntervalMillis`、`heartbeatTimeoutMillis`，用于前端设置心跳超时判定。
+- 心跳事件：`ping`，由服务端按 `notice.sse.heartbeat-interval-millis` 周期推送。
+- 关键配置：
+  - `notice.sse.heartbeat-interval-millis`（默认 `60000`）
+  - `notice.sse.heartbeat-timeout-millis`（默认 `180000`）
+  - `notice.sse.latest-limit`（默认 `5`）
 
 ### 数据范围
 
