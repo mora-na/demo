@@ -45,9 +45,9 @@ auth:
     code-length: 4
     # 内置字体资源（可配置多个以混用）
     font-resources:
-      # 字体示例: IndieFlower-Regular.ttf
-      - classpath:front/IndieFlower-Regular.ttf
-      - classpath:front/PermanentMarker-Regular.ttf
+      # 字体示例: DejaVuSans.ttf、OpenSans-Bold.ttf
+      - classpath:front/DejaVuSans.ttf
+      - classpath:front/OpenSans-Bold.ttf
     # 验证码有效期（秒）
     expire-seconds: 120
   # 密码策略配置
@@ -139,6 +139,16 @@ notify:
 
 # 数据源与缓存配置
 spring:
+  main:
+    # 延迟初始化非关键 Bean，缩短冷启动时间（首个请求可能略慢）
+    lazy-initialization: true
+
+  data:
+    redis:
+      repositories:
+        # 禁用 Spring Data Redis Repository 扫描（项目当前未使用 Repository 模式）
+        enabled: false
+
   # SMTP 邮件配置（Spring Boot 标准）
   mail:
     # SMTP 主机地址

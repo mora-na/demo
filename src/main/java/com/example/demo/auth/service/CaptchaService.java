@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -19,6 +18,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 验证码服务，生成图片验证码并进行验证。
@@ -37,9 +37,22 @@ public class CaptchaService {
     private final CaptchaStore captchaStore;
     private final AuthConstants systemConstants;
     private volatile List<Font> embeddedFonts = Collections.emptyList();
+    private final AtomicBoolean fontsInitialized = new AtomicBoolean(false);
 
-    @PostConstruct
-    public void initEmbeddedFonts() {
+    private void ensureEmbeddedFontsInitialized() {
+        if (fontsInitialized.get()) {
+            return;
+        }
+        synchronized (this) {
+            if (fontsInitialized.get()) {
+                return;
+            }
+            initEmbeddedFonts();
+            fontsInitialized.set(true);
+        }
+    }
+
+    private void initEmbeddedFonts() {
         List<String> resources = authProperties.getCaptcha().getFontResources();
         if (resources == null || resources.isEmpty()) {
             return;
@@ -73,6 +86,7 @@ public class CaptchaService {
      * @return 验证码响应信息
      */
     public CaptchaResponse createCaptcha() {
+        ensureEmbeddedFontsInitialized();
         AuthProperties.Captcha config = authProperties.getCaptcha();
         Captcha captcha = createCaptchaImage(
                 config.getWidth(),

@@ -53,25 +53,33 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
     const authStore = useAuthStore();
-    if (to.meta?.requiresAuth) {
-        if (!authStore.token) {
-            return {name: "login"};
+    try {
+        if (to.meta?.requiresAuth) {
+            if (!authStore.token) {
+                return {name: "login"};
+            }
+            const result = await authStore.loadProfile();
+            if (!result.ok) {
+                authStore.clearSession();
+                return {name: "login"};
+            }
+            return true;
         }
-        const result = await authStore.loadProfile();
-        if (!result.ok) {
+        if (to.name === "login" && authStore.token) {
+            const result = await authStore.loadProfile();
+            if (result.ok) {
+                return {name: "home"};
+            }
             authStore.clearSession();
-            return {name: "login"};
         }
         return true;
-    }
-    if (to.name === "login" && authStore.token) {
-        const result = await authStore.loadProfile();
-        if (result.ok) {
-            return {name: "home"};
-        }
+    } catch (_error) {
         authStore.clearSession();
+        if (to.name === "login") {
+            return true;
+        }
+        return {name: "login"};
     }
-    return true;
 });
 
 export default router;

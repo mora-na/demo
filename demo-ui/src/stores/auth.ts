@@ -6,6 +6,11 @@ import {fetchProfile, type MenuTree, type UserProfileInfo} from "../api/auth";
 const TOKEN_KEY = "demo-token";
 const USER_KEY = "demo-user";
 
+function resolveErrorMessage(error: unknown, fallback: string): string {
+    const err = error as { response?: { data?: { message?: string } }; message?: string };
+    return err?.response?.data?.message || err?.message || fallback;
+}
+
 export const useAuthStore = defineStore("auth", () => {
     const token = ref<string>(localStorage.getItem(TOKEN_KEY) || "");
     const userName = ref<string>(localStorage.getItem(USER_KEY) || "");
@@ -46,21 +51,25 @@ export const useAuthStore = defineStore("auth", () => {
         if (profileLoaded.value && !force) {
             return {ok: true};
         }
-        const result = await fetchProfile();
-        if (result?.code === 200 && result.data) {
-            profile.value = result.data.user;
-            roles.value = result.data.roles || [];
-            permissions.value = result.data.permissions || [];
-            menus.value = result.data.menus || [];
-            passwordChangeRequired.value = Boolean(result.data.passwordChangeRequired);
-            profileLoaded.value = true;
-            if (result.data.user?.userName) {
-                userName.value = result.data.user.userName;
-                localStorage.setItem(USER_KEY, result.data.user.userName);
+        try {
+            const result = await fetchProfile();
+            if (result?.code === 200 && result.data) {
+                profile.value = result.data.user;
+                roles.value = result.data.roles || [];
+                permissions.value = result.data.permissions || [];
+                menus.value = result.data.menus || [];
+                passwordChangeRequired.value = Boolean(result.data.passwordChangeRequired);
+                profileLoaded.value = true;
+                if (result.data.user?.userName) {
+                    userName.value = result.data.user.userName;
+                    localStorage.setItem(USER_KEY, result.data.user.userName);
+                }
+                return {ok: true};
             }
-            return {ok: true};
+            return {ok: false, message: result?.message || i18n.global.t("common.profileLoadFailed")};
+        } catch (error) {
+            return {ok: false, message: resolveErrorMessage(error, i18n.global.t("common.profileLoadFailed"))};
         }
-        return {ok: false, message: result?.message || i18n.global.t("common.profileLoadFailed")};
     }
 
     return {
