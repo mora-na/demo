@@ -14,7 +14,7 @@
 - 登录安全：登录失败次数限制（滑动窗口）与锁定策略。
 - 会话安全：支持退出登录后服务端主动撤销 Token（无需等待 JWT 自然过期）。
 - 邮件安全能力：支持异地/设备变更登录告警、敏感操作邮箱二次确认（验证码 + 短期票据）。
-- 密码安全：传输层可选 AES-GCM/SM2，持久化支持 bcrypt/md5/sm3（可配置），并支持首次登录强制改密与密码过期策略。
+- 密码安全：传输层可选 AES-GCM/SM2，持久化支持 bcrypt/sm3（可配置），并支持首次登录强制改密与密码过期策略。
 - 统一接口契约：后端统一 `CommonResult` 返回结构，前端统一按 `code/message/data` 处理。
 - 常量治理：模块魔法值收敛到各模块 `*Constants`，支持默认值与配置覆盖。
 - 数据范围控制：按角色配置可见范围（ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE）。
@@ -111,6 +111,7 @@ npm run dev
 - Token 头仅支持 `Authorization: Bearer <token>` 或 `X-Auth-Token`。
 - JWT 配置：`auth.jwt.secret`、`auth.jwt.ttl-seconds`。
 - 密码策略：`auth.password.mode`、`auth.password.transport-mode`、`auth.password.transport-key`。
+  - `auth.password.mode` 仅支持 `bcrypt` / `sm3`（已移除 `md5`）。
 - 密码治理：
     - 首次登录强制改密：`auth.password.force-change-on-first-login`（默认 `true`）。
     - 密码过期天数：`auth.password.expire-days`（默认 `120`，`<=0` 表示关闭过期策略）。
@@ -213,6 +214,8 @@ npm run dev
 - `deptTreeIds`：当前部门及子部门集合。
 - `roleDataScopes`：角色默认 + 菜单级范围。
 - `userScopeOverrides`：用户级覆盖（`scope_key` → 覆盖配置）。
+- 性能说明：上述画像在登录时一次性装配并写入认证上下文；查询阶段不再回表重复装配角色/菜单/用户覆盖数据，仅基于上下文做范围合并与
+  SQL 拼接。
 
 **读取过滤流程（SELECT）**
 - 方法标注 `@DataScope`，写入 `scopeKey` 至线程上下文。

@@ -15,7 +15,7 @@ A front-end/back-end separated sample system focused on authentication/authoriza
 - Session security: server-side token revocation on logout (no need to wait for JWT natural expiration).
 - Mail-backed security: login anomaly alerts (IP/device change) and sensitive-operation email confirmation (code +
   short-lived ticket).
-- Password security: transport AES-GCM/SM2, storage bcrypt/md5/sm3 (configurable), with first-login forced password
+- Password security: transport AES-GCM/SM2, storage bcrypt/sm3 (configurable), with first-login forced password
   change and password expiration policy.
 - Unified API contract: backend returns `CommonResult` consistently; frontend handles `code/message/data` in one place.
 - Constant governance: magic values are centralized in module-level `*Constants` with defaults and config overrides.
@@ -114,6 +114,7 @@ npm run dev
 - Token header: `Authorization: Bearer <token>` or `X-Auth-Token`.
 - JWT config: `auth.jwt.secret`, `auth.jwt.ttl-seconds`.
 - Password policy: `auth.password.mode`, `auth.password.transport-mode`, `auth.password.transport-key`.
+    - `auth.password.mode` supports only `bcrypt` / `sm3` (`md5` has been removed).
 - Password governance:
     - Force password change on first login: `auth.password.force-change-on-first-login` (default `true`).
     - Password expiration days: `auth.password.expire-days` (default `120`; disable when `<=0`).
@@ -222,6 +223,8 @@ npm run dev
 - `deptTreeIds`: current dept and descendants.
 - `roleDataScopes`: role default + menu overrides.
 - `userScopeOverrides`: user overrides (scope_key → config).
+- Performance note: this profile is assembled once at login and stored in auth context; query-time filtering no longer
+  rebuilds role/menu/override profile from DB, and only performs in-memory scope merge plus SQL predicate injection.
 
 **Read-time Filtering (SELECT)**
 - Annotate with `@DataScope` to set `scopeKey` in thread context.

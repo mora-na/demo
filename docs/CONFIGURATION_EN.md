@@ -928,7 +928,6 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 |---|---|---|
 | `auth.constants.password.mode-fallback` | `plain` | Fallback password mode. |
 | `auth.constants.password.mode-bcrypt` | `bcrypt` | Mode token for bcrypt password handling. |
-| `auth.constants.password.mode-md5` | `md5` | Mode token for md5 password handling. |
 | `auth.constants.password.mode-sm3` | `sm3` | Mode token for sm3 password handling. |
 | `auth.constants.password.transport-mode-aes` | `aes` | Mode token for AES transport decryption. |
 | `auth.constants.password.transport-mode-aes-gcm` | `aes-gcm` | Mode token for AES-GCM transport decryption. |

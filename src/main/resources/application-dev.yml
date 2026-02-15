@@ -52,9 +52,9 @@ auth:
     expire-seconds: 120
   # 密码策略配置
   password:
-    # 用户密码加密持久化处理模式：plain/md5/bcrypt/sm3
+    # 用户密码加密持久化处理模式：bcrypt/sm3
     mode: sm3
-    # 密码盐（用于 md5/sm3）
+    # 密码盐（用于 sm3）
     salt: "4a97HT87*7&s649c-49f3-./9nTsdn^5$1becc50a*7!4e4"
     # 默认密码（支持使用环境变量覆盖）
     default-password: ${AUTH_DEFAULT_PASSWORD:ENC(hf7z4h+P3Ranjc8Ana8ZQg==)}

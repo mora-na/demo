@@ -926,7 +926,6 @@
 |---|---|---|
 | `auth.constants.password.mode-fallback` | `plain` | 密码模式兜底值。 |
 | `auth.constants.password.mode-bcrypt` | `bcrypt` | bcrypt 模式标识。 |
-| `auth.constants.password.mode-md5` | `md5` | md5 模式标识。 |
 | `auth.constants.password.mode-sm3` | `sm3` | sm3 模式标识。 |
 | `auth.constants.password.transport-mode-aes` | `aes` | AES 传输模式标识。 |
 | `auth.constants.password.transport-mode-aes-gcm` | `aes-gcm` | AES-GCM 传输模式标识。 |

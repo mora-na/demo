@@ -145,7 +145,6 @@ public class AuthConstants {
     public static class Password {
         public static final String DEFAULT_MODE_FALLBACK = "plain";
         public static final String DEFAULT_MODE_BCRYPT = "bcrypt";
-        public static final String DEFAULT_MODE_MD5 = "md5";
         public static final String DEFAULT_MODE_SM3 = "sm3";
         public static final String DEFAULT_TRANSPORT_MODE_AES = "aes";
         public static final String DEFAULT_TRANSPORT_MODE_AES_GCM = "aes-gcm";
@@ -159,7 +158,6 @@ public class AuthConstants {
 
         private String modeFallback = DEFAULT_MODE_FALLBACK;
         private String modeBcrypt = DEFAULT_MODE_BCRYPT;
-        private String modeMd5 = DEFAULT_MODE_MD5;
         private String modeSm3 = DEFAULT_MODE_SM3;
         private String transportModeAes = DEFAULT_TRANSPORT_MODE_AES;
         private String transportModeAesGcm = DEFAULT_TRANSPORT_MODE_AES_GCM;

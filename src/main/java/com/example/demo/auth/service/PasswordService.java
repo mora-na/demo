@@ -7,8 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.DigestUtils;
 
+import javax.annotation.PostConstruct;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -18,7 +18,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * 密码处理服务，支持 plain、md5、bcrypt、sm3 模式。
+ * 密码处理服务，支持 bcrypt、sm3 模式。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
@@ -30,6 +30,15 @@ public class PasswordService {
     private final AuthProperties authProperties;
     private final AuthConstants systemConstants;
     private final BCryptPasswordEncoder bcryptPasswordEncoder = new BCryptPasswordEncoder();
+
+    @PostConstruct
+    public void validatePasswordMode() {
+        String mode = normalizeMode(authProperties.getPassword().getMode());
+        AuthConstants.Password constants = systemConstants.getPassword();
+        if (!equalsMode(mode, constants.getModeBcrypt()) && !equalsMode(mode, constants.getModeSm3())) {
+            throw new IllegalStateException("Unsupported auth.password.mode: " + mode + ", only bcrypt/sm3 are allowed.");
+        }
+    }
 
     /**
      * 校验原始密码与已编码密码是否匹配。
@@ -47,13 +56,10 @@ public class PasswordService {
         if (equalsMode(mode, constants.getModeBcrypt())) {
             return bcryptPasswordEncoder.matches(rawPassword, encodedPassword);
         }
-        if (equalsMode(mode, constants.getModeMd5())) {
-            return md5(rawPassword).equalsIgnoreCase(encodedPassword);
-        }
         if (equalsMode(mode, constants.getModeSm3())) {
             return sm3(rawPassword).equalsIgnoreCase(encodedPassword);
         }
-        return rawPassword.equals(encodedPassword);
+        throw new IllegalStateException("Unsupported auth.password.mode: " + mode + ", only bcrypt/sm3 are allowed.");
     }
 
     /**
@@ -150,25 +156,10 @@ public class PasswordService {
         if (equalsMode(mode, constants.getModeBcrypt())) {
             return bcryptPasswordEncoder.encode(rawPassword);
         }
-        if (equalsMode(mode, constants.getModeMd5())) {
-            return md5(rawPassword);
-        }
         if (equalsMode(mode, constants.getModeSm3())) {
             return sm3(rawPassword);
         }
-        return rawPassword;
-    }
-
-    /**
-     * 计算带盐的 MD5 值。
-     *
-     * @param rawPassword 原始密码
-     * @return MD5 字符串
-     */
-    private String md5(String rawPassword) {
-        String salt = authProperties.getPassword().getSalt();
-        String value = (salt == null ? "" : salt) + rawPassword;
-        return DigestUtils.md5DigestAsHex(value.getBytes(StandardCharsets.UTF_8));
+        throw new IllegalStateException("Unsupported auth.password.mode: " + mode + ", only bcrypt/sm3 are allowed.");
     }
 
     /**
