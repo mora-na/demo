@@ -164,86 +164,10 @@ WHERE (
 - Multi-role merge is a union.
 - Defaults work without extra config.
 
-### Dictionary (Dict)
+### Configuration Docs
 
-- Tables: `sys_dict_type` and `sys_dict_data`, linked by `dict_type`.
-- Public APIs (login required):
-  - `GET /api/dict/data/{dictType}`
-  - `GET /api/dict/data/batch?types=a,b`
-  - `GET /api/dict/data/all`
-- Admin APIs (admin only, `dict:*`):
-  - `GET /api/sys/dict/type/list`
-  - `POST /api/sys/dict/type`
-  - `PUT /api/sys/dict/type/{id}`
-  - `DELETE /api/sys/dict/type/{id}`
-  - `GET /api/sys/dict/data/list`
-  - `POST /api/sys/dict/data`
-  - `PUT /api/sys/dict/data/{id}`
-  - `DELETE /api/sys/dict/data/{id}`
-  - `DELETE /api/sys/dict/cache/refresh`
-- Cache: `dict.cache.seconds` (<=0 disables caching).
-- Backend translation: annotate VO fields with `@DictLabel("sys_gender")` to add `xxxLabel`.
-
-### Notifications (SSE)
-
-- Config: `notice.sse.*`.
-
-### Scheduled Jobs (Quartz)
-
-- Persistent scheduling: `spring.quartz.*`.
-- Handlers implement `JobHandler` and are Spring beans.
-- Logs in `sys_job_log` with detail in `log_detail`.
-
-### Job Log Auto Collection
-
-- Switch/scope: `job.log.collect.enabled`, `job.log.collect.scope`.
-- Level/size: `job.log.collect.min-level`, `job.log.collect.max-length`.
-- Merge: `job.log.collect.merge-delay-millis`, `job.log.collect.max-hold-millis`.
-- Thread context: `job.log.collect.inherit-thread-context`.
-
-### Security Protections
-
-- SQL guard: `security.sql-guard.*`.
-- XSS filter: `security.xss.*`.
-- Rate limiting: `security.rate-limit.*`.
-- Duplicate-submit: `security.duplicate-submit.*`.
-- Exclude paths are merged with `security.common.exclude-paths`.
-
-### Filters and Interceptors Overview
-
-- `TraceIdFilter`: injects `traceId` into MDC. General-purpose.
-- `AuthTokenFilter`: validates token and sets `AuthContext`. Allowlist-based.
-- `PermissionInterceptor`: checks `@RequireLogin` / `@RequirePermission`. Allowlist-based.
-- `RateLimitFilter`: rate limiting. Allowlist-based.
-- `DuplicateSubmitFilter`: duplicate-submit protection with `Idempotency-Key`. Allowlist-based.
-- `XssFilter`: request param XSS sanitization. Allowlist-based.
-- `XssRequestBodyAdvice`: request-body XSS sanitization. Allowlist-based.
-- `DataScopeAspect`: reads `@DataScope` and writes to thread context. General-purpose.
-- `DataScopeInnerInterceptor`: SQL rewrite for data scope. General-purpose.
-- `PaginationInnerInterceptor`: pagination. General-purpose.
-- `OptimisticLockerInnerInterceptor`: optimistic lock. General-purpose.
-- `SqlGuardInnerInterceptor`: blocks multi-statements and full-table updates/deletes. Blacklist-style.
-
-Impact on development:
-
-- Public endpoints must be added to `auth.filter.exclude-paths` and `security.permission.exclude-paths`.
-- High-frequency APIs may hit 429; tune rate limits or exclude paths.
-- Write endpoints can be blocked for duplicate submits; use `Idempotency-Key` if needed.
-- Rich-text input should be excluded from XSS or handled in business logic.
-- Data scope requires `@DataScope` and correct `deptAlias` / `userAlias`.
-- Full-table UPDATE/DELETE will be blocked by SQL guard.
-
-### Encrypted Configs (Jasypt)
-
-- Wrap secrets with `ENC(...)`.
-- Provide the password via `JASYPT_ENCRYPTOR_PASSWORD`.
-
-### Runtime & Environment
-
-- Main configs: `src/main/resources/application.yml` + `application-dev.yml`.
-- Default profile: `dev` (override with `SPRING_PROFILES_ACTIVE`).
-- DB scripts: `sql/mysql.sql`, `sql/postgresql.sql`.
-- Druid monitor: `spring.datasource.druid.stat-view-servlet.*`.
+- All configuration references were moved to `docs/CONFIGURATION_EN.md`.
+- Chinese version: `docs/CONFIGURATION.md`.
 
 ### Licenses & Compliance
 
