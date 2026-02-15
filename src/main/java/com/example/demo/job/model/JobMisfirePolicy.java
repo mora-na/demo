@@ -2,6 +2,7 @@ package com.example.demo.job.model;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 定时任务误触发策略常量。
@@ -30,6 +31,6 @@ public final class JobMisfirePolicy {
         if (value == null) {
             return false;
         }
-        return SUPPORTED.contains(value.trim().toUpperCase());
+        return SUPPORTED.contains(value.trim().toUpperCase(Locale.ROOT));
     }
 }

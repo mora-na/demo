@@ -23,9 +23,6 @@ import java.time.LocalDateTime;
 @TableName(value = "sys_job")
 public class SysJob implements Serializable {
 
-    public static final int STATUS_ENABLED = 1;
-    public static final int STATUS_DISABLED = 0;
-
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)

@@ -5,12 +5,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.dto.JobLogDetailVO;
 import com.example.demo.job.dto.JobLogQuery;
 import com.example.demo.job.dto.JobLogVO;
 import com.example.demo.job.entity.SysJobLog;
 import com.example.demo.job.mapper.SysJobLogMapper;
 import com.example.demo.job.service.SysJobLogService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,7 +26,10 @@ import java.util.List;
  * @date 2026/2/12
  */
 @Service
+@RequiredArgsConstructor
 public class SysJobLogServiceImpl extends ServiceImpl<SysJobLogMapper, SysJobLog> implements SysJobLogService {
+
+    private final JobConstants jobConstants;
 
     @Override
     public List<SysJobLog> selectLogs(JobLogQuery query) {
@@ -34,7 +39,7 @@ public class SysJobLogServiceImpl extends ServiceImpl<SysJobLogMapper, SysJobLog
     @Override
     public IPage<SysJobLog> selectLogsPage(Page<SysJobLog> page, JobLogQuery query) {
         if (page == null) {
-            return new Page<>(1, 10);
+            return new Page<>(jobConstants.getPage().getDefaultPageNum(), jobConstants.getPage().getDefaultPageSize());
         }
         return this.page(page, buildQuery(query));
     }

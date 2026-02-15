@@ -1,5 +1,6 @@
 package com.example.demo.log.listener;
 
+import com.example.demo.log.config.LogConstants;
 import com.example.demo.log.entity.SysOperLog;
 import com.example.demo.log.event.OperLogEvent;
 import com.example.demo.log.service.SysOperLogService;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Component;
 public class OperLogEventListener {
 
     private final SysOperLogService operLogService;
+    private final LogConstants logConstants;
 
     @Async
     @EventListener
@@ -37,7 +39,7 @@ public class OperLogEventListener {
             }
             operLogService.save(logEntity);
         } catch (Exception e) {
-            log.error("操作日志入库失败", e);
+            log.error(logConstants.getMessage().getOperLogPersistFailed(), e);
         }
     }
 }

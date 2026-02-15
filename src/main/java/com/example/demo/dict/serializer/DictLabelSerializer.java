@@ -1,6 +1,8 @@
 package com.example.demo.dict.serializer;
 
+import com.example.demo.common.spring.SpringContextHolder;
 import com.example.demo.dict.annotation.DictLabel;
+import com.example.demo.dict.config.DictConstants;
 import com.example.demo.dict.support.DictTool;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.BeanProperty;
@@ -41,7 +43,7 @@ public class DictLabelSerializer extends JsonSerializer<Object> implements Conte
         String currentName = gen.getOutputContext().getCurrentName();
         String targetName = StringUtils.isNotBlank(targetField)
                 ? targetField
-                : (currentName == null ? null : currentName + "Label");
+                : (currentName == null ? null : currentName + resolveLabelFieldSuffix());
         if (StringUtils.isBlank(targetName) || StringUtils.equals(targetName, currentName)) {
             return;
         }
@@ -66,5 +68,14 @@ public class DictLabelSerializer extends JsonSerializer<Object> implements Conte
             return this;
         }
         return new DictLabelSerializer(annotation.value(), annotation.target());
+    }
+
+    private String resolveLabelFieldSuffix() {
+        DictConstants constants = SpringContextHolder.getBean(DictConstants.class);
+        if (constants == null || constants.getSerializer() == null
+                || StringUtils.isBlank(constants.getSerializer().getLabelFieldSuffix())) {
+            return DictConstants.Serializer.DEFAULT_LABEL_FIELD_SUFFIX;
+        }
+        return constants.getSerializer().getLabelFieldSuffix();
     }
 }

@@ -1,6 +1,6 @@
 package com.example.demo.job.log;
 
-import com.example.demo.job.config.JobLogCollectProperties;
+import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.entity.SysJobLog;
 import com.example.demo.job.service.SysJobLogService;
 import lombok.RequiredArgsConstructor;
@@ -25,61 +25,57 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class JobLogCollector {
 
-    private final JobLogCollectProperties properties;
+    private final JobConstants jobConstants;
     private final SysJobLogService jobLogService;
     private final Map<String, JobLogBuffer> buffers = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
-        Thread thread = new Thread(runnable, "job-log-collector");
-        thread.setDaemon(true);
-        return thread;
-    });
+    private ScheduledExecutorService scheduler;
 
     public boolean isEnabled() {
-        return properties.isEnabled();
+        return jobConstants.getLogCollect().isEnabled();
     }
 
     public String getMdcKey() {
-        return properties.getMdcKey();
+        return jobConstants.getLogCollect().getMdcKey();
     }
 
     public String getThreadKey() {
-        return properties.getThreadKey();
+        return jobConstants.getLogCollect().getThreadKey();
     }
 
     public int getMaxLength() {
-        return properties.getMaxLength();
+        return jobConstants.getLogCollect().getMaxLength();
     }
 
     public long getMergeDelayMillis() {
-        return properties.getMergeDelayMillis();
+        return jobConstants.getLogCollect().getMergeDelayMillis();
     }
 
     public long getMaxHoldMillis() {
-        return properties.getMaxHoldMillis();
+        return jobConstants.getLogCollect().getMaxHoldMillis();
     }
 
     public boolean isInheritThreadContext() {
-        return properties.isInheritThreadContext();
+        return jobConstants.getLogCollect().isInheritThreadContext();
     }
 
     public String start() {
-        if (!properties.isEnabled() || properties.getMaxLength() <= 0) {
+        if (!jobConstants.getLogCollect().isEnabled() || jobConstants.getLogCollect().getMaxLength() <= 0) {
             return null;
         }
         String runId = UUID.randomUUID().toString();
-        buffers.put(runId, new JobLogBuffer(properties.getMaxLength()));
+        buffers.put(runId, new JobLogBuffer(jobConstants.getLogCollect().getMaxLength()));
         return runId;
     }
 
     public void append(String runId, String line) {
-        if (!properties.isEnabled() || runId == null || line == null) {
+        if (!jobConstants.getLogCollect().isEnabled() || runId == null || line == null) {
             return;
         }
         JobLogBuffer buffer = buffers.get(runId);
         if (buffer == null) {
             return;
         }
-        buffer.append(line, properties.getMaxHoldMillis());
+        buffer.append(line, jobConstants.getLogCollect().getMaxHoldMillis());
     }
 
     public String finish(String runId) {
@@ -102,7 +98,9 @@ public class JobLogCollector {
     }
 
     public boolean shouldDelayMerge() {
-        return properties.isEnabled() && properties.getMergeDelayMillis() > 0 && properties.getMaxHoldMillis() > 0;
+        return jobConstants.getLogCollect().isEnabled()
+                && jobConstants.getLogCollect().getMergeDelayMillis() > 0
+                && jobConstants.getLogCollect().getMaxHoldMillis() > 0;
     }
 
     public void scheduleMerge(String runId, Long logId, String manualLog) {
@@ -110,7 +108,7 @@ public class JobLogCollector {
             close(runId);
             return;
         }
-        long delay = properties.getMergeDelayMillis();
+        long delay = jobConstants.getLogCollect().getMergeDelayMillis();
         scheduler.schedule(() -> mergeAndUpdate(runId, logId, manualLog), delay, TimeUnit.MILLISECONDS);
     }
 
@@ -123,20 +121,31 @@ public class JobLogCollector {
         if (right.isEmpty()) {
             return trim(left);
         }
-        return trim(left + "\n----\n" + right);
+        return trim(left + jobConstants.getExecution().getLogMergeSeparator() + right);
     }
 
     @PostConstruct
     public void startCleanup() {
-        if (!properties.isEnabled()) {
+        scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            Thread thread = new Thread(runnable, jobConstants.getLogCollect().getCollectorThreadName());
+            thread.setDaemon(true);
+            return thread;
+        });
+        if (!jobConstants.getLogCollect().isEnabled()) {
             return;
         }
-        scheduler.scheduleAtFixedRate(this::cleanupExpired, 60000L, 60000L, TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(
+                this::cleanupExpired,
+                jobConstants.getLogCollect().getCleanupInitialDelayMillis(),
+                jobConstants.getLogCollect().getCleanupIntervalMillis(),
+                TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy
     public void shutdown() {
-        scheduler.shutdownNow();
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+        }
     }
 
     private void mergeAndUpdate(String runId, Long logId, String manualLog) {
@@ -157,11 +166,11 @@ public class JobLogCollector {
     }
 
     private void cleanupExpired() {
-        if (buffers.isEmpty() || properties.getMaxHoldMillis() <= 0) {
+        if (buffers.isEmpty() || jobConstants.getLogCollect().getMaxHoldMillis() <= 0) {
             return;
         }
         long now = System.currentTimeMillis();
-        long maxHoldMillis = properties.getMaxHoldMillis();
+        long maxHoldMillis = jobConstants.getLogCollect().getMaxHoldMillis();
         for (Map.Entry<String, JobLogBuffer> entry : buffers.entrySet()) {
             JobLogBuffer buffer = entry.getValue();
             if (buffer == null) {
@@ -236,7 +245,7 @@ public class JobLogCollector {
         if (value == null) {
             return null;
         }
-        int maxLength = properties.getMaxLength();
+        int maxLength = jobConstants.getLogCollect().getMaxLength();
         if (maxLength <= 0) {
             return null;
         }

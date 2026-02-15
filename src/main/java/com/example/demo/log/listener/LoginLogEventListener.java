@@ -1,5 +1,6 @@
 package com.example.demo.log.listener;
 
+import com.example.demo.log.config.LogConstants;
 import com.example.demo.log.entity.SysLoginLog;
 import com.example.demo.log.event.LoginLogEvent;
 import com.example.demo.log.service.SysLoginLogService;
@@ -26,6 +27,7 @@ import java.time.LocalDateTime;
 public class LoginLogEventListener {
 
     private final SysLoginLogService loginLogService;
+    private final LogConstants logConstants;
 
     @Async
     @EventListener
@@ -55,7 +57,7 @@ public class LoginLogEventListener {
 
             loginLogService.save(logEntity);
         } catch (Exception e) {
-            log.error("登录日志入库失败", e);
+            log.error(logConstants.getMessage().getLoginLogPersistFailed(), e);
         }
     }
 }

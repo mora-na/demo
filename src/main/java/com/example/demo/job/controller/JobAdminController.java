@@ -6,6 +6,7 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.model.PageResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.dto.*;
 import com.example.demo.job.entity.SysJob;
 import com.example.demo.job.model.JobMisfirePolicy;
@@ -36,6 +37,7 @@ public class JobAdminController extends BaseController {
     private final SysJobService jobService;
     private final SysJobLogService jobLogService;
     private final JobHandlerRegistry jobHandlerRegistry;
+    private final JobConstants jobConstants;
 
     @GetMapping
     @RequirePermission("job:query")
@@ -57,7 +59,7 @@ public class JobAdminController extends BaseController {
     public CommonResult<JobVO> detail(@PathVariable Long id) {
         SysJob job = jobService.getById(id);
         if (job == null) {
-            return error(404, i18n("job.not.found"));
+            return error(jobConstants.getController().getNotFoundCode(), i18n(jobConstants.getMessage().getJobNotFound()));
         }
         return success(jobService.toView(job));
     }
@@ -67,19 +69,19 @@ public class JobAdminController extends BaseController {
     public CommonResult<JobVO> create(@Valid @RequestBody JobCreateRequest request) {
         String cron = request.getCronExpression();
         if (!CronExpression.isValidExpression(cron)) {
-            return error(400, i18n("job.cron.invalid"));
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobCronInvalid()));
         }
         if (jobHandlerRegistry.getHandler(request.getHandlerName()) == null) {
-            return error(400, i18n("job.handler.invalid"));
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobHandlerInvalid()));
         }
         if (StringUtils.isNotBlank(request.getMisfirePolicy())
                 && !JobMisfirePolicy.isSupported(request.getMisfirePolicy())) {
-            return error(400, i18n("job.misfire.invalid"));
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobMisfireInvalid()));
         }
         AuthUser user = AuthContext.get();
         SysJob job = jobService.createJob(request, user);
         if (job == null) {
-            return error(500, i18n("job.create.failed"));
+            return error(jobConstants.getController().getInternalServerErrorCode(), i18n(jobConstants.getMessage().getJobCreateFailed()));
         }
         return success(jobService.toView(job));
     }
@@ -89,22 +91,22 @@ public class JobAdminController extends BaseController {
     public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody JobUpdateRequest request) {
         SysJob existing = jobService.getById(id);
         if (existing == null) {
-            return error(404, i18n("job.not.found"));
+            return error(jobConstants.getController().getNotFoundCode(), i18n(jobConstants.getMessage().getJobNotFound()));
         }
         if (StringUtils.isNotBlank(request.getCronExpression())
                 && !CronExpression.isValidExpression(request.getCronExpression())) {
-            return error(400, i18n("job.cron.invalid"));
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobCronInvalid()));
         }
         if (StringUtils.isNotBlank(request.getHandlerName())
                 && jobHandlerRegistry.getHandler(request.getHandlerName()) == null) {
-            return error(400, i18n("job.handler.invalid"));
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobHandlerInvalid()));
         }
         if (StringUtils.isNotBlank(request.getMisfirePolicy())
                 && !JobMisfirePolicy.isSupported(request.getMisfirePolicy())) {
-            return error(400, i18n("job.misfire.invalid"));
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobMisfireInvalid()));
         }
         if (!jobService.updateJob(id, request)) {
-            return error(500, i18n("job.update.failed"));
+            return error(jobConstants.getController().getInternalServerErrorCode(), i18n(jobConstants.getMessage().getJobUpdateFailed()));
         }
         return success();
     }
@@ -113,10 +115,10 @@ public class JobAdminController extends BaseController {
     @RequirePermission("job:delete")
     public CommonResult<Void> delete(@PathVariable Long id) {
         if (jobService.getById(id) == null) {
-            return error(404, i18n("job.not.found"));
+            return error(jobConstants.getController().getNotFoundCode(), i18n(jobConstants.getMessage().getJobNotFound()));
         }
         if (!jobService.deleteJob(id)) {
-            return error(500, i18n("job.delete.failed"));
+            return error(jobConstants.getController().getInternalServerErrorCode(), i18n(jobConstants.getMessage().getJobDeleteFailed()));
         }
         return success();
     }
@@ -125,10 +127,10 @@ public class JobAdminController extends BaseController {
     @RequirePermission("job:status")
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody JobStatusRequest request) {
         if (jobService.getById(id) == null) {
-            return error(404, i18n("job.not.found"));
+            return error(jobConstants.getController().getNotFoundCode(), i18n(jobConstants.getMessage().getJobNotFound()));
         }
         if (!jobService.updateStatus(id, request.getStatus())) {
-            return error(500, i18n("job.status.update.failed"));
+            return error(jobConstants.getController().getInternalServerErrorCode(), i18n(jobConstants.getMessage().getJobStatusUpdateFailed()));
         }
         return success();
     }
@@ -137,10 +139,10 @@ public class JobAdminController extends BaseController {
     @RequirePermission("job:run")
     public CommonResult<Void> runOnce(@PathVariable Long id) {
         if (jobService.getById(id) == null) {
-            return error(404, i18n("job.not.found"));
+            return error(jobConstants.getController().getNotFoundCode(), i18n(jobConstants.getMessage().getJobNotFound()));
         }
         if (!jobService.runOnce(id)) {
-            return error(500, i18n("job.run.failed"));
+            return error(jobConstants.getController().getInternalServerErrorCode(), i18n(jobConstants.getMessage().getJobRunFailed()));
         }
         return success();
     }
@@ -149,7 +151,7 @@ public class JobAdminController extends BaseController {
     @RequirePermission("job:query")
     public CommonResult<PageResult<JobLogVO>> logs(@PathVariable Long id) {
         if (jobService.getById(id) == null) {
-            return error(404, i18n("job.not.found"));
+            return error(jobConstants.getController().getNotFoundCode(), i18n(jobConstants.getMessage().getJobNotFound()));
         }
         PageResult<com.example.demo.job.entity.SysJobLog> rawPage = page(new JobLogQuery(id), jobLogService::selectLogsPage);
         PageResult<JobLogVO> result = new PageResult<>(
@@ -165,7 +167,7 @@ public class JobAdminController extends BaseController {
     public CommonResult<JobLogDetailVO> logDetail(@PathVariable Long logId) {
         com.example.demo.job.entity.SysJobLog log = jobLogService.getById(logId);
         if (log == null) {
-            return error(404, i18n("job.log.not.found"));
+            return error(jobConstants.getController().getNotFoundCode(), i18n(jobConstants.getMessage().getJobLogNotFound()));
         }
         return success(jobLogService.toDetailView(log));
     }

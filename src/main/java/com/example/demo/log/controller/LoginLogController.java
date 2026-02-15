@@ -4,6 +4,7 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.model.PageResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.log.config.LogConstants;
 import com.example.demo.log.dto.LoginLogQuery;
 import com.example.demo.log.entity.SysLoginLog;
 import com.example.demo.log.service.SysLoginLogService;
@@ -24,6 +25,7 @@ import java.util.List;
 public class LoginLogController extends BaseController {
 
     private final SysLoginLogService loginLogService;
+    private final LogConstants logConstants;
 
     @GetMapping
     @RequirePermission("login-log:query")
@@ -38,7 +40,8 @@ public class LoginLogController extends BaseController {
             return success();
         }
         if (!loginLogService.removeById(id)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(logConstants.getController().getInternalServerErrorCode(),
+                    i18n(logConstants.getMessage().getCommonDeleteFailed()));
         }
         return success();
     }

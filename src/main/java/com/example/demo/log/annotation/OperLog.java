@@ -26,5 +26,5 @@ public @interface OperLog {
 
     boolean saveDiff() default false;
 
-    String[] excludeParams() default {"password", "oldPassword", "newPassword", "token"};
+    String[] excludeParams() default {};
 }

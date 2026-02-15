@@ -23,9 +23,6 @@ import java.time.LocalDateTime;
 @TableName(value = "sys_job_log")
 public class SysJobLog implements Serializable {
 
-    public static final int STATUS_SUCCESS = 1;
-    public static final int STATUS_FAILED = 0;
-
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)

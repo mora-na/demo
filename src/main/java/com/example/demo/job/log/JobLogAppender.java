@@ -5,7 +5,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.AppenderBase;
-import com.example.demo.job.config.JobLogCollectProperties;
+import com.example.demo.job.config.JobConstants;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -20,22 +20,20 @@ import java.util.Map;
  */
 public class JobLogAppender extends AppenderBase<ILoggingEvent> {
 
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
-
     private final JobLogCollector collector;
-    private final JobLogCollectProperties properties;
+    private final JobConstants jobConstants;
 
-    public JobLogAppender(JobLogCollector collector, JobLogCollectProperties properties) {
+    public JobLogAppender(JobLogCollector collector, JobConstants jobConstants) {
         this.collector = collector;
-        this.properties = properties;
+        this.jobConstants = jobConstants;
     }
 
     @Override
     protected void append(ILoggingEvent event) {
-        if (event == null || !properties.isEnabled() || collector.getMaxLength() <= 0) {
+        if (event == null || !jobConstants.getLogCollect().isEnabled() || collector.getMaxLength() <= 0) {
             return;
         }
-        Level minLevel = Level.toLevel(properties.getMinLevel(), Level.INFO);
+        Level minLevel = Level.toLevel(jobConstants.getLogCollect().getMinLevel(), Level.INFO);
         if (event.getLevel() == null || !event.getLevel().isGreaterOrEqual(minLevel)) {
             return;
         }
@@ -50,17 +48,17 @@ public class JobLogAppender extends AppenderBase<ILoggingEvent> {
     }
 
     private String resolveRunId(ILoggingEvent event) {
-        JobLogCollectProperties.Scope scope = properties.getScope();
+        JobConstants.LogCollect.Scope scope = jobConstants.getLogCollect().getScope();
         Map<String, String> mdc = event.getMDCPropertyMap();
         if (mdc == null || mdc.isEmpty()) {
             return resolveThreadContextRunId();
         }
-        String runId = mdc.get(properties.getMdcKey());
+        String runId = mdc.get(jobConstants.getLogCollect().getMdcKey());
         if (runId == null || runId.isEmpty()) {
             return resolveThreadContextRunId();
         }
-        if (scope == JobLogCollectProperties.Scope.THREAD) {
-            String threadKey = properties.getThreadKey();
+        if (scope == JobConstants.LogCollect.Scope.THREAD) {
+            String threadKey = jobConstants.getLogCollect().getThreadKey();
             String expected = mdc.get(threadKey);
             if (expected == null || !expected.equals(event.getThreadName())) {
                 return null;
@@ -72,18 +70,18 @@ public class JobLogAppender extends AppenderBase<ILoggingEvent> {
     private String formatLine(ILoggingEvent event) {
         String message = event.getFormattedMessage();
         if (message == null) {
-            message = "";
+            message = jobConstants.getAppender().getEmptyMessage();
         }
         String time = Instant.ofEpochMilli(event.getTimeStamp())
                 .atZone(ZoneId.systemDefault())
-                .format(TIME_FORMAT);
+                .format(resolveTimeFormatter());
         String logger = event.getLoggerName();
         String base = time + " " + event.getLevel() + " " + logger + " - " + message;
         IThrowableProxy throwable = event.getThrowableProxy();
         if (throwable == null) {
             return base;
         }
-        return base + "\n" + ThrowableProxyUtil.asString(throwable);
+        return base + jobConstants.getAppender().getThrowableSeparator() + ThrowableProxyUtil.asString(throwable);
     }
 
     private String resolveThreadContextRunId() {
@@ -92,5 +90,9 @@ public class JobLogAppender extends AppenderBase<ILoggingEvent> {
         }
         String runId = JobLogThreadContext.get();
         return collector.isActive(runId) ? runId : null;
+    }
+
+    private DateTimeFormatter resolveTimeFormatter() {
+        return DateTimeFormatter.ofPattern(jobConstants.getAppender().getTimePattern());
     }
 }

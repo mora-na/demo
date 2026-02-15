@@ -7,6 +7,7 @@ import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.dept.entity.Dept;
 import com.example.demo.dept.service.DeptService;
 import com.example.demo.log.annotation.OperLog;
+import com.example.demo.log.config.LogConstants;
 import com.example.demo.log.entity.SysOperLog;
 import com.example.demo.log.enums.BusinessType;
 import com.example.demo.log.event.OperLogEvent;
@@ -33,7 +34,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,39 +52,20 @@ import java.util.regex.Pattern;
 @Component
 public class OperLogAspect {
 
-    private static final int MAX_TEXT_LENGTH = 2000;
-    private static final String[] DEFAULT_EXCLUDE_PARAMS = {"password", "oldPassword", "newPassword", "token"};
-    private static final Map<String, String> TITLE_MAPPINGS;
-    private static final Pattern SPEL_PATTERN = Pattern.compile("#\\{(.+?)}");
-
-    static {
-        Map<String, String> mappings = new HashMap<>();
-        mappings.put("user", "用户管理");
-        mappings.put("role", "角色管理");
-        mappings.put("menu", "菜单管理");
-        mappings.put("dept", "部门管理");
-        mappings.put("post", "岗位管理");
-        mappings.put("permission", "权限管理");
-        mappings.put("notice", "系统通知");
-        mappings.put("job", "定时任务");
-        mappings.put("order", "订单管理");
-        mappings.put("data-scope", "数据权限");
-        mappings.put("log", "操作日志");
-        mappings.put("login-log", "登录日志");
-        TITLE_MAPPINGS = Collections.unmodifiableMap(mappings);
-    }
-
     private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
     private final DeptService deptService;
+    private final LogConstants logConstants;
     private final ExpressionParser spelParser = new SpelExpressionParser();
 
     public OperLogAspect(ApplicationEventPublisher eventPublisher,
                          ObjectMapper objectMapper,
-                         DeptService deptService) {
+                         DeptService deptService,
+                         LogConstants logConstants) {
         this.eventPublisher = eventPublisher;
         this.objectMapper = objectMapper;
         this.deptService = deptService;
+        this.logConstants = logConstants;
     }
 
     @Pointcut("@annotation(com.example.demo.log.annotation.OperLog) || " +
@@ -119,14 +104,14 @@ public class OperLogAspect {
         Throwable error = null;
         try {
             result = joinPoint.proceed();
-            logEntity.setStatus(1);
+            logEntity.setStatus(logConstants.getStatus().getOperSuccess());
             if (operLog != null && operLog.saveResult() && result != null) {
-                logEntity.setOperResult(truncate(maskSensitive(toJson(result), operLog.excludeParams())));
+                logEntity.setOperResult(truncate(maskSensitive(toJson(result), resolveExcludeParams(operLog))));
             }
             return result;
         } catch (Throwable ex) {
             error = ex;
-            logEntity.setStatus(0);
+            logEntity.setStatus(logConstants.getStatus().getOperFailed());
             logEntity.setErrorMsg(truncate(ex.getMessage()));
             throw ex;
         } finally {
@@ -152,7 +137,9 @@ public class OperLogAspect {
         if (httpMethod == null) {
             return false;
         }
-        if ("GET".equalsIgnoreCase(httpMethod) || "OPTIONS".equalsIgnoreCase(httpMethod)) {
+        if (StringUtils.equalsAnyIgnoreCase(httpMethod,
+                logConstants.getHttp().getGetMethod(),
+                logConstants.getHttp().getOptionsMethod())) {
             return false;
         }
         return permission != null || login != null;
@@ -193,9 +180,9 @@ public class OperLogAspect {
         if (!saveParam) {
             return;
         }
-        String[] excludeParams = operLog == null ? DEFAULT_EXCLUDE_PARAMS : operLog.excludeParams();
+        String[] excludeParams = resolveExcludeParams(operLog);
         String paramJson;
-        if (request != null && "GET".equalsIgnoreCase(request.getMethod())) {
+        if (request != null && StringUtils.equalsIgnoreCase(request.getMethod(), logConstants.getHttp().getGetMethod())) {
             paramJson = toJson(request.getParameterMap());
         } else {
             paramJson = toJson(filterArgs(joinPoint.getArgs()));
@@ -223,13 +210,15 @@ public class OperLogAspect {
         if (operLog != null) {
             return operLog.businessType().getCode();
         }
-        if ("POST".equalsIgnoreCase(httpMethod)) {
+        if (StringUtils.equalsIgnoreCase(httpMethod, logConstants.getHttp().getPostMethod())) {
             return BusinessType.INSERT.getCode();
         }
-        if ("PUT".equalsIgnoreCase(httpMethod) || "PATCH".equalsIgnoreCase(httpMethod)) {
+        if (StringUtils.equalsAnyIgnoreCase(httpMethod,
+                logConstants.getHttp().getPutMethod(),
+                logConstants.getHttp().getPatchMethod())) {
             return BusinessType.UPDATE.getCode();
         }
-        if ("DELETE".equalsIgnoreCase(httpMethod)) {
+        if (StringUtils.equalsIgnoreCase(httpMethod, logConstants.getHttp().getDeleteMethod())) {
             return BusinessType.DELETE.getCode();
         }
         return BusinessType.OTHER.getCode();
@@ -243,8 +232,12 @@ public class OperLogAspect {
         if (StringUtils.isBlank(perm)) {
             return null;
         }
-        String prefix = perm.split(":")[0];
-        return TITLE_MAPPINGS.getOrDefault(prefix, perm);
+        String prefix = permissionPrefix(perm);
+        Map<String, String> mappings = logConstants.getAspect().getTitleMappings();
+        if (mappings == null || mappings.isEmpty()) {
+            return perm;
+        }
+        return mappings.getOrDefault(prefix, perm);
     }
 
     private String resolveOperation(OperLog operLog, RequirePermission permission, String method, String url) {
@@ -256,7 +249,7 @@ public class OperLogAspect {
             return perm;
         }
         if (StringUtils.isNotBlank(method) && StringUtils.isNotBlank(url)) {
-            return method + " " + url;
+            return method + logConstants.getHttp().getMethodUrlSeparator() + url;
         }
         return method;
     }
@@ -274,17 +267,18 @@ public class OperLogAspect {
                 }
             }
             context.setVariable("result", result);
-            Matcher matcher = SPEL_PATTERN.matcher(template);
+            Matcher matcher = resolveSpelPattern().matcher(template);
             StringBuffer buffer = new StringBuffer();
             while (matcher.find()) {
                 String expression = matcher.group(1);
                 Object value = spelParser.parseExpression(expression).getValue(context);
-                matcher.appendReplacement(buffer, Matcher.quoteReplacement(value == null ? "null" : String.valueOf(value)));
+                matcher.appendReplacement(buffer, Matcher.quoteReplacement(
+                        value == null ? logConstants.getAspect().getSpelNullLiteral() : String.valueOf(value)));
             }
             matcher.appendTail(buffer);
             return buffer.toString();
         } catch (Exception e) {
-            log.warn("解析操作日志SpEL失败: {}", template, e);
+            log.warn(logConstants.getMessage().getSpelParseFailed(), template, e);
             return template;
         }
     }
@@ -302,8 +296,8 @@ public class OperLogAspect {
                 continue;
             }
             String className = arg.getClass().getName();
-            if (className.startsWith("org.springframework.validation.")
-                    || className.startsWith("org.springframework.web.multipart.")) {
+            if (className.startsWith(logConstants.getAspect().getSpringValidationPackagePrefix())
+                    || className.startsWith(logConstants.getAspect().getSpringMultipartPackagePrefix())) {
                 continue;
             }
             results.add(arg);
@@ -332,7 +326,7 @@ public class OperLogAspect {
                 continue;
             }
             String pattern = "\"" + Pattern.quote(field) + "\"\\s*:\\s*\"[^\"]*\"";
-            masked = masked.replaceAll(pattern, "\"" + field + "\":\"******\"");
+            masked = masked.replaceAll(pattern, "\"" + field + "\":\"" + logConstants.getAspect().getMaskValue() + "\"");
         }
         return masked;
     }
@@ -341,10 +335,45 @@ public class OperLogAspect {
         if (value == null) {
             return null;
         }
-        if (value.length() <= MAX_TEXT_LENGTH) {
+        if (value.length() <= logConstants.getAspect().getMaxTextLength()) {
             return value;
         }
-        return value.substring(0, MAX_TEXT_LENGTH);
+        return value.substring(0, logConstants.getAspect().getMaxTextLength());
+    }
+
+    private String[] resolveExcludeParams(OperLog operLog) {
+        if (operLog != null && operLog.excludeParams() != null && operLog.excludeParams().length > 0) {
+            return operLog.excludeParams();
+        }
+        List<String> defaults = logConstants.getAspect().getDefaultExcludeParams();
+        if (defaults == null || defaults.isEmpty()) {
+            return new String[0];
+        }
+        return defaults.toArray(new String[0]);
+    }
+
+    private Pattern resolveSpelPattern() {
+        String regex = logConstants.getAspect().getSpelPattern();
+        if (StringUtils.isBlank(regex)) {
+            return Pattern.compile(LogConstants.Aspect.DEFAULT_SPEL_PATTERN);
+        }
+        try {
+            return Pattern.compile(regex);
+        } catch (Exception ignored) {
+            return Pattern.compile(LogConstants.Aspect.DEFAULT_SPEL_PATTERN);
+        }
+    }
+
+    private String permissionPrefix(String permission) {
+        String separator = logConstants.getHttp().getPermissionSeparator();
+        if (StringUtils.isBlank(separator)) {
+            return permission;
+        }
+        int idx = permission.indexOf(separator);
+        if (idx <= 0) {
+            return permission;
+        }
+        return permission.substring(0, idx);
     }
 
     private RequirePermission resolvePermission(Method method, Class<?> targetClass) {

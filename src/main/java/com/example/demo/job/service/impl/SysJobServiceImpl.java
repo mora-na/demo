@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.dto.JobCreateRequest;
 import com.example.demo.job.dto.JobQuery;
 import com.example.demo.job.dto.JobUpdateRequest;
@@ -39,6 +40,7 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
 
     private final JobSchedulerService jobSchedulerService;
     private final JobHandlerRegistry jobHandlerRegistry;
+    private final JobConstants jobConstants;
 
     @Override
     public List<SysJob> selectJobs(JobQuery query) {
@@ -48,7 +50,7 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
     @Override
     public IPage<SysJob> selectJobsPage(Page<SysJob> page, JobQuery query) {
         if (page == null) {
-            return new Page<>(1, 10);
+            return new Page<>(jobConstants.getPage().getDefaultPageNum(), jobConstants.getPage().getDefaultPageSize());
         }
         return this.page(page, buildQuery(query));
     }
@@ -245,19 +247,21 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
 
     private int normalizeStatus(Integer status) {
         if (status == null) {
-            return SysJob.STATUS_ENABLED;
+            return jobConstants.getStatus().getJobEnabled();
         }
-        if (status == SysJob.STATUS_DISABLED) {
-            return SysJob.STATUS_DISABLED;
+        if (status == jobConstants.getStatus().getJobDisabled()) {
+            return jobConstants.getStatus().getJobDisabled();
         }
-        return SysJob.STATUS_ENABLED;
+        return jobConstants.getStatus().getJobEnabled();
     }
 
     private int normalizeConcurrent(Integer allowConcurrent) {
         if (allowConcurrent == null) {
-            return 1;
+            return jobConstants.getConcurrent().getAllow();
         }
-        return allowConcurrent == 0 ? 0 : 1;
+        return allowConcurrent == jobConstants.getConcurrent().getDisallow()
+                ? jobConstants.getConcurrent().getDisallow()
+                : jobConstants.getConcurrent().getAllow();
     }
 
     private String normalizeMisfirePolicy(String policy) {

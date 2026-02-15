@@ -4,6 +4,7 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.model.PageResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.log.config.LogConstants;
 import com.example.demo.log.dto.OperLogQuery;
 import com.example.demo.log.entity.SysOperLog;
 import com.example.demo.log.service.SysOperLogService;
@@ -24,6 +25,7 @@ import java.util.List;
 public class OperLogController extends BaseController {
 
     private final SysOperLogService operLogService;
+    private final LogConstants logConstants;
 
     @GetMapping
     @RequirePermission("log:query")
@@ -38,7 +40,8 @@ public class OperLogController extends BaseController {
             return success();
         }
         if (!operLogService.removeById(id)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(logConstants.getController().getInternalServerErrorCode(),
+                    i18n(logConstants.getMessage().getCommonDeleteFailed()));
         }
         return success();
     }

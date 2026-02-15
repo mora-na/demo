@@ -5,6 +5,7 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.model.PageResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.dict.config.DictConstants;
 import com.example.demo.dict.dto.*;
 import com.example.demo.dict.entity.DictData;
 import com.example.demo.dict.entity.DictType;
@@ -36,6 +37,7 @@ public class DictAdminController extends BaseController {
     private final DictTypeService dictTypeService;
     private final DictDataService dictDataService;
     private final DictService dictService;
+    private final DictConstants dictConstants;
 
     @GetMapping("/type/list")
     @RequirePermission("dict:query")
@@ -55,13 +57,13 @@ public class DictAdminController extends BaseController {
     @OperLog(title = "字典管理", operation = "新增字典类型", businessType = BusinessType.INSERT)
     public CommonResult<DictTypeVO> createType(@Valid @RequestBody DictTypeCreateRequest request) {
         if (existsType(request.getDictType(), null)) {
-            return error(400, i18n("dict.type.exists"));
+            return error(dictConstants.getController().getBadRequestCode(), i18n(dictConstants.getMessage().getDictTypeExists()));
         }
         DictType type = new DictType();
         type.setDictType(request.getDictType());
         type.setDictName(request.getDictName());
         type.setStatus(normalizeStatus(request.getStatus()));
-        type.setSort(request.getSort() == null ? 0 : request.getSort());
+        type.setSort(request.getSort() == null ? dictConstants.getSort().getDefaultSort() : request.getSort());
         type.setRemark(request.getRemark());
         dictTypeService.save(type);
         dictService.refreshCache(request.getDictType());
@@ -75,10 +77,10 @@ public class DictAdminController extends BaseController {
     public CommonResult<Void> updateType(@PathVariable Long id, @Valid @RequestBody DictTypeUpdateRequest request) {
         DictType existing = dictTypeService.getById(id);
         if (existing == null) {
-            return error(404, i18n("dict.type.not.found"));
+            return error(dictConstants.getController().getNotFoundCode(), i18n(dictConstants.getMessage().getDictTypeNotFound()));
         }
         if (existsType(request.getDictType(), id)) {
-            return error(400, i18n("dict.type.exists"));
+            return error(dictConstants.getController().getBadRequestCode(), i18n(dictConstants.getMessage().getDictTypeExists()));
         }
         String oldType = existing.getDictType();
         DictType type = new DictType();
@@ -86,10 +88,10 @@ public class DictAdminController extends BaseController {
         type.setDictType(request.getDictType());
         type.setDictName(request.getDictName());
         type.setStatus(normalizeStatus(request.getStatus()));
-        type.setSort(request.getSort() == null ? 0 : request.getSort());
+        type.setSort(request.getSort() == null ? dictConstants.getSort().getDefaultSort() : request.getSort());
         type.setRemark(request.getRemark());
         if (!dictTypeService.updateById(type)) {
-            return error(500, i18n("common.update.failed"));
+            return error(dictConstants.getController().getInternalServerErrorCode(), i18n(dictConstants.getMessage().getCommonUpdateFailed()));
         }
         if (StringUtils.isNotBlank(oldType) && !oldType.equals(request.getDictType())) {
             dictDataService.update(Wrappers.lambdaUpdate(DictData.class)
@@ -108,12 +110,12 @@ public class DictAdminController extends BaseController {
     public CommonResult<Void> deleteType(@PathVariable Long id) {
         DictType existing = dictTypeService.getById(id);
         if (existing == null) {
-            return error(404, i18n("dict.type.not.found"));
+            return error(dictConstants.getController().getNotFoundCode(), i18n(dictConstants.getMessage().getDictTypeNotFound()));
         }
         String dictType = existing.getDictType();
         dictDataService.remove(Wrappers.lambdaQuery(DictData.class).eq(DictData::getDictType, dictType));
         if (!dictTypeService.removeById(id)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(dictConstants.getController().getInternalServerErrorCode(), i18n(dictConstants.getMessage().getCommonDeleteFailed()));
         }
         dictService.refreshCache(dictType);
         return success();
@@ -140,17 +142,17 @@ public class DictAdminController extends BaseController {
         DictType type = dictTypeService.getOne(Wrappers.lambdaQuery(DictType.class)
                 .eq(DictType::getDictType, request.getDictType()));
         if (type == null) {
-            return error(404, i18n("dict.type.not.found"));
+            return error(dictConstants.getController().getNotFoundCode(), i18n(dictConstants.getMessage().getDictTypeNotFound()));
         }
         if (existsData(request.getDictType(), request.getDictValue(), null)) {
-            return error(400, i18n("dict.data.exists"));
+            return error(dictConstants.getController().getBadRequestCode(), i18n(dictConstants.getMessage().getDictDataExists()));
         }
         DictData data = new DictData();
         data.setDictType(request.getDictType());
         data.setDictLabel(request.getDictLabel());
         data.setDictValue(request.getDictValue());
         data.setStatus(normalizeStatus(request.getStatus()));
-        data.setSort(request.getSort() == null ? 0 : request.getSort());
+        data.setSort(request.getSort() == null ? dictConstants.getSort().getDefaultSort() : request.getSort());
         data.setRemark(request.getRemark());
         dictDataService.save(data);
         dictService.refreshCache(request.getDictType());
@@ -163,20 +165,20 @@ public class DictAdminController extends BaseController {
     public CommonResult<Void> updateData(@PathVariable Long id, @Valid @RequestBody DictDataUpdateRequest request) {
         DictData existing = dictDataService.getById(id);
         if (existing == null) {
-            return error(404, i18n("dict.data.not.found"));
+            return error(dictConstants.getController().getNotFoundCode(), i18n(dictConstants.getMessage().getDictDataNotFound()));
         }
         if (existsData(existing.getDictType(), request.getDictValue(), id)) {
-            return error(400, i18n("dict.data.exists"));
+            return error(dictConstants.getController().getBadRequestCode(), i18n(dictConstants.getMessage().getDictDataExists()));
         }
         DictData data = new DictData();
         data.setId(id);
         data.setDictLabel(request.getDictLabel());
         data.setDictValue(request.getDictValue());
         data.setStatus(normalizeStatus(request.getStatus()));
-        data.setSort(request.getSort() == null ? 0 : request.getSort());
+        data.setSort(request.getSort() == null ? dictConstants.getSort().getDefaultSort() : request.getSort());
         data.setRemark(request.getRemark());
         if (!dictDataService.updateById(data)) {
-            return error(500, i18n("common.update.failed"));
+            return error(dictConstants.getController().getInternalServerErrorCode(), i18n(dictConstants.getMessage().getCommonUpdateFailed()));
         }
         dictService.refreshCache(existing.getDictType());
         return success();
@@ -188,10 +190,10 @@ public class DictAdminController extends BaseController {
     public CommonResult<Void> deleteData(@PathVariable Long id) {
         DictData existing = dictDataService.getById(id);
         if (existing == null) {
-            return error(404, i18n("dict.data.not.found"));
+            return error(dictConstants.getController().getNotFoundCode(), i18n(dictConstants.getMessage().getDictDataNotFound()));
         }
         if (!dictDataService.removeById(id)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(dictConstants.getController().getInternalServerErrorCode(), i18n(dictConstants.getMessage().getCommonDeleteFailed()));
         }
         dictService.refreshCache(existing.getDictType());
         return success();
@@ -252,6 +254,10 @@ public class DictAdminController extends BaseController {
     }
 
     private Integer normalizeStatus(Integer status) {
-        return status != null && (status == 0 || status == 1) ? status : 1;
+        return status != null
+                && (status == dictConstants.getStatus().getDisabled()
+                || status == dictConstants.getStatus().getEnabled())
+                ? status
+                : dictConstants.getStatus().getEnabled();
     }
 }

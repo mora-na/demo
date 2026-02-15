@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.menu.config.MenuConstants;
 import com.example.demo.menu.dto.MenuCreateRequest;
 import com.example.demo.menu.dto.MenuStatusRequest;
 import com.example.demo.menu.dto.MenuUpdateRequest;
@@ -36,6 +37,7 @@ public class MenuAdminController extends BaseController {
 
     private final MenuService menuService;
     private final RoleMenuService roleMenuService;
+    private final MenuConstants menuConstants;
 
     /**
      * 获取菜单列表。
@@ -63,7 +65,7 @@ public class MenuAdminController extends BaseController {
     public CommonResult<MenuVO> detail(@PathVariable Long id) {
         Menu menu = menuService.getById(id);
         if (menu == null) {
-            return error(404, i18n("menu.not.found"));
+            return error(menuConstants.getController().getNotFoundCode(), i18n(menuConstants.getMessage().getMenuNotFound()));
         }
         return success(toVO(menu));
     }
@@ -80,10 +82,10 @@ public class MenuAdminController extends BaseController {
     @RequirePermission("menu:create")
     public CommonResult<MenuVO> create(@Valid @RequestBody MenuCreateRequest request) {
         if (existsCode(request.getCode(), null)) {
-            return error(400, i18n("menu.code.exists"));
+            return error(menuConstants.getController().getBadRequestCode(), i18n(menuConstants.getMessage().getMenuCodeExists()));
         }
         if (request.getParentId() != null && menuService.getById(request.getParentId()) == null) {
-            return error(400, i18n("menu.parent.not.found"));
+            return error(menuConstants.getController().getBadRequestCode(), i18n(menuConstants.getMessage().getMenuParentNotFound()));
         }
         Menu menu = new Menu();
         menu.setName(request.getName());
@@ -93,7 +95,7 @@ public class MenuAdminController extends BaseController {
         menu.setComponent(request.getComponent());
         menu.setPermission(request.getPermission());
         menu.setStatus(normalizeStatus(request.getStatus()));
-        menu.setSort(request.getSort() == null ? 0 : request.getSort());
+        menu.setSort(request.getSort() == null ? menuConstants.getSort().getDefaultSort() : request.getSort());
         menu.setRemark(request.getRemark());
         menuService.save(menu);
         return success(toVO(menu));
@@ -113,17 +115,17 @@ public class MenuAdminController extends BaseController {
     public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody MenuUpdateRequest request) {
         Menu existing = menuService.getById(id);
         if (existing == null) {
-            return error(404, i18n("menu.not.found"));
+            return error(menuConstants.getController().getNotFoundCode(), i18n(menuConstants.getMessage().getMenuNotFound()));
         }
         if (existsCode(request.getCode(), id)) {
-            return error(400, i18n("menu.code.exists"));
+            return error(menuConstants.getController().getBadRequestCode(), i18n(menuConstants.getMessage().getMenuCodeExists()));
         }
         if (request.getParentId() != null) {
             if (id.equals(request.getParentId())) {
-                return error(400, i18n("menu.parent.cannot.self"));
+                return error(menuConstants.getController().getBadRequestCode(), i18n(menuConstants.getMessage().getMenuParentCannotSelf()));
             }
             if (menuService.getById(request.getParentId()) == null) {
-                return error(400, i18n("menu.parent.not.found"));
+                return error(menuConstants.getController().getBadRequestCode(), i18n(menuConstants.getMessage().getMenuParentNotFound()));
             }
         }
         Menu menu = new Menu();
@@ -138,7 +140,8 @@ public class MenuAdminController extends BaseController {
         menu.setSort(request.getSort());
         menu.setRemark(request.getRemark());
         if (!menuService.updateById(menu)) {
-            return error(500, i18n("common.update.failed"));
+            return error(menuConstants.getController().getInternalServerErrorCode(),
+                    i18n(menuConstants.getMessage().getCommonUpdateFailed()));
         }
         return success();
     }
@@ -157,14 +160,16 @@ public class MenuAdminController extends BaseController {
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody MenuStatusRequest request) {
         Menu existing = menuService.getById(id);
         if (existing == null) {
-            return error(404, i18n("menu.not.found"));
+            return error(menuConstants.getController().getNotFoundCode(), i18n(menuConstants.getMessage().getMenuNotFound()));
         }
         Integer status = request.getStatus();
         if (notValidStatus(status)) {
-            return error(400, i18n("common.status.invalid"));
+            return error(menuConstants.getController().getBadRequestCode(),
+                    i18n(menuConstants.getMessage().getCommonStatusInvalid()));
         }
         if (!menuService.updateStatus(id, status)) {
-            return error(500, i18n("common.status.update.failed"));
+            return error(menuConstants.getController().getInternalServerErrorCode(),
+                    i18n(menuConstants.getMessage().getCommonStatusUpdateFailed()));
         }
         return success();
     }
@@ -174,11 +179,12 @@ public class MenuAdminController extends BaseController {
     @Transactional(rollbackFor = Exception.class)
     public CommonResult<Void> delete(@PathVariable Long id) {
         if (menuService.getById(id) == null) {
-            return error(404, i18n("menu.not.found"));
+            return error(menuConstants.getController().getNotFoundCode(), i18n(menuConstants.getMessage().getMenuNotFound()));
         }
         roleMenuService.remove(Wrappers.lambdaQuery(RoleMenu.class).eq(RoleMenu::getMenuId, id));
         if (!menuService.removeById(id)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(menuConstants.getController().getInternalServerErrorCode(),
+                    i18n(menuConstants.getMessage().getCommonDeleteFailed()));
         }
         return success();
     }
@@ -199,7 +205,8 @@ public class MenuAdminController extends BaseController {
         }
         roleMenuService.remove(Wrappers.lambdaQuery(RoleMenu.class).in(RoleMenu::getMenuId, uniqueIds));
         if (!menuService.removeByIds(uniqueIds)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(menuConstants.getController().getInternalServerErrorCode(),
+                    i18n(menuConstants.getMessage().getCommonDeleteFailed()));
         }
         return success();
     }
@@ -232,7 +239,7 @@ public class MenuAdminController extends BaseController {
      */
     private Integer normalizeStatus(Integer status) {
         if (notValidStatus(status)) {
-            return 1;
+            return menuConstants.getStatus().getEnabled();
         }
         return status;
     }
@@ -246,7 +253,9 @@ public class MenuAdminController extends BaseController {
      * @date 2026/2/9
      */
     private boolean notValidStatus(Integer status) {
-        return status == null || (status != 0 && status != 1);
+        return status == null
+                || (status != menuConstants.getStatus().getDisabled()
+                && status != menuConstants.getStatus().getEnabled());
     }
 
     /**

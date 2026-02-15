@@ -2,7 +2,7 @@ package com.example.demo.dict.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.common.cache.CacheTool;
-import com.example.demo.dict.config.DictCacheProperties;
+import com.example.demo.dict.config.DictConstants;
 import com.example.demo.dict.dto.DictDataVO;
 import com.example.demo.dict.entity.DictData;
 import com.example.demo.dict.entity.DictType;
@@ -26,24 +26,21 @@ import java.util.stream.Collectors;
 @Service
 public class DictServiceImpl implements DictService {
 
-    private static final String CACHE_PREFIX = "dict:data:";
-    private static final String CACHE_ALL_KEY = "dict:data:all";
-
     private final DictDataService dictDataService;
     private final DictTypeService dictTypeService;
     private final CacheTool cacheTool;
-    private final DictCacheProperties cacheProperties;
+    private final DictConstants dictConstants;
     private final ObjectMapper objectMapper;
 
     public DictServiceImpl(DictDataService dictDataService,
                            DictTypeService dictTypeService,
                            CacheTool cacheTool,
-                           DictCacheProperties cacheProperties,
+                           DictConstants dictConstants,
                            ObjectMapper objectMapper) {
         this.dictDataService = dictDataService;
         this.dictTypeService = dictTypeService;
         this.cacheTool = cacheTool;
-        this.cacheProperties = cacheProperties;
+        this.dictConstants = dictConstants;
         this.objectMapper = objectMapper;
     }
 
@@ -74,7 +71,7 @@ public class DictServiceImpl implements DictService {
         if (types.isEmpty()) {
             return Collections.emptyMap();
         }
-        Map<String, List<DictDataVO>> allCached = readMapCache(CACHE_ALL_KEY);
+        Map<String, List<DictDataVO>> allCached = readMapCache(dictConstants.getCache().getAllKey());
         if (allCached != null && types.stream().allMatch(allCached::containsKey)) {
             return types.stream().collect(Collectors.toMap(type -> type, allCached::get, (a, b) -> a, LinkedHashMap::new));
         }
@@ -90,7 +87,7 @@ public class DictServiceImpl implements DictService {
         if (!missing.isEmpty()) {
             List<DictData> items = dictDataService.list(Wrappers.lambdaQuery(DictData.class)
                     .in(DictData::getDictType, missing)
-                    .eq(DictData::getStatus, 1)
+                    .eq(DictData::getStatus, dictConstants.getStatus().getEnabled())
                     .orderByAsc(DictData::getSort)
                     .orderByAsc(DictData::getId));
             Map<String, List<DictDataVO>> grouped = toGroupMap(items);
@@ -105,16 +102,16 @@ public class DictServiceImpl implements DictService {
 
     @Override
     public Map<String, List<DictDataVO>> getAllEnabled() {
-        Map<String, List<DictDataVO>> cached = readMapCache(CACHE_ALL_KEY);
+        Map<String, List<DictDataVO>> cached = readMapCache(dictConstants.getCache().getAllKey());
         if (cached != null) {
             return cached;
         }
         List<DictData> items = dictDataService.list(Wrappers.lambdaQuery(DictData.class)
-                .eq(DictData::getStatus, 1)
+                .eq(DictData::getStatus, dictConstants.getStatus().getEnabled())
                 .orderByAsc(DictData::getSort)
                 .orderByAsc(DictData::getId));
         Map<String, List<DictDataVO>> result = toGroupMap(items);
-        writeCache(CACHE_ALL_KEY, result);
+        writeCache(dictConstants.getCache().getAllKey(), result);
         return result;
     }
 
@@ -137,7 +134,7 @@ public class DictServiceImpl implements DictService {
 
     @Override
     public void refreshCache() {
-        cacheTool.delete(CACHE_ALL_KEY);
+        cacheTool.delete(dictConstants.getCache().getAllKey());
         List<DictType> types = dictTypeService.list();
         if (types != null) {
             for (DictType type : types) {
@@ -153,13 +150,13 @@ public class DictServiceImpl implements DictService {
         if (StringUtils.isNotBlank(dictType)) {
             cacheTool.delete(buildTypeKey(dictType));
         }
-        cacheTool.delete(CACHE_ALL_KEY);
+        cacheTool.delete(dictConstants.getCache().getAllKey());
     }
 
     private List<DictDataVO> queryEnabledDataByType(String dictType) {
         List<DictData> items = dictDataService.list(Wrappers.lambdaQuery(DictData.class)
                 .eq(DictData::getDictType, dictType)
-                .eq(DictData::getStatus, 1)
+                .eq(DictData::getStatus, dictConstants.getStatus().getEnabled())
                 .orderByAsc(DictData::getSort)
                 .orderByAsc(DictData::getId));
         return toVOList(items);
@@ -201,14 +198,11 @@ public class DictServiceImpl implements DictService {
     }
 
     private String buildTypeKey(String dictType) {
-        return CACHE_PREFIX + dictType;
+        return dictConstants.getCache().getKeyPrefix() + dictType;
     }
 
     private Duration resolveTtl() {
-        if (cacheProperties == null) {
-            return null;
-        }
-        long seconds = cacheProperties.getSeconds();
+        long seconds = dictConstants.getCache().getTtlSeconds();
         if (seconds <= 0) {
             return null;
         }

@@ -1,6 +1,7 @@
 package com.example.demo.job.support;
 
 import com.example.demo.common.spring.SpringContextHolder;
+import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.entity.SysJobLog;
 import com.example.demo.job.log.JobLogCollector;
 import com.example.demo.job.log.JobLogThreadContext;
@@ -23,8 +24,9 @@ public abstract class AbstractQuartzJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
+        JobConstants constants = resolveConstants();
         JobDataMap dataMap = context.getMergedJobDataMap();
-        JobContext jobContext = buildContext(dataMap);
+        JobContext jobContext = buildContext(dataMap, constants);
         SysJobLogService logService = SpringContextHolder.getBean(SysJobLogService.class);
         JobLogCollector logCollector = SpringContextHolder.getBean(JobLogCollector.class);
         LocalDateTime start = LocalDateTime.now();
@@ -39,24 +41,25 @@ public abstract class AbstractQuartzJob implements Job {
                 JobLogThreadContext.set(runId);
             }
         }
-        jobContext.appendLog("开始执行: " + start);
+        jobContext.appendLog(constants.getExecution().getExecuteStartPrefix() + start);
         if (jobContext.getParams() != null && !jobContext.getParams().trim().isEmpty()) {
-            jobContext.appendLog("参数: " + jobContext.getParams());
+            jobContext.appendLog(constants.getExecution().getParamsPrefix() + jobContext.getParams());
         }
         try {
             JobHandlerRegistry registry = SpringContextHolder.getBean(JobHandlerRegistry.class);
             JobHandler handler = registry == null ? null : registry.getHandler(jobContext.getHandlerName());
             if (handler == null) {
-                message = "handler not found";
-                jobContext.appendLog("处理器不存在: " + jobContext.getHandlerName());
+                message = constants.getExecution().getHandlerNotFoundMessage();
+                jobContext.appendLog(constants.getExecution().getHandlerNotFoundLogPrefix() + jobContext.getHandlerName());
                 return;
             }
             handler.execute(jobContext);
             success = true;
-            jobContext.appendLog("执行成功");
+            jobContext.appendLog(constants.getExecution().getExecuteSuccessLog());
         } catch (Exception ex) {
             message = ex.getMessage();
-            jobContext.appendLog("执行异常: " + (message == null ? ex.getClass().getSimpleName() : message));
+            jobContext.appendLog(constants.getExecution().getExecuteErrorPrefix()
+                    + (message == null ? ex.getClass().getSimpleName() : message));
             jobContext.appendLog(buildStackTrace(ex));
             throw new JobExecutionException(ex);
         } finally {
@@ -71,16 +74,18 @@ public abstract class AbstractQuartzJob implements Job {
                 log.setJobId(jobContext.getJobId());
                 log.setJobName(jobContext.getJobName());
                 log.setHandlerName(jobContext.getHandlerName());
-                log.setStatus(success ? SysJobLog.STATUS_SUCCESS : SysJobLog.STATUS_FAILED);
-                log.setMessage(trimMessage(message));
+                log.setStatus(success ? constants.getStatus().getLogSuccess() : constants.getStatus().getLogFailed());
+                log.setMessage(trimMessage(message, constants.getExecution().getMessageMaxLength()));
                 log.setStartTime(start);
                 LocalDateTime end = LocalDateTime.now();
                 log.setEndTime(end);
                 log.setDurationMs(java.time.Duration.between(start, end).toMillis());
                 String merged = logCollector != null
                         ? logCollector.mergeLogs(manualLog, runId == null ? null : logCollector.finish(runId))
-                        : mergeLogDetail(manualLog, null);
-                log.setLogDetail(logCollector != null ? merged : trimLogDetail(merged));
+                        : mergeLogDetail(manualLog, null, constants.getExecution().getLogMergeSeparator());
+                log.setLogDetail(logCollector != null
+                        ? merged
+                        : trimLogDetail(merged, constants.getExecution().getLogDetailMaxLength()));
                 logService.save(log);
                 if (logCollector != null && runId != null) {
                     if (logCollector.shouldDelayMerge()) {
@@ -93,28 +98,28 @@ public abstract class AbstractQuartzJob implements Job {
         }
     }
 
-    private JobContext buildContext(JobDataMap dataMap) {
+    private JobContext buildContext(JobDataMap dataMap, JobConstants constants) {
         JobContext context = new JobContext();
-        context.setJobId(dataMap.getLongValue("jobId"));
-        context.setJobName(dataMap.getString("jobName"));
-        context.setHandlerName(dataMap.getString("handlerName"));
-        context.setCronExpression(dataMap.getString("cronExpression"));
-        context.setParams(dataMap.getString("params"));
+        context.setJobId(dataMap.getLongValue(constants.getDataMap().getJobIdKey()));
+        context.setJobName(dataMap.getString(constants.getDataMap().getJobNameKey()));
+        context.setHandlerName(dataMap.getString(constants.getDataMap().getHandlerNameKey()));
+        context.setCronExpression(dataMap.getString(constants.getDataMap().getCronExpressionKey()));
+        context.setParams(dataMap.getString(constants.getDataMap().getParamsKey()));
         return context;
     }
 
-    private String trimMessage(String message) {
+    private String trimMessage(String message, int maxLength) {
         if (message == null) {
             return null;
         }
         String value = message.trim();
-        if (value.length() <= 500) {
+        if (value.length() <= maxLength) {
             return value;
         }
-        return value.substring(0, 500);
+        return value.substring(0, maxLength);
     }
 
-    private String trimLogDetail(String detail) {
+    private String trimLogDetail(String detail, int maxLength) {
         if (detail == null) {
             return null;
         }
@@ -122,13 +127,13 @@ public abstract class AbstractQuartzJob implements Job {
         if (value.isEmpty()) {
             return null;
         }
-        if (value.length() <= 8000) {
+        if (value.length() <= maxLength) {
             return value;
         }
-        return value.substring(0, 8000);
+        return value.substring(0, maxLength);
     }
 
-    private String mergeLogDetail(String manual, String autoLog) {
+    private String mergeLogDetail(String manual, String autoLog, String separator) {
         String left = manual == null ? "" : manual.trim();
         String right = autoLog == null ? "" : autoLog.trim();
         if (left.isEmpty()) {
@@ -137,7 +142,7 @@ public abstract class AbstractQuartzJob implements Job {
         if (right.isEmpty()) {
             return left;
         }
-        return left + "\n----\n" + right;
+        return left + separator + right;
     }
 
     private String buildStackTrace(Exception ex) {
@@ -145,5 +150,10 @@ public abstract class AbstractQuartzJob implements Job {
         java.io.PrintWriter printWriter = new java.io.PrintWriter(writer);
         ex.printStackTrace(printWriter);
         return writer.toString();
+    }
+
+    private JobConstants resolveConstants() {
+        JobConstants constants = SpringContextHolder.getBean(JobConstants.class);
+        return constants == null ? new JobConstants() : constants;
     }
 }

@@ -19,9 +19,6 @@ import java.time.LocalDateTime;
 @TableName("sys_login_log")
 public class SysLoginLog implements Serializable {
 
-    public static final int TYPE_LOGIN = 1;
-    public static final int TYPE_LOGOUT = 2;
-
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)

@@ -1,5 +1,6 @@
 package com.example.demo.job.service.impl;
 
+import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.entity.SysJob;
 import com.example.demo.job.model.JobMisfirePolicy;
 import com.example.demo.job.service.JobSchedulerService;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Quartz 调度器服务实现。
@@ -26,10 +28,8 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class JobSchedulerServiceImpl implements JobSchedulerService {
 
-    private static final String JOB_GROUP = "SYS_JOB";
-    private static final String TRIGGER_GROUP = "SYS_JOB_TRIGGER";
-
     private final Scheduler scheduler;
+    private final JobConstants jobConstants;
 
     @Override
     public void syncJob(SysJob job) {
@@ -46,7 +46,7 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
                 scheduler.addJob(jobDetail, true);
             }
 
-            if (SysJob.STATUS_ENABLED == normalizeStatus(job.getStatus())) {
+            if (jobConstants.getStatus().getJobEnabled() == normalizeStatus(job.getStatus())) {
                 CronTrigger trigger = buildTrigger(job, triggerKey);
                 if (scheduler.checkExists(triggerKey)) {
                     scheduler.rescheduleJob(triggerKey, trigger);
@@ -110,11 +110,11 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
 
     private JobDetail buildJobDetail(SysJob job, JobKey jobKey) {
         JobDataMap map = new JobDataMap();
-        map.put("jobId", job.getId());
-        map.put("jobName", job.getName());
-        map.put("handlerName", job.getHandlerName());
-        map.put("cronExpression", job.getCronExpression());
-        map.put("params", StringUtils.defaultString(job.getParams()));
+        map.put(jobConstants.getDataMap().getJobIdKey(), job.getId());
+        map.put(jobConstants.getDataMap().getJobNameKey(), job.getName());
+        map.put(jobConstants.getDataMap().getHandlerNameKey(), job.getHandlerName());
+        map.put(jobConstants.getDataMap().getCronExpressionKey(), job.getCronExpression());
+        map.put(jobConstants.getDataMap().getParamsKey(), StringUtils.defaultString(job.getParams()));
 
         Class<? extends Job> jobClass = resolveJobClass(job.getAllowConcurrent());
         return JobBuilder.newJob(jobClass)
@@ -142,26 +142,28 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
     }
 
     private JobKey buildJobKey(SysJob job) {
-        return JobKey.jobKey("JOB_" + job.getId(), JOB_GROUP);
+        return JobKey.jobKey(jobConstants.getScheduler().getJobKeyPrefix() + job.getId(),
+                jobConstants.getScheduler().getJobGroup());
     }
 
     private TriggerKey buildTriggerKey(SysJob job) {
-        return TriggerKey.triggerKey("TRIGGER_" + job.getId(), TRIGGER_GROUP);
+        return TriggerKey.triggerKey(jobConstants.getScheduler().getTriggerKeyPrefix() + job.getId(),
+                jobConstants.getScheduler().getTriggerGroup());
     }
 
     private int normalizeStatus(Integer status) {
-        return status == null ? SysJob.STATUS_ENABLED : status;
+        return status == null ? jobConstants.getStatus().getJobEnabled() : status;
     }
 
     private String normalizeMisfirePolicy(String policy) {
         if (policy == null) {
             return JobMisfirePolicy.DEFAULT;
         }
-        return policy.trim().toUpperCase();
+        return policy.trim().toUpperCase(Locale.ROOT);
     }
 
     private Class<? extends Job> resolveJobClass(Integer allowConcurrent) {
-        if (allowConcurrent != null && allowConcurrent == 0) {
+        if (allowConcurrent != null && allowConcurrent == jobConstants.getConcurrent().getDisallow()) {
             return DisallowConcurrentQuartzJob.class;
         }
         return ConcurrentQuartzJob.class;

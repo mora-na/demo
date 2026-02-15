@@ -1,6 +1,12 @@
 package com.example.demo.log.support;
 
+import com.example.demo.common.spring.SpringContextHolder;
+import com.example.demo.log.config.LogConstants;
+import org.apache.commons.lang3.StringUtils;
+
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * IP 工具类。
@@ -10,14 +16,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 public final class IpUtils {
 
-    private static final String[] HEADERS = {
-            "X-Forwarded-For",
-            "X-Real-IP",
-            "Proxy-Client-IP",
-            "WL-Proxy-Client-IP",
-            "HTTP_CLIENT_IP",
-            "HTTP_X_FORWARDED_FOR"
-    };
+    private static final LogConstants DEFAULTS = new LogConstants();
 
     private IpUtils() {
     }
@@ -26,11 +25,20 @@ public final class IpUtils {
         if (request == null) {
             return null;
         }
-        for (String header : HEADERS) {
+        LogConstants.Ip ipConstants = constants().getIp();
+        List<String> headers = ipConstants.getHeaders();
+        if (headers == null || headers.isEmpty()) {
+            return request.getRemoteAddr();
+        }
+        for (String header : headers) {
+            if (StringUtils.isBlank(header)) {
+                continue;
+            }
             String ip = request.getHeader(header);
-            if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
-                if (ip.contains(",")) {
-                    return ip.split(",")[0].trim();
+            if (StringUtils.isNotBlank(ip) && !StringUtils.equalsIgnoreCase(ip, ipConstants.getUnknownToken())) {
+                if (StringUtils.isNotBlank(ipConstants.getMultiIpSeparator())
+                        && ip.contains(ipConstants.getMultiIpSeparator())) {
+                    return ip.split(Pattern.quote(ipConstants.getMultiIpSeparator()))[0].trim();
                 }
                 return ip;
             }
@@ -39,40 +47,50 @@ public final class IpUtils {
     }
 
     public static String resolveLocation(String ip) {
-        if (ip == null || ip.isEmpty()) {
+        if (StringUtils.isBlank(ip)) {
             return null;
         }
+        LogConstants.Ip ipConstants = constants().getIp();
         if (isInternalIp(ip)) {
-            return "内网IP";
+            return ipConstants.getInternalIpText();
         }
-        return "未知";
+        return ipConstants.getUnknownLocationText();
     }
 
     public static boolean isInternalIp(String ip) {
-        if (ip == null) {
+        if (StringUtils.isBlank(ip)) {
             return false;
         }
+        LogConstants.Ip ipConstants = constants().getIp();
         String val = ip.trim();
-        if (val.startsWith("127.") || val.startsWith("0:0:0:0:0:0:0:1") || val.equals("::1")) {
+        if (val.startsWith(ipConstants.getIpv4LoopbackPrefix())
+                || val.startsWith(ipConstants.getIpv6LoopbackFull())
+                || val.equals(ipConstants.getIpv6LoopbackShort())) {
             return true;
         }
-        if (val.startsWith("10.")) {
+        if (val.startsWith(ipConstants.getPrivateAPrefix())) {
             return true;
         }
-        if (val.startsWith("192.168.")) {
+        if (val.startsWith(ipConstants.getPrivateCPrefix())) {
             return true;
         }
-        if (val.startsWith("172.")) {
-            String[] parts = val.split("\\.");
+        if (val.startsWith(ipConstants.getPrivateBPrefix())) {
+            String[] parts = val.split(ipConstants.getIpv4SegmentSeparatorRegex());
             if (parts.length > 1) {
                 try {
                     int second = Integer.parseInt(parts[1]);
-                    return second >= 16 && second <= 31;
+                    return second >= ipConstants.getPrivateBSecondOctetMin()
+                            && second <= ipConstants.getPrivateBSecondOctetMax();
                 } catch (NumberFormatException ignored) {
                     return false;
                 }
             }
         }
         return false;
+    }
+
+    private static LogConstants constants() {
+        LogConstants bean = SpringContextHolder.getBean(LogConstants.class);
+        return bean == null ? DEFAULTS : bean;
     }
 }
