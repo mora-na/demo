@@ -16,6 +16,7 @@ import com.example.demo.menu.entity.Menu;
 import com.example.demo.menu.entity.RoleMenu;
 import com.example.demo.menu.service.MenuService;
 import com.example.demo.menu.service.RoleMenuService;
+import com.example.demo.permission.config.PermissionConstants;
 import com.example.demo.permission.dto.*;
 import com.example.demo.permission.entity.Permission;
 import com.example.demo.permission.entity.Role;
@@ -54,6 +55,7 @@ public class RoleAdminController extends BaseController {
     private final MenuService menuService;
     private final RoleMenuDeptService roleMenuDeptService;
     private final UserRoleService userRoleService;
+    private final PermissionConstants permissionConstants;
 
     /**
      * 获取角色列表并附带权限集合。
@@ -88,7 +90,8 @@ public class RoleAdminController extends BaseController {
     public CommonResult<RoleVO> detail(@PathVariable Long id) {
         Role role = roleService.getById(id);
         if (role == null) {
-            return error(404, i18n("role.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getRoleNotFound()));
         }
         List<Long> permissionIds = rolePermissionService.list(Wrappers.lambdaQuery(RolePermission.class)
                         .eq(RolePermission::getRoleId, id))
@@ -109,7 +112,8 @@ public class RoleAdminController extends BaseController {
     public CommonResult<List<Long>> menuIds(@PathVariable Long id) {
         Role role = roleService.getById(id);
         if (role == null) {
-            return error(404, i18n("role.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getRoleNotFound()));
         }
         List<Long> menuIds = roleMenuService.list(Wrappers.lambdaQuery(RoleMenu.class)
                         .eq(RoleMenu::getRoleId, id))
@@ -133,7 +137,8 @@ public class RoleAdminController extends BaseController {
     @RequirePermission("role:create")
     public CommonResult<RoleVO> create(@Valid @RequestBody RoleCreateRequest request) {
         if (existsCode(request.getCode(), null)) {
-            return error(400, i18n("role.code.exists"));
+            return error(permissionConstants.getController().getBadRequestCode(),
+                    i18n(permissionConstants.getMessage().getRoleCodeExists()));
         }
         Role role = new Role();
         role.setCode(request.getCode());
@@ -159,10 +164,12 @@ public class RoleAdminController extends BaseController {
     public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody RoleUpdateRequest request) {
         Role existing = roleService.getById(id);
         if (existing == null) {
-            return error(404, i18n("role.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getRoleNotFound()));
         }
         if (existsCode(request.getCode(), id)) {
-            return error(400, i18n("role.code.exists"));
+            return error(permissionConstants.getController().getBadRequestCode(),
+                    i18n(permissionConstants.getMessage().getRoleCodeExists()));
         }
         Role role = new Role();
         role.setId(id);
@@ -171,7 +178,8 @@ public class RoleAdminController extends BaseController {
         role.setDataScopeType(request.getDataScopeType());
         role.setDataScopeValue(request.getDataScopeValue());
         if (!roleService.updateById(role)) {
-            return error(500, i18n("common.update.failed"));
+            return error(permissionConstants.getController().getInternalServerErrorCode(),
+                    i18n(permissionConstants.getMessage().getCommonUpdateFailed()));
         }
         return success();
     }
@@ -190,14 +198,17 @@ public class RoleAdminController extends BaseController {
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody RoleStatusRequest request) {
         Role existing = roleService.getById(id);
         if (existing == null) {
-            return error(404, i18n("role.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getRoleNotFound()));
         }
         Integer status = request.getStatus();
         if (!isValidStatus(status)) {
-            return error(400, i18n("common.status.invalid"));
+            return error(permissionConstants.getController().getBadRequestCode(),
+                    i18n(permissionConstants.getMessage().getCommonStatusInvalid()));
         }
         if (!roleService.updateStatus(id, status)) {
-            return error(500, i18n("common.status.update.failed"));
+            return error(permissionConstants.getController().getInternalServerErrorCode(),
+                    i18n(permissionConstants.getMessage().getCommonStatusUpdateFailed()));
         }
         return success();
     }
@@ -216,17 +227,20 @@ public class RoleAdminController extends BaseController {
     public CommonResult<Void> assignPermissions(@PathVariable Long id, @Valid @RequestBody RolePermissionAssignRequest request) {
         Role existing = roleService.getById(id);
         if (existing == null) {
-            return error(404, i18n("role.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getRoleNotFound()));
         }
         List<Long> permissionIds = request.getPermissionIds();
         if (permissionIds != null && !permissionIds.isEmpty()) {
             List<Permission> permissions = permissionService.listByIds(permissionIds);
             if (permissions.size() != permissionIds.stream().filter(Objects::nonNull).distinct().count()) {
-                return error(400, i18n("permission.not.found"));
+                return error(permissionConstants.getController().getBadRequestCode(),
+                        i18n(permissionConstants.getMessage().getPermissionNotFound()));
             }
         }
         if (!roleService.assignPermissions(id, permissionIds)) {
-            return error(500, i18n("role.permissions.assign.failed"));
+            return error(permissionConstants.getController().getInternalServerErrorCode(),
+                    i18n(permissionConstants.getMessage().getRolePermissionsAssignFailed()));
         }
         return success();
     }
@@ -245,17 +259,20 @@ public class RoleAdminController extends BaseController {
     public CommonResult<Void> assignMenus(@PathVariable Long id, @Valid @RequestBody RoleMenuAssignRequest request) {
         Role existing = roleService.getById(id);
         if (existing == null) {
-            return error(404, i18n("role.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getRoleNotFound()));
         }
         List<Long> menuIds = request.getMenuIds();
         if (menuIds != null && !menuIds.isEmpty()) {
             List<Menu> menus = menuService.listByIds(menuIds);
             if (menus.size() != menuIds.stream().filter(Objects::nonNull).distinct().count()) {
-                return error(400, i18n("menu.not.found"));
+                return error(permissionConstants.getController().getBadRequestCode(),
+                        i18n(permissionConstants.getMessage().getMenuNotFound()));
             }
         }
         if (!roleMenuService.assignMenus(id, menuIds)) {
-            return error(500, i18n("role.menus.assign.failed"));
+            return error(permissionConstants.getController().getInternalServerErrorCode(),
+                    i18n(permissionConstants.getMessage().getRoleMenusAssignFailed()));
         }
         return success();
     }
@@ -268,7 +285,8 @@ public class RoleAdminController extends BaseController {
     public CommonResult<RoleMenuDataScopeResponse> getMenuDataScope(@PathVariable Long id) {
         Role role = roleService.getById(id);
         if (role == null) {
-            return error(404, i18n("role.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getRoleNotFound()));
         }
         List<RoleMenu> roleMenus = roleMenuService.list(Wrappers.lambdaQuery(RoleMenu.class)
                 .eq(RoleMenu::getRoleId, id));
@@ -342,7 +360,8 @@ public class RoleAdminController extends BaseController {
                                                 @Valid @RequestBody RoleMenuDataScopeBatchRequest request) {
         Role role = roleService.getById(id);
         if (role == null) {
-            return error(404, i18n("role.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getRoleNotFound()));
         }
         if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
             return success();
@@ -355,7 +374,8 @@ public class RoleAdminController extends BaseController {
                     .eq(RoleMenu::getRoleId, id)
                     .eq(RoleMenu::getMenuId, item.getMenuId()));
             if (relation == null) {
-                return error(400, i18n("role.menu.not.found"));
+                return error(permissionConstants.getController().getBadRequestCode(),
+                        i18n(permissionConstants.getMessage().getRoleMenuNotFound()));
             }
             String normalizedType = normalizeMenuScopeType(item.getDataScopeType());
             roleMenuService.update(Wrappers.lambdaUpdate(RoleMenu.class)
@@ -396,7 +416,8 @@ public class RoleAdminController extends BaseController {
     public CommonResult<Void> clearMenuDataScope(@PathVariable Long roleId, @PathVariable Long menuId) {
         Role role = roleService.getById(roleId);
         if (role == null) {
-            return error(404, i18n("role.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getRoleNotFound()));
         }
         roleMenuService.update(Wrappers.lambdaUpdate(RoleMenu.class)
                 .eq(RoleMenu::getRoleId, roleId)
@@ -413,13 +434,15 @@ public class RoleAdminController extends BaseController {
     @Transactional(rollbackFor = Exception.class)
     public CommonResult<Void> delete(@PathVariable Long id) {
         if (roleService.getById(id) == null) {
-            return error(404, i18n("role.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getRoleNotFound()));
         }
         rolePermissionService.remove(Wrappers.lambdaQuery(RolePermission.class).eq(RolePermission::getRoleId, id));
         roleMenuService.remove(Wrappers.lambdaQuery(RoleMenu.class).eq(RoleMenu::getRoleId, id));
         userRoleService.remove(Wrappers.lambdaQuery(UserRole.class).eq(UserRole::getRoleId, id));
         if (!roleService.removeById(id)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(permissionConstants.getController().getInternalServerErrorCode(),
+                    i18n(permissionConstants.getMessage().getCommonDeleteFailed()));
         }
         return success();
     }
@@ -442,7 +465,8 @@ public class RoleAdminController extends BaseController {
         roleMenuService.remove(Wrappers.lambdaQuery(RoleMenu.class).in(RoleMenu::getRoleId, uniqueIds));
         userRoleService.remove(Wrappers.lambdaQuery(UserRole.class).in(UserRole::getRoleId, uniqueIds));
         if (!roleService.removeByIds(uniqueIds)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(permissionConstants.getController().getInternalServerErrorCode(),
+                    i18n(permissionConstants.getMessage().getCommonDeleteFailed()));
         }
         return success();
     }
@@ -476,7 +500,7 @@ public class RoleAdminController extends BaseController {
      */
     private Integer normalizeStatus(Integer status) {
         if (!isValidStatus(status)) {
-            return 1;
+            return permissionConstants.getStatus().getEnabled();
         }
         return status;
     }
@@ -490,7 +514,9 @@ public class RoleAdminController extends BaseController {
      * @date 2026/2/9
      */
     private boolean isValidStatus(Integer status) {
-        return status != null && (status == 0 || status == 1);
+        return status != null
+                && (status == permissionConstants.getStatus().getDisabled()
+                || status == permissionConstants.getStatus().getEnabled());
     }
 
     private String normalizeMenuScopeType(String raw) {
@@ -498,7 +524,13 @@ public class RoleAdminController extends BaseController {
             return null;
         }
         String normalized = raw.trim().toUpperCase(Locale.ROOT);
-        if ("INHERIT".equals(normalized) || "DEFAULT".equals(normalized)) {
+        String inherit = StringUtils.defaultString(permissionConstants.getMenuDataScope().getInherit())
+                .trim()
+                .toUpperCase(Locale.ROOT);
+        String defaultType = StringUtils.defaultString(permissionConstants.getMenuDataScope().getDefaultType())
+                .trim()
+                .toUpperCase(Locale.ROOT);
+        if (normalized.equals(inherit) || normalized.equals(defaultType)) {
             return null;
         }
         switch (normalized) {

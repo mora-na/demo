@@ -7,6 +7,7 @@ import com.example.demo.common.model.PageResult;
 import com.example.demo.common.tool.ExcelTool;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.user.config.UserConstants;
 import com.example.demo.user.converter.SysUserConverter;
 import com.example.demo.user.dto.SysUserQuery;
 import com.example.demo.user.dto.SysUserVO;
@@ -37,6 +38,7 @@ public class SysUserController extends BaseController {
     private final SysUserService userService;
     private final SysUserViewService userViewService;
     private final SysUserConverter userConverter;
+    private final UserConstants userConstants;
 
     @RequestMapping("/selectUsers1")
     @RequirePermission("user:query")
@@ -74,7 +76,8 @@ public class SysUserController extends BaseController {
     @GetMapping("/export")
     @RequirePermission("user:export")
     public void export(@ModelAttribute SysUserQuery query, HttpServletResponse response) {
-        exportExcel(response, page -> userService.selectUsersPage(page, query), SysUser.class, "用户信息" + LocalDateTime.now());
+        exportExcel(response, page -> userService.selectUsersPage(page, query), SysUser.class,
+                userConstants.getExcel().getExportFilePrefix() + LocalDateTime.now());
     }
 
     @PostMapping("/import")
@@ -83,9 +86,9 @@ public class SysUserController extends BaseController {
         List<SysUser> users = ExcelTool.importFromMultipart(file, SysUser.class);
         log.info("Received request to importExcel,users:[{}]", users);
         if (userService.saveOrUpdateBatch(users)) {
-            return success(i18n("user.import.success"));
+            return success(i18n(userConstants.getMessage().getUserImportSuccess()));
         }
-        return error(i18n("user.import.failed"));
+        return error(i18n(userConstants.getMessage().getUserImportFailed()));
     }
 
 }

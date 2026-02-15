@@ -2,10 +2,12 @@ package com.example.demo.notice.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.demo.notice.config.NoticeConstants;
 import com.example.demo.notice.dto.NoticeUnreadCount;
 import com.example.demo.notice.entity.NoticeRecipient;
 import com.example.demo.notice.mapper.NoticeRecipientMapper;
 import com.example.demo.notice.service.NoticeRecipientService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -21,8 +23,11 @@ import java.util.stream.Collectors;
  * @date 2026/2/12
  */
 @Service
+@RequiredArgsConstructor
 public class NoticeRecipientServiceImpl extends ServiceImpl<NoticeRecipientMapper, NoticeRecipient>
         implements NoticeRecipientService {
+
+    private final NoticeConstants noticeConstants;
 
     @Override
     public List<Long> listUserIdsByNoticeIds(List<Long> noticeIds) {
@@ -32,7 +37,7 @@ public class NoticeRecipientServiceImpl extends ServiceImpl<NoticeRecipientMappe
         return list(Wrappers.lambdaQuery(NoticeRecipient.class)
                 .select(NoticeRecipient::getUserId)
                 .in(NoticeRecipient::getNoticeId, noticeIds)
-                .eq(NoticeRecipient::getIsDeleted, 0))
+                .eq(NoticeRecipient::getIsDeleted, noticeConstants.getCommon().getNotDeletedFlag()))
                 .stream()
                 .map(NoticeRecipient::getUserId)
                 .filter(Objects::nonNull)
@@ -54,7 +59,9 @@ public class NoticeRecipientServiceImpl extends ServiceImpl<NoticeRecipientMappe
                 .filter(count -> count.getUserId() != null)
                 .collect(Collectors.toMap(
                         NoticeUnreadCount::getUserId,
-                        count -> count.getUnreadCount() == null ? 0L : count.getUnreadCount(),
+                        count -> count.getUnreadCount() == null
+                                ? noticeConstants.getNumeric().getZeroLong()
+                                : count.getUnreadCount(),
                         (left, right) -> right
                 ));
     }

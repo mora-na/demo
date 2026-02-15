@@ -5,6 +5,7 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.dept.service.DeptService;
+import com.example.demo.post.config.PostConstants;
 import com.example.demo.post.dto.PostCreateRequest;
 import com.example.demo.post.dto.PostStatusRequest;
 import com.example.demo.post.dto.PostUpdateRequest;
@@ -38,6 +39,7 @@ public class PostAdminController extends BaseController {
     private final PostService postService;
     private final UserPostService userPostService;
     private final DeptService deptService;
+    private final PostConstants postConstants;
 
     /**
      * 获取岗位列表。
@@ -61,7 +63,8 @@ public class PostAdminController extends BaseController {
     public CommonResult<PostVO> detail(@PathVariable Long id) {
         SysPost post = postService.getById(id);
         if (post == null) {
-            return error(404, i18n("post.not.found"));
+            return error(postConstants.getController().getNotFoundCode(),
+                    i18n(postConstants.getMessage().getPostNotFound()));
         }
         return success(toVO(post));
     }
@@ -76,17 +79,19 @@ public class PostAdminController extends BaseController {
     @RequirePermission("post:create")
     public CommonResult<PostVO> create(@Valid @RequestBody PostCreateRequest request) {
         if (existsCode(request.getCode(), null)) {
-            return error(400, i18n("post.code.exists"));
+            return error(postConstants.getController().getBadRequestCode(),
+                    i18n(postConstants.getMessage().getPostCodeExists()));
         }
         if (request.getDeptId() == null || deptService.getById(request.getDeptId()) == null) {
-            return error(400, i18n("dept.not.found"));
+            return error(postConstants.getController().getBadRequestCode(),
+                    i18n(postConstants.getMessage().getDeptNotFound()));
         }
         SysPost post = new SysPost();
         post.setName(request.getName());
         post.setCode(request.getCode());
         post.setDeptId(request.getDeptId());
         post.setStatus(normalizeStatus(request.getStatus()));
-        post.setSort(request.getSort() == null ? 0 : request.getSort());
+        post.setSort(request.getSort() == null ? postConstants.getSort().getDefaultSort() : request.getSort());
         post.setRemark(request.getRemark());
         postService.save(post);
         return success(toVO(post));
@@ -104,13 +109,16 @@ public class PostAdminController extends BaseController {
     public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody PostUpdateRequest request) {
         SysPost existing = postService.getById(id);
         if (existing == null) {
-            return error(404, i18n("post.not.found"));
+            return error(postConstants.getController().getNotFoundCode(),
+                    i18n(postConstants.getMessage().getPostNotFound()));
         }
         if (existsCode(request.getCode(), id)) {
-            return error(400, i18n("post.code.exists"));
+            return error(postConstants.getController().getBadRequestCode(),
+                    i18n(postConstants.getMessage().getPostCodeExists()));
         }
         if (request.getDeptId() != null && deptService.getById(request.getDeptId()) == null) {
-            return error(400, i18n("dept.not.found"));
+            return error(postConstants.getController().getBadRequestCode(),
+                    i18n(postConstants.getMessage().getDeptNotFound()));
         }
         SysPost post = new SysPost();
         post.setId(id);
@@ -121,7 +129,8 @@ public class PostAdminController extends BaseController {
         post.setSort(request.getSort());
         post.setRemark(request.getRemark());
         if (!postService.updateById(post)) {
-            return error(500, i18n("common.update.failed"));
+            return error(postConstants.getController().getInternalServerErrorCode(),
+                    i18n(postConstants.getMessage().getCommonUpdateFailed()));
         }
         return success();
     }
@@ -138,14 +147,17 @@ public class PostAdminController extends BaseController {
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody PostStatusRequest request) {
         SysPost existing = postService.getById(id);
         if (existing == null) {
-            return error(404, i18n("post.not.found"));
+            return error(postConstants.getController().getNotFoundCode(),
+                    i18n(postConstants.getMessage().getPostNotFound()));
         }
         Integer status = request.getStatus();
         if (notValidStatus(status)) {
-            return error(400, i18n("common.status.invalid"));
+            return error(postConstants.getController().getBadRequestCode(),
+                    i18n(postConstants.getMessage().getCommonStatusInvalid()));
         }
         if (!postService.updateStatus(id, status)) {
-            return error(500, i18n("common.status.update.failed"));
+            return error(postConstants.getController().getInternalServerErrorCode(),
+                    i18n(postConstants.getMessage().getCommonStatusUpdateFailed()));
         }
         return success();
     }
@@ -155,11 +167,13 @@ public class PostAdminController extends BaseController {
     @Transactional(rollbackFor = Exception.class)
     public CommonResult<Void> delete(@PathVariable Long id) {
         if (postService.getById(id) == null) {
-            return error(404, i18n("post.not.found"));
+            return error(postConstants.getController().getNotFoundCode(),
+                    i18n(postConstants.getMessage().getPostNotFound()));
         }
         userPostService.remove(Wrappers.lambdaQuery(UserPost.class).eq(UserPost::getPostId, id));
         if (!postService.removeById(id)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(postConstants.getController().getInternalServerErrorCode(),
+                    i18n(postConstants.getMessage().getCommonDeleteFailed()));
         }
         return success();
     }
@@ -180,7 +194,8 @@ public class PostAdminController extends BaseController {
         }
         userPostService.remove(Wrappers.lambdaQuery(UserPost.class).in(UserPost::getPostId, uniqueIds));
         if (!postService.removeByIds(uniqueIds)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(postConstants.getController().getInternalServerErrorCode(),
+                    i18n(postConstants.getMessage().getCommonDeleteFailed()));
         }
         return success();
     }
@@ -193,7 +208,7 @@ public class PostAdminController extends BaseController {
      */
     private Integer normalizeStatus(Integer status) {
         if (notValidStatus(status)) {
-            return 1;
+            return postConstants.getStatus().getEnabled();
         }
         return status;
     }
@@ -205,7 +220,9 @@ public class PostAdminController extends BaseController {
      * @return true 表示非法
      */
     private boolean notValidStatus(Integer status) {
-        return status == null || (status != 0 && status != 1);
+        return status == null
+                || (status != postConstants.getStatus().getDisabled()
+                && status != postConstants.getStatus().getEnabled());
     }
 
     private List<PostVO> toVOs(List<SysPost> posts) {

@@ -2,9 +2,9 @@ package com.example.demo.notice.support;
 
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.notice.config.NoticeConstants;
 import com.example.demo.notice.dto.NoticePublishRequest;
 import com.example.demo.notice.entity.Notice;
-import com.example.demo.notice.model.NoticeScopeType;
 import com.example.demo.notice.service.NoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,37 +22,38 @@ import java.util.List;
 public class NoticePublisher {
 
     private final NoticeService noticeService;
+    private final NoticeConstants noticeConstants;
 
     public Notice publishToAll(String title, String content) {
-        return publish(title, content, NoticeScopeType.ALL, null, AuthContext.get());
+        return publish(title, content, noticeConstants.getScope().getAll(), null, AuthContext.get());
     }
 
     public Notice publishToDepts(String title, String content, List<Long> deptIds) {
-        return publish(title, content, NoticeScopeType.DEPT, deptIds, AuthContext.get());
+        return publish(title, content, noticeConstants.getScope().getDept(), deptIds, AuthContext.get());
     }
 
     public Notice publishToRoles(String title, String content, List<Long> roleIds) {
-        return publish(title, content, NoticeScopeType.ROLE, roleIds, AuthContext.get());
+        return publish(title, content, noticeConstants.getScope().getRole(), roleIds, AuthContext.get());
     }
 
     public Notice publishToUsers(String title, String content, List<Long> userIds) {
-        return publish(title, content, NoticeScopeType.USER, userIds, AuthContext.get());
+        return publish(title, content, noticeConstants.getScope().getUser(), userIds, AuthContext.get());
     }
 
     public Notice publishToAll(String title, String content, AuthUser publisher) {
-        return publish(title, content, NoticeScopeType.ALL, null, publisher);
+        return publish(title, content, noticeConstants.getScope().getAll(), null, publisher);
     }
 
     public Notice publishToDepts(String title, String content, List<Long> deptIds, AuthUser publisher) {
-        return publish(title, content, NoticeScopeType.DEPT, deptIds, publisher);
+        return publish(title, content, noticeConstants.getScope().getDept(), deptIds, publisher);
     }
 
     public Notice publishToRoles(String title, String content, List<Long> roleIds, AuthUser publisher) {
-        return publish(title, content, NoticeScopeType.ROLE, roleIds, publisher);
+        return publish(title, content, noticeConstants.getScope().getRole(), roleIds, publisher);
     }
 
     public Notice publishToUsers(String title, String content, List<Long> userIds, AuthUser publisher) {
-        return publish(title, content, NoticeScopeType.USER, userIds, publisher);
+        return publish(title, content, noticeConstants.getScope().getUser(), userIds, publisher);
     }
 
     private Notice publish(String title, String content, String scopeType, List<Long> scopeIds, AuthUser publisher) {

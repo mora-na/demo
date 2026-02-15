@@ -1,7 +1,10 @@
 package com.example.demo.notice.model;
 
-import java.util.Arrays;
-import java.util.List;
+import com.example.demo.common.spring.SpringContextHolder;
+import com.example.demo.notice.config.NoticeConstants;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Locale;
 
 /**
  * 通知范围类型常量。
@@ -11,20 +14,45 @@ import java.util.List;
  */
 public final class NoticeScopeType {
 
-    public static final String ALL = "ALL";
-    public static final String DEPT = "DEPT";
-    public static final String ROLE = "ROLE";
-    public static final String USER = "USER";
+    public static final String ALL = NoticeConstants.Scope.DEFAULT_ALL;
+    public static final String DEPT = NoticeConstants.Scope.DEFAULT_DEPT;
+    public static final String ROLE = NoticeConstants.Scope.DEFAULT_ROLE;
+    public static final String USER = NoticeConstants.Scope.DEFAULT_USER;
 
-    private static final List<String> SUPPORTED = Arrays.asList(ALL, DEPT, ROLE, USER);
+    private static final NoticeConstants DEFAULTS = new NoticeConstants();
 
     private NoticeScopeType() {
     }
 
+    public static String all() {
+        return constants().getScope().getAll();
+    }
+
+    public static String dept() {
+        return constants().getScope().getDept();
+    }
+
+    public static String role() {
+        return constants().getScope().getRole();
+    }
+
+    public static String user() {
+        return constants().getScope().getUser();
+    }
+
     public static boolean isSupported(String value) {
-        if (value == null) {
+        if (StringUtils.isBlank(value)) {
             return false;
         }
-        return SUPPORTED.contains(value.trim().toUpperCase());
+        String normalized = value.trim().toUpperCase(Locale.ROOT);
+        return StringUtils.equalsIgnoreCase(all(), normalized)
+                || StringUtils.equalsIgnoreCase(dept(), normalized)
+                || StringUtils.equalsIgnoreCase(role(), normalized)
+                || StringUtils.equalsIgnoreCase(user(), normalized);
+    }
+
+    private static NoticeConstants constants() {
+        NoticeConstants bean = SpringContextHolder.getBean(NoticeConstants.class);
+        return bean == null ? DEFAULTS : bean;
     }
 }

@@ -1,6 +1,6 @@
 package com.example.demo.notice.service;
 
-import com.example.demo.notice.config.NoticeStreamProperties;
+import com.example.demo.notice.config.NoticeConstants;
 import com.example.demo.notice.dto.NoticeLatestVO;
 import com.example.demo.notice.dto.NoticePushPayload;
 import com.example.demo.notice.entity.Notice;
@@ -26,23 +26,17 @@ import java.util.concurrent.*;
 @RequiredArgsConstructor
 public class NoticeStreamService {
 
-    private static final long TIMEOUT_MILLIS = 0L;
-
-    private final NoticeStreamProperties properties;
+    private final NoticeConstants noticeConstants;
     private final Map<Long, CopyOnWriteArrayList<SseEmitter>> emitters = new ConcurrentHashMap<>();
     private final Map<Long, Deque<NoticeLatestVO>> latestCache = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor(runnable -> {
-        Thread thread = new Thread(runnable, "notice-sse-heartbeat");
-        thread.setDaemon(true);
-        return thread;
-    });
+    private ScheduledExecutorService heartbeatExecutor;
 
     public SseEmitter connect(Long userId) {
         return connect(userId, null, null);
     }
 
     public SseEmitter connect(Long userId, List<NoticeLatestVO> latestNotices, Long unreadCount) {
-        SseEmitter emitter = new SseEmitter(TIMEOUT_MILLIS);
+        SseEmitter emitter = new SseEmitter(noticeConstants.getStream().getEmitterTimeoutMillis());
         if (userId == null) {
             return emitter;
         }
@@ -70,22 +64,24 @@ public class NoticeStreamService {
                 continue;
             }
             List<NoticeLatestVO> latestSnapshot = updateLatestCache(userId, notice);
-            Long unreadCount = unreadCounts == null ? 0L : unreadCounts.getOrDefault(userId, 0L);
+            Long unreadCount = unreadCounts == null
+                    ? noticeConstants.getNumeric().getZeroLong()
+                    : unreadCounts.getOrDefault(userId, noticeConstants.getNumeric().getZeroLong());
             NoticePushPayload payload = new NoticePushPayload(
                     notice.getId(),
                     notice.getTitle(),
                     notice.getCreatedName(),
                     notice.getCreateTime(),
-                    unreadCount,
+                    unreadCount == null ? noticeConstants.getNumeric().getZeroLong() : unreadCount,
                     latestSnapshot,
                     null,
                     null
             );
             for (SseEmitter emitter : userEmitters) {
                 try {
-                    emitter.send(SseEmitter.event().name("notice").data(payload));
+                    emitter.send(SseEmitter.event().name(noticeConstants.getStream().getEventNoticeName()).data(payload));
                 } catch (IOException ex) {
-                    log.debug("Failed to push notice to user {}, removing emitter.", userId, ex);
+                    log.debug(noticeConstants.getStream().getLogPushFailed(), userId, ex);
                     removeEmitter(userId, emitter);
                 }
             }
@@ -110,22 +106,24 @@ public class NoticeStreamService {
             List<NoticeLatestVO> latestSnapshot = removedIds.isEmpty()
                     ? latestSnapshot(userId)
                     : removeFromLatestCache(userId, removedIds);
-            Long unreadCount = unreadCounts == null ? 0L : unreadCounts.getOrDefault(userId, 0L);
+            Long unreadCount = unreadCounts == null
+                    ? noticeConstants.getNumeric().getZeroLong()
+                    : unreadCounts.getOrDefault(userId, noticeConstants.getNumeric().getZeroLong());
             NoticePushPayload payload = new NoticePushPayload(
                     null,
                     null,
                     null,
                     null,
-                    unreadCount,
+                    unreadCount == null ? noticeConstants.getNumeric().getZeroLong() : unreadCount,
                     latestSnapshot,
                     null,
                     null
             );
             for (SseEmitter emitter : userEmitters) {
                 try {
-                    emitter.send(SseEmitter.event().name("notice").data(payload));
+                    emitter.send(SseEmitter.event().name(noticeConstants.getStream().getEventNoticeName()).data(payload));
                 } catch (IOException ex) {
-                    log.debug("Failed to push notice update to user {}, removing emitter.", userId, ex);
+                    log.debug(noticeConstants.getStream().getLogPushUpdateFailed(), userId, ex);
                     removeEmitter(userId, emitter);
                 }
             }
@@ -134,9 +132,14 @@ public class NoticeStreamService {
 
     @PostConstruct
     public void startHeartbeat() {
-        long interval = properties.getHeartbeatIntervalMillis();
+        heartbeatExecutor = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            Thread thread = new Thread(runnable, noticeConstants.getStream().getHeartbeatThreadName());
+            thread.setDaemon(true);
+            return thread;
+        });
+        long interval = noticeConstants.getStream().getHeartbeatIntervalMillis();
         if (interval <= 0) {
-            log.info("Notice SSE heartbeat disabled (interval={}ms).", interval);
+            log.info(noticeConstants.getStream().getLogHeartbeatDisabled(), interval);
             return;
         }
         heartbeatExecutor.scheduleAtFixedRate(this::sendHeartbeat, interval, interval, TimeUnit.MILLISECONDS);
@@ -144,7 +147,9 @@ public class NoticeStreamService {
 
     @PreDestroy
     public void stopHeartbeat() {
-        heartbeatExecutor.shutdownNow();
+        if (heartbeatExecutor != null) {
+            heartbeatExecutor.shutdownNow();
+        }
     }
 
     private void removeEmitter(Long userId, SseEmitter emitter) {
@@ -164,7 +169,7 @@ public class NoticeStreamService {
 
     private void sendInitEvent(Long userId, SseEmitter emitter, Long unreadCount) {
         List<NoticeLatestVO> latestSnapshot = latestLimit() > 0 ? latestSnapshot(userId) : new ArrayList<>();
-        Long safeUnreadCount = unreadCount == null ? 0L : unreadCount;
+        Long safeUnreadCount = unreadCount == null ? noticeConstants.getNumeric().getZeroLong() : unreadCount;
         NoticePushPayload payload = new NoticePushPayload(
                 null,
                 null,
@@ -172,13 +177,13 @@ public class NoticeStreamService {
                 null,
                 safeUnreadCount,
                 latestSnapshot,
-                properties.getHeartbeatIntervalMillis(),
-                properties.getHeartbeatTimeoutMillis()
+                noticeConstants.getStream().getHeartbeatIntervalMillis(),
+                noticeConstants.getStream().getHeartbeatTimeoutMillis()
         );
         try {
-            emitter.send(SseEmitter.event().name("init").data(payload));
+            emitter.send(SseEmitter.event().name(noticeConstants.getStream().getEventInitName()).data(payload));
         } catch (IOException ex) {
-            log.debug("Failed to send init payload to user {}, removing emitter.", userId, ex);
+            log.debug(noticeConstants.getStream().getLogInitFailed(), userId, ex);
             removeEmitter(userId, emitter);
         }
     }
@@ -221,7 +226,7 @@ public class NoticeStreamService {
                     notice.getTitle(),
                     notice.getCreatedName(),
                     notice.getCreateTime(),
-                    0,
+                    noticeConstants.getRecipient().getUnread(),
                     null
             );
             deque.addFirst(latest);
@@ -266,7 +271,7 @@ public class NoticeStreamService {
     }
 
     private int latestLimit() {
-        return Math.max(0, properties.getLatestLimit());
+        return Math.max(noticeConstants.getNumeric().getZeroInt(), noticeConstants.getStream().getLatestLimit());
     }
 
     private void sendHeartbeat() {
@@ -282,10 +287,10 @@ public class NoticeStreamService {
             }
             for (SseEmitter emitter : userEmitters) {
                 try {
-                    emitter.send(SseEmitter.event().name("ping").data(now));
+                    emitter.send(SseEmitter.event().name(noticeConstants.getStream().getEventPingName()).data(now));
                 } catch (IOException ex) {
                     if (log.isDebugEnabled()) {
-                        log.debug("Heartbeat failed for user {}, removing emitter: {}", userId, ex.getMessage());
+                        log.debug(noticeConstants.getStream().getLogHeartbeatFailed(), userId, ex.getMessage());
                     }
                     removeEmitter(userId, emitter);
                 }

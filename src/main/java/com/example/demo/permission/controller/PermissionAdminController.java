@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.permission.config.PermissionConstants;
 import com.example.demo.permission.dto.PermissionCreateRequest;
 import com.example.demo.permission.dto.PermissionStatusRequest;
 import com.example.demo.permission.dto.PermissionUpdateRequest;
@@ -36,6 +37,7 @@ public class PermissionAdminController extends BaseController {
 
     private final PermissionService permissionService;
     private final RolePermissionService rolePermissionService;
+    private final PermissionConstants permissionConstants;
 
     /**
      * 获取权限列表。
@@ -63,7 +65,8 @@ public class PermissionAdminController extends BaseController {
     public CommonResult<PermissionVO> detail(@PathVariable Long id) {
         Permission permission = permissionService.getById(id);
         if (permission == null) {
-            return error(404, i18n("permission.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getPermissionNotFound()));
         }
         return success(toVO(permission));
     }
@@ -80,7 +83,8 @@ public class PermissionAdminController extends BaseController {
     @RequirePermission("permission:create")
     public CommonResult<PermissionVO> create(@Valid @RequestBody PermissionCreateRequest request) {
         if (existsCode(request.getCode(), null)) {
-            return error(400, i18n("permission.code.exists"));
+            return error(permissionConstants.getController().getBadRequestCode(),
+                    i18n(permissionConstants.getMessage().getPermissionCodeExists()));
         }
         Permission permission = new Permission();
         permission.setCode(request.getCode());
@@ -104,17 +108,20 @@ public class PermissionAdminController extends BaseController {
     public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody PermissionUpdateRequest request) {
         Permission existing = permissionService.getById(id);
         if (existing == null) {
-            return error(404, i18n("permission.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getPermissionNotFound()));
         }
         if (existsCode(request.getCode(), id)) {
-            return error(400, i18n("permission.code.exists"));
+            return error(permissionConstants.getController().getBadRequestCode(),
+                    i18n(permissionConstants.getMessage().getPermissionCodeExists()));
         }
         Permission permission = new Permission();
         permission.setId(id);
         permission.setCode(request.getCode());
         permission.setName(request.getName());
         if (!permissionService.updateById(permission)) {
-            return error(500, i18n("common.update.failed"));
+            return error(permissionConstants.getController().getInternalServerErrorCode(),
+                    i18n(permissionConstants.getMessage().getCommonUpdateFailed()));
         }
         return success();
     }
@@ -133,14 +140,17 @@ public class PermissionAdminController extends BaseController {
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody PermissionStatusRequest request) {
         Permission existing = permissionService.getById(id);
         if (existing == null) {
-            return error(404, i18n("permission.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getPermissionNotFound()));
         }
         Integer status = request.getStatus();
         if (notValidStatus(status)) {
-            return error(400, i18n("common.status.invalid"));
+            return error(permissionConstants.getController().getBadRequestCode(),
+                    i18n(permissionConstants.getMessage().getCommonStatusInvalid()));
         }
         if (!permissionService.updateStatus(id, status)) {
-            return error(500, i18n("common.status.update.failed"));
+            return error(permissionConstants.getController().getInternalServerErrorCode(),
+                    i18n(permissionConstants.getMessage().getCommonStatusUpdateFailed()));
         }
         return success();
     }
@@ -150,12 +160,14 @@ public class PermissionAdminController extends BaseController {
     @Transactional(rollbackFor = Exception.class)
     public CommonResult<Void> delete(@PathVariable Long id) {
         if (permissionService.getById(id) == null) {
-            return error(404, i18n("permission.not.found"));
+            return error(permissionConstants.getController().getNotFoundCode(),
+                    i18n(permissionConstants.getMessage().getPermissionNotFound()));
         }
         rolePermissionService.remove(Wrappers.lambdaQuery(RolePermission.class)
                 .eq(RolePermission::getPermissionId, id));
         if (!permissionService.removeById(id)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(permissionConstants.getController().getInternalServerErrorCode(),
+                    i18n(permissionConstants.getMessage().getCommonDeleteFailed()));
         }
         return success();
     }
@@ -177,7 +189,8 @@ public class PermissionAdminController extends BaseController {
         rolePermissionService.remove(Wrappers.lambdaQuery(RolePermission.class)
                 .in(RolePermission::getPermissionId, uniqueIds));
         if (!permissionService.removeByIds(uniqueIds)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(permissionConstants.getController().getInternalServerErrorCode(),
+                    i18n(permissionConstants.getMessage().getCommonDeleteFailed()));
         }
         return success();
     }
@@ -209,7 +222,7 @@ public class PermissionAdminController extends BaseController {
      */
     private Integer normalizeStatus(Integer status) {
         if (notValidStatus(status)) {
-            return 1;
+            return permissionConstants.getStatus().getEnabled();
         }
         return status;
     }
@@ -223,7 +236,9 @@ public class PermissionAdminController extends BaseController {
      * @date 2026/2/9
      */
     private boolean notValidStatus(Integer status) {
-        return status == null || (status != 0 && status != 1);
+        return status == null
+                || (status != permissionConstants.getStatus().getDisabled()
+                && status != permissionConstants.getStatus().getEnabled());
     }
 
     /**

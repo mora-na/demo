@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.notice.config.NoticeConstants;
 import com.example.demo.notice.dto.*;
 import com.example.demo.notice.entity.Notice;
 import com.example.demo.notice.entity.NoticeRecipient;
@@ -43,6 +44,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     private final NoticeStreamService noticeStreamService;
     private final SysUserService userService;
     private final UserRoleService userRoleService;
+    private final NoticeConstants noticeConstants;
 
     @Override
     public List<Notice> selectNotices(NoticeQuery query) {
@@ -52,7 +54,8 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     @Override
     public IPage<Notice> selectNoticesPage(Page<Notice> page, NoticeQuery query) {
         if (page == null) {
-            return new Page<>(1, 10);
+            return new Page<>(noticeConstants.getPage().getDefaultPageNum(),
+                    noticeConstants.getPage().getDefaultPageSize());
         }
         return this.page(page, buildNoticeQuery(query));
     }
@@ -93,8 +96,10 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
             view.setCreatedName(notice.getCreatedName());
             view.setCreatedAt(notice.getCreateTime());
             NoticeReadStat stat = notice.getId() == null ? null : stats.get(notice.getId());
-            view.setTotalCount(stat == null || stat.getTotalCount() == null ? 0L : stat.getTotalCount());
-            view.setReadCount(stat == null || stat.getReadCount() == null ? 0L : stat.getReadCount());
+            view.setTotalCount(stat == null || stat.getTotalCount() == null
+                    ? noticeConstants.getNumeric().getZeroLong() : stat.getTotalCount());
+            view.setReadCount(stat == null || stat.getReadCount() == null
+                    ? noticeConstants.getNumeric().getZeroLong() : stat.getReadCount());
             views.add(view);
         }
         return views;
@@ -119,10 +124,11 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     @Override
     public IPage<NoticeMyVO> listMyNoticesPage(Page<NoticeMyVO> page, Long userId) {
         if (page == null) {
-            return new Page<>(1, 10);
+            return new Page<>(noticeConstants.getPage().getDefaultPageNum(),
+                    noticeConstants.getPage().getDefaultPageSize());
         }
         if (userId == null) {
-            page.setTotal(0L);
+            page.setTotal(noticeConstants.getNumeric().getZeroLong());
             page.setRecords(Collections.emptyList());
             return page;
         }
@@ -140,10 +146,10 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     @Override
     public long countUnread(Long userId) {
         if (userId == null) {
-            return 0L;
+            return noticeConstants.getNumeric().getZeroLong();
         }
         Long count = noticeRecipientMapper.countUnreadByUserId(userId);
-        return count == null ? 0L : count;
+        return count == null ? noticeConstants.getNumeric().getZeroLong() : count;
     }
 
     private LambdaQueryWrapper<Notice> buildNoticeQuery(NoticeQuery query) {
@@ -159,7 +165,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
                         wrapper.like(Notice::getTitle, keyword)
                                 .or()
                                 .like(Notice::getContent, keyword))
-                .eq(StringUtils.isNotBlank(scopeType), Notice::getScopeType, scopeType.toUpperCase())
+                .eq(StringUtils.isNotBlank(scopeType), Notice::getScopeType, scopeType.toUpperCase(Locale.ROOT))
                 .orderByDesc(Notice::getCreateTime)
                 .orderByDesc(Notice::getId);
     }
@@ -170,27 +176,27 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
             return false;
         }
         NoticeRecipient update = new NoticeRecipient();
-        update.setReadStatus(NoticeRecipient.STATUS_READ);
+        update.setReadStatus(noticeConstants.getRecipient().getRead());
         update.setReadTime(LocalDateTime.now());
         return noticeRecipientService.update(update,
                 Wrappers.lambdaUpdate(NoticeRecipient.class)
                         .eq(NoticeRecipient::getNoticeId, noticeId)
                         .eq(NoticeRecipient::getUserId, userId)
-                        .eq(NoticeRecipient::getReadStatus, NoticeRecipient.STATUS_UNREAD));
+                        .eq(NoticeRecipient::getReadStatus, noticeConstants.getRecipient().getUnread()));
     }
 
     @Override
     public int markAllRead(Long userId) {
         if (userId == null) {
-            return 0;
+            return noticeConstants.getNumeric().getZeroInt();
         }
         NoticeRecipient update = new NoticeRecipient();
-        update.setReadStatus(NoticeRecipient.STATUS_READ);
+        update.setReadStatus(noticeConstants.getRecipient().getRead());
         update.setReadTime(LocalDateTime.now());
         return noticeRecipientMapper.update(update,
                 Wrappers.lambdaUpdate(NoticeRecipient.class)
                         .eq(NoticeRecipient::getUserId, userId)
-                        .eq(NoticeRecipient::getReadStatus, NoticeRecipient.STATUS_UNREAD));
+                        .eq(NoticeRecipient::getReadStatus, noticeConstants.getRecipient().getUnread()));
     }
 
     @Override
@@ -225,7 +231,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
                     NoticeRecipient recipient = new NoticeRecipient();
                     recipient.setNoticeId(notice.getId());
                     recipient.setUserId(userId);
-                    recipient.setReadStatus(NoticeRecipient.STATUS_UNREAD);
+                    recipient.setReadStatus(noticeConstants.getRecipient().getUnread());
                     recipient.setReadTime(null);
                     recipient.setCreateTime(now);
                     return recipient;
@@ -237,7 +243,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(
                         com.example.demo.notice.dto.NoticeUnreadCount::getUserId,
-                        count -> count.getUnreadCount() == null ? 0L : count.getUnreadCount(),
+                        count -> count.getUnreadCount() == null ? noticeConstants.getNumeric().getZeroLong() : count.getUnreadCount(),
                         (left, right) -> right
                 ));
         noticeStreamService.pushToUsers(targetUserIds, notice, unreadCounts);
@@ -257,13 +263,13 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
 
     private String normalizeScopeType(String scopeType) {
         if (scopeType == null) {
-            return "";
+            return noticeConstants.getScope().getEmptyScopeType();
         }
         return scopeType.trim().toUpperCase(Locale.ROOT);
     }
 
     private String buildScopeValue(String scopeType, List<Long> scopeIds) {
-        if (NoticeScopeType.ALL.equals(scopeType)) {
+        if (NoticeScopeType.all().equals(scopeType)) {
             return null;
         }
         if (scopeIds == null || scopeIds.isEmpty()) {
@@ -273,11 +279,11 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
                 .filter(Objects::nonNull)
                 .distinct()
                 .map(String::valueOf)
-                .collect(Collectors.joining(","));
+                .collect(Collectors.joining(noticeConstants.getScope().getScopeValueSeparator()));
     }
 
     private List<Long> resolveTargetUsers(String scopeType, List<Long> scopeIds) {
-        if (NoticeScopeType.ALL.equals(scopeType)) {
+        if (NoticeScopeType.all().equals(scopeType)) {
             return listEnabledUserIds(null);
         }
         if (scopeIds == null || scopeIds.isEmpty()) {
@@ -290,13 +296,13 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         if (uniqueIds.isEmpty()) {
             return Collections.emptyList();
         }
-        if (NoticeScopeType.DEPT.equals(scopeType)) {
+        if (NoticeScopeType.dept().equals(scopeType)) {
             return listEnabledUserIdsByDept(uniqueIds);
         }
-        if (NoticeScopeType.ROLE.equals(scopeType)) {
+        if (NoticeScopeType.role().equals(scopeType)) {
             return listEnabledUserIdsByRole(uniqueIds);
         }
-        if (NoticeScopeType.USER.equals(scopeType)) {
+        if (NoticeScopeType.user().equals(scopeType)) {
             return listEnabledUserIds(uniqueIds);
         }
         return Collections.emptyList();
@@ -308,7 +314,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         }
         List<SysUser> users = userService.list(Wrappers.lambdaQuery(SysUser.class)
                 .in(SysUser::getDeptId, deptIds)
-                .eq(SysUser::getStatus, SysUser.STATUS_ENABLED));
+                .eq(SysUser::getStatus, noticeConstants.getUser().getEnabledStatus()));
         return toIdList(users);
     }
 
@@ -330,7 +336,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         List<SysUser> users;
         if (userIds == null) {
             users = userService.list(Wrappers.lambdaQuery(SysUser.class)
-                    .eq(SysUser::getStatus, SysUser.STATUS_ENABLED));
+                    .eq(SysUser::getStatus, noticeConstants.getUser().getEnabledStatus()));
         } else if (userIds.isEmpty()) {
             return Collections.emptyList();
         } else {
@@ -340,7 +346,8 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
             return Collections.emptyList();
         }
         return users.stream()
-                .filter(user -> user != null && (user.getStatus() == null || user.getStatus() == SysUser.STATUS_ENABLED))
+                .filter(user -> user != null && (user.getStatus() == null
+                        || user.getStatus() == noticeConstants.getUser().getEnabledStatus()))
                 .map(SysUser::getId)
                 .filter(Objects::nonNull)
                 .distinct()

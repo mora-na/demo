@@ -24,9 +24,6 @@ import java.time.LocalDateTime;
 @TableName(value = "sys_notice_recipient")
 public class NoticeRecipient extends BaseEntity implements Serializable {
 
-    public static final int STATUS_UNREAD = 0;
-    public static final int STATUS_READ = 1;
-
     private static final long serialVersionUID = 1L;
 
     /**

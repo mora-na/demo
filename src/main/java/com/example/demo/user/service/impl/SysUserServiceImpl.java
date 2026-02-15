@@ -13,6 +13,7 @@ import com.example.demo.permission.entity.UserRole;
 import com.example.demo.permission.service.UserRoleService;
 import com.example.demo.post.entity.UserPost;
 import com.example.demo.post.service.UserPostService;
+import com.example.demo.user.config.UserConstants;
 import com.example.demo.user.converter.SysUserConverter;
 import com.example.demo.user.dto.SysUserCreateRequest;
 import com.example.demo.user.dto.SysUserQuery;
@@ -40,6 +41,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     private final UserRoleService userRoleService;
     private final UserPostService userPostService;
     private final UserDataScopeService userDataScopeService;
+    private final UserConstants userConstants;
 
     @Override
     @DataScope(permission = "user:query")
@@ -51,7 +53,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @DataScope(permission = "user:query")
     public IPage<SysUser> selectUsersPage(Page<SysUser> page, SysUserQuery query) {
         if (page == null) {
-            return new Page<>(1, 10);
+            return new Page<>(userConstants.getPage().getDefaultPageNum(),
+                    userConstants.getPage().getDefaultPageSize());
         }
         return baseMapper.selectPage(page, buildListQueryWrapper(query));
     }
@@ -60,7 +63,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @DataScope(permission = "user:query")
     public IPage<SysUser> searchUsersPage(Page<SysUser> page, String keyword) {
         if (page == null) {
-            return new Page<>(1, 10);
+            return new Page<>(userConstants.getPage().getDefaultPageNum(),
+                    userConstants.getPage().getDefaultPageSize());
         }
         if (StringUtils.isBlank(keyword)) {
             return page;
@@ -158,7 +162,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setEmail(request.getEmail());
         user.setSex(request.getSex());
         user.setRemark(request.getRemark());
-        user.setStatus(request.getStatus() == null ? SysUser.STATUS_ENABLED : request.getStatus());
+        user.setStatus(request.getStatus() == null ? userConstants.getStatus().getEnabled() : request.getStatus());
         user.setDeptId(request.getDeptId());
         user.setDataScopeType(request.getDataScopeType());
         user.setDataScopeValue(request.getDataScopeValue());
@@ -290,7 +294,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setDataScopeValue(dataScopeValue);
         boolean updated = updateById(user);
 
-        String normalizedKey = (scopeKey == null || scopeKey.trim().isEmpty()) ? "*" : scopeKey.trim();
+        String normalizedKey = (scopeKey == null || scopeKey.trim().isEmpty())
+                ? userConstants.getScope().getGlobalScopeKey()
+                : scopeKey.trim();
         UserDataScope record = userDataScopeService.getOne(
                 com.baomidou.mybatisplus.core.toolkit.Wrappers.lambdaQuery(UserDataScope.class)
                         .eq(UserDataScope::getUserId, id)
@@ -300,7 +306,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             record = new UserDataScope();
             record.setUserId(id);
             record.setScopeKey(normalizedKey);
-            record.setStatus(1);
+            record.setStatus(userConstants.getStatus().getDataScopeEnabled());
         }
         record.setDataScopeType(dataScopeType);
         record.setDataScopeValue(dataScopeValue);
