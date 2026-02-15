@@ -1,7 +1,9 @@
 package com.example.demo.auth.service;
 
+import com.example.demo.auth.config.AuthConstants;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.common.cache.CacheTool;
+import com.example.demo.common.config.CommonConstants;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -21,11 +23,10 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class LoginAttemptService {
 
-    private static final String FAIL_KEY_PREFIX = "auth:login:fail:";
-    private static final String LOCK_KEY_PREFIX = "auth:login:lock:";
-
     private final CacheTool cacheTool;
     private final AuthProperties authProperties;
+    private final AuthConstants authConstants;
+    private final CommonConstants commonConstants;
 
     /**
      * Check whether the account is locked.
@@ -182,11 +183,13 @@ public class LoginAttemptService {
             return null;
         }
         String keyMode = normalizeKeyMode();
+        AuthConstants.LoginAttempt constants = authConstants.getLoginAttempt();
         String ip = resolveClientIp(request);
-        if ("ip".equals(keyMode)) {
+        if (normalizeModeValue(constants.getModeIp()).equals(keyMode)) {
             return StringUtils.isBlank(ip) ? normalized : ip;
         }
-        if ("ip-user".equals(keyMode) || "user-ip".equals(keyMode)) {
+        if (normalizeModeValue(constants.getModeIpUser()).equals(keyMode)
+                || normalizeModeValue(constants.getModeUserIp()).equals(keyMode)) {
             return StringUtils.isBlank(ip) ? normalized : ip + ":" + normalized;
         }
         return normalized;
@@ -195,19 +198,20 @@ public class LoginAttemptService {
     private String normalizeKeyMode() {
         AuthProperties.LoginLimit limit = authProperties.getLoginLimit();
         String mode = limit == null ? null : limit.getKeyMode();
-        return mode == null ? "user" : mode.trim().toLowerCase(Locale.ROOT);
+        String fallback = authConstants.getLoginAttempt().getModeFallback();
+        return mode == null ? normalizeModeValue(fallback) : mode.trim().toLowerCase(Locale.ROOT);
     }
 
     private String resolveClientIp(HttpServletRequest request) {
         if (request == null) {
             return null;
         }
-        String forwarded = request.getHeader("X-Forwarded-For");
+        String forwarded = request.getHeader(commonConstants.getHttp().getForwardedForHeader());
         if (forwarded != null && !forwarded.trim().isEmpty()) {
             int comma = forwarded.indexOf(',');
             return comma > 0 ? forwarded.substring(0, comma).trim() : forwarded.trim();
         }
-        String realIp = request.getHeader("X-Real-IP");
+        String realIp = request.getHeader(commonConstants.getHttp().getRealIpHeader());
         if (realIp != null && !realIp.trim().isEmpty()) {
             return realIp.trim();
         }
@@ -216,10 +220,14 @@ public class LoginAttemptService {
     }
 
     private String buildFailKey(String identity) {
-        return FAIL_KEY_PREFIX + identity;
+        return authConstants.getLoginAttempt().getFailKeyPrefix() + identity;
     }
 
     private String buildLockKey(String identity) {
-        return LOCK_KEY_PREFIX + identity;
+        return authConstants.getLoginAttempt().getLockKeyPrefix() + identity;
+    }
+
+    private String normalizeModeValue(String mode) {
+        return mode == null ? AuthConstants.LoginAttempt.DEFAULT_MODE_FALLBACK : mode.trim().toLowerCase(Locale.ROOT);
     }
 }

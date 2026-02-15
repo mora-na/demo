@@ -3,6 +3,7 @@ package com.example.demo.common.web.filter;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.cache.CacheTool;
+import com.example.demo.common.config.CommonConstants;
 import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
@@ -41,6 +42,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final CacheTool cacheTool;
     private final I18nService i18nService;
+    private final CommonConstants systemConstants;
 
     /**
      * 构造函数，注入限流配置与缓存工具。
@@ -54,11 +56,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
     public RateLimitFilter(RateLimitProperties properties,
                            CommonExcludePathsProperties commonExcludePaths,
                            CacheTool cacheTool,
-                           I18nService i18nService) {
+                           I18nService i18nService,
+                           CommonConstants systemConstants) {
         this.properties = properties;
         this.commonExcludePaths = commonExcludePaths;
         this.cacheTool = cacheTool;
         this.i18nService = i18nService;
+        this.systemConstants = systemConstants;
     }
 
     /**
@@ -148,7 +152,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
      * @date 2026/2/9
      */
     private String buildKey(HttpServletRequest request) {
-        StringBuilder builder = new StringBuilder("rl:");
+        StringBuilder builder = new StringBuilder(systemConstants.getRateLimit().getKeyPrefix());
         if (properties.isIncludePath()) {
             builder.append(request.getRequestURI());
         }
@@ -193,12 +197,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
      * @date 2026/2/9
      */
     private String resolveClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
+        String forwarded = request.getHeader(systemConstants.getHttp().getForwardedForHeader());
         if (forwarded != null && !forwarded.trim().isEmpty()) {
             int comma = forwarded.indexOf(',');
             return comma > 0 ? forwarded.substring(0, comma).trim() : forwarded.trim();
         }
-        String realIp = request.getHeader("X-Real-IP");
+        String realIp = request.getHeader(systemConstants.getHttp().getRealIpHeader());
         if (realIp != null && !realIp.trim().isEmpty()) {
             return realIp.trim();
         }
@@ -214,10 +218,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
      * @date 2026/2/9
      */
     private void writeRateLimited(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.setStatus(429);
-        response.setContentType("application/json;charset=UTF-8");
-        String message = i18nService.getMessage(request, "common.rate.limit.exceeded");
-        CommonResult<Object> result = CommonResult.error(429, message);
+        int status = systemConstants.getRateLimit().getResponseStatus();
+        response.setStatus(status);
+        response.setContentType(systemConstants.getHttp().getJsonContentType());
+        String message = i18nService.getMessage(request, systemConstants.getRateLimit().getMessageKey());
+        CommonResult<Object> result = CommonResult.error(status, message);
         response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
     }
 }

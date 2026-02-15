@@ -1,5 +1,6 @@
 package com.example.demo.auth.controller;
 
+import com.example.demo.auth.config.AuthConstants;
 import com.example.demo.auth.dto.*;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
@@ -44,6 +45,8 @@ public class AuthController extends BaseController {
     private final com.example.demo.datascope.service.DataScopeProfileService dataScopeProfileService;
     private final DeptService deptService;
     private final ApplicationEventPublisher eventPublisher;
+    private final AuthTokenResolver authTokenResolver;
+    private final AuthConstants systemConstants;
 
     /**
      * 生成验证码并返回验证码 ID 与图片数据。
@@ -67,57 +70,61 @@ public class AuthController extends BaseController {
                                              HttpServletRequest httpRequest,
                                              HttpServletResponse response) {
         final String credentialError = i18n("auth.login.credential.error");
+        AuthConstants.Controller controllerConstants = systemConstants.getController();
+        int loginType = systemConstants.getLoginLog().getTypeLogin();
+        int loginSuccessStatus = systemConstants.getLoginLog().getStatusSuccess();
+        int loginFailStatus = systemConstants.getLoginLog().getStatusFail();
         if (request == null) {
-            publishLoginLog(null, null, SysLoginLogType.LOGIN, LoginStatus.FAIL,
+            publishLoginLog(null, null, loginType, loginFailStatus,
                     i18n("auth.login.request.empty"), httpRequest);
-            return error(400, i18n("auth.login.request.empty"));
+            return error(controllerConstants.getBadRequestCode(), i18n("auth.login.request.empty"));
         }
         if (StringUtils.isBlank(request.getUserName()) || StringUtils.isBlank(request.getPassword())) {
-            publishLoginLog(request.getUserName(), null, SysLoginLogType.LOGIN, LoginStatus.FAIL,
+            publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
                     credentialError, httpRequest);
-            return error(401, credentialError);
+            return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
         if (loginAttemptService.isLocked(request.getUserName(), httpRequest)) {
             long remaining = loginAttemptService.getRemainingLockSeconds(request.getUserName(), httpRequest);
-            publishLoginLog(request.getUserName(), null, SysLoginLogType.LOGIN, LoginStatus.FAIL,
+            publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
                     i18n("auth.login.locked", remaining), httpRequest);
-            return error(429, i18n("auth.login.locked", remaining));
+            return error(controllerConstants.getTooManyRequestsCode(), i18n("auth.login.locked", remaining));
         }
         if (StringUtils.isBlank(request.getCaptchaId()) || StringUtils.isBlank(request.getCaptchaCode())) {
-            publishLoginLog(request.getUserName(), null, SysLoginLogType.LOGIN, LoginStatus.FAIL,
+            publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
                     i18n("auth.login.captcha.empty"), httpRequest);
-            return error(400, i18n("auth.login.captcha.empty"));
+            return error(controllerConstants.getBadRequestCode(), i18n("auth.login.captcha.empty"));
         }
         if (!captchaService.verify(request.getCaptchaId(), request.getCaptchaCode())) {
-            publishLoginLog(request.getUserName(), null, SysLoginLogType.LOGIN, LoginStatus.FAIL,
+            publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
                     i18n("auth.login.captcha.invalid"), httpRequest);
-            return error(401, i18n("auth.login.captcha.invalid"));
+            return error(controllerConstants.getUnauthorizedCode(), i18n("auth.login.captcha.invalid"));
         }
         SysUser user = userService.getByUserName(request.getUserName());
         if (user == null) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
-            publishLoginLog(request.getUserName(), null, SysLoginLogType.LOGIN, LoginStatus.FAIL,
+            publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
                     credentialError, httpRequest);
-            return error(401, credentialError);
+            return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
         if (user.getStatus() != null && user.getStatus().equals(SysUser.STATUS_DISABLED)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
-            publishLoginLog(request.getUserName(), user.getId(), SysLoginLogType.LOGIN, LoginStatus.FAIL,
+            publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
                     credentialError, httpRequest);
-            return error(401, credentialError);
+            return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
         String rawPassword = passwordService.decodeTransportPassword(request.getPassword());
         if (StringUtils.isBlank(rawPassword)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
-            publishLoginLog(request.getUserName(), user.getId(), SysLoginLogType.LOGIN, LoginStatus.FAIL,
+            publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
                     credentialError, httpRequest);
-            return error(401, credentialError);
+            return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
         if (!passwordService.matches(rawPassword, user.getPassword())) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
-            publishLoginLog(request.getUserName(), user.getId(), SysLoginLogType.LOGIN, LoginStatus.FAIL,
+            publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
                     credentialError, httpRequest);
-            return error(401, credentialError);
+            return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
         loginAttemptService.clearFailures(request.getUserName(), httpRequest);
         AuthUser authUser = new AuthUser();
@@ -138,8 +145,9 @@ public class AuthController extends BaseController {
         authUser.setRoleDataScopes(profile.getRoleDataScopes());
         authUser.setUserScopeOverrides(profile.getUserScopeOverrides());
         LoginResponse loginResponse = tokenService.issueToken(authUser);
-        response.setHeader("Authorization", "Bearer " + loginResponse.getToken());
-        publishLoginLog(user.getUserName(), user.getId(), SysLoginLogType.LOGIN, LoginStatus.SUCCESS,
+        AuthConstants.Token tokenConstants = systemConstants.getToken();
+        response.setHeader(tokenConstants.getAuthorizationHeader(), tokenConstants.getBearerPrefix() + loginResponse.getToken());
+        publishLoginLog(user.getUserName(), user.getId(), loginType, loginSuccessStatus,
                 i18n("auth.login.success"), httpRequest);
         return success(loginResponse);
     }
@@ -154,19 +162,21 @@ public class AuthController extends BaseController {
     @PostMapping("/logout")
     public CommonResult<Void> logout(HttpServletRequest request,
                                      @RequestBody(required = false) LogoutRequest body) {
-        String token = AuthTokenResolver.resolve(request);
+        String token = authTokenResolver.resolve(request);
         if (StringUtils.isBlank(token) && body != null) {
             token = body.getToken();
         }
         if (StringUtils.isBlank(token)) {
-            return error(400, i18n("auth.logout.token.empty"));
+            return error(systemConstants.getController().getBadRequestCode(), i18n("auth.logout.token.empty"));
         }
         AuthUser loginUser = tokenService.verifyToken(token);
         tokenService.revoke(token);
+        int logoutType = systemConstants.getLoginLog().getTypeLogout();
+        int successStatus = systemConstants.getLoginLog().getStatusSuccess();
         publishLoginLog(loginUser == null ? null : loginUser.getUserName(),
                 loginUser == null ? null : loginUser.getId(),
-                SysLoginLogType.LOGOUT,
-                LoginStatus.SUCCESS,
+                logoutType,
+                successStatus,
                 i18n("auth.logout.success"),
                 request);
         return success(i18n("auth.logout.success"));
@@ -192,16 +202,17 @@ public class AuthController extends BaseController {
     @PutMapping("/profile")
     @RequireLogin
     public CommonResult<Void> updateProfile(@Valid @RequestBody(required = false) UserProfileUpdateRequest request) {
+        AuthConstants.Controller controllerConstants = systemConstants.getController();
         if (request == null) {
-            return error(400, i18n("common.request.invalid"));
+            return error(controllerConstants.getBadRequestCode(), i18n("common.request.invalid"));
         }
         AuthUser authUser = AuthContext.get();
         if (authUser == null || authUser.getId() == null) {
-            return error(401, i18n("auth.user.invalid"));
+            return error(controllerConstants.getUnauthorizedCode(), i18n("auth.user.invalid"));
         }
         SysUser dbUser = userService.getById(authUser.getId());
         if (dbUser == null) {
-            return error(404, i18n("user.not.found"));
+            return error(controllerConstants.getNotFoundCode(), i18n("user.not.found"));
         }
         String oldPasswordCipher = request.getOldPassword();
         String newPasswordCipher = request.getNewPassword();
@@ -209,25 +220,25 @@ public class AuthController extends BaseController {
         String newRawPassword = null;
         if (wantsPasswordChange) {
             if (StringUtils.isBlank(oldPasswordCipher) || StringUtils.isBlank(newPasswordCipher)) {
-                return error(400, i18n("user.password.invalid"));
+                return error(controllerConstants.getBadRequestCode(), i18n("user.password.invalid"));
             }
             String oldRawPassword = passwordService.decodeTransportPassword(oldPasswordCipher);
             newRawPassword = passwordService.decodeTransportPassword(newPasswordCipher);
             if (StringUtils.isBlank(oldRawPassword) || StringUtils.isBlank(newRawPassword)) {
-                return error(400, i18n("user.password.invalid"));
+                return error(controllerConstants.getBadRequestCode(), i18n("user.password.invalid"));
             }
             if (!passwordService.matches(oldRawPassword, dbUser.getPassword())) {
-                return error(400, i18n("user.password.old.invalid"));
+                return error(controllerConstants.getBadRequestCode(), i18n("user.password.old.invalid"));
             }
-            if (newRawPassword.length() < 6) {
-                return error(400, i18n("user.password.length.invalid"));
+            if (newRawPassword.length() < systemConstants.getProfile().getNewPasswordMinLength()) {
+                return error(controllerConstants.getBadRequestCode(), i18n("user.password.length.invalid"));
             }
             if (!passwordService.isStrongPassword(newRawPassword)) {
-                return error(400, i18n("user.password.weak"));
+                return error(controllerConstants.getBadRequestCode(), i18n("user.password.weak"));
             }
         }
         if (!userService.updateSelfProfile(authUser.getId(), request, newRawPassword)) {
-            return error(500, i18n("common.update.failed"));
+            return error(controllerConstants.getInternalServerErrorCode(), i18n("common.update.failed"));
         }
         return success();
     }
@@ -242,7 +253,7 @@ public class AuthController extends BaseController {
             return;
         }
         String ip = IpUtils.getClientIp(request);
-        String ua = request == null ? null : request.getHeader("User-Agent");
+        String ua = request == null ? null : request.getHeader(systemConstants.getProfile().getUserAgentHeader());
         eventPublisher.publishEvent(new LoginLogEvent(
                 userName,
                 userId,
@@ -255,13 +266,4 @@ public class AuthController extends BaseController {
         ));
     }
 
-    private static final class SysLoginLogType {
-        private static final int LOGIN = 1;
-        private static final int LOGOUT = 2;
-    }
-
-    private static final class LoginStatus {
-        private static final int FAIL = 0;
-        private static final int SUCCESS = 1;
-    }
 }

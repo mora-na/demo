@@ -1,5 +1,6 @@
 package com.example.demo.auth.store;
 
+import com.example.demo.auth.config.AuthConstants;
 import com.example.demo.common.cache.CacheTool;
 import org.springframework.stereotype.Component;
 
@@ -15,17 +16,17 @@ import java.time.Instant;
 @Component
 public class CaptchaStore {
 
-    private static final String CAPTCHA_KEY_PREFIX = "auth:captcha:";
-
     private final CacheTool cacheTool;
+    private final AuthConstants systemConstants;
 
     /**
      * 构造函数，注入缓存工具。
      *
      * @param cacheTool 缓存工具
      */
-    public CaptchaStore(CacheTool cacheTool) {
+    public CaptchaStore(CacheTool cacheTool, AuthConstants systemConstants) {
         this.cacheTool = cacheTool;
+        this.systemConstants = systemConstants;
     }
 
     /**
@@ -73,6 +74,6 @@ public class CaptchaStore {
      * @return 缓存 Key
      */
     private String buildKey(String captchaId) {
-        return CAPTCHA_KEY_PREFIX + captchaId;
+        return systemConstants.getCaptcha().getStoreKeyPrefix() + captchaId;
     }
 }

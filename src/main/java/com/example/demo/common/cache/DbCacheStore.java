@@ -1,6 +1,7 @@
 package com.example.demo.common.cache;
 
 import com.example.demo.common.cache.mapper.CacheMapper;
+import com.example.demo.common.config.CommonConstants;
 import com.example.demo.notice.mapper.NoticeRecipientMapper;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,13 +26,14 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
     private final ScheduledExecutorService cleanupExecutor;
     private final long maximumRows;
 
-    public DbCacheStore(CacheMapper cacheMapper, CacheSerializer serializer, CacheProperties.Db dbProperties) {
+    public DbCacheStore(CacheMapper cacheMapper, CacheSerializer serializer, CacheProperties.Db dbProperties, CommonConstants systemConstants) {
         this.cacheMapper = cacheMapper;
         this.serializer = serializer;
         this.maximumRows = dbProperties == null ? 0 : dbProperties.getMaximumRows();
         long cleanupInterval = dbProperties == null ? 0 : dbProperties.getCleanupIntervalSeconds();
         if (cleanupInterval > 0) {
-            this.cleanupExecutor = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("cache-db-cleanup"));
+            String prefix = resolveCleanupThreadPrefix(systemConstants);
+            this.cleanupExecutor = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory(prefix));
             this.cleanupExecutor.scheduleAtFixedRate(this::cleanupExpired, cleanupInterval, cleanupInterval, TimeUnit.SECONDS);
         } else {
             this.cleanupExecutor = null;
@@ -253,6 +255,14 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
 
     private long parseLong(Object value) {
         return NoticeRecipientMapper.toLong(value);
+    }
+
+    private String resolveCleanupThreadPrefix(CommonConstants systemConstants) {
+        String prefix = systemConstants == null ? null : systemConstants.getCache().getDbCleanupThreadPrefix();
+        if (prefix == null || prefix.trim().isEmpty()) {
+            return CommonConstants.Cache.DEFAULT_DB_CLEANUP_THREAD_PREFIX;
+        }
+        return prefix;
     }
 
     @Override

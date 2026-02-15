@@ -24,9 +24,11 @@ import java.util.Locale;
 public class MybatisPlusConfig {
 
     private final Environment environment;
+    private final CommonConstants systemConstants;
 
-    public MybatisPlusConfig(Environment environment) {
+    public MybatisPlusConfig(Environment environment, CommonConstants systemConstants) {
         this.environment = environment;
+        this.systemConstants = systemConstants;
     }
 
     /**
@@ -66,21 +68,21 @@ public class MybatisPlusConfig {
     }
 
     private DbType resolveDbType() {
-        String url = environment == null ? null : environment.getProperty("spring.datasource.url");
+        String url = environment == null ? null : environment.getProperty(systemConstants.getMybatis().getDatasourceUrlProperty());
         if (url == null) {
             return null;
         }
         String normalized = url.toLowerCase(Locale.ROOT);
-        if (normalized.contains(":postgresql:")) {
+        if (normalized.contains(systemConstants.getMybatis().getPostgresToken())) {
             return DbType.POSTGRE_SQL;
         }
-        if (normalized.contains(":mysql:")) {
+        if (normalized.contains(systemConstants.getMybatis().getMysqlToken())) {
             return DbType.MYSQL;
         }
-        if (normalized.contains(":mariadb:")) {
+        if (normalized.contains(systemConstants.getMybatis().getMariadbToken())) {
             return DbType.MARIADB;
         }
-        if (normalized.contains(":oracle:")) {
+        if (normalized.contains(systemConstants.getMybatis().getOracleToken())) {
             return DbType.ORACLE;
         }
         return null;

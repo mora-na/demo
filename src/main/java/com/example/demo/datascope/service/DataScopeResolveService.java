@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.common.mybatis.DataScopeRuleProvider;
 import com.example.demo.common.mybatis.DataScopeType;
 import com.example.demo.common.web.permission.PermissionProperties;
+import com.example.demo.datascope.config.DataScopeConstants;
 import com.example.demo.datascope.dto.DataScopeResolveMenuVO;
 import com.example.demo.datascope.dto.DataScopeResolveResponse;
 import com.example.demo.datascope.entity.DataScopeRule;
@@ -44,11 +45,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DataScopeResolveService {
 
-    private static final String GLOBAL_SCOPE_KEY = "*";
-    private static final String SOURCE_LAYER_3 = "LAYER3";
-    private static final String SOURCE_LAYER_2 = "LAYER2";
-    private static final String SOURCE_LAYER_1 = "LAYER1";
-
     private final SysUserService userService;
     private final RoleService roleService;
     private final UserRoleService userRoleService;
@@ -60,6 +56,7 @@ public class DataScopeResolveService {
     private final DataScopeProfileService dataScopeProfileService;
     private final DataScopeRuleProvider dataScopeRuleProvider;
     private final PermissionProperties permissionProperties;
+    private final DataScopeConstants dataScopeConstants;
 
     public DataScopeResolveResponse resolve(Long userId, String scopeKey) {
         SysUser user = userService.getById(userId);
@@ -230,12 +227,12 @@ public class DataScopeResolveService {
         }
         UserScopeOverride override = scopeKey == null ? null : overrides.get(scopeKey);
         if (override == null) {
-            override = overrides.get(GLOBAL_SCOPE_KEY);
+            override = overrides.get(dataScopeConstants.getScope().getGlobalScopeKey());
         }
         if (override == null) {
             return null;
         }
-        if (override.getStatus() != null && override.getStatus() == 0) {
+        if (override.getStatus() != null && override.getStatus() == dataScopeConstants.getStatus().getDisabled()) {
             return null;
         }
         return override;
@@ -303,7 +300,7 @@ public class DataScopeResolveService {
 
             if (DataScopeType.ALL.equals(selection.type)) {
                 return new RoleScopeResult(DataScopeEvaluator.FinalScope.all(), details, Collections.emptySet(),
-                        false, "ALL");
+                        false, dataScopeConstants.getLabel().getFinalAll());
             }
             if (DataScopeType.SELF.equals(selection.type)) {
                 includeSelf = true;
@@ -340,10 +337,10 @@ public class DataScopeResolveService {
         }
         if (hasAny) {
             return new RoleScopeResult(DataScopeEvaluator.FinalScope.none(), details, Collections.emptySet(),
-                    false, "NONE");
+                    false, dataScopeConstants.getLabel().getFinalNone());
         }
         return new RoleScopeResult(DataScopeEvaluator.FinalScope.selfOnly(user.getId()), details,
-                Collections.emptySet(), true, "SELF");
+                Collections.emptySet(), true, dataScopeConstants.getLabel().getFinalSelf());
     }
 
     private RoleSelection resolveRoleSelection(RoleDataScope roleScope, String scopeKey) {
@@ -356,13 +353,15 @@ public class DataScopeResolveService {
             }
         }
         if (layer2 != null) {
-            return new RoleSelection(layer2, SOURCE_LAYER_2, roleScope.getDataScopeType(), layer2, custom);
+            return new RoleSelection(layer2, dataScopeConstants.getLayer().getSourceLayer2(),
+                    roleScope.getDataScopeType(), layer2, custom);
         }
         String layer1 = normalizeType(roleScope.getDataScopeType());
         if (layer1 == null) {
             return null;
         }
-        return new RoleSelection(layer1, SOURCE_LAYER_1, roleScope.getDataScopeType(), null, roleScope.getCustomDeptIds());
+        return new RoleSelection(layer1, dataScopeConstants.getLayer().getSourceLayer1(),
+                roleScope.getDataScopeType(), null, roleScope.getCustomDeptIds());
     }
 
     private void fillFinal(DataScopeResolveResponse response,
@@ -384,11 +383,11 @@ public class DataScopeResolveService {
         }
         DataScopeResolveResponse.RuleSummary ruleSummary = new DataScopeResolveResponse.RuleSummary();
         if (rule == null) {
-            ruleSummary.setSource("DEFAULT");
-            ruleSummary.setDeptColumn("create_dept");
-            ruleSummary.setUserColumn("create_by");
+            ruleSummary.setSource(dataScopeConstants.getRule().getSourceDefault());
+            ruleSummary.setDeptColumn(dataScopeConstants.getRule().getDefaultDeptColumn());
+            ruleSummary.setUserColumn(dataScopeConstants.getRule().getDefaultUserColumn());
         } else {
-            ruleSummary.setSource("MAPPING");
+            ruleSummary.setSource(dataScopeConstants.getRule().getSourceMapping());
             ruleSummary.setTableName(rule.getTableName());
             ruleSummary.setTableAlias(rule.getTableAlias());
             ruleSummary.setDeptColumn(rule.getDeptColumn());
@@ -405,24 +404,34 @@ public class DataScopeResolveService {
             return null;
         }
         if (finalScope.isAll()) {
-            return "无过滤";
+            return dataScopeConstants.getSql().getNoFilterText();
         }
         if (finalScope.isNone()) {
-            return "1 = 0";
+            return dataScopeConstants.getSql().getNoneCondition();
         }
         String deptColumn = ruleSummary.getDeptColumn();
         String userColumn = ruleSummary.getUserColumn();
         String alias = rule == null ? null : rule.getTableAlias();
         String deptExpr = null;
         if (StringUtils.isNotBlank(deptColumn) && !finalScope.getDeptIds().isEmpty()) {
-            deptExpr = withAlias(alias, deptColumn) + " IN (" + joinIds(finalScope.getDeptIds()) + ")";
+            deptExpr = withAlias(alias, deptColumn)
+                    + dataScopeConstants.getSql().getInOperator()
+                    + dataScopeConstants.getSql().getLeftBracket()
+                    + joinIds(finalScope.getDeptIds())
+                    + dataScopeConstants.getSql().getRightBracket();
         }
         String userExpr = null;
         if (finalScope.isSelf() && StringUtils.isNotBlank(userColumn)) {
-            userExpr = withAlias(alias, userColumn) + " = :userId";
+            userExpr = withAlias(alias, userColumn)
+                    + dataScopeConstants.getSql().getEqualsOperator()
+                    + dataScopeConstants.getSql().getSelfUserParam();
         }
         if (deptExpr != null && userExpr != null) {
-            return "(" + deptExpr + " OR " + userExpr + ")";
+            return dataScopeConstants.getSql().getLeftBracket()
+                    + deptExpr
+                    + dataScopeConstants.getSql().getOrOperator()
+                    + userExpr
+                    + dataScopeConstants.getSql().getRightBracket();
         }
         return deptExpr != null ? deptExpr : userExpr;
     }
@@ -431,7 +440,7 @@ public class DataScopeResolveService {
         if (StringUtils.isBlank(alias)) {
             return column;
         }
-        return alias.trim() + "." + column;
+        return alias.trim() + dataScopeConstants.getSql().getDot() + column;
     }
 
     private String resolveRoleName(Long roleId) {
@@ -444,44 +453,45 @@ public class DataScopeResolveService {
 
     private String buildFinalLabel(DataScopeEvaluator.FinalScope scope) {
         if (scope == null) {
-            return "NONE";
+            return dataScopeConstants.getLabel().getFinalNone();
         }
         if (scope.isAll()) {
-            return "ALL";
+            return dataScopeConstants.getLabel().getFinalAll();
         }
         if (scope.isNone()) {
-            return "NONE";
+            return dataScopeConstants.getLabel().getFinalNone();
         }
         if (scope.isSelf() && scope.getDeptIds().isEmpty()) {
-            return "SELF";
+            return dataScopeConstants.getLabel().getFinalSelf();
         }
         return buildLabel(scope.getDeptIds(), scope.isSelf());
     }
 
     private String buildLabel(Set<Long> deptIds, boolean includeSelf) {
-        String deptLabel = (deptIds == null || deptIds.isEmpty()) ? null : "DEPT";
+        String deptLabel = (deptIds == null || deptIds.isEmpty()) ? null : dataScopeConstants.getLabel().getFinalDept();
         if (deptLabel != null && includeSelf) {
-            return "DEPT+SELF";
+            return dataScopeConstants.getLabel().getFinalDeptAndSelf();
         }
         if (deptLabel != null) {
             return deptLabel;
         }
         if (includeSelf) {
-            return "SELF";
+            return dataScopeConstants.getLabel().getFinalSelf();
         }
-        return "NONE";
+        return dataScopeConstants.getLabel().getFinalNone();
     }
 
     private String resolveSourceLayer(DataScopeResolveResponse.Layer3Summary layer3,
                                       List<DataScopeResolveResponse.RoleScopeSummary> roleScopes) {
         if (layer3 != null) {
-            return SOURCE_LAYER_3;
+            return dataScopeConstants.getLayer().getSourceLayer3();
         }
         if (roleScopes == null || roleScopes.isEmpty()) {
-            return SOURCE_LAYER_1;
+            return dataScopeConstants.getLayer().getSourceLayer1();
         }
-        boolean hasLayer2 = roleScopes.stream().anyMatch(item -> SOURCE_LAYER_2.equals(item.getSourceLayer()));
-        return hasLayer2 ? SOURCE_LAYER_2 : SOURCE_LAYER_1;
+        boolean hasLayer2 = roleScopes.stream()
+                .anyMatch(item -> dataScopeConstants.getLayer().getSourceLayer2().equals(item.getSourceLayer()));
+        return hasLayer2 ? dataScopeConstants.getLayer().getSourceLayer2() : dataScopeConstants.getLayer().getSourceLayer1();
     }
 
     private String normalizeType(String value) {
@@ -510,7 +520,7 @@ public class DataScopeResolveService {
         return ids.stream()
                 .filter(Objects::nonNull)
                 .map(String::valueOf)
-                .collect(Collectors.joining(","));
+                .collect(Collectors.joining(dataScopeConstants.getParser().getDeptIdSeparator()));
     }
 
     private List<Menu> loadUserMenus(Long userId) {

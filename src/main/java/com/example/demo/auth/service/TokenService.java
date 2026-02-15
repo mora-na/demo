@@ -1,5 +1,6 @@
 package com.example.demo.auth.service;
 
+import com.example.demo.auth.config.AuthConstants;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.dto.LoginResponse;
 import com.example.demo.auth.model.AuthUser;
@@ -26,7 +27,6 @@ import java.util.*;
 @RequiredArgsConstructor
 public class TokenService {
 
-    private static final String TOKEN_TYPE = "Bearer";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Base64.Encoder BASE64_URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
     private static final Base64.Decoder BASE64_URL_DECODER = Base64.getUrlDecoder();
@@ -35,6 +35,7 @@ public class TokenService {
 
     private final AuthProperties authProperties;
     private final TokenStore tokenStore;
+    private final AuthConstants systemConstants;
 
     /**
      * 签发 JWT 并写入令牌存储。
@@ -43,17 +44,18 @@ public class TokenService {
      * @return 登录响应信息
      */
     public LoginResponse issueToken(AuthUser user) {
+        AuthConstants.Token tokenConstants = systemConstants.getToken();
         long nowSeconds = Instant.now().getEpochSecond();
         long expireAt = nowSeconds + authProperties.getJwt().getTtlSeconds();
         Map<String, Object> payload = new HashMap<>();
-        payload.put("sub", user.getUserName());
-        payload.put("uid", user.getId());
-        payload.put("iat", nowSeconds);
-        payload.put("exp", expireAt);
-        payload.put("jti", UUID.randomUUID().toString());
+        payload.put(tokenConstants.getJwtClaimSubject(), user.getUserName());
+        payload.put(tokenConstants.getJwtClaimUserId(), user.getId());
+        payload.put(tokenConstants.getJwtClaimIssuedAt(), nowSeconds);
+        payload.put(tokenConstants.getJwtClaimExpiresAt(), expireAt);
+        payload.put(tokenConstants.getJwtClaimJwtId(), UUID.randomUUID().toString());
         String token = createToken(payload, getSecret());
         tokenStore.save(token, user, expireAt);
-        return new LoginResponse(token, TOKEN_TYPE, expireAt, user);
+        return new LoginResponse(token, tokenConstants.getTokenType(), expireAt, user);
     }
 
     /**
@@ -70,7 +72,7 @@ public class TokenService {
         if (payload == null) {
             return null;
         }
-        Long exp = getLongClaim(payload, "exp");
+        Long exp = getLongClaim(payload, systemConstants.getToken().getJwtClaimExpiresAt());
         long now = Instant.now().getEpochSecond();
         if (exp == null || exp < now) {
             tokenStore.revoke(token);
@@ -121,9 +123,10 @@ public class TokenService {
 
     private String createToken(Map<String, Object> payload, byte[] secret) {
         try {
+            AuthConstants.Token tokenConstants = systemConstants.getToken();
             Map<String, Object> header = new HashMap<>();
-            header.put("alg", "HS256");
-            header.put("typ", "JWT");
+            header.put(tokenConstants.getJwtHeaderAlgKey(), tokenConstants.getJwtHeaderAlgValue());
+            header.put(tokenConstants.getJwtHeaderTypeKey(), tokenConstants.getJwtHeaderTypeValue());
             String encodedHeader = base64UrlEncode(OBJECT_MAPPER.writeValueAsBytes(header));
             String encodedPayload = base64UrlEncode(OBJECT_MAPPER.writeValueAsBytes(payload));
             String signingInput = encodedHeader + "." + encodedPayload;
@@ -180,8 +183,9 @@ public class TokenService {
 
     private byte[] hmacSha256(String data, byte[] secret) {
         try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(secret, "HmacSHA256"));
+            String signAlgorithm = systemConstants.getToken().getSignAlgorithm();
+            Mac mac = Mac.getInstance(signAlgorithm);
+            mac.init(new SecretKeySpec(secret, signAlgorithm));
             return mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             throw new IllegalStateException("Failed to sign JWT", e);

@@ -3,6 +3,7 @@ package com.example.demo.datascope.service;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.mybatis.DataScopeType;
 import com.example.demo.common.web.permission.PermissionProperties;
+import com.example.demo.datascope.config.DataScopeConstants;
 import com.example.demo.datascope.model.RoleDataScope;
 import com.example.demo.datascope.model.UserScopeOverride;
 import lombok.Getter;
@@ -22,9 +23,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class DataScopeEvaluator {
 
-    public static final String GLOBAL_SCOPE_KEY = "*";
-
     private final PermissionProperties permissionProperties;
+    private final DataScopeConstants dataScopeConstants;
 
     public FinalScope resolve(AuthUser user, String scopeKey) {
         if (user == null || user.getId() == null) {
@@ -52,12 +52,12 @@ public class DataScopeEvaluator {
         }
         UserScopeOverride override = scopeKey == null ? null : overrides.get(scopeKey);
         if (override == null) {
-            override = overrides.get(GLOBAL_SCOPE_KEY);
+            override = overrides.get(dataScopeConstants.getScope().getGlobalScopeKey());
         }
         if (override == null) {
             return null;
         }
-        if (override.getStatus() != null && override.getStatus() == 0) {
+        if (override.getStatus() != null && override.getStatus() == dataScopeConstants.getStatus().getDisabled()) {
             return null;
         }
         return override;

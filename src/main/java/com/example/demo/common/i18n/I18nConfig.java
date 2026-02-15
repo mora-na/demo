@@ -1,5 +1,6 @@
 package com.example.demo.common.i18n;
 
+import com.example.demo.common.config.CommonConstants;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,19 +15,20 @@ import java.util.Locale;
 public class I18nConfig {
 
     @Bean
-    public MessageSource messageSource() {
+    public MessageSource messageSource(CommonConstants systemConstants) {
         ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
-        messageSource.setBasename("classpath:i18n/messages");
-        messageSource.setDefaultEncoding("UTF-8");
-        messageSource.setFallbackToSystemLocale(false);
-        messageSource.setUseCodeAsDefaultMessage(true);
+        CommonConstants.I18n i18n = systemConstants.getI18n();
+        messageSource.setBasename(i18n.getBasename());
+        messageSource.setDefaultEncoding(i18n.getDefaultEncoding());
+        messageSource.setFallbackToSystemLocale(i18n.isFallbackToSystemLocale());
+        messageSource.setUseCodeAsDefaultMessage(i18n.isUseCodeAsDefaultMessage());
         return messageSource;
     }
 
     @Bean
-    public LocaleResolver localeResolver() {
+    public LocaleResolver localeResolver(CommonConstants systemConstants) {
         AcceptHeaderLocaleResolver resolver = new AcceptHeaderLocaleResolver();
-        resolver.setDefaultLocale(Locale.SIMPLIFIED_CHINESE);
+        resolver.setDefaultLocale(Locale.forLanguageTag(systemConstants.getI18n().getDefaultLocaleTag()));
         return resolver;
     }
 

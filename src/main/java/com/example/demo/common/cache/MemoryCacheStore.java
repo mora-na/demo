@@ -1,5 +1,6 @@
 package com.example.demo.common.cache;
 
+import com.example.demo.common.config.CommonConstants;
 import com.example.demo.notice.mapper.NoticeRecipientMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -28,7 +29,7 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
     private final ScheduledExecutorService cleanupExecutor;
     private final long maximumWeightBytes;
 
-    public MemoryCacheStore(CacheProperties.Memory memoryProperties) {
+    public MemoryCacheStore(CacheProperties.Memory memoryProperties, CommonConstants systemConstants) {
         long maxSize = memoryProperties == null ? DEFAULT_MAXIMUM_SIZE : memoryProperties.getMaximumSize();
         if (maxSize <= 0) {
             maxSize = DEFAULT_MAXIMUM_SIZE;
@@ -46,7 +47,8 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
         this.cache = builder.build();
         long cleanupInterval = memoryProperties == null ? 0 : memoryProperties.getCleanupIntervalSeconds();
         if (cleanupInterval > 0) {
-            this.cleanupExecutor = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("cache-cleanup"));
+            String prefix = resolveCleanupThreadPrefix(systemConstants);
+            this.cleanupExecutor = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory(prefix));
             this.cleanupExecutor.scheduleAtFixedRate(cache::cleanUp, cleanupInterval, cleanupInterval, TimeUnit.SECONDS);
         } else {
             this.cleanupExecutor = null;
@@ -257,6 +259,14 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
         } catch (ArithmeticException ex) {
             return Long.MAX_VALUE;
         }
+    }
+
+    private String resolveCleanupThreadPrefix(CommonConstants systemConstants) {
+        String prefix = systemConstants == null ? null : systemConstants.getCache().getMemoryCleanupThreadPrefix();
+        if (prefix == null || prefix.trim().isEmpty()) {
+            return CommonConstants.Cache.DEFAULT_MEMORY_CLEANUP_THREAD_PREFIX;
+        }
+        return prefix;
     }
 
     @Override

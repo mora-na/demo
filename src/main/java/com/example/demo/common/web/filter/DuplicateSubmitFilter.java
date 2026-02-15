@@ -3,6 +3,7 @@ package com.example.demo.common.web.filter;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.cache.CacheTool;
+import com.example.demo.common.config.CommonConstants;
 import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
@@ -42,6 +43,7 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final CacheTool cacheTool;
     private final I18nService i18nService;
+    private final CommonConstants systemConstants;
 
     /**
      * 构造函数，注入重复提交配置与缓存工具。
@@ -55,11 +57,13 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
     public DuplicateSubmitFilter(DuplicateSubmitProperties properties,
                                  CommonExcludePathsProperties commonExcludePaths,
                                  CacheTool cacheTool,
-                                 I18nService i18nService) {
+                                 I18nService i18nService,
+                                 CommonConstants systemConstants) {
         this.properties = properties;
         this.commonExcludePaths = commonExcludePaths;
         this.cacheTool = cacheTool;
         this.i18nService = i18nService;
+        this.systemConstants = systemConstants;
     }
 
     /**
@@ -152,7 +156,7 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
      * @date 2026/2/9
      */
     private String buildKey(HttpServletRequest request, String bodyHash) {
-        StringBuilder builder = new StringBuilder("dup:");
+        StringBuilder builder = new StringBuilder(systemConstants.getDuplicateSubmit().getKeyPrefix());
         if (properties.isIncludePath()) {
             builder.append(request.getRequestURI());
         }
@@ -161,15 +165,24 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
         builder.append(identity);
         String idempotency = resolveIdempotencyKey(request);
         if (idempotency != null) {
-            builder.append(":k=").append(idempotency);
+            builder.append(':')
+                    .append(systemConstants.getDuplicateSubmit().getKeyIdempotencyTag())
+                    .append('=')
+                    .append(idempotency);
             return builder.toString();
         }
         String query = request.getQueryString();
         if (query != null && !query.isEmpty()) {
-            builder.append(":q=").append(query);
+            builder.append(':')
+                    .append(systemConstants.getDuplicateSubmit().getKeyQueryTag())
+                    .append('=')
+                    .append(query);
         }
         if (properties.isIncludeBody() && bodyHash != null) {
-            builder.append(":b=").append(bodyHash);
+            builder.append(':')
+                    .append(systemConstants.getDuplicateSubmit().getKeyBodyTag())
+                    .append('=')
+                    .append(bodyHash);
         }
         return builder.toString();
     }
@@ -188,7 +201,7 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
         }
         String headerName = properties.getHeaderName();
         if (headerName == null || headerName.trim().isEmpty()) {
-            headerName = "Idempotency-Key";
+            headerName = systemConstants.getHttp().getIdempotencyHeaderDefault();
         }
         String value = request.getHeader(headerName);
         if (value == null || value.trim().isEmpty()) {
@@ -232,12 +245,12 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
      * @date 2026/2/9
      */
     private String resolveClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
+        String forwarded = request.getHeader(systemConstants.getHttp().getForwardedForHeader());
         if (forwarded != null && !forwarded.trim().isEmpty()) {
             int comma = forwarded.indexOf(',');
             return comma > 0 ? forwarded.substring(0, comma).trim() : forwarded.trim();
         }
-        String realIp = request.getHeader("X-Real-IP");
+        String realIp = request.getHeader(systemConstants.getHttp().getRealIpHeader());
         if (realIp != null && !realIp.trim().isEmpty()) {
             return realIp.trim();
         }
@@ -254,7 +267,8 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
      */
     private boolean isMultipart(HttpServletRequest request) {
         String contentType = request.getContentType();
-        return contentType != null && contentType.toLowerCase(Locale.ROOT).startsWith("multipart/");
+        String prefix = systemConstants.getHttp().getMultipartPrefix();
+        return contentType != null && contentType.toLowerCase(Locale.ROOT).startsWith(prefix);
     }
 
     /**
@@ -302,10 +316,11 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
      * @date 2026/2/9
      */
     private void writeDuplicate(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.setStatus(409);
-        response.setContentType("application/json;charset=UTF-8");
-        String message = i18nService.getMessage(request, "common.duplicate.submission");
-        CommonResult<Object> result = CommonResult.error(409, message);
+        int status = systemConstants.getDuplicateSubmit().getResponseStatus();
+        response.setStatus(status);
+        response.setContentType(systemConstants.getHttp().getJsonContentType());
+        String message = i18nService.getMessage(request, systemConstants.getDuplicateSubmit().getMessageKey());
+        CommonResult<Object> result = CommonResult.error(status, message);
         response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
     }
 }

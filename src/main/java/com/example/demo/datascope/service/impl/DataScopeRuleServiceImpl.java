@@ -1,9 +1,12 @@
 package com.example.demo.datascope.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.demo.datascope.config.DataScopeConstants;
 import com.example.demo.datascope.entity.DataScopeRule;
 import com.example.demo.datascope.mapper.DataScopeRuleMapper;
 import com.example.demo.datascope.service.DataScopeRuleService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -17,8 +20,11 @@ import java.util.Map;
  * @date 2026/2/9
  */
 @Service
+@RequiredArgsConstructor
 public class DataScopeRuleServiceImpl extends ServiceImpl<DataScopeRuleMapper, DataScopeRule>
         implements DataScopeRuleService {
+
+    private final DataScopeConstants dataScopeConstants;
 
     /**
      * 查询启用规则并构建表->字段映射。
@@ -29,7 +35,8 @@ public class DataScopeRuleServiceImpl extends ServiceImpl<DataScopeRuleMapper, D
      */
     @Override
     public Map<String, DataScopeRule> getEnabledRules() {
-        List<DataScopeRule> rules = baseMapper.selectEnabledRules();
+        List<DataScopeRule> rules = list(Wrappers.lambdaQuery(DataScopeRule.class)
+                .eq(DataScopeRule::getStatus, dataScopeConstants.getStatus().getEnabled()));
         Map<String, DataScopeRule> map = new HashMap<>();
         if (rules == null || rules.isEmpty()) {
             return map;

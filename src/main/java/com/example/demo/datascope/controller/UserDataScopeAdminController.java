@@ -5,6 +5,7 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.model.PageResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.datascope.config.DataScopeConstants;
 import com.example.demo.datascope.dto.UserDataScopeQuery;
 import com.example.demo.datascope.dto.UserDataScopeVO;
 import com.example.demo.datascope.entity.UserDataScope;
@@ -44,6 +45,7 @@ public class UserDataScopeAdminController extends BaseController {
     private final SysUserService userService;
     private final DeptService deptService;
     private final MenuService menuService;
+    private final DataScopeConstants dataScopeConstants;
 
     @GetMapping("/list")
     @RequirePermission("data-scope:user:query")
@@ -114,7 +116,8 @@ public class UserDataScopeAdminController extends BaseController {
             vo.setDeptName(dept == null ? null : dept.getName());
         }
 
-        if (StringUtils.isNotBlank(entity.getScopeKey()) && !"*".equals(entity.getScopeKey())) {
+        if (StringUtils.isNotBlank(entity.getScopeKey())
+                && !dataScopeConstants.getScope().getGlobalScopeKey().equals(entity.getScopeKey())) {
             Menu menu = menuService.getOne(Wrappers.lambdaQuery(Menu.class)
                     .eq(Menu::getPermission, entity.getScopeKey()));
             if (menu != null) {
@@ -122,9 +125,9 @@ public class UserDataScopeAdminController extends BaseController {
                 vo.setPermission(menu.getPermission());
             }
         }
-        if ("*".equals(entity.getScopeKey())) {
-            vo.setMenuName("全局覆盖");
-            vo.setPermission("*");
+        if (dataScopeConstants.getScope().getGlobalScopeKey().equals(entity.getScopeKey())) {
+            vo.setMenuName(dataScopeConstants.getScope().getGlobalScopeMenuName());
+            vo.setPermission(dataScopeConstants.getScope().getGlobalScopePermission());
         }
         return vo;
     }

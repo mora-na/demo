@@ -1,5 +1,6 @@
 package com.example.demo.auth.service;
 
+import com.example.demo.auth.config.AuthConstants;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.common.tool.GmCryptoTool;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -26,6 +28,7 @@ import java.util.regex.Pattern;
 public class PasswordService {
 
     private final AuthProperties authProperties;
+    private final AuthConstants systemConstants;
     private final BCryptPasswordEncoder bcryptPasswordEncoder = new BCryptPasswordEncoder();
 
     /**
@@ -40,13 +43,15 @@ public class PasswordService {
             return false;
         }
         String mode = normalizeMode(authProperties.getPassword().getMode());
-        switch (mode) {
-            case "bcrypt":
-                return bcryptPasswordEncoder.matches(rawPassword, encodedPassword);
-            case "md5":
-                return md5(rawPassword).equalsIgnoreCase(encodedPassword);
-            case "sm3":
-                return sm3(rawPassword).equalsIgnoreCase(encodedPassword);
+        AuthConstants.Password constants = systemConstants.getPassword();
+        if (equalsMode(mode, constants.getModeBcrypt())) {
+            return bcryptPasswordEncoder.matches(rawPassword, encodedPassword);
+        }
+        if (equalsMode(mode, constants.getModeMd5())) {
+            return md5(rawPassword).equalsIgnoreCase(encodedPassword);
+        }
+        if (equalsMode(mode, constants.getModeSm3())) {
+            return sm3(rawPassword).equalsIgnoreCase(encodedPassword);
         }
         return rawPassword.equals(encodedPassword);
     }
@@ -62,21 +67,23 @@ public class PasswordService {
             return null;
         }
         String mode = normalizeTransportMode(authProperties.getPassword().getTransportMode());
-        switch (mode) {
-            case "plain":
-                return cipherText;
-            case "base64":
-                try {
-                    byte[] decoded = Base64.getDecoder().decode(cipherText);
-                    return new String(decoded, StandardCharsets.UTF_8);
-                } catch (IllegalArgumentException ex) {
-                    return null;
-                }
-            case "aes":
-            case "aes-gcm":
-                return decryptAesGcm(cipherText, authProperties.getPassword().getTransportKey());
-            case "sm2":
-                return decryptSm2(cipherText, authProperties.getPassword().getTransportSm2PrivateKey());
+        AuthConstants.Password constants = systemConstants.getPassword();
+        if (equalsMode(mode, constants.getModeFallback())) {
+            return cipherText;
+        }
+        if (equalsMode(mode, constants.getTransportModeBase64())) {
+            try {
+                byte[] decoded = Base64.getDecoder().decode(cipherText);
+                return new String(decoded, StandardCharsets.UTF_8);
+            } catch (IllegalArgumentException ex) {
+                return null;
+            }
+        }
+        if (equalsMode(mode, constants.getTransportModeAes()) || equalsMode(mode, constants.getTransportModeAesGcm())) {
+            return decryptAesGcm(cipherText, authProperties.getPassword().getTransportKey());
+        }
+        if (equalsMode(mode, constants.getTransportModeSm2())) {
+            return decryptSm2(cipherText, authProperties.getPassword().getTransportSm2PrivateKey());
         }
         return cipherText;
     }
@@ -139,13 +146,15 @@ public class PasswordService {
             return null;
         }
         String mode = normalizeMode(authProperties.getPassword().getMode());
-        switch (mode) {
-            case "bcrypt":
-                return bcryptPasswordEncoder.encode(rawPassword);
-            case "md5":
-                return md5(rawPassword);
-            case "sm3":
-                return sm3(rawPassword);
+        AuthConstants.Password constants = systemConstants.getPassword();
+        if (equalsMode(mode, constants.getModeBcrypt())) {
+            return bcryptPasswordEncoder.encode(rawPassword);
+        }
+        if (equalsMode(mode, constants.getModeMd5())) {
+            return md5(rawPassword);
+        }
+        if (equalsMode(mode, constants.getModeSm3())) {
+            return sm3(rawPassword);
         }
         return rawPassword;
     }
@@ -181,28 +190,31 @@ public class PasswordService {
      * @return 规范化后的模式
      */
     private String normalizeMode(String mode) {
-        return mode == null ? "plain" : mode.trim().toLowerCase();
+        String fallback = systemConstants.getPassword().getModeFallback();
+        return mode == null ? normalizeConfiguredMode(fallback) : mode.trim().toLowerCase(Locale.ROOT);
     }
 
     private String normalizeTransportMode(String mode) {
-        return mode == null ? "plain" : mode.trim().toLowerCase();
+        String fallback = systemConstants.getPassword().getModeFallback();
+        return mode == null ? normalizeConfiguredMode(fallback) : mode.trim().toLowerCase(Locale.ROOT);
     }
 
     private String decryptAesGcm(String cipherText, String base64Key) {
         if (StringUtils.isBlank(base64Key)) {
             return null;
         }
-        String[] parts = cipherText.split(":", 2);
-        if (parts.length != 2) {
+        AuthConstants.Password constants = systemConstants.getPassword();
+        String[] parts = cipherText.split(constants.getTransportSplitDelimiter(), constants.getTransportSplitLimit());
+        if (parts.length != constants.getTransportSplitLimit()) {
             return null;
         }
         try {
             byte[] keyBytes = Base64.getDecoder().decode(base64Key);
             byte[] iv = Base64.getDecoder().decode(parts[0]);
             byte[] encrypted = Base64.getDecoder().decode(parts[1]);
-            SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
-            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            GCMParameterSpec spec = new GCMParameterSpec(128, iv);
+            SecretKeySpec keySpec = new SecretKeySpec(keyBytes, constants.getAesKeyAlgorithm());
+            Cipher cipher = Cipher.getInstance(constants.getAesTransformation());
+            GCMParameterSpec spec = new GCMParameterSpec(constants.getAesGcmTagLengthBits(), iv);
             cipher.init(Cipher.DECRYPT_MODE, keySpec, spec);
             byte[] plain = cipher.doFinal(encrypted);
             return new String(plain, StandardCharsets.UTF_8);
@@ -259,5 +271,13 @@ public class PasswordService {
             }
         }
         return false;
+    }
+
+    private boolean equalsMode(String mode, String configured) {
+        return mode.equals(normalizeConfiguredMode(configured));
+    }
+
+    private String normalizeConfiguredMode(String configured) {
+        return configured == null ? AuthConstants.Password.DEFAULT_MODE_FALLBACK : configured.trim().toLowerCase(Locale.ROOT);
     }
 }

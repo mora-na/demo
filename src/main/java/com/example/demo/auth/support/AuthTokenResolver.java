@@ -1,6 +1,8 @@
 package com.example.demo.auth.support;
 
+import com.example.demo.auth.config.AuthConstants;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -10,14 +12,13 @@ import javax.servlet.http.HttpServletRequest;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
-public final class AuthTokenResolver {
+@Component
+public class AuthTokenResolver {
 
-    private static final String BEARER_PREFIX = "Bearer ";
+    private final AuthConstants systemConstants;
 
-    /**
-     * 私有构造函数，禁止实例化。
-     */
-    private AuthTokenResolver() {
+    public AuthTokenResolver(AuthConstants systemConstants) {
+        this.systemConstants = systemConstants;
     }
 
     /**
@@ -26,22 +27,24 @@ public final class AuthTokenResolver {
      * @param request HTTP 请求
      * @return 解析到的令牌字符串，未找到返回 null
      */
-    public static String resolve(HttpServletRequest request) {
+    public String resolve(HttpServletRequest request) {
         if (request == null) {
             return null;
         }
-        String authorization = request.getHeader("Authorization");
+        AuthConstants.Token tokenConstants = systemConstants.getToken();
+        String authorization = request.getHeader(tokenConstants.getAuthorizationHeader());
         if (StringUtils.isNotBlank(authorization)) {
-            if (authorization.startsWith(BEARER_PREFIX)) {
-                return authorization.substring(BEARER_PREFIX.length());
+            String bearerPrefix = tokenConstants.getBearerPrefix();
+            if (authorization.startsWith(bearerPrefix)) {
+                return authorization.substring(bearerPrefix.length());
             }
             return authorization;
         }
-        String token = request.getHeader("X-Auth-Token");
+        String token = request.getHeader(tokenConstants.getFallbackTokenHeader());
         if (StringUtils.isNotBlank(token)) {
             return token;
         }
-        String queryToken = request.getParameter("token");
+        String queryToken = request.getParameter(tokenConstants.getQueryTokenParameter());
         if (StringUtils.isNotBlank(queryToken)) {
             return queryToken;
         }

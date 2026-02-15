@@ -1,5 +1,6 @@
 package com.example.demo.auth.service;
 
+import com.example.demo.auth.config.AuthConstants;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.dto.CaptchaResponse;
 import com.example.demo.auth.store.CaptchaStore;
@@ -29,13 +30,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CaptchaService {
 
-    private static final String IMAGE_PREFIX = "data:image/png;base64,";
-    private static final char[] CAPTCHA_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int BASE_FONT_STYLE = Font.BOLD;
 
     private final AuthProperties authProperties;
     private final CaptchaStore captchaStore;
+    private final AuthConstants systemConstants;
     private volatile List<Font> embeddedFonts = Collections.emptyList();
 
     @PostConstruct
@@ -83,7 +83,7 @@ public class CaptchaService {
         String captchaId = UUID.randomUUID().toString();
         long expireAt = Instant.now().getEpochSecond() + config.getExpireSeconds();
         captchaStore.save(captchaId, captcha.code, expireAt);
-        String imageBase64 = IMAGE_PREFIX + captcha.base64;
+        String imageBase64 = systemConstants.getCaptcha().getImagePrefix() + captcha.base64;
         return new CaptchaResponse(captchaId, imageBase64, config.getExpireSeconds());
     }
 
@@ -108,7 +108,9 @@ public class CaptchaService {
             g.fillRect(0, 0, width, height);
 
             drawNoiseLines(g, width, height, Math.max(0, noiseLines));
-            drawNoiseDots(g, width, height, Math.max(20, (width * height) / 150));
+            int minDots = systemConstants.getCaptcha().getNoiseDotMinCount();
+            int densityDivisor = Math.max(1, systemConstants.getCaptcha().getNoiseDotDensityDivisor());
+            drawNoiseDots(g, width, height, Math.max(minDots, (width * height) / densityDivisor));
             drawChars(g, code, width, height);
         } finally {
             g.dispose();
@@ -118,7 +120,10 @@ public class CaptchaService {
 
     private void drawNoiseLines(Graphics2D g, int width, int height, int count) {
         for (int i = 0; i < count; i++) {
-            g.setColor(randomColor(120, 200));
+            g.setColor(randomColor(
+                    systemConstants.getCaptcha().getLineDotColorMin(),
+                    systemConstants.getCaptcha().getLineDotColorMax()
+            ));
             int x1 = RANDOM.nextInt(width);
             int y1 = RANDOM.nextInt(height);
             int x2 = RANDOM.nextInt(width);
@@ -128,7 +133,10 @@ public class CaptchaService {
     }
 
     private void drawChars(Graphics2D g, String code, int width, int height) {
-        int fontSize = Math.max(18, height - 10);
+        int fontSize = Math.max(
+                systemConstants.getCaptcha().getFontMinSize(),
+                height - systemConstants.getCaptcha().getFontPadding()
+        );
         Font baseFont = resolveFont(fontSize);
         g.setFont(baseFont);
         FontMetrics metrics = g.getFontMetrics(baseFont);
@@ -140,7 +148,10 @@ public class CaptchaService {
             char ch = code.charAt(i);
             Font font = resolveFont(fontSize);
             g.setFont(font);
-            g.setColor(randomColor(30, 160));
+            g.setColor(randomColor(
+                    systemConstants.getCaptcha().getCharColorMin(),
+                    systemConstants.getCaptcha().getCharColorMax()
+            ));
             int x = gap * (i + 1) - metrics.charWidth(ch) / 2;
             double centerX = x + metrics.charWidth(ch) / 2.0;
             double centerY = baseY - metrics.getAscent() / 2.0;
@@ -163,9 +174,13 @@ public class CaptchaService {
         if (length <= 0) {
             return "";
         }
+        String charset = systemConstants.getCaptcha().getCodeCharset();
+        char[] captchaChars = charset == null || charset.isEmpty()
+                ? AuthConstants.Captcha.DEFAULT_CODE_CHARSET.toCharArray()
+                : charset.toCharArray();
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
-            sb.append(CAPTCHA_CHARS[RANDOM.nextInt(CAPTCHA_CHARS.length)]);
+            sb.append(captchaChars[RANDOM.nextInt(captchaChars.length)]);
         }
         return sb.toString();
     }
@@ -180,7 +195,10 @@ public class CaptchaService {
 
     private void drawNoiseDots(Graphics2D g, int width, int height, int count) {
         for (int i = 0; i < count; i++) {
-            g.setColor(randomColor(120, 200));
+            g.setColor(randomColor(
+                    systemConstants.getCaptcha().getLineDotColorMin(),
+                    systemConstants.getCaptcha().getLineDotColorMax()
+            ));
             int x = RANDOM.nextInt(width);
             int y = RANDOM.nextInt(height);
             int size = 1 + RANDOM.nextInt(2);
@@ -190,7 +208,7 @@ public class CaptchaService {
 
     private String toBase64Png(BufferedImage image) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            ImageIO.write(image, "png", out);
+            ImageIO.write(image, systemConstants.getCaptcha().getPngFormat(), out);
             return Base64.getEncoder().encodeToString(out.toByteArray());
         } catch (Exception e) {
             throw new IllegalStateException("Failed to render captcha", e);
@@ -202,7 +220,7 @@ public class CaptchaService {
         if (base != null) {
             return base.deriveFont(Font.BOLD, (float) fontSize);
         }
-        return new Font("SansSerif", Font.BOLD, fontSize);
+        return new Font(systemConstants.getCaptcha().getFallbackFontFamily(), Font.BOLD, fontSize);
     }
 
     private Font pickEmbeddedFont() {
@@ -226,8 +244,12 @@ public class CaptchaService {
 
     private InputStream openFontResource(String resource) throws Exception {
         String path = resource.trim();
-        if (path.startsWith("classpath:")) {
-            path = path.substring("classpath:".length());
+        String classpathPrefix = systemConstants.getCaptcha().getFontResourceClasspathPrefix();
+        if (classpathPrefix == null || classpathPrefix.isEmpty()) {
+            classpathPrefix = AuthConstants.Captcha.DEFAULT_FONT_RESOURCE_CLASSPATH_PREFIX;
+        }
+        if (path.startsWith(classpathPrefix)) {
+            path = path.substring(classpathPrefix.length());
         }
         while (path.startsWith("/")) {
             path = path.substring(1);

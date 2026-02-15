@@ -1,6 +1,7 @@
 package com.example.demo.common.cache;
 
 import com.example.demo.common.cache.mapper.CacheMapper;
+import com.example.demo.common.config.CommonConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -26,14 +27,17 @@ public class CacheStoreConfig {
 
     @Bean
     @ConditionalOnProperty(prefix = "cache", name = "location", havingValue = "memory")
-    public CacheStore memoryCacheStore(CacheProperties cacheProperties) {
-        return new MemoryCacheStore(cacheProperties == null ? null : cacheProperties.getMemory());
+    public CacheStore memoryCacheStore(CacheProperties cacheProperties, CommonConstants systemConstants) {
+        return new MemoryCacheStore(cacheProperties == null ? null : cacheProperties.getMemory(), systemConstants);
     }
 
     @Bean
     @ConditionalOnProperty(prefix = "cache", name = "location", havingValue = "db")
-    public CacheStore dbCacheStore(CacheMapper cacheMapper, ObjectMapper objectMapper, CacheProperties cacheProperties) {
+    public CacheStore dbCacheStore(CacheMapper cacheMapper,
+                                   ObjectMapper objectMapper,
+                                   CacheProperties cacheProperties,
+                                   CommonConstants systemConstants) {
         CacheSerializer serializer = new CacheSerializer(objectMapper);
-        return new DbCacheStore(cacheMapper, serializer, cacheProperties == null ? null : cacheProperties.getDb());
+        return new DbCacheStore(cacheMapper, serializer, cacheProperties == null ? null : cacheProperties.getDb(), systemConstants);
     }
 }

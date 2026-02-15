@@ -2,6 +2,7 @@ package com.example.demo.datascope.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.common.mybatis.DataScopeType;
+import com.example.demo.datascope.config.DataScopeConstants;
 import com.example.demo.datascope.entity.RoleMenuDept;
 import com.example.demo.datascope.entity.UserDataScope;
 import com.example.demo.datascope.model.DataScopeProfile;
@@ -35,8 +36,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DataScopeProfileService {
 
-    private static final String GLOBAL_SCOPE_KEY = "*";
-
     private final UserRoleService userRoleService;
     private final RoleService roleService;
     private final RoleMenuService roleMenuService;
@@ -44,6 +43,7 @@ public class DataScopeProfileService {
     private final DeptService deptService;
     private final RoleMenuDeptService roleMenuDeptService;
     private final UserDataScopeService userDataScopeService;
+    private final DataScopeConstants dataScopeConstants;
 
     /**
      * 构建用户数据范围画像。
@@ -224,7 +224,7 @@ public class DataScopeProfileService {
         if (StringUtils.isBlank(value)) {
             return Collections.emptySet();
         }
-        String[] tokens = value.split(",");
+        String[] tokens = value.split(dataScopeConstants.getParser().getDeptIdSeparator());
         Set<Long> ids = new LinkedHashSet<>();
         for (String token : tokens) {
             if (StringUtils.isBlank(token)) {

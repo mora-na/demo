@@ -1,5 +1,6 @@
 package com.example.demo.common.web.filter;
 
+import com.example.demo.common.config.CommonConstants;
 import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.common.web.xss.XssHttpServletRequestWrapper;
 import com.example.demo.common.web.xss.XssProperties;
@@ -26,6 +27,7 @@ public class XssFilter implements Filter {
     private final XssProperties properties;
     private final CommonExcludePathsProperties commonExcludePaths;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private final CommonConstants systemConstants;
 
     /**
      * 构造函数，注入 XSS 配置与公共排除路径。
@@ -36,9 +38,11 @@ public class XssFilter implements Filter {
      * @date 2026/2/9
      */
     public XssFilter(XssProperties properties,
-                     CommonExcludePathsProperties commonExcludePaths) {
+                     CommonExcludePathsProperties commonExcludePaths,
+                     CommonConstants systemConstants) {
         this.properties = properties;
         this.commonExcludePaths = commonExcludePaths;
+        this.systemConstants = systemConstants;
     }
 
     /**
@@ -61,6 +65,12 @@ public class XssFilter implements Filter {
         }
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         if (!properties.isEnabled() || isExcluded(httpRequest)) {
+            chain.doFilter(request, response);
+            return;
+        }
+        String prefix = systemConstants.getHttp().getMultipartPrefix();
+        String contentType = httpRequest.getContentType();
+        if (contentType != null && contentType.toLowerCase(java.util.Locale.ROOT).startsWith(prefix)) {
             chain.doFilter(request, response);
             return;
         }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.dept.config.DeptConstants;
 import com.example.demo.dept.dto.DeptCreateRequest;
 import com.example.demo.dept.dto.DeptStatusRequest;
 import com.example.demo.dept.dto.DeptUpdateRequest;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 public class DeptAdminController extends BaseController {
 
     private final DeptService deptService;
+    private final DeptConstants deptConstants;
 
     /**
      * 获取部门列表。
@@ -60,7 +62,7 @@ public class DeptAdminController extends BaseController {
     public CommonResult<DeptVO> detail(@PathVariable Long id) {
         Dept dept = deptService.getById(id);
         if (dept == null) {
-            return error(404, i18n("dept.not.found"));
+            return error(deptConstants.getController().getNotFoundCode(), i18n(deptConstants.getMessage().getDeptNotFound()));
         }
         return success(toVO(dept));
     }
@@ -77,17 +79,17 @@ public class DeptAdminController extends BaseController {
     @RequirePermission("dept:create")
     public CommonResult<DeptVO> create(@Valid @RequestBody DeptCreateRequest request) {
         if (existsCode(request.getCode(), null)) {
-            return error(400, i18n("dept.code.exists"));
+            return error(deptConstants.getController().getBadRequestCode(), i18n(deptConstants.getMessage().getDeptCodeExists()));
         }
         if (request.getParentId() != null && deptService.getById(request.getParentId()) == null) {
-            return error(400, i18n("dept.parent.not.found"));
+            return error(deptConstants.getController().getBadRequestCode(), i18n(deptConstants.getMessage().getDeptParentNotFound()));
         }
         Dept dept = new Dept();
         dept.setName(request.getName());
         dept.setCode(request.getCode());
         dept.setParentId(request.getParentId());
         dept.setStatus(normalizeStatus(request.getStatus()));
-        dept.setSort(request.getSort() == null ? 0 : request.getSort());
+        dept.setSort(request.getSort() == null ? deptConstants.getSort().getDefaultSort() : request.getSort());
         dept.setRemark(request.getRemark());
         deptService.save(dept);
         return success(toVO(dept));
@@ -107,17 +109,17 @@ public class DeptAdminController extends BaseController {
     public CommonResult<Void> update(@PathVariable Long id, @Valid @RequestBody DeptUpdateRequest request) {
         Dept existing = deptService.getById(id);
         if (existing == null) {
-            return error(404, i18n("dept.not.found"));
+            return error(deptConstants.getController().getNotFoundCode(), i18n(deptConstants.getMessage().getDeptNotFound()));
         }
         if (existsCode(request.getCode(), id)) {
-            return error(400, i18n("dept.code.exists"));
+            return error(deptConstants.getController().getBadRequestCode(), i18n(deptConstants.getMessage().getDeptCodeExists()));
         }
         if (request.getParentId() != null) {
             if (id.equals(request.getParentId())) {
-                return error(400, i18n("dept.parent.cannot.self"));
+                return error(deptConstants.getController().getBadRequestCode(), i18n(deptConstants.getMessage().getDeptParentCannotSelf()));
             }
             if (deptService.getById(request.getParentId()) == null) {
-                return error(400, i18n("dept.parent.not.found"));
+                return error(deptConstants.getController().getBadRequestCode(), i18n(deptConstants.getMessage().getDeptParentNotFound()));
             }
         }
         Dept dept = new Dept();
@@ -125,11 +127,11 @@ public class DeptAdminController extends BaseController {
         dept.setName(request.getName());
         dept.setCode(request.getCode());
         dept.setParentId(request.getParentId());
-        dept.setStatus(request.getStatus());
+        dept.setStatus(normalizeStatus(request.getStatus()));
         dept.setSort(request.getSort());
         dept.setRemark(request.getRemark());
         if (!deptService.updateById(dept)) {
-            return error(500, i18n("common.update.failed"));
+            return error(deptConstants.getController().getInternalServerErrorCode(), i18n(deptConstants.getMessage().getCommonUpdateFailed()));
         }
         return success();
     }
@@ -148,14 +150,14 @@ public class DeptAdminController extends BaseController {
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody DeptStatusRequest request) {
         Dept existing = deptService.getById(id);
         if (existing == null) {
-            return error(404, i18n("dept.not.found"));
+            return error(deptConstants.getController().getNotFoundCode(), i18n(deptConstants.getMessage().getDeptNotFound()));
         }
         Integer status = request.getStatus();
         if (notValidStatus(status)) {
-            return error(400, i18n("common.status.invalid"));
+            return error(deptConstants.getController().getBadRequestCode(), i18n(deptConstants.getMessage().getCommonStatusInvalid()));
         }
         if (!deptService.updateStatus(id, status)) {
-            return error(500, i18n("common.status.update.failed"));
+            return error(deptConstants.getController().getInternalServerErrorCode(), i18n(deptConstants.getMessage().getCommonStatusUpdateFailed()));
         }
         return success();
     }
@@ -165,10 +167,10 @@ public class DeptAdminController extends BaseController {
     @Transactional(rollbackFor = Exception.class)
     public CommonResult<Void> delete(@PathVariable Long id) {
         if (deptService.getById(id) == null) {
-            return error(404, i18n("dept.not.found"));
+            return error(deptConstants.getController().getNotFoundCode(), i18n(deptConstants.getMessage().getDeptNotFound()));
         }
         if (!deptService.removeById(id)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(deptConstants.getController().getInternalServerErrorCode(), i18n(deptConstants.getMessage().getCommonDeleteFailed()));
         }
         return success();
     }
@@ -188,7 +190,7 @@ public class DeptAdminController extends BaseController {
             return success();
         }
         if (!deptService.removeByIds(uniqueIds)) {
-            return error(500, i18n("common.delete.failed"));
+            return error(deptConstants.getController().getInternalServerErrorCode(), i18n(deptConstants.getMessage().getCommonDeleteFailed()));
         }
         return success();
     }
@@ -221,7 +223,7 @@ public class DeptAdminController extends BaseController {
      */
     private Integer normalizeStatus(Integer status) {
         if (notValidStatus(status)) {
-            return 1;
+            return deptConstants.getStatus().getEnabled();
         }
         return status;
     }
@@ -235,7 +237,9 @@ public class DeptAdminController extends BaseController {
      * @date 2026/2/9
      */
     private boolean notValidStatus(Integer status) {
-        return status == null || (status != 0 && status != 1);
+        return status == null
+                || (status != deptConstants.getStatus().getDisabled()
+                && status != deptConstants.getStatus().getEnabled());
     }
 
     /**

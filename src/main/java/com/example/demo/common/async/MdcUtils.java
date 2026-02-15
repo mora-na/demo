@@ -1,5 +1,6 @@
 package com.example.demo.common.async;
 
+import com.example.demo.common.config.CommonConstants;
 import org.slf4j.MDC;
 
 import java.util.Map;
@@ -72,11 +73,15 @@ public final class MdcUtils {
     }
 
     public static ThreadFactory threadFactory(String namePrefix, boolean daemon) {
-        String prefix = namePrefix == null ? "mdc-thread-" : namePrefix;
+        String prefix = namePrefix;
+        if (prefix == null || prefix.trim().isEmpty()) {
+            prefix = CommonConstants.Mdc.DEFAULT_THREAD_NAME_PREFIX;
+        }
+        final String threadNamePrefix = prefix;
         AtomicInteger index = new AtomicInteger();
         return runnable -> {
             Thread thread = new Thread(wrap(runnable));
-            thread.setName(prefix + index.incrementAndGet());
+            thread.setName(threadNamePrefix + index.incrementAndGet());
             thread.setDaemon(daemon);
             return thread;
         };

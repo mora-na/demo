@@ -3,6 +3,7 @@ package com.example.demo.datascope.service;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.common.mybatis.DataScopeProperties;
 import com.example.demo.common.mybatis.DataScopeType;
+import com.example.demo.datascope.config.DataScopeConstants;
 import com.example.demo.dept.entity.Dept;
 import com.example.demo.dept.service.DeptService;
 import com.example.demo.permission.entity.Role;
@@ -29,15 +30,18 @@ public class DataScopeResolver {
     private final RoleService roleService;
     private final DeptService deptService;
     private final DataScopeProperties properties;
+    private final DataScopeConstants dataScopeConstants;
 
     public DataScopeResolver(UserRoleService userRoleService,
                              RoleService roleService,
                              DeptService deptService,
-                             DataScopeProperties properties) {
+                             DataScopeProperties properties,
+                             DataScopeConstants dataScopeConstants) {
         this.userRoleService = userRoleService;
         this.roleService = roleService;
         this.deptService = deptService;
         this.properties = properties;
+        this.dataScopeConstants = dataScopeConstants;
     }
 
     /**
@@ -82,7 +86,7 @@ public class DataScopeResolver {
                 continue;
             }
             Integer status = role.getStatus();
-            if (status != null && status != 1) {
+            if (status != null && status != dataScopeConstants.getStatus().getRoleActive()) {
                 continue;
             }
             String type = normalizeType(role.getDataScopeType(), null);
@@ -180,7 +184,7 @@ public class DataScopeResolver {
         if (value == null || value.trim().isEmpty()) {
             return Collections.emptyList();
         }
-        String[] tokens = value.split(",");
+        String[] tokens = value.split(dataScopeConstants.getParser().getDeptIdSeparator());
         List<Long> ids = new ArrayList<>();
         for (String token : tokens) {
             if (token == null) {
@@ -211,7 +215,9 @@ public class DataScopeResolver {
     }
 
     private String joinIds(Collection<Long> ids) {
-        return ids.stream().map(String::valueOf).collect(Collectors.joining(","));
+        return ids.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(dataScopeConstants.getParser().getDeptIdSeparator()));
     }
 
     private String normalizeType(String value, String fallback) {

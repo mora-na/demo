@@ -1,5 +1,6 @@
 package com.example.demo.auth.store;
 
+import com.example.demo.auth.config.AuthConstants;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.cache.CacheTool;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,19 +21,19 @@ import java.time.Instant;
 @Component
 public class TokenStore {
 
-    private static final String TOKEN_KEY_PREFIX = "auth:token:";
-
     private final CacheTool cacheTool;
     private final ObjectMapper objectMapper;
+    private final AuthConstants systemConstants;
 
     /**
      * 构造函数，注入缓存工具。
      *
      * @param cacheTool 缓存工具
      */
-    public TokenStore(CacheTool cacheTool, ObjectMapper objectMapper) {
+    public TokenStore(CacheTool cacheTool, ObjectMapper objectMapper, AuthConstants systemConstants) {
         this.cacheTool = cacheTool;
         this.objectMapper = objectMapper;
+        this.systemConstants = systemConstants;
     }
 
     /**
@@ -94,7 +95,7 @@ public class TokenStore {
      * @return 缓存 Key
      */
     private String buildKey(String token) {
-        return TOKEN_KEY_PREFIX + token;
+        return systemConstants.getToken().getStoreKeyPrefix() + token;
     }
 
     private TokenRecord convertRecord(Object value) {

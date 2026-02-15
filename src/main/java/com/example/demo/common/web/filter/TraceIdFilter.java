@@ -1,5 +1,6 @@
 package com.example.demo.common.web.filter;
 
+import com.example.demo.common.config.CommonConstants;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,13 @@ import java.util.UUID;
  */
 @Component
 public class TraceIdFilter implements Filter {
+
+    private final CommonConstants systemConstants;
+
+    public TraceIdFilter(CommonConstants systemConstants) {
+        this.systemConstants = systemConstants;
+    }
+
     /**
      * 为当前请求绑定 traceId 并在请求结束后清理。
      *
@@ -28,11 +36,12 @@ public class TraceIdFilter implements Filter {
      */
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        String mdcKey = systemConstants.getTrace().getMdcKey();
         try {
-            MDC.put("traceId", UUID.randomUUID().toString()); // 可改为从请求头提取 traceId
+            MDC.put(mdcKey, UUID.randomUUID().toString()); // 可改为从请求头提取 traceId
             chain.doFilter(request, response);
         } finally {
-            MDC.remove("traceId");
+            MDC.remove(mdcKey);
         }
     }
 }

@@ -2,6 +2,7 @@ package com.example.demo.common.web.permission;
 
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.common.config.CommonConstants;
 import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
@@ -37,6 +38,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
     private final CommonExcludePathsProperties commonExcludePaths;
     private final I18nService i18nService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private final CommonConstants systemConstants;
 
     /**
      * 构造函数，注入权限配置、服务与公共排除路径。
@@ -50,11 +52,13 @@ public class PermissionInterceptor implements HandlerInterceptor {
     public PermissionInterceptor(PermissionProperties properties,
                                  PermissionService permissionService,
                                  CommonExcludePathsProperties commonExcludePaths,
-                                 I18nService i18nService) {
+                                 I18nService i18nService,
+                                 CommonConstants systemConstants) {
         this.properties = properties;
         this.permissionService = permissionService;
         this.commonExcludePaths = commonExcludePaths;
         this.i18nService = i18nService;
+        this.systemConstants = systemConstants;
     }
 
     /**
@@ -86,7 +90,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
         boolean loginRequired = login != null || permission != null || properties.isRequireLoginByDefault();
         AuthUser user = AuthContext.get();
         if (loginRequired && user == null) {
-            writeUnauthorized(response, i18nService.getMessage(request, "auth.permission.required"));
+            writeUnauthorized(response, i18nService.getMessage(request, systemConstants.getPermission().getRequiredMessageKey()));
             return false;
         }
         if (permission == null) {
@@ -105,7 +109,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
             allowed = permissionService.hasAllPermissions(user, required);
         }
         if (!allowed) {
-            writeForbidden(response, i18nService.getMessage(request, "auth.permission.denied"));
+            writeForbidden(response, i18nService.getMessage(request, systemConstants.getPermission().getDeniedMessageKey()));
             return false;
         }
         return true;
@@ -207,7 +211,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
             return;
         }
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.setContentType("application/json;charset=UTF-8");
+        response.setContentType(systemConstants.getHttp().getJsonContentType());
         String body = OBJECT_MAPPER.writeValueAsString(result);
         try {
             response.getWriter().write(body);

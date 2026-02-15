@@ -3,6 +3,7 @@ package com.example.demo.datascope.controller;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.datascope.config.DataScopeConstants;
 import com.example.demo.datascope.dto.DataScopeResolveMenuVO;
 import com.example.demo.datascope.dto.DataScopeResolveResponse;
 import com.example.demo.datascope.service.DataScopeResolveService;
@@ -28,6 +29,7 @@ import java.util.List;
 public class DataScopeResolveController extends BaseController {
 
     private final DataScopeResolveService resolveService;
+    private final DataScopeConstants dataScopeConstants;
 
     @GetMapping("/resolve")
     @RequirePermission("data-scope:resolve")
@@ -35,7 +37,7 @@ public class DataScopeResolveController extends BaseController {
                                                           @RequestParam(value = "permission", required = false) String permission) {
         DataScopeResolveResponse response = resolveService.resolve(userId, permission);
         if (response == null) {
-            return error(404, i18n("user.not.found"));
+            return error(dataScopeConstants.getController().getNotFoundCode(), i18n("user.not.found"));
         }
         return success(response);
     }
