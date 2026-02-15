@@ -23,7 +23,6 @@ spring:
   # 默认使用 dev 配置，可通过环境变量覆盖
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
-
   # 控制台输出配置
   output:
     # ANSI 颜色输出配置
@@ -91,6 +90,13 @@ spring:
             useProperties: false
             # 获取触发器时加锁（高并发 DB 建议开启）
             acquireTriggersWithinLock: true
+
+# Actuator 健康检查配置
+management:
+  health:
+    mail:
+      # 默认跟随 NOTIFY_MAIL_ENABLED，未启用邮件时不探测 SMTP，避免无密码告警
+      enabled: ${MANAGEMENT_HEALTH_MAIL_ENABLED:${NOTIFY_MAIL_ENABLED:false}}
 
 # 定时任务日志收集配置
 job:

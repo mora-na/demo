@@ -2,6 +2,67 @@
 
 本文档从 `README.md` 拆分，集中维护所有配置项说明。
 
+### 邮件通知能力（notify.mail + spring.mail）
+
+- 默认实现放在 `src/main/java/com/example/demo/common/notify/mail`，供 `auth/notice` 等模块复用。
+- 开启后使用 Spring Mail（SMTP）发送；关闭时自动降级为 Noop 实现（只记录日志，不发送）。
+- SMTP 连接参数使用 `spring.mail.*` 标准配置；业务开关与文案使用 `notify.mail.*`。
+
+**notify.mail 业务配置**
+
+| 配置键                          | 默认值      | 说明                                  |
+|------------------------------|----------|-------------------------------------|
+| `notify.mail.enabled`        | `false`  | 是否启用 SMTP 邮件发送能力。                   |
+| `notify.mail.from`           | ``       | 发件人地址；为空时回退 `spring.mail.username`。 |
+| `notify.mail.subject-prefix` | `[Demo]` | 邮件主题前缀（发送时自动拼接）。                    |
+
+**spring.mail SMTP 配置（Spring 标准）**
+
+| 配置键                                                | 默认值          | 说明                      |
+|----------------------------------------------------|--------------|-------------------------|
+| `spring.mail.host`                                 | ``           | SMTP 主机地址。              |
+| `spring.mail.port`                                 | ``           | SMTP 端口。                |
+| `spring.mail.username`                             | ``           | SMTP 用户名（同时可作为默认发件人）。   |
+| `spring.mail.password`                             | ``           | SMTP 密码/授权码。            |
+| `spring.mail.properties.mail.smtp.auth`            | `true/false` | 是否启用 SMTP 认证（按服务商要求配置）。 |
+| `spring.mail.properties.mail.smtp.starttls.enable` | `true/false` | 是否启用 STARTTLS。          |
+| `spring.mail.properties.mail.smtp.ssl.enable`      | `true/false` | 是否启用 SSL。               |
+
+### 认证安全增强（auth.security）
+
+- 配置绑定类：`src/main/java/com/example/demo/auth/config/AuthProperties.java`。
+- 当前提供两类能力：
+    1. 异地/设备变更登录告警（登录成功后异步检测并发邮件）。
+    2. 敏感操作邮箱二次确认（发码 + 验码 + 签发短期票据）。
+
+**登录异常告警（auth.security.login-anomaly）**
+
+| 配置键                                                   | 默认值      | 说明                                       |
+|-------------------------------------------------------|----------|------------------------------------------|
+| `auth.security.login-anomaly.enabled`                 | `true`   | 是否启用异地/设备变更告警。                           |
+| `auth.security.login-anomaly.notify-on-ip-change`     | `true`   | 是否在 IP 变化时告警。                            |
+| `auth.security.login-anomaly.notify-on-device-change` | `true`   | 是否在设备指纹变化时告警（设备类型/系统/浏览器）。               |
+| `auth.security.login-anomaly.mail-subject`            | `登录安全提醒` | 告警邮件主题（不含 `notify.mail.subject-prefix`）。 |
+
+**敏感操作二次确认（auth.security.operation-confirm）**
+
+| 配置键                                                       | 默认值         | 说明                                         |
+|-----------------------------------------------------------|-------------|--------------------------------------------|
+| `auth.security.operation-confirm.enabled`                 | `true`      | 是否启用邮箱二次确认能力。                              |
+| `auth.security.operation-confirm.code-length`             | `6`         | 验证码长度（系统内部限制 4~10）。                        |
+| `auth.security.operation-confirm.code-ttl-seconds`        | `300`       | 验证码有效期（秒，最小 60）。                           |
+| `auth.security.operation-confirm.resend-interval-seconds` | `60`        | 发码冷却时间（秒，最小 10）。                           |
+| `auth.security.operation-confirm.max-verify-attempts`     | `5`         | 单验证码最大校验失败次数。                              |
+| `auth.security.operation-confirm.ticket-ttl-seconds`      | `900`       | 验证通过后票据有效期（秒，最小 60）。                       |
+| `auth.security.operation-confirm.mail-subject`            | `敏感操作确认验证码` | 二次确认邮件主题（不含 `notify.mail.subject-prefix`）。 |
+
+**相关接口（需登录）**
+
+| 接口                                             | 说明            |
+|------------------------------------------------|---------------|
+| `POST /auth/security/operation-confirm/send`   | 发送敏感操作邮箱验证码。  |
+| `POST /auth/security/operation-confirm/verify` | 校验验证码并返回短期票据。 |
+
 ### DataScope 模块常量覆盖（datascope.constants）
 
 - 默认值集中定义在 `src/main/java/com/example/demo/datascope/config/DataScopeConstants.java`。

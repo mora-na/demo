@@ -12,7 +12,13 @@ A front-end/back-end separated sample system focused on authentication/authoriza
 
 - Auth & Authorization: JWT, captcha login, permission interception (roles/permissions/menus).
 - Login security: failure limits (sliding window) and lock strategy.
-- Password security: transport AES-GCM/SM2, storage bcrypt/md5/sm3 (configurable).
+- Session security: server-side token revocation on logout (no need to wait for JWT natural expiration).
+- Mail-backed security: login anomaly alerts (IP/device change) and sensitive-operation email confirmation (code +
+  short-lived ticket).
+- Password security: transport AES-GCM/SM2, storage bcrypt/md5/sm3 (configurable), with first-login forced password
+  change and password expiration policy.
+- Unified API contract: backend returns `CommonResult` consistently; frontend handles `code/message/data` in one place.
+- Constant governance: magic values are centralized in module-level `*Constants` with defaults and config overrides.
 - Data scope control: ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE.
 - Security protections: SQL guard, XSS filter, rate limiting, duplicate-submit protection.
 - Excel import/export: user batch import/export example.
@@ -20,6 +26,9 @@ A front-end/back-end separated sample system focused on authentication/authoriza
 - Notifications: publish/read states, SSE pushes unread counts and latest list.
 - Dictionary module: dict types/data, front/back caching, automatic label translation in responses.
 - Caching: Redis / in-memory / database options.
+- Frontend routing & permissions: Vue Router nested routes (History mode), menu-driven navigation, and permission-aware
+  access.
+- Internationalization: backend i18n messages + frontend `vue-i18n` for bilingual extensibility.
 
 ## Tech Stack
 
@@ -27,9 +36,12 @@ A front-end/back-end separated sample system focused on authentication/authoriza
 
 - Spring Boot 2.7.x (current 2.7.12)
 - MyBatis-Plus
+- Spring Validation
 - Quartz (JDBC persistence)
+- Spring Mail (SMTP)
 - Redis + Caffeine (multi-level caching)
 - Druid + Dynamic Datasource
+- Spring Security Crypto + BouncyCastle (password and cryptography support)
 - Jasypt (config encryption)
 - Logback
 - PostgreSQL / MySQL (see `sql/`)
@@ -37,9 +49,11 @@ A front-end/back-end separated sample system focused on authentication/authoriza
 ### Frontend (`demo-ui`)
 
 - Vue 3 + Vite + TypeScript
+- Vue Router (History mode)
 - Pinia + Axios
 - Element Plus
 - vue-i18n
+- sm-crypto (SM2/SM3 in browser)
 - lucide-vue-next
 
 ## Quick Start
@@ -74,6 +88,25 @@ npm run dev
 - `sql/` database scripts
 - `demo-ui/` frontend
 
+## Module Capability Map
+
+| Module       | Responsibility           | Key Capabilities                                                                                          |
+|--------------|--------------------------|-----------------------------------------------------------------------------------------------------------|
+| `auth`       | Authentication & session | Captcha login, JWT issue/verify, logout revocation, login security policy, email confirmation             |
+| `user`       | User management          | User profile, status lifecycle, password updates, user-level data-scope overrides                         |
+| `dept`       | Organization structure   | Department tree, hierarchy management, ownership baseline                                                 |
+| `menu`       | Menu management          | Menu tree, route menu payloads, menu permission identifiers                                               |
+| `permission` | Roles & permissions      | Role authorization, permission-point control, API access control                                          |
+| `datascope`  | Data authorization       | 3-layer scope merge (role/menu/user), SQL data filtering                                                  |
+| `dict`       | Dictionary management    | Dict type/data maintenance, caching, dict label mapping                                                   |
+| `notice`     | Notification center      | Notification publish/read state, SSE real-time push                                                       |
+| `job`        | Job scheduling           | Quartz job management, execution logs and result tracking                                                 |
+| `log`        | Audit logging            | Login logs, operation logs, audit event persistence                                                       |
+| `post`       | Position management      | Position maintenance, user-position association                                                           |
+| `order`      | Business sample          | Order sample module (demonstrates CRUD + permission/data-scope integration)                               |
+| `common`     | Shared infrastructure    | Unified response, exception handling, cache abstraction, mail sender abstraction, common utilities/config |
+| `ai`         | AI extension entry       | AI capability integration and extensibility (enabled per business needs)                                  |
+
 ## Usage and Configuration
 
 ### Authentication & Login
@@ -81,7 +114,44 @@ npm run dev
 - Token header: `Authorization: Bearer <token>` or `X-Auth-Token`.
 - JWT config: `auth.jwt.secret`, `auth.jwt.ttl-seconds`.
 - Password policy: `auth.password.mode`, `auth.password.transport-mode`, `auth.password.transport-key`.
+- Password governance:
+    - Force password change on first login: `auth.password.force-change-on-first-login` (default `true`).
+    - Password expiration days: `auth.password.expire-days` (default `120`; disable when `<=0`).
 - Login failure limits: `auth.login-limit.enabled`, `auth.login-limit.max-errors`, `auth.login-limit.window-seconds`, `auth.login-limit.lock-seconds`, `auth.login-limit.key-mode`.
+- Security enhancements:
+    - Login anomaly alert: `auth.security.login-anomaly.*`
+    - Sensitive-operation email confirmation: `auth.security.operation-confirm.*`
+    - Send code API: `POST /auth/security/operation-confirm/send`
+    - Verify code API: `POST /auth/security/operation-confirm/verify`
+- Logout invalidation:
+    - API: `POST /auth/logout`
+    - Behavior: current token is revoked server-side and becomes invalid immediately.
+
+### Unified Response & Constants
+
+- Unified response: except binary download endpoints, backend APIs return `CommonResult`.
+- Constant governance: module magic values are centralized in `*Constants` and bound via `@ConfigurationProperties`.
+- Full configurable keys and defaults: `docs/CONFIGURATION_EN.md`.
+
+### Mail-backed Security Scenarios
+
+- Email is sent in these cases:
+    - After successful login, anomaly detection triggers alert when IP/device fingerprint changes and policy matches.
+    - Calling `POST /auth/security/operation-confirm/send` sends operation confirmation code by email.
+- `POST /auth/security/operation-confirm/verify` only verifies code and issues a short-lived ticket, it does not send
+  email.
+- Enforcing confirmation on concrete business actions requires consuming the ticket (`consumeTicket`) in those business
+  APIs.
+
+### Mail Config (Minimal)
+
+- Business switch/text: `notify.mail.*`
+- SMTP connection: `spring.mail.*`
+- Default `notify.mail.enabled=false` means no actual sending (Noop sender).
+- Mail health check switch: `management.health.mail.enabled`
+    - Defaults to `NOTIFY_MAIL_ENABLED`.
+    - When mail sending is disabled, SMTP probing is disabled by default to avoid noisy `Mail health check failed`
+      warnings.
 
 ### Captcha
 
@@ -187,6 +257,8 @@ python3 scripts/licenses_scan_frontend.py
 - Too many login failures: check `auth.login-limit.*` and Redis.
 - Invalid captcha: verify Redis and expiration.
 - Invalid/expired token: check `auth.jwt.ttl-seconds` and system time.
+- `Mail health check failed`: check whether `management.health.mail.enabled` is enabled; if enabled, ensure
+  `spring.mail.username/password` are fully configured.
 
 ## Common Commands
 

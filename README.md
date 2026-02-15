@@ -12,7 +12,11 @@
 
 - 认证与鉴权：JWT、验证码登录、权限拦截（角色/权限/菜单）。
 - 登录安全：登录失败次数限制（滑动窗口）与锁定策略。
-- 密码安全：传输层可选 AES-GCM/SM2，持久化支持 bcrypt/md5/sm3（可配置）。
+- 会话安全：支持退出登录后服务端主动撤销 Token（无需等待 JWT 自然过期）。
+- 邮件安全能力：支持异地/设备变更登录告警、敏感操作邮箱二次确认（验证码 + 短期票据）。
+- 密码安全：传输层可选 AES-GCM/SM2，持久化支持 bcrypt/md5/sm3（可配置），并支持首次登录强制改密与密码过期策略。
+- 统一接口契约：后端统一 `CommonResult` 返回结构，前端统一按 `code/message/data` 处理。
+- 常量治理：模块魔法值收敛到各模块 `*Constants`，支持默认值与配置覆盖。
 - 数据范围控制：按角色配置可见范围（ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE）。
 - 安全防护：SQL 防护、XSS 过滤、限流、重复提交防护。
 - Excel 导入导出：用户数据批量导入导出示例。
@@ -20,6 +24,8 @@
 - 系统通知：支持发布与阅读状态，SSE 实时推送未读数与列表。
 - 字典管理：支持字典类型/数据项维护，前后端缓存，接口返回可自动翻译字典标签。
 - 缓存体系：Redis / 本地内存 / 数据库多策略缓存配置。
+- 前端路由与权限：采用 Vue Router（History 模式）嵌套路由，菜单点击路由跳转并保留权限控制。
+- 国际化：后端 i18n 消息与前端 `vue-i18n` 配合，支持中英文文案扩展。
 
 ## 技术栈
 
@@ -27,9 +33,12 @@
 
 - Spring Boot 2.7.x（当前 2.7.12）
 - MyBatis-Plus
+- Spring Validation
 - Quartz（JDBC 持久化）
+- Spring Mail（SMTP）
 - Redis + Caffeine（多级缓存）
 - Druid + Dynamic Datasource
+- Spring Security Crypto + BouncyCastle（密码与国密能力）
 - Jasypt（配置加密）
 - Logback（日志）
 - PostgreSQL / MySQL（见 `sql/`）
@@ -37,9 +46,11 @@
 ### 前端（`demo-ui`）
 
 - Vue 3 + Vite + TypeScript
+- Vue Router（History）
 - Pinia + Axios
 - Element Plus
 - vue-i18n
+- sm-crypto（SM2/SM3 前端能力）
 - lucide-vue-next（图标）
 
 ## 快速开始
@@ -74,6 +85,25 @@ npm run dev
 - `sql/` 数据库建表脚本
 - `demo-ui/` 前端工程（如需）
 
+## 模块能力地图
+
+| 模块           | 主要职责    | 关键能力                               |
+|--------------|---------|------------------------------------|
+| `auth`       | 认证与会话   | 验证码登录、JWT 签发与校验、登出撤销、登录安全策略、邮箱二次确认 |
+| `user`       | 用户管理    | 用户资料、状态维护、密码修改、用户级数据范围覆盖           |
+| `dept`       | 组织架构    | 部门树维护、上下级关系、数据归属基础                 |
+| `menu`       | 菜单管理    | 菜单树、路由菜单数据、菜单权限标识                  |
+| `permission` | 角色与权限   | 角色授权、权限点控制、接口访问控制                  |
+| `datascope`  | 数据权限    | 角色/菜单/用户三级数据范围合并、SQL 数据过滤          |
+| `dict`       | 字典管理    | 字典类型与数据维护、缓存、字典标签映射                |
+| `notice`     | 通知中心    | 通知发布与阅读状态、SSE 实时推送                 |
+| `job`        | 任务调度    | Quartz 任务管理、执行日志与结果追踪              |
+| `log`        | 日志审计    | 登录日志、操作日志、审计事件落库                   |
+| `post`       | 岗位管理    | 岗位信息维护、用户岗位关联                      |
+| `order`      | 业务示例    | 订单示例模块（用于展示业务层 CRUD + 权限/数据范围接入）   |
+| `common`     | 公共基础设施  | 统一返回、异常处理、缓存抽象、邮件发送抽象、工具与通用配置      |
+| `ai`         | AI 扩展入口 | AI 相关能力接入与扩展（按业务启用）                |
+
 ## 使用说明与配置
 
 ### 认证与登录
@@ -81,7 +111,41 @@ npm run dev
 - Token 头仅支持 `Authorization: Bearer <token>` 或 `X-Auth-Token`。
 - JWT 配置：`auth.jwt.secret`、`auth.jwt.ttl-seconds`。
 - 密码策略：`auth.password.mode`、`auth.password.transport-mode`、`auth.password.transport-key`。
+- 密码治理：
+    - 首次登录强制改密：`auth.password.force-change-on-first-login`（默认 `true`）。
+    - 密码过期天数：`auth.password.expire-days`（默认 `120`，`<=0` 表示关闭过期策略）。
 - 登录失败限制（滑动窗口）：`auth.login-limit.enabled`、`auth.login-limit.max-errors`、`auth.login-limit.window-seconds`、`auth.login-limit.lock-seconds`、`auth.login-limit.key-mode`。
+- 安全增强：
+    - 登录异常告警：`auth.security.login-anomaly.*`
+    - 敏感操作邮箱二次确认：`auth.security.operation-confirm.*`
+    - 发送接口：`POST /auth/security/operation-confirm/send`
+    - 校验接口：`POST /auth/security/operation-confirm/verify`
+- 登出失效：
+    - 接口：`POST /auth/logout`
+    - 行为：服务端撤销当前 Token，使其立即失效。
+
+### 统一返回与常量治理
+
+- 统一返回：除下载流等特殊场景外，后端接口统一返回 `CommonResult`，便于前端统一错误处理与消息展示。
+- 常量治理：模块内部魔法值已收敛到各自 `*Constants`，通过 `@ConfigurationProperties` 支持配置覆盖。
+- 详细可覆盖项与默认值见：`docs/CONFIGURATION.md`。
+
+### 邮件能力（安全场景）
+
+- 当前会触发邮件发送的场景：
+    - 登录成功后触发“登录环境异常检测”，当 IP 或设备指纹变化且满足策略时发送告警邮件。
+    - 调用 `POST /auth/security/operation-confirm/send` 时发送敏感操作验证码邮件。
+- `POST /auth/security/operation-confirm/verify` 只校验验证码并返回短期票据，不发送邮件。
+- 当前“敏感业务接口强制二次确认”需要在具体业务接口中消费短期票据（`consumeTicket`）后才会真正生效。
+
+### 邮件配置最小说明
+
+- 业务开关与文案：`notify.mail.*`
+- SMTP 连接参数：`spring.mail.*`
+- 默认 `notify.mail.enabled=false`，即默认不发送邮件（Noop 实现）。
+- 邮件健康检查开关：`management.health.mail.enabled`
+    - 默认跟随 `NOTIFY_MAIL_ENABLED`。
+    - 未启用邮件时默认不探测 SMTP，避免出现 `Mail health check failed` 的误告警。
 
 ### 验证码
 
@@ -187,6 +251,8 @@ python3 scripts/licenses_scan_frontend.py
 - 登录失败次数过多：检查 `auth.login-limit.*` 与 Redis。
 - 验证码无效：确认 Redis 可用与验证码是否过期。
 - Token 无效/过期：检查 `auth.jwt.ttl-seconds` 与时钟偏差。
+- 出现 `Mail health check failed`：检查 `management.health.mail.enabled` 是否被开启；若开启需同时完整配置
+  `spring.mail.username/password`。
 
 ## 常用命令
 

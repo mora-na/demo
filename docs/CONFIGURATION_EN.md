@@ -2,6 +2,68 @@
 
 This document is split from `README_EN.md` and centralizes all configuration references.
 
+### Mail Notification Capability (`notify.mail` + `spring.mail`)
+
+- Default implementation is under `src/main/java/com/example/demo/common/notify/mail`, reusable by modules like `auth`
+  and `notice`.
+- When enabled, SMTP is used via Spring Mail; when disabled, it falls back to a Noop sender (log only, no actual email).
+- SMTP connection settings come from standard `spring.mail.*`; business switch/text settings come from `notify.mail.*`.
+
+**`notify.mail` business settings**
+
+| Key                          | Default  | Description                                                      |
+|------------------------------|----------|------------------------------------------------------------------|
+| `notify.mail.enabled`        | `false`  | Enables SMTP mail sending capability.                            |
+| `notify.mail.from`           | ``       | Sender address. Falls back to `spring.mail.username` when empty. |
+| `notify.mail.subject-prefix` | `[Demo]` | Subject prefix auto-prepended to outgoing emails.                |
+
+**`spring.mail` SMTP settings (Spring standard)**
+
+| Key                                                | Default      | Description                                           |
+|----------------------------------------------------|--------------|-------------------------------------------------------|
+| `spring.mail.host`                                 | ``           | SMTP host.                                            |
+| `spring.mail.port`                                 | ``           | SMTP port.                                            |
+| `spring.mail.username`                             | ``           | SMTP username (also used as default sender).          |
+| `spring.mail.password`                             | ``           | SMTP password/app token.                              |
+| `spring.mail.properties.mail.smtp.auth`            | `true/false` | Enables SMTP auth depending on provider requirements. |
+| `spring.mail.properties.mail.smtp.starttls.enable` | `true/false` | Enables STARTTLS.                                     |
+| `spring.mail.properties.mail.smtp.ssl.enable`      | `true/false` | Enables SSL.                                          |
+
+### Auth Security Enhancements (`auth.security`)
+
+- Bound in `src/main/java/com/example/demo/auth/config/AuthProperties.java`.
+- Current capabilities:
+    1. Login anomaly alert (async check after successful login, with email alert).
+    2. Sensitive-operation email confirmation (send code + verify code + issue short-lived ticket).
+
+**Login anomaly alert (`auth.security.login-anomaly`)**
+
+| Key                                                   | Default  | Description                                                            |
+|-------------------------------------------------------|----------|------------------------------------------------------------------------|
+| `auth.security.login-anomaly.enabled`                 | `true`   | Enables login anomaly alerting.                                        |
+| `auth.security.login-anomaly.notify-on-ip-change`     | `true`   | Triggers alerts on IP change.                                          |
+| `auth.security.login-anomaly.notify-on-device-change` | `true`   | Triggers alerts on device fingerprint change (device type/OS/browser). |
+| `auth.security.login-anomaly.mail-subject`            | `登录安全提醒` | Alert email subject (without `notify.mail.subject-prefix`).            |
+
+**Sensitive-operation confirmation (`auth.security.operation-confirm`)**
+
+| Key                                                       | Default     | Description                                                              |
+|-----------------------------------------------------------|-------------|--------------------------------------------------------------------------|
+| `auth.security.operation-confirm.enabled`                 | `true`      | Enables email-based operation confirmation.                              |
+| `auth.security.operation-confirm.code-length`             | `6`         | Verification code length (internally clamped to 4~10).                   |
+| `auth.security.operation-confirm.code-ttl-seconds`        | `300`       | Code TTL in seconds (minimum 60).                                        |
+| `auth.security.operation-confirm.resend-interval-seconds` | `60`        | Resend cooldown in seconds (minimum 10).                                 |
+| `auth.security.operation-confirm.max-verify-attempts`     | `5`         | Max verification failures per code.                                      |
+| `auth.security.operation-confirm.ticket-ttl-seconds`      | `900`       | Issued ticket TTL in seconds after successful verification (minimum 60). |
+| `auth.security.operation-confirm.mail-subject`            | `敏感操作确认验证码` | Confirmation email subject (without `notify.mail.subject-prefix`).       |
+
+**Related APIs (login required)**
+
+| API                                            | Description                                     |
+|------------------------------------------------|-------------------------------------------------|
+| `POST /auth/security/operation-confirm/send`   | Sends operation confirmation email code.        |
+| `POST /auth/security/operation-confirm/verify` | Verifies code and returns a short-lived ticket. |
+
 ### Datascope Constants Override (`datascope.constants`)
 
 - Defaults are centralized in `src/main/java/com/example/demo/datascope/config/DataScopeConstants.java`.

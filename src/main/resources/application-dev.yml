@@ -98,9 +98,77 @@ auth:
       - /auth/captcha # 排除验证码接口
       - /auth/login # 排除登录接口
       - /error # 排除错误接口
+  # 安全增强配置
+  security:
+    # 登录异常告警配置
+    login-anomaly:
+      # 是否启用异地/设备变更告警邮件
+      enabled: true
+      # 是否在 IP 变化时告警
+      notify-on-ip-change: true
+      # 是否在设备变化时告警
+      notify-on-device-change: true
+      # 告警邮件主题（不含 notify.mail.subject-prefix）
+      mail-subject: 登录安全提醒
+    # 敏感操作邮箱二次确认配置
+    operation-confirm:
+      # 是否启用二次确认
+      enabled: true
+      # 验证码长度（系统会限制在 4~10）
+      code-length: 6
+      # 验证码有效期（秒）
+      code-ttl-seconds: 300
+      # 发码冷却时间（秒）
+      resend-interval-seconds: 60
+      # 单验证码最大校验失败次数
+      max-verify-attempts: 5
+      # 校验通过后的票据有效期（秒）
+      ticket-ttl-seconds: 900
+      # 二次确认邮件主题（不含 notify.mail.subject-prefix）
+      mail-subject: 敏感操作确认验证码
+
+# 通知能力配置
+notify:
+  mail:
+    # 是否启用 SMTP 邮件发送能力
+    enabled: ${NOTIFY_MAIL_ENABLED:false}
+    # 发件人地址；为空时回退到 spring.mail.username
+    from: ${NOTIFY_MAIL_FROM:}
+    # 邮件主题前缀（会自动拼接到业务主题前）
+    subject-prefix: ${NOTIFY_MAIL_SUBJECT_PREFIX:[Demo]}
 
 # 数据源与缓存配置
 spring:
+  # SMTP 邮件配置（Spring Boot 标准）
+  mail:
+    # SMTP 主机地址
+    host: ${SPRING_MAIL_HOST:}
+    # SMTP 端口
+    port: ${SPRING_MAIL_PORT:587}
+    # SMTP 用户名
+    username: ${SPRING_MAIL_USERNAME:}
+    # SMTP 密码/授权码
+    password: ${SPRING_MAIL_PASSWORD:}
+    # 编码
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          # 是否启用 SMTP 认证
+          auth: ${SPRING_MAIL_SMTP_AUTH:true}
+          # 是否启用 STARTTLS
+          starttls:
+            enable: ${SPRING_MAIL_SMTP_STARTTLS:true}
+          # 是否启用 SSL（和 STARTTLS 二选一）
+          ssl:
+            enable: ${SPRING_MAIL_SMTP_SSL:false}
+          # 连接超时（毫秒）
+          connectiontimeout: ${SPRING_MAIL_CONNECTION_TIMEOUT:5000}
+          # 读超时（毫秒）
+          timeout: ${SPRING_MAIL_TIMEOUT:5000}
+          # 写超时（毫秒）
+          writetimeout: ${SPRING_MAIL_WRITE_TIMEOUT:5000}
+
   # Redis 连接配置
   redis:
     # Redis 主机地址
