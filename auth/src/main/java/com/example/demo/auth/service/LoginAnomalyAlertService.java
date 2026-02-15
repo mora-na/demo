@@ -7,7 +7,7 @@ import com.example.demo.common.notify.mail.NotifyMailSender;
 import com.example.demo.log.entity.SysLoginLog;
 import com.example.demo.log.service.SysLoginLogService;
 import com.example.demo.log.support.UserAgentUtils;
-import com.example.demo.user.entity.SysUser;
+import com.example.demo.system.api.user.UserAccountDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -47,7 +47,7 @@ public class LoginAnomalyAlertService {
      * @param loginTime 当前登录时间
      */
     @Async
-    public void checkAndNotify(SysUser user, String currentIp, String userAgent, LocalDateTime loginTime) {
+    public void checkAndNotify(UserAccountDTO user, String currentIp, String userAgent, LocalDateTime loginTime) {
         AuthProperties.Security.LoginAnomaly config = authProperties.getSecurity().getLoginAnomaly();
         if (config == null || !config.isEnabled()) {
             return;
@@ -141,7 +141,7 @@ public class LoginAnomalyAlertService {
         parts.add(normalized);
     }
 
-    private String buildMailContent(SysUser user,
+    private String buildMailContent(UserAccountDTO user,
                                     SysLoginLog previous,
                                     String currentIp,
                                     UserAgentUtils.UserAgentInfo currentUa,

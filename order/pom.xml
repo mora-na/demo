@@ -24,7 +24,11 @@
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
-            <artifactId>system</artifactId>
+            <artifactId>system-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>datascope</artifactId>
         </dependency>
 
         <dependency>

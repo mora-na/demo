@@ -8,8 +8,8 @@ import com.example.demo.order.converter.OrderConverter;
 import com.example.demo.order.dto.OrderQuery;
 import com.example.demo.order.dto.OrderVO;
 import com.example.demo.order.service.OrderService;
-import com.example.demo.user.entity.SysUser;
-import com.example.demo.user.service.SysUserService;
+import com.example.demo.system.api.user.UserAccountApi;
+import com.example.demo.system.api.user.UserSimpleDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 public class OrderAdminController extends BaseController {
 
     private final OrderService orderService;
-    private final SysUserService userService;
+    private final UserAccountApi userAccountApi;
     private final OrderConverter orderConverter;
 
     @GetMapping
@@ -78,15 +78,15 @@ public class OrderAdminController extends BaseController {
         if (userIds.isEmpty()) {
             return;
         }
-        Map<Long, SysUser> userMap = userService.listByIds(userIds).stream()
+        Map<Long, UserSimpleDTO> userMap = userAccountApi.listSimpleByIds(userIds).stream()
                 .filter(Objects::nonNull)
                 .filter(user -> user.getId() != null)
-                .collect(Collectors.toMap(SysUser::getId, user -> user, (left, right) -> right));
+                .collect(Collectors.toMap(UserSimpleDTO::getId, user -> user, (left, right) -> right));
         for (OrderVO view : views) {
             if (view == null || view.getUserId() == null) {
                 continue;
             }
-            SysUser user = userMap.get(view.getUserId());
+            UserSimpleDTO user = userMap.get(view.getUserId());
             if (user != null) {
                 view.setUserName(user.getUserName());
                 view.setNickName(user.getNickName());

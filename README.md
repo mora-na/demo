@@ -104,6 +104,14 @@ npm run dev
 | `common`     | 公共基础设施  | 统一返回、异常处理、缓存抽象、邮件发送抽象、工具与通用配置      |
 | `ai`         | AI 扩展入口 | AI 相关能力接入与扩展（按业务启用）                |
 
+### 微服务过渡模块（Phase 1）
+
+- `gateway`：统一入口与灰度转发，默认回落到 `app`。
+- `auth-service`：认证域过渡服务（包装现有 `auth` 能力）。
+- `order-service`：订单域过渡服务（包装现有 `order` 能力）。
+- `system-api`：`auth/order` 跨域调用契约模块（降低对 `system` 实体/Service 直连依赖）。
+- 迁移说明：`docs/MICROSERVICE_TRANSITION.md`。
+
 ## 使用说明与配置
 
 ### 认证与登录

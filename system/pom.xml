@@ -18,6 +18,10 @@
     <dependencies>
         <dependency>
             <groupId>com.example</groupId>
+            <artifactId>system-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example</groupId>
             <artifactId>core</artifactId>
         </dependency>
         <dependency>

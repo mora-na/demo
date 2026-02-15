@@ -1,0 +1,53 @@
+server:
+  port: ${AUTH_SERVICE_PORT:9001}
+
+spring:
+  application:
+    name: auth-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        register-enabled: true
+  main:
+    lazy-initialization: true
+  datasource:
+    dynamic:
+      primary: master
+      strict: false
+      datasource:
+        master:
+          url: ${AUTH_DB_URL:jdbc:postgresql://localhost:5432/test?currentSchema=test}
+          username: ${AUTH_DB_USERNAME:panpan}
+          password: ${AUTH_DB_PASSWORD:admin}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+  data:
+    redis:
+      host: ${AUTH_REDIS_HOST:localhost}
+      port: ${AUTH_REDIS_PORT:6379}
+      repositories:
+        enabled: false
+
+cache:
+  location: ${AUTH_CACHE_LOCATION:memory}
+
+auth:
+  filter:
+    enabled: true
+    exclude-paths:
+      - /auth/captcha
+      - /auth/login
+      - /error
+
+sql-log:
+  enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

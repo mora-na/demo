@@ -1,7 +1,7 @@
 package com.example.demo.auth.service;
 
 import com.example.demo.auth.config.AuthProperties;
-import com.example.demo.user.service.UserPasswordPolicyService;
+import com.example.demo.system.api.user.UserPasswordPolicyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,0 +1,45 @@
+server:
+  port: ${ORDER_SERVICE_PORT:9002}
+
+spring:
+  application:
+    name: order-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        register-enabled: true
+  main:
+    lazy-initialization: true
+  datasource:
+    dynamic:
+      primary: master
+      strict: false
+      datasource:
+        master:
+          url: ${ORDER_DB_URL:jdbc:postgresql://localhost:5432/test?currentSchema=test}
+          username: ${ORDER_DB_USERNAME:panpan}
+          password: ${ORDER_DB_PASSWORD:admin}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+  data:
+    redis:
+      host: ${ORDER_REDIS_HOST:localhost}
+      port: ${ORDER_REDIS_PORT:6379}
+      repositories:
+        enabled: false
+
+cache:
+  location: ${ORDER_CACHE_LOCATION:memory}
+
+sql-log:
+  enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

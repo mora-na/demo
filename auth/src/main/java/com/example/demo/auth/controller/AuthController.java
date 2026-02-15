@@ -9,13 +9,15 @@ import com.example.demo.auth.support.AuthTokenResolver;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequireLogin;
-import com.example.demo.dept.entity.Dept;
-import com.example.demo.dept.service.DeptService;
 import com.example.demo.log.event.LoginLogEvent;
 import com.example.demo.log.support.IpUtils;
-import com.example.demo.user.dto.SysUserProfileUpdateRequest;
-import com.example.demo.user.entity.SysUser;
-import com.example.demo.user.service.SysUserService;
+import com.example.demo.system.api.datascope.DataScopeProfileApi;
+import com.example.demo.system.api.datascope.DataScopeProfileDTO;
+import com.example.demo.system.api.dept.DeptApi;
+import com.example.demo.system.api.dept.DeptDTO;
+import com.example.demo.system.api.user.UserAccountApi;
+import com.example.demo.system.api.user.UserAccountDTO;
+import com.example.demo.system.api.user.UserProfileUpdateCommand;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,13 +43,13 @@ public class AuthController extends BaseController {
     private final TokenService tokenService;
     private final PasswordService passwordService;
     private final PasswordPolicyService passwordPolicyService;
-    private final SysUserService userService;
+    private final UserAccountApi userAccountApi;
     private final LoginAttemptService loginAttemptService;
     private final LoginAnomalyAlertService loginAnomalyAlertService;
     private final OperationConfirmService operationConfirmService;
     private final UserProfileService userProfileService;
-    private final com.example.demo.datascope.service.DataScopeProfileService dataScopeProfileService;
-    private final DeptService deptService;
+    private final DataScopeProfileApi dataScopeProfileApi;
+    private final DeptApi deptApi;
     private final ApplicationEventPublisher eventPublisher;
     private final AuthTokenResolver authTokenResolver;
     private final AuthConstants systemConstants;
@@ -104,14 +106,14 @@ public class AuthController extends BaseController {
                     i18n("auth.login.captcha.invalid"), httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), i18n("auth.login.captcha.invalid"));
         }
-        SysUser user = userService.getByUserName(request.getUserName());
+        UserAccountDTO user = userAccountApi.getByUserName(request.getUserName());
         if (user == null) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
                     credentialError, httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
-        if (user.getStatus() != null && user.getStatus().equals(SysUser.STATUS_DISABLED)) {
+        if (user.getStatus() != null && user.getStatus().equals(UserAccountDTO.STATUS_DISABLED)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
                     credentialError, httpRequest);
@@ -137,14 +139,14 @@ public class AuthController extends BaseController {
         authUser.setNickName(user.getNickName());
         authUser.setDeptId(user.getDeptId());
         if (user.getDeptId() != null) {
-            Dept dept = deptService.getById(user.getDeptId());
+            DeptDTO dept = deptApi.getById(user.getDeptId());
             if (dept != null) {
                 authUser.setDeptName(dept.getName());
             }
         }
         authUser.setDataScopeType(user.getDataScopeType());
         authUser.setDataScopeValue(user.getDataScopeValue());
-        com.example.demo.datascope.model.DataScopeProfile profile = dataScopeProfileService.buildProfile(user);
+        DataScopeProfileDTO profile = dataScopeProfileApi.buildProfile(user.getId(), user.getDeptId());
         authUser.setDeptTreeIds(profile.getDeptTreeIds());
         authUser.setRoleDataScopes(profile.getRoleDataScopes());
         authUser.setUserScopeOverrides(profile.getUserScopeOverrides());
@@ -223,7 +225,7 @@ public class AuthController extends BaseController {
         if (authUser == null || authUser.getId() == null) {
             return error(controllerConstants.getUnauthorizedCode(), i18n("auth.user.invalid"));
         }
-        SysUser dbUser = userService.getById(authUser.getId());
+        UserAccountDTO dbUser = userAccountApi.getById(authUser.getId());
         if (dbUser == null) {
             return error(controllerConstants.getNotFoundCode(), i18n("user.not.found"));
         }
@@ -250,13 +252,13 @@ public class AuthController extends BaseController {
                 return error(controllerConstants.getBadRequestCode(), i18n("user.password.weak"));
             }
         }
-        SysUserProfileUpdateRequest profileUpdate = new SysUserProfileUpdateRequest();
+        UserProfileUpdateCommand profileUpdate = new UserProfileUpdateCommand();
         profileUpdate.setNickName(request.getNickName());
         profileUpdate.setPhone(request.getPhone());
         profileUpdate.setEmail(request.getEmail());
         profileUpdate.setSex(request.getSex());
         profileUpdate.setRemark(request.getRemark());
-        if (!userService.updateSelfProfile(authUser.getId(), profileUpdate, newRawPassword)) {
+        if (!userAccountApi.updateSelfProfile(authUser.getId(), profileUpdate, newRawPassword)) {
             return error(controllerConstants.getInternalServerErrorCode(), i18n("common.update.failed"));
         }
         return success();

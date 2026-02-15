@@ -5,8 +5,8 @@ import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.cache.CacheTool;
 import com.example.demo.common.notify.mail.NotifyMailSender;
-import com.example.demo.user.entity.SysUser;
-import com.example.demo.user.service.SysUserService;
+import com.example.demo.system.api.user.UserAccountApi;
+import com.example.demo.system.api.user.UserAccountDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +34,7 @@ public class OperationConfirmService {
 
     private final CacheTool cacheTool;
     private final NotifyMailSender notifyMailSender;
-    private final SysUserService userService;
+    private final UserAccountApi userAccountApi;
     private final AuthProperties authProperties;
     private final AuthConstants authConstants;
 
@@ -61,7 +61,7 @@ public class OperationConfirmService {
             return SendCodeResult.fail(authConstants.getController().getBadRequestCode(),
                     "auth.operation.confirm.action.invalid", 0);
         }
-        SysUser user = userService.getById(userId);
+        UserAccountDTO user = userAccountApi.getById(userId);
         if (user == null || StringUtils.isBlank(user.getEmail())) {
             return SendCodeResult.fail(authConstants.getController().getBadRequestCode(),
                     "auth.operation.confirm.email.empty", 0);
@@ -239,7 +239,7 @@ public class OperationConfirmService {
         return StringUtils.defaultIfBlank(subject, "敏感操作确认验证码");
     }
 
-    private String buildMailContent(SysUser user,
+    private String buildMailContent(UserAccountDTO user,
                                     String actionKey,
                                     String actionLabel,
                                     String code,

@@ -107,6 +107,14 @@ npm run dev
 | `common`     | Shared infrastructure    | Unified response, exception handling, cache abstraction, mail sender abstraction, common utilities/config |
 | `ai`         | AI extension entry       | AI capability integration and extensibility (enabled per business needs)                                  |
 
+### Microservice Transition Modules (Phase 1)
+
+- `gateway`: unified entry and canary forwarding, with default fallback to `app`.
+- `auth-service`: auth-domain transition service (wrapper over existing `auth` module).
+- `order-service`: order-domain transition service (wrapper over existing `order` module).
+- `system-api`: cross-domain contract module used by `auth/order` to reduce direct `system` coupling.
+- Migration guide: `docs/MICROSERVICE_TRANSITION.md`.
+
 ## Usage and Configuration
 
 ### Authentication & Login

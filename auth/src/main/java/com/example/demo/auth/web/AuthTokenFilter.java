@@ -11,8 +11,8 @@ import com.example.demo.common.config.CommonConstants;
 import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
-import com.example.demo.user.entity.SysUser;
-import com.example.demo.user.service.SysUserService;
+import com.example.demo.system.api.user.UserAccountApi;
+import com.example.demo.system.api.user.UserAccountDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -46,7 +46,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private final CommonExcludePathsProperties commonExcludePaths;
     private final TokenService tokenService;
     private final PasswordPolicyService passwordPolicyService;
-    private final SysUserService userService;
+    private final UserAccountApi userAccountApi;
     private final I18nService i18nService;
     private final AuthConstants authConstants;
     private final CommonConstants commonConstants;
@@ -104,12 +104,12 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             writeUnauthorized(response, i18nService.getMessage(request, filterConstants.getUserInvalidMessageKey()));
             return;
         }
-        SysUser dbUser = userService.getById(user.getId());
+        UserAccountDTO dbUser = userAccountApi.getById(user.getId());
         if (dbUser == null) {
             writeUnauthorized(response, i18nService.getMessage(request, filterConstants.getUserNotFoundMessageKey()));
             return;
         }
-        if (dbUser.getStatus() != null && dbUser.getStatus().equals(SysUser.STATUS_DISABLED)) {
+        if (dbUser.getStatus() != null && dbUser.getStatus().equals(UserAccountDTO.STATUS_DISABLED)) {
             writeForbidden(response, i18nService.getMessage(request, filterConstants.getUserDisabledMessageKey()));
             return;
         }
