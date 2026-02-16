@@ -140,11 +140,11 @@ notify:
 # 数据源模式配置
 app:
   datasource:
-    # 三种模式：
+    # 三种模式：1)占用内存比较多 500MB+,推荐2),100MB+
     # 1) multi-datasource
     # 2) single-datasource-multi-schema
     # 3) single-datasource-single-schema
-    mode: ${APP_DATASOURCE_MODE:multi-datasource}
+    mode: ${APP_DATASOURCE_MODE:single-datasource-multi-schema}
     # 单 schema 模式下目标 schema 名称（mode=single-datasource-single-schema）
     single-schema-name: ${APP_DATASOURCE_SINGLE_SCHEMA_NAME:demo}
 
