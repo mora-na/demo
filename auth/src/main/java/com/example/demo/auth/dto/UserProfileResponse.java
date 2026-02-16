@@ -1,6 +1,7 @@
 package com.example.demo.auth.dto;
 
 import com.example.demo.identity.api.dto.IdentityMenuTreeDTO;
+import com.example.demo.identity.api.dto.IdentityRoleDTO;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -24,6 +25,8 @@ public class UserProfileResponse implements Serializable {
     private List<String> permissions;
 
     private List<IdentityMenuTreeDTO> menus;
+
+    private List<IdentityRoleDTO> roleTargets;
 
     /**
      * 是否需要强制修改密码。

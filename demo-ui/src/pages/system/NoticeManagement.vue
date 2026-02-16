@@ -149,6 +149,7 @@
 import {computed, onMounted, reactive, ref, watch} from "vue";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {useI18n} from "vue-i18n";
+import {useAuthStore} from "../../stores/auth";
 import {
   deleteNotice,
   deleteNotices,
@@ -175,6 +176,7 @@ const publishVisible = ref(false);
 const detailVisible = ref(false);
 const detailNotice = ref<NoticeVO | null>(null);
 const {t} = useI18n();
+const authStore = useAuthStore();
 
 const filters = reactive({
   keyword: "",
@@ -196,6 +198,36 @@ const publishForm = reactive<NoticePublishPayload>({
 const depts = ref<DeptVO[]>([]);
 const roles = ref<RoleVO[]>([]);
 const users = ref<UserVO[]>([]);
+
+const deptFallbackOptions = computed(() => {
+  const deptId = authStore.profile?.deptId;
+  if (!deptId) {
+    return [];
+  }
+  const label = authStore.profile?.deptName || `#${deptId}`;
+  return [{label, value: deptId}];
+});
+
+const roleFallbackOptions = computed(() => {
+  if (!authStore.roleTargets?.length) {
+    return [];
+  }
+  return authStore.roleTargets
+      .filter((role) => role?.id != null)
+      .map((role) => ({
+        label: role.name || role.code || `#${role.id}`,
+        value: role.id
+      }));
+});
+
+const selfUserFallbackOptions = computed(() => {
+  const profile = authStore.profile;
+  if (!profile?.id) {
+    return [];
+  }
+  const nick = profile.nickName ? ` (${profile.nickName})` : "";
+  return [{label: `${profile.userName}${nick}`, value: profile.id}];
+});
 
 const scopeTargetLabel = computed(() => {
   if (publishForm.scopeType === "DEPT") {
@@ -225,13 +257,16 @@ const scopePlaceholder = computed(() => {
 
 const scopeOptions = computed(() => {
   if (publishForm.scopeType === "DEPT") {
-    return depts.value.map((dept) => ({label: dept.name, value: dept.id}));
+    const options = depts.value.map((dept) => ({label: dept.name, value: dept.id}));
+    return options.length ? options : deptFallbackOptions.value;
   }
   if (publishForm.scopeType === "ROLE") {
-    return roles.value.map((role) => ({label: role.name, value: role.id}));
+    const options = roles.value.map((role) => ({label: role.name, value: role.id}));
+    return options.length ? options : roleFallbackOptions.value;
   }
   if (publishForm.scopeType === "USER") {
-    return users.value.map((user) => ({label: userLabel(user), value: user.id}));
+    const options = users.value.map((user) => ({label: userLabel(user), value: user.id}));
+    return options.length ? options : selfUserFallbackOptions.value;
   }
   return [];
 });
@@ -481,7 +516,12 @@ watch(
     }
 );
 
-onMounted(loadNotices);
+onMounted(async () => {
+  if (!authStore.profileLoaded) {
+    await authStore.loadProfile();
+  }
+  loadNotices();
+});
 </script>
 
 <style scoped>

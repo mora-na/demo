@@ -1,5 +1,7 @@
 package com.example.demo.identity.api.facade;
 
+import com.example.demo.identity.api.dto.IdentityRoleDTO;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -18,6 +20,8 @@ public interface IdentityRoleApi {
     List<Long> listEnabledUserIdsByDeptIds(Collection<Long> deptIds);
 
     List<Long> listEnabledUserIdsByRoleIds(Collection<Long> roleIds);
+
+    List<IdentityRoleDTO> listEnabledRolesByUserId(Long userId);
 
     List<String> listRoleCodesByUserId(Long userId);
 

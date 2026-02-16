@@ -5,6 +5,7 @@ import com.example.demo.auth.dto.UserProfileResponse;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.web.permission.PermissionProperties;
 import com.example.demo.identity.api.dto.IdentityMenuTreeDTO;
+import com.example.demo.identity.api.dto.IdentityRoleDTO;
 import com.example.demo.identity.api.dto.IdentityUserDTO;
 import com.example.demo.identity.api.facade.IdentityReadFacade;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class UserProfileService {
         response.setFirstLoginForceChange(passwordPolicyService.isFirstLoginForceChange(user));
         response.setPasswordChangeRequired(response.isPasswordExpired() || response.isFirstLoginForceChange());
         response.setRoles(loadRoles(authUser.getId()));
+        response.setRoleTargets(loadRoleTargets(authUser.getId()));
         response.setPermissions(loadPermissions(authUser));
         response.setMenus(buildMenuTree(loadMenus(authUser)));
         return response;
@@ -54,14 +56,19 @@ public class UserProfileService {
             info.setEmail(user.getEmail());
             info.setSex(user.getSex());
             info.setDeptId(user.getDeptId());
+            info.setDeptName(authUser.getDeptName());
             info.setDataScopeType(user.getDataScopeType());
             info.setDataScopeValue(user.getDataScopeValue());
         } else {
             info.setUserName(authUser.getUserName());
             info.setNickName(authUser.getNickName());
             info.setDeptId(authUser.getDeptId());
+            info.setDeptName(authUser.getDeptName());
             info.setDataScopeType(authUser.getDataScopeType());
             info.setDataScopeValue(authUser.getDataScopeValue());
+        }
+        if (StringUtils.isBlank(info.getDeptName()) && info.getDeptId() != null) {
+            info.setDeptName(identityReadFacade.getDeptNameById(info.getDeptId()));
         }
         return info;
     }
@@ -78,6 +85,23 @@ public class UserProfileService {
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    private List<IdentityRoleDTO> loadRoleTargets(Long userId) {
+        if (userId == null) {
+            return Collections.emptyList();
+        }
+        List<IdentityRoleDTO> roles = identityReadFacade.listEnabledRolesByUserId(userId);
+        if (roles == null || roles.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return roles.stream()
+                .filter(Objects::nonNull)
+                .filter(role -> role.getId() != null)
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(IdentityRoleDTO::getId, role -> role, (left, right) -> left, LinkedHashMap::new),
+                        map -> new ArrayList<>(map.values())
+                ));
     }
 
     private List<String> loadPermissions(AuthUser authUser) {

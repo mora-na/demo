@@ -41,8 +41,15 @@ export interface UserProfileInfo {
     email?: string;
     sex?: string;
     deptId: number | null;
+    deptName?: string;
     dataScopeType: string;
     dataScopeValue: string;
+}
+
+export interface UserRoleTarget {
+    id: number;
+    code?: string;
+    name?: string;
 }
 
 export interface MenuTree {
@@ -62,6 +69,7 @@ export interface MenuTree {
 export interface UserProfileResponse {
     user: UserProfileInfo;
     roles: string[];
+    roleTargets?: UserRoleTarget[];
     permissions: string[];
     menus: MenuTree[];
     passwordChangeRequired?: boolean;

@@ -29,6 +29,8 @@ public class UserProfileInfo implements Serializable {
 
     private Long deptId;
 
+    private String deptName;
+
     private String dataScopeType;
 
     private String dataScopeValue;

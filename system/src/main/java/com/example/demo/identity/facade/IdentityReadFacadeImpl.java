@@ -7,6 +7,7 @@ import com.example.demo.dept.entity.Dept;
 import com.example.demo.dept.service.DeptService;
 import com.example.demo.identity.api.dto.IdentityDataScopeProfileDTO;
 import com.example.demo.identity.api.dto.IdentityMenuTreeDTO;
+import com.example.demo.identity.api.dto.IdentityRoleDTO;
 import com.example.demo.identity.api.dto.IdentityUserDTO;
 import com.example.demo.identity.api.facade.IdentityReadFacade;
 import com.example.demo.menu.entity.Menu;
@@ -28,10 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -142,23 +140,29 @@ public class IdentityReadFacadeImpl implements IdentityReadFacade {
     }
 
     @Override
-    public List<String> listRoleCodesByUserId(Long userId) {
-        if (userId == null) {
+    public List<IdentityRoleDTO> listEnabledRolesByUserId(Long userId) {
+        List<Role> roles = listEnabledRoles(userId);
+        if (roles.isEmpty()) {
             return Collections.emptyList();
         }
-        List<Long> roleIds = userRoleService.list(Wrappers.lambdaQuery(UserRole.class)
-                        .eq(UserRole::getUserId, userId))
-                .stream()
-                .map(UserRole::getRoleId)
-                .filter(Objects::nonNull)
-                .distinct()
+        return roles.stream()
+                .map(role -> {
+                    IdentityRoleDTO dto = new IdentityRoleDTO();
+                    dto.setId(role.getId());
+                    dto.setCode(role.getCode());
+                    dto.setName(role.getName());
+                    return dto;
+                })
                 .collect(Collectors.toList());
-        if (roleIds.isEmpty()) {
+    }
+
+    @Override
+    public List<String> listRoleCodesByUserId(Long userId) {
+        List<Role> roles = listEnabledRoles(userId);
+        if (roles.isEmpty()) {
             return Collections.emptyList();
         }
-        return roleService.listByIds(roleIds).stream()
-                .filter(Objects::nonNull)
-                .filter(role -> role.getStatus() == null || role.getStatus() == 1)
+        return roles.stream()
                 .map(Role::getCode)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
@@ -271,6 +275,29 @@ public class IdentityReadFacadeImpl implements IdentityReadFacade {
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    private List<Role> listEnabledRoles(Long userId) {
+        if (userId == null) {
+            return Collections.emptyList();
+        }
+        List<Long> roleIds = userRoleService.list(Wrappers.lambdaQuery(UserRole.class)
+                        .eq(UserRole::getUserId, userId))
+                .stream()
+                .map(UserRole::getRoleId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (roleIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return roleService.listByIds(roleIds).stream()
+                .filter(Objects::nonNull)
+                .filter(role -> role.getStatus() == null || role.getStatus() == 1)
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(Role::getId, role -> role, (left, right) -> left, LinkedHashMap::new),
+                        map -> new java.util.ArrayList<>(map.values())
+                ));
     }
 
     private List<Long> toEnabledUserIds(List<SysUser> users) {

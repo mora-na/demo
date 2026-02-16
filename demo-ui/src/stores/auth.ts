@@ -1,7 +1,7 @@
 import {computed, ref} from "vue";
 import {defineStore} from "pinia";
 import {i18n} from "../i18n";
-import {fetchProfile, type MenuTree, type UserProfileInfo} from "../api/auth";
+import {fetchProfile, type MenuTree, type UserProfileInfo, type UserRoleTarget} from "../api/auth";
 
 const TOKEN_KEY = "demo-token";
 const USER_KEY = "demo-user";
@@ -16,6 +16,7 @@ export const useAuthStore = defineStore("auth", () => {
     const userName = ref<string>(localStorage.getItem(USER_KEY) || "");
     const profile = ref<UserProfileInfo | null>(null);
     const roles = ref<string[]>([]);
+    const roleTargets = ref<UserRoleTarget[]>([]);
     const permissions = ref<string[]>([]);
     const menus = ref<MenuTree[]>([]);
     const passwordChangeRequired = ref(false);
@@ -36,6 +37,7 @@ export const useAuthStore = defineStore("auth", () => {
         userName.value = "";
         profile.value = null;
         roles.value = [];
+        roleTargets.value = [];
         permissions.value = [];
         menus.value = [];
         passwordChangeRequired.value = false;
@@ -56,6 +58,7 @@ export const useAuthStore = defineStore("auth", () => {
             if (result?.code === 200 && result.data) {
                 profile.value = result.data.user;
                 roles.value = result.data.roles || [];
+                roleTargets.value = result.data.roleTargets || [];
                 permissions.value = result.data.permissions || [];
                 menus.value = result.data.menus || [];
                 passwordChangeRequired.value = Boolean(result.data.passwordChangeRequired);
@@ -77,6 +80,7 @@ export const useAuthStore = defineStore("auth", () => {
         userName,
         profile,
         roles,
+        roleTargets,
         permissions,
         menus,
         passwordChangeRequired,
