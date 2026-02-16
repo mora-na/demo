@@ -22,6 +22,10 @@
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
+            <artifactId>identity-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example</groupId>
             <artifactId>cache</artifactId>
         </dependency>
         <dependency>
@@ -56,4 +60,38 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>ban-business-impl-dependency</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>false</searchTransitive>
+                                    <excludes>
+                                        <exclude>com.example:auth</exclude>
+                                        <exclude>com.example:order</exclude>
+                                        <exclude>com.example:notice</exclude>
+                                        <exclude>com.example:job</exclude>
+                                        <exclude>com.example:log</exclude>
+                                        <exclude>com.example:app</exclude>
+                                    </excludes>
+                                    <message>system 模块禁止依赖业务实现模块，身份域能力应通过 *-api 对外暴露。</message>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

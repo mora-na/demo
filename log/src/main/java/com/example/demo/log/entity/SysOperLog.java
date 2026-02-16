@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  * @date 2026/2/14
  */
 @Data
-@TableName("sys_oper_log")
+@TableName("log.sys_oper_log")
 public class SysOperLog implements Serializable {
 
     private static final long serialVersionUID = 1L;

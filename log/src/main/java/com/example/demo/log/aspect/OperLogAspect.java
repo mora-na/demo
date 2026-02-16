@@ -4,8 +4,7 @@ import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.web.permission.RequireLogin;
 import com.example.demo.common.web.permission.RequirePermission;
-import com.example.demo.dept.entity.Dept;
-import com.example.demo.dept.service.DeptService;
+import com.example.demo.identity.api.facade.OrgApi;
 import com.example.demo.log.annotation.OperLog;
 import com.example.demo.log.config.LogConstants;
 import com.example.demo.log.entity.SysOperLog;
@@ -54,17 +53,17 @@ public class OperLogAspect {
 
     private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
-    private final DeptService deptService;
+    private final OrgApi orgApi;
     private final LogConstants logConstants;
     private final ExpressionParser spelParser = new SpelExpressionParser();
 
     public OperLogAspect(ApplicationEventPublisher eventPublisher,
                          ObjectMapper objectMapper,
-                         DeptService deptService,
+                         OrgApi orgApi,
                          LogConstants logConstants) {
         this.eventPublisher = eventPublisher;
         this.objectMapper = objectMapper;
-        this.deptService = deptService;
+        this.orgApi = orgApi;
         this.logConstants = logConstants;
     }
 
@@ -164,10 +163,10 @@ public class OperLogAspect {
         logEntity.setDeptId(user.getDeptId());
         if (StringUtils.isNotBlank(user.getDeptName())) {
             logEntity.setDeptName(user.getDeptName());
-        } else if (user.getDeptId() != null && deptService != null) {
-            Dept dept = deptService.getById(user.getDeptId());
-            if (dept != null && StringUtils.isNotBlank(dept.getName())) {
-                logEntity.setDeptName(dept.getName());
+        } else if (user.getDeptId() != null && orgApi != null) {
+            String deptName = orgApi.getDeptNameById(user.getDeptId());
+            if (StringUtils.isNotBlank(deptName)) {
+                logEntity.setDeptName(deptName);
             }
         }
     }

@@ -1,7 +1,7 @@
 package com.example.demo.auth.service;
 
 import com.example.demo.auth.config.AuthProperties;
-import com.example.demo.user.entity.SysUser;
+import com.example.demo.identity.api.dto.IdentityUserDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class PasswordPolicyService {
+
+    private static final int FORCE_PASSWORD_CHANGE_YES = 1;
 
     private final AuthProperties authProperties;
 
@@ -36,18 +38,18 @@ public class PasswordPolicyService {
     /**
      * 当前用户是否命中首次登录强制改密。
      */
-    public boolean isFirstLoginForceChange(SysUser user) {
+    public boolean isFirstLoginForceChange(IdentityUserDTO user) {
         if (!isForceChangeOnFirstLoginEnabled() || user == null) {
             return false;
         }
         return user.getForcePasswordChange() != null
-                && user.getForcePasswordChange().equals(SysUser.FORCE_PASSWORD_CHANGE_YES);
+                && user.getForcePasswordChange().equals(FORCE_PASSWORD_CHANGE_YES);
     }
 
     /**
      * 当前用户密码是否已过期。
      */
-    public boolean isPasswordExpired(SysUser user) {
+    public boolean isPasswordExpired(IdentityUserDTO user) {
         if (user == null) {
             return false;
         }
@@ -66,8 +68,7 @@ public class PasswordPolicyService {
     /**
      * 是否需要强制修改密码（首次登录或密码过期）。
      */
-    public boolean isPasswordChangeRequired(SysUser user) {
+    public boolean isPasswordChangeRequired(IdentityUserDTO user) {
         return isFirstLoginForceChange(user) || isPasswordExpired(user);
     }
 }
-

@@ -4,6 +4,10 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * SQL 防护配置项，绑定 security.sql-guard 前缀。
  *
@@ -20,5 +24,11 @@ public class SqlGuardProperties {
     private boolean blockFullTable = true;
 
     private boolean blockMultiStatement = true;
+
+    private boolean blockCrossSchemaJoin = true;
+
+    private List<String> allowedSchemas = new ArrayList<>(Arrays.asList(
+            "system", "order", "notice", "job", "log", "dict", "cache"
+    ));
 
 }

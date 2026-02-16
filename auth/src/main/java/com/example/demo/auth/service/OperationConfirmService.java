@@ -5,8 +5,8 @@ import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.cache.CacheTool;
 import com.example.demo.common.notify.mail.NotifyMailSender;
-import com.example.demo.user.entity.SysUser;
-import com.example.demo.user.service.SysUserService;
+import com.example.demo.identity.api.dto.IdentityUserDTO;
+import com.example.demo.identity.api.facade.IdentityReadFacade;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +34,7 @@ public class OperationConfirmService {
 
     private final CacheTool cacheTool;
     private final NotifyMailSender notifyMailSender;
-    private final SysUserService userService;
+    private final IdentityReadFacade identityReadFacade;
     private final AuthProperties authProperties;
     private final AuthConstants authConstants;
 
@@ -61,7 +61,7 @@ public class OperationConfirmService {
             return SendCodeResult.fail(authConstants.getController().getBadRequestCode(),
                     "auth.operation.confirm.action.invalid", 0);
         }
-        SysUser user = userService.getById(userId);
+        IdentityUserDTO user = identityReadFacade.getUserById(userId);
         if (user == null || StringUtils.isBlank(user.getEmail())) {
             return SendCodeResult.fail(authConstants.getController().getBadRequestCode(),
                     "auth.operation.confirm.email.empty", 0);
@@ -239,23 +239,22 @@ public class OperationConfirmService {
         return StringUtils.defaultIfBlank(subject, "敏感操作确认验证码");
     }
 
-    private String buildMailContent(SysUser user,
+    private String buildMailContent(IdentityUserDTO user,
                                     String actionKey,
                                     String actionLabel,
                                     String code,
                                     int codeTtlSeconds) {
         String displayAction = StringUtils.defaultIfBlank(StringUtils.trimToNull(actionLabel), actionKey);
         String userName = user == null ? "" : StringUtils.defaultString(user.getUserName());
-        StringBuilder builder = new StringBuilder(192);
-        builder.append("你正在执行敏感操作，需要完成邮箱二次确认。").append('\n')
-                .append('\n')
-                .append("账号：").append(userName).append('\n')
-                .append("操作：").append(displayAction).append('\n')
-                .append("验证码：").append(code).append('\n')
-                .append("有效期：").append(codeTtlSeconds).append(" 秒").append('\n')
-                .append('\n')
-                .append("若非本人操作，请忽略本邮件并尽快检查账号安全。");
-        return builder.toString();
+        String builder = "你正在执行敏感操作，需要完成邮箱二次确认。" + '\n' +
+                '\n' +
+                "账号：" + userName + '\n' +
+                "操作：" + displayAction + '\n' +
+                "验证码：" + code + '\n' +
+                "有效期：" + codeTtlSeconds + " 秒" + '\n' +
+                '\n' +
+                "若非本人操作，请忽略本邮件并尽快检查账号安全。";
+        return builder;
     }
 
     private long incrementAttempts(String attemptKey, String codeKey) {

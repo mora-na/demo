@@ -1,13 +1,12 @@
 package com.example.demo.auth.service;
 
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.auth.config.AuthConstants;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.common.notify.mail.NotifyMailSender;
-import com.example.demo.log.entity.SysLoginLog;
-import com.example.demo.log.service.SysLoginLogService;
-import com.example.demo.log.support.UserAgentUtils;
-import com.example.demo.user.entity.SysUser;
+import com.example.demo.identity.api.dto.IdentityUserDTO;
+import com.example.demo.log.api.dto.LoginLogRecordDTO;
+import com.example.demo.log.api.dto.UserAgentInfoDTO;
+import com.example.demo.log.api.facade.LoginLogReadFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -35,7 +34,7 @@ public class LoginAnomalyAlertService {
 
     private final AuthProperties authProperties;
     private final AuthConstants authConstants;
-    private final SysLoginLogService loginLogService;
+    private final LoginLogReadFacade loginLogReadFacade;
     private final NotifyMailSender notifyMailSender;
 
     /**
@@ -47,7 +46,7 @@ public class LoginAnomalyAlertService {
      * @param loginTime 当前登录时间
      */
     @Async
-    public void checkAndNotify(SysUser user, String currentIp, String userAgent, LocalDateTime loginTime) {
+    public void checkAndNotify(IdentityUserDTO user, String currentIp, String userAgent, LocalDateTime loginTime) {
         AuthProperties.Security.LoginAnomaly config = authProperties.getSecurity().getLoginAnomaly();
         if (config == null || !config.isEnabled()) {
             return;
@@ -55,11 +54,11 @@ public class LoginAnomalyAlertService {
         if (user == null || user.getId() == null || StringUtils.isBlank(user.getEmail())) {
             return;
         }
-        SysLoginLog previous = queryLastSuccessLogin(user.getId());
+        LoginLogRecordDTO previous = queryLastSuccessLogin(user.getId());
         if (previous == null) {
             return;
         }
-        UserAgentUtils.UserAgentInfo currentUa = UserAgentUtils.parse(userAgent);
+        UserAgentInfoDTO currentUa = loginLogReadFacade.parseUserAgent(userAgent);
         boolean ipChanged = isIpChanged(previous.getLoginIp(), currentIp);
         boolean deviceChanged = isDeviceChanged(previous, currentUa);
         boolean alert = (config.isNotifyOnIpChange() && ipChanged)
@@ -76,15 +75,13 @@ public class LoginAnomalyAlertService {
         }
     }
 
-    private SysLoginLog queryLastSuccessLogin(Long userId) {
+    private LoginLogRecordDTO queryLastSuccessLogin(Long userId) {
         AuthConstants.LoginLog loginLogConstants = authConstants.getLoginLog();
-        return loginLogService.getOne(Wrappers.lambdaQuery(SysLoginLog.class)
-                .eq(SysLoginLog::getUserId, userId)
-                .eq(SysLoginLog::getLoginType, loginLogConstants.getTypeLogin())
-                .eq(SysLoginLog::getStatus, loginLogConstants.getStatusSuccess())
-                .orderByDesc(SysLoginLog::getLoginTime)
-                .orderByDesc(SysLoginLog::getId)
-                .last("limit 1"));
+        return loginLogReadFacade.getLatestByUserAndStatus(
+                userId,
+                loginLogConstants.getTypeLogin(),
+                loginLogConstants.getStatusSuccess()
+        );
     }
 
     private boolean isIpChanged(String previousIp, String currentIp) {
@@ -94,7 +91,7 @@ public class LoginAnomalyAlertService {
         return !StringUtils.equals(previousIp.trim(), currentIp.trim());
     }
 
-    private boolean isDeviceChanged(SysLoginLog previous, UserAgentUtils.UserAgentInfo currentUa) {
+    private boolean isDeviceChanged(LoginLogRecordDTO previous, UserAgentInfoDTO currentUa) {
         String previousFingerprint = buildDeviceFingerprint(
                 previous == null ? null : previous.getDeviceType(),
                 previous == null ? null : previous.getOs(),
@@ -141,10 +138,10 @@ public class LoginAnomalyAlertService {
         parts.add(normalized);
     }
 
-    private String buildMailContent(SysUser user,
-                                    SysLoginLog previous,
+    private String buildMailContent(IdentityUserDTO user,
+                                    LoginLogRecordDTO previous,
                                     String currentIp,
-                                    UserAgentUtils.UserAgentInfo currentUa,
+                                    UserAgentInfoDTO currentUa,
                                     boolean ipChanged,
                                     boolean deviceChanged,
                                     LocalDateTime loginTime) {

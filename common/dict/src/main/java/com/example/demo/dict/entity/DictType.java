@@ -20,7 +20,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TableName("sys_dict_type")
+@TableName("dict.sys_dict_type")
 public class DictType extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

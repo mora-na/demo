@@ -5,6 +5,8 @@ import com.example.demo.common.cache.CacheTool;
 import com.example.demo.permission.mapper.PermissionMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.*;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
  */
 @Component
 @ConditionalOnProperty(prefix = "security.permission", name = "source", havingValue = "db", matchIfMissing = true)
+@Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
 public class DbPermissionService implements PermissionService {
 
     private static final String PERMISSION_KEY_PREFIX = "perm:user:";

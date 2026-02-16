@@ -20,7 +20,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TableName(value = "sys_permission")
+@TableName(value = "system.sys_permission")
 public class Permission extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

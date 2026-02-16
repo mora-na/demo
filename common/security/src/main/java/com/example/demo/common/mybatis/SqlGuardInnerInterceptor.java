@@ -5,7 +5,12 @@ import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.mapping.BoundSql;
 
 import java.sql.Connection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * SQL 安全防护拦截器，用于阻断多语句执行与全表更新/删除。
@@ -14,6 +19,9 @@ import java.util.Locale;
  * @date 2026/2/9
  */
 public class SqlGuardInnerInterceptor implements InnerInterceptor {
+
+    private static final Pattern SCHEMA_QUALIFIED_TABLE_PATTERN =
+            Pattern.compile("(?i)\\b(?:from|join)\\s+\"?([a-z_][a-z0-9_]*)\"?\\.\"?[a-z_][a-z0-9_]*\"?\\b");
 
     private final SqlGuardProperties properties;
 
@@ -60,6 +68,9 @@ public class SqlGuardInnerInterceptor implements InnerInterceptor {
         if (properties.isBlockFullTable() && isUpdateOrDelete(trimmed) && !hasTopLevelWhere(trimmed)) {
             throw new IllegalStateException("SQL guard blocked full table update/delete");
         }
+        if (properties.isBlockCrossSchemaJoin()) {
+            validateSchemaIsolation(trimmed);
+        }
     }
 
     /**
@@ -74,6 +85,42 @@ public class SqlGuardInnerInterceptor implements InnerInterceptor {
         String stripped = stripLeadingComments(sql);
         String lower = stripped.toLowerCase(Locale.ROOT);
         return startsWithKeyword(lower, "update") || startsWithKeyword(lower, "delete");
+    }
+
+    private void validateSchemaIsolation(String sql) {
+        String lower = stripLeadingComments(sql).toLowerCase(Locale.ROOT);
+        if (!lower.contains(" join ")) {
+            return;
+        }
+        Matcher matcher = SCHEMA_QUALIFIED_TABLE_PATTERN.matcher(sql);
+        Set<String> schemas = new HashSet<>();
+        while (matcher.find()) {
+            String schema = matcher.group(1);
+            if (schema == null || schema.trim().isEmpty()) {
+                continue;
+            }
+            schemas.add(schema.trim().toLowerCase(Locale.ROOT));
+        }
+        if (schemas.isEmpty()) {
+            return;
+        }
+        List<String> allowedSchemas = properties.getAllowedSchemas();
+        if (allowedSchemas != null && !allowedSchemas.isEmpty()) {
+            Set<String> allowed = new HashSet<>();
+            for (String schema : allowedSchemas) {
+                if (schema != null && !schema.trim().isEmpty()) {
+                    allowed.add(schema.trim().toLowerCase(Locale.ROOT));
+                }
+            }
+            for (String schema : schemas) {
+                if (!allowed.contains(schema)) {
+                    throw new IllegalStateException("SQL guard blocked non-whitelisted schema usage: " + schema);
+                }
+            }
+        }
+        if (schemas.size() > 1) {
+            throw new IllegalStateException("SQL guard blocked cross-schema join");
+        }
     }
 
     /**

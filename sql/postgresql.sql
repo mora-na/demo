@@ -1,29 +1,38 @@
+CREATE SCHEMA IF NOT EXISTS system;
+CREATE SCHEMA IF NOT EXISTS "order";
+CREATE SCHEMA IF NOT EXISTS notice;
+CREATE SCHEMA IF NOT EXISTS job;
+CREATE SCHEMA IF NOT EXISTS log;
+CREATE SCHEMA IF NOT EXISTS dict;
+CREATE SCHEMA IF NOT EXISTS cache;
+
+SET search_path TO system, public;
+
 CREATE SEQUENCE IF NOT EXISTS sys_user_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_user
 (
-    id               BIGINT PRIMARY KEY    DEFAULT nextval('sys_user_id_seq'),
-    user_name        VARCHAR(64)  NOT NULL,
-    nick_name        VARCHAR(64),
-    phone            VARCHAR(32),
-    email            VARCHAR(128),
-    password         VARCHAR(128) NOT NULL,
-    password_updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    force_password_change SMALLINT  NOT NULL DEFAULT 1,
-    status           SMALLINT     NOT NULL DEFAULT 1,
-    dept_id          BIGINT,
-    data_scope_type  VARCHAR(32),
-    data_scope_value VARCHAR(512),
-    sex              VARCHAR(16),
-    create_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by BIGINT,
-    create_dept BIGINT,
-    update_by BIGINT,
-    is_deleted       SMALLINT     NOT NULL DEFAULT 0,
-    version          INT          NOT NULL DEFAULT 0,
-    remark           VARCHAR(500)
+    id                    BIGINT PRIMARY KEY    DEFAULT nextval('sys_user_id_seq'),
+    user_name             VARCHAR(64)  NOT NULL,
+    nick_name             VARCHAR(64),
+    phone                 VARCHAR(32),
+    email                 VARCHAR(128),
+    password              VARCHAR(128) NOT NULL,
+    password_updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    force_password_change SMALLINT     NOT NULL DEFAULT 1,
+    status                SMALLINT     NOT NULL DEFAULT 1,
+    dept_id               BIGINT,
+    data_scope_type       VARCHAR(32),
+    data_scope_value      VARCHAR(512),
+    sex                   VARCHAR(16),
+    create_time           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by             BIGINT,
+    create_dept           BIGINT,
+    update_by             BIGINT,
+    is_deleted            SMALLINT     NOT NULL DEFAULT 0,
+    version               INT          NOT NULL DEFAULT 0,
+    remark                VARCHAR(500)
 );
-ALTER SEQUENCE sys_user_id_seq OWNED BY sys_user.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_user_name ON sys_user (user_name, is_deleted);
 COMMENT ON TABLE sys_user IS '系统用户表';
 COMMENT ON COLUMN sys_user.id IS '主键ID';
@@ -70,7 +79,6 @@ CREATE TABLE IF NOT EXISTS sys_dept
     version     INT          NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_dept_id_seq OWNED BY sys_dept.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_dept_code ON sys_dept (code, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_dept_parent ON sys_dept (parent_id);
 COMMENT ON TABLE sys_dept IS '部门表';
@@ -107,7 +115,6 @@ CREATE TABLE IF NOT EXISTS sys_post
     version     INT          NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_post_id_seq OWNED BY sys_post.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_post_code ON sys_post (code, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_post_dept ON sys_post (dept_id);
 CREATE INDEX IF NOT EXISTS idx_sys_post_dept_status_deleted ON sys_post (dept_id, status, is_deleted);
@@ -138,14 +145,13 @@ CREATE TABLE IF NOT EXISTS sys_role
     data_scope_value VARCHAR(512),
     create_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by BIGINT,
+    create_by   BIGINT,
     create_dept BIGINT,
-    update_by BIGINT,
+    update_by   BIGINT,
     is_deleted       SMALLINT     NOT NULL DEFAULT 0,
     version          INT          NOT NULL DEFAULT 0,
     remark           VARCHAR(500)
 );
-ALTER SEQUENCE sys_role_id_seq OWNED BY sys_role.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_code ON sys_role (code, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_role_status_deleted ON sys_role (status, is_deleted);
 COMMENT ON TABLE sys_role IS '角色表';
@@ -180,7 +186,6 @@ CREATE TABLE IF NOT EXISTS sys_permission
     version     INT          NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_permission_id_seq OWNED BY sys_permission.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_permission_code ON sys_permission (code, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_permission_status_deleted ON sys_permission (status, is_deleted);
 COMMENT ON TABLE sys_permission IS '权限表';
@@ -196,6 +201,8 @@ COMMENT ON COLUMN sys_permission.remark IS '备注';
 COMMENT ON COLUMN sys_permission.code IS '权限编码（唯一）';
 COMMENT ON COLUMN sys_permission.name IS '权限名称';
 COMMENT ON COLUMN sys_permission.status IS '状态：1-启用，0-禁用';
+
+SET search_path TO dict, public;
 
 CREATE SEQUENCE IF NOT EXISTS sys_dict_type_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_dict_type
@@ -214,7 +221,6 @@ CREATE TABLE IF NOT EXISTS sys_dict_type
     version     INT          NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_dict_type_id_seq OWNED BY sys_dict_type.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_dict_type ON sys_dict_type (dict_type, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_dict_type_status_deleted_sort ON sys_dict_type (status, is_deleted, sort, id);
 COMMENT ON TABLE sys_dict_type IS '字典类型表';
@@ -250,7 +256,6 @@ CREATE TABLE IF NOT EXISTS sys_dict_data
     version     INT          NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_dict_data_id_seq OWNED BY sys_dict_data.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_dict_data ON sys_dict_data (dict_type, dict_value, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_dict_data_type ON sys_dict_data (dict_type);
 CREATE INDEX IF NOT EXISTS idx_sys_dict_data_type_status_deleted_sort ON sys_dict_data (dict_type, status, is_deleted, sort, id);
@@ -269,6 +274,8 @@ COMMENT ON COLUMN sys_dict_data.update_by IS '更新人';
 COMMENT ON COLUMN sys_dict_data.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN sys_dict_data.version IS '乐观锁版本号';
 COMMENT ON COLUMN sys_dict_data.remark IS '备注';
+
+SET search_path TO system, public;
 
 CREATE SEQUENCE IF NOT EXISTS sys_menu_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_menu
@@ -291,7 +298,6 @@ CREATE TABLE IF NOT EXISTS sys_menu
     version     INT          NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_menu_id_seq OWNED BY sys_menu.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_menu_code ON sys_menu (code, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_menu_parent ON sys_menu (parent_id);
 CREATE INDEX IF NOT EXISTS idx_sys_menu_parent_status_deleted_sort ON sys_menu (parent_id, status, is_deleted, sort, id);
@@ -324,14 +330,13 @@ CREATE TABLE IF NOT EXISTS sys_role_permission
     permission_id BIGINT    NOT NULL,
     create_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by BIGINT,
+    create_by   BIGINT,
     create_dept BIGINT,
-    update_by BIGINT,
+    update_by   BIGINT,
     is_deleted    SMALLINT  NOT NULL DEFAULT 0,
     version       INT       NOT NULL DEFAULT 0,
     remark        VARCHAR(500)
 );
-ALTER SEQUENCE sys_role_permission_id_seq OWNED BY sys_role_permission.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_permission_role_perm ON sys_role_permission (role_id, permission_id, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_role_permission_role ON sys_role_permission (role_id);
 CREATE INDEX IF NOT EXISTS idx_sys_role_permission_perm ON sys_role_permission (permission_id);
@@ -358,14 +363,13 @@ CREATE TABLE IF NOT EXISTS sys_role_menu
     data_scope_type VARCHAR(32),
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by BIGINT,
+    create_by   BIGINT,
     create_dept BIGINT,
-    update_by BIGINT,
+    update_by   BIGINT,
     is_deleted  SMALLINT  NOT NULL DEFAULT 0,
     version     INT       NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_role_menu_id_seq OWNED BY sys_role_menu.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_menu_role_menu ON sys_role_menu (role_id, menu_id, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_role_menu_role ON sys_role_menu (role_id);
 CREATE INDEX IF NOT EXISTS idx_sys_role_menu_menu ON sys_role_menu (menu_id);
@@ -400,7 +404,6 @@ CREATE TABLE IF NOT EXISTS sys_role_menu_dept
     version     INT       NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_role_menu_dept_id_seq OWNED BY sys_role_menu_dept.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_role_menu_dept_role_menu_dept ON sys_role_menu_dept (role_id, menu_id, dept_id, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_role_menu_dept_role ON sys_role_menu_dept (role_id);
 CREATE INDEX IF NOT EXISTS idx_sys_role_menu_dept_menu ON sys_role_menu_dept (menu_id);
@@ -434,7 +437,6 @@ CREATE TABLE IF NOT EXISTS sys_user_role
     version     INT       NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_user_role_id_seq OWNED BY sys_user_role.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_role_user_role ON sys_user_role (user_id, role_id, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_user_role_user ON sys_user_role (user_id);
 CREATE INDEX IF NOT EXISTS idx_sys_user_role_role ON sys_user_role (role_id);
@@ -455,22 +457,21 @@ COMMENT ON COLUMN sys_user_role.role_id IS '角色ID';
 CREATE SEQUENCE IF NOT EXISTS sys_user_data_scope_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_user_data_scope
 (
-    id               BIGINT PRIMARY KEY DEFAULT nextval('sys_user_data_scope_id_seq'),
-    user_id          BIGINT    NOT NULL,
+    id          BIGINT PRIMARY KEY DEFAULT nextval('sys_user_data_scope_id_seq'),
+    user_id     BIGINT    NOT NULL,
     scope_key        VARCHAR(200) NOT NULL,
     data_scope_type  VARCHAR(32),
     data_scope_value VARCHAR(512),
-    status           SMALLINT  NOT NULL DEFAULT 1,
-    create_time      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by BIGINT,
+    status      SMALLINT  NOT NULL DEFAULT 1,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by   BIGINT,
     create_dept      BIGINT,
-    update_by BIGINT,
-    is_deleted       SMALLINT  NOT NULL DEFAULT 0,
-    version          INT       NOT NULL DEFAULT 0,
+    update_by   BIGINT,
+    is_deleted  SMALLINT  NOT NULL DEFAULT 0,
+    version     INT       NOT NULL DEFAULT 0,
     remark           VARCHAR(500)
 );
-ALTER SEQUENCE sys_user_data_scope_id_seq OWNED BY sys_user_data_scope.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_data_scope_user_key ON sys_user_data_scope (user_id, scope_key, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_user_data_scope_user ON sys_user_data_scope (user_id);
 CREATE INDEX IF NOT EXISTS idx_sys_user_data_scope_key ON sys_user_data_scope (scope_key);
@@ -496,18 +497,17 @@ CREATE SEQUENCE IF NOT EXISTS sys_user_post_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_user_post
 (
     id          BIGINT PRIMARY KEY DEFAULT nextval('sys_user_post_id_seq'),
-    user_id     BIGINT     NOT NULL,
-    post_id     BIGINT     NOT NULL,
-    create_time TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by BIGINT,
+    user_id     BIGINT    NOT NULL,
+    post_id     BIGINT    NOT NULL,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by   BIGINT,
     create_dept BIGINT,
-    update_by BIGINT,
-    is_deleted  SMALLINT   NOT NULL DEFAULT 0,
-    version     INT        NOT NULL DEFAULT 0,
+    update_by   BIGINT,
+    is_deleted  SMALLINT  NOT NULL DEFAULT 0,
+    version     INT       NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_user_post_id_seq OWNED BY sys_user_post.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_user_post_user_post ON sys_user_post (user_id, post_id, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_user_post_user ON sys_user_post (user_id);
 CREATE INDEX IF NOT EXISTS idx_sys_user_post_post ON sys_user_post (post_id);
@@ -527,24 +527,23 @@ COMMENT ON COLUMN sys_user_post.post_id IS '岗位ID';
 CREATE SEQUENCE IF NOT EXISTS sys_data_scope_rule_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_data_scope_rule
 (
-    id           BIGINT PRIMARY KEY DEFAULT nextval('sys_data_scope_rule_id_seq'),
-    scope_key    VARCHAR(200) NOT NULL,
-    table_name   VARCHAR(100) NOT NULL,
-    table_alias  VARCHAR(20)  DEFAULT '',
-    dept_column  VARCHAR(100) DEFAULT 'create_dept',
-    user_column  VARCHAR(100) DEFAULT 'create_by',
-    filter_type  SMALLINT     DEFAULT 1,
-    status       SMALLINT     DEFAULT 1,
-    create_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by BIGINT,
-    create_dept  BIGINT,
-    update_by BIGINT,
-    is_deleted   SMALLINT     NOT NULL DEFAULT 0,
-    version      INT          NOT NULL DEFAULT 0,
-    remark       VARCHAR(500)
+    id          BIGINT PRIMARY KEY    DEFAULT nextval('sys_data_scope_rule_id_seq'),
+    scope_key   VARCHAR(200) NOT NULL,
+    table_name  VARCHAR(100) NOT NULL,
+    table_alias VARCHAR(20)           DEFAULT '',
+    dept_column VARCHAR(100)          DEFAULT 'create_dept',
+    user_column VARCHAR(100)          DEFAULT 'create_by',
+    filter_type SMALLINT              DEFAULT 1,
+    status      SMALLINT              DEFAULT 1,
+    create_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by   BIGINT,
+    create_dept BIGINT,
+    update_by   BIGINT,
+    is_deleted  SMALLINT     NOT NULL DEFAULT 0,
+    version     INT          NOT NULL DEFAULT 0,
+    remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_data_scope_rule_id_seq OWNED BY sys_data_scope_rule.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_data_scope_rule_key ON sys_data_scope_rule (scope_key);
 CREATE INDEX IF NOT EXISTS idx_sys_data_scope_rule_status_deleted ON sys_data_scope_rule (status, is_deleted);
 COMMENT ON TABLE sys_data_scope_rule IS '数据范围规则表';
@@ -565,10 +564,14 @@ COMMENT ON COLUMN sys_data_scope_rule.user_column IS '用户字段名';
 COMMENT ON COLUMN sys_data_scope_rule.filter_type IS '过滤方式';
 COMMENT ON COLUMN sys_data_scope_rule.status IS '状态：0-禁用 1-启用';
 
-INSERT INTO sys_data_scope_rule (id, scope_key, table_name, table_alias, dept_column, user_column, filter_type, status, create_time, update_time, remark)
-VALUES (1, 'order:query', 'sys_order', '', 'create_dept', 'user_id', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '订单数据范围'),
+INSERT INTO sys_data_scope_rule (id, scope_key, table_name, table_alias, dept_column, user_column, filter_type, status,
+                                 create_time, update_time, remark)
+VALUES (1, 'order:query', 'sys_order', '', 'create_dept', 'user_id', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
+        '订单数据范围'),
        (2, 'user:query', 'sys_user', '', 'dept_id', 'id', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '用户数据范围')
 ;
+
+SET search_path TO "order", public;
 
 CREATE SEQUENCE IF NOT EXISTS sys_order_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_order
@@ -585,7 +588,6 @@ CREATE TABLE IF NOT EXISTS sys_order
     version     INT            NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_order_id_seq OWNED BY sys_order.id;
 CREATE INDEX IF NOT EXISTS idx_sys_order_user ON sys_order (user_id);
 CREATE INDEX IF NOT EXISTS idx_sys_order_user_deleted_create_time ON sys_order (user_id, is_deleted, create_time, id);
 CREATE INDEX IF NOT EXISTS idx_sys_order_user_deleted_amount ON sys_order (user_id, is_deleted, amount);
@@ -602,6 +604,8 @@ COMMENT ON COLUMN sys_order.remark IS '备注';
 COMMENT ON COLUMN sys_order.user_id IS '用户ID';
 COMMENT ON COLUMN sys_order.amount IS '订单金额';
 
+SET search_path TO cache, public;
+
 CREATE TABLE IF NOT EXISTS sys_cache
 (
     cache_key   VARCHAR(255) PRIMARY KEY,
@@ -617,25 +621,26 @@ COMMENT ON COLUMN sys_cache.cache_value IS '缓存内容（JSON）';
 COMMENT ON COLUMN sys_cache.value_class IS '值类型名称';
 COMMENT ON COLUMN sys_cache.expire_at IS '过期时间（毫秒时间戳）';
 
+SET search_path TO notice, public;
+
 CREATE SEQUENCE IF NOT EXISTS sys_notice_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_notice
 (
-    id           BIGINT PRIMARY KEY DEFAULT nextval('sys_notice_id_seq'),
+    id          BIGINT PRIMARY KEY DEFAULT nextval('sys_notice_id_seq'),
     title        VARCHAR(200) NOT NULL,
     content      TEXT         NOT NULL,
     scope_type   VARCHAR(32)  NOT NULL,
     scope_value  VARCHAR(1024),
     create_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    create_by BIGINT,
+    create_by   BIGINT,
     create_dept BIGINT,
-    update_by BIGINT,
+    update_by   BIGINT,
     created_name VARCHAR(64),
     is_deleted   SMALLINT     NOT NULL DEFAULT 0,
     version      INT          NOT NULL DEFAULT 0,
     remark       VARCHAR(500)
 );
-ALTER SEQUENCE sys_notice_id_seq OWNED BY sys_notice.id;
 CREATE INDEX IF NOT EXISTS idx_sys_notice_create_time ON sys_notice (create_time);
 CREATE INDEX IF NOT EXISTS idx_sys_notice_deleted_create_time ON sys_notice (is_deleted, create_time, id);
 CREATE INDEX IF NOT EXISTS idx_sys_notice_scope_deleted_create_time ON sys_notice (scope_type, is_deleted, create_time, id);
@@ -672,7 +677,6 @@ CREATE TABLE IF NOT EXISTS sys_notice_recipient
     version     INT       NOT NULL DEFAULT 0,
     remark      VARCHAR(500)
 );
-ALTER SEQUENCE sys_notice_recipient_id_seq OWNED BY sys_notice_recipient.id;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_notice_recipient_notice_user ON sys_notice_recipient (notice_id, user_id, is_deleted);
 CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_notice ON sys_notice_recipient (notice_id);
 CREATE INDEX IF NOT EXISTS idx_sys_notice_recipient_user ON sys_notice_recipient (user_id);
@@ -695,6 +699,8 @@ COMMENT ON COLUMN sys_notice_recipient.user_id IS '接收用户ID';
 COMMENT ON COLUMN sys_notice_recipient.read_status IS '阅读状态：0-未读，1-已读';
 COMMENT ON COLUMN sys_notice_recipient.read_time IS '阅读时间';
 
+SET search_path TO job, public;
+
 CREATE SEQUENCE IF NOT EXISTS sys_job_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_job
 (
@@ -712,7 +718,6 @@ CREATE TABLE IF NOT EXISTS sys_job
     updated_at       TIMESTAMP,
     remark           VARCHAR(255)
 );
-ALTER SEQUENCE sys_job_id_seq OWNED BY sys_job.id;
 CREATE INDEX IF NOT EXISTS idx_sys_job_status ON sys_job (status);
 CREATE INDEX IF NOT EXISTS idx_sys_job_handler ON sys_job (handler_name);
 CREATE INDEX IF NOT EXISTS idx_sys_job_status_id ON sys_job (status, id);
@@ -745,7 +750,6 @@ CREATE TABLE IF NOT EXISTS sys_job_log
     end_time     TIMESTAMP,
     duration_ms  BIGINT
 );
-ALTER SEQUENCE sys_job_log_id_seq OWNED BY sys_job_log.id;
 CREATE INDEX IF NOT EXISTS idx_sys_job_log_job ON sys_job_log (job_id);
 CREATE INDEX IF NOT EXISTS idx_sys_job_log_start ON sys_job_log (start_time);
 CREATE INDEX IF NOT EXISTS idx_sys_job_log_job_start_id ON sys_job_log (job_id, start_time, id);
@@ -761,6 +765,8 @@ COMMENT ON COLUMN sys_job_log.start_time IS '开始时间';
 COMMENT ON COLUMN sys_job_log.end_time IS '结束时间';
 COMMENT ON COLUMN sys_job_log.duration_ms IS '耗时毫秒';
 
+SET search_path TO log, public;
+
 CREATE SEQUENCE IF NOT EXISTS sys_oper_log_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_oper_log
 (
@@ -771,7 +777,7 @@ CREATE TABLE IF NOT EXISTS sys_oper_log
     dept_name      VARCHAR(128),
     title          VARCHAR(128),
     operation      VARCHAR(256),
-    business_type  SMALLINT     NOT NULL DEFAULT 0,
+    business_type SMALLINT  NOT NULL DEFAULT 0,
     method         VARCHAR(255),
     request_method VARCHAR(16),
     oper_url       VARCHAR(512),
@@ -781,12 +787,11 @@ CREATE TABLE IF NOT EXISTS sys_oper_log
     oper_result    TEXT,
     before_data    TEXT,
     after_data     TEXT,
-    status         SMALLINT     NOT NULL DEFAULT 1,
+    status        SMALLINT  NOT NULL DEFAULT 1,
     error_msg      VARCHAR(2000),
-    cost_time      BIGINT       NOT NULL DEFAULT 0,
-    oper_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    cost_time     BIGINT    NOT NULL DEFAULT 0,
+    oper_time     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-ALTER SEQUENCE sys_oper_log_id_seq OWNED BY sys_oper_log.id;
 CREATE INDEX IF NOT EXISTS idx_sys_oper_log_user ON sys_oper_log (user_id);
 CREATE INDEX IF NOT EXISTS idx_sys_oper_log_type ON sys_oper_log (business_type);
 CREATE INDEX IF NOT EXISTS idx_sys_oper_log_status ON sys_oper_log (status);
@@ -826,12 +831,11 @@ CREATE TABLE IF NOT EXISTS sys_login_log
     browser        VARCHAR(128),
     os             VARCHAR(128),
     device_type    VARCHAR(64),
-    login_type     SMALLINT     NOT NULL DEFAULT 1,
-    status         SMALLINT     NOT NULL DEFAULT 1,
+    login_type SMALLINT  NOT NULL DEFAULT 1,
+    status     SMALLINT  NOT NULL DEFAULT 1,
     msg            VARCHAR(500),
-    login_time     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    login_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-ALTER SEQUENCE sys_login_log_id_seq OWNED BY sys_login_log.id;
 CREATE INDEX IF NOT EXISTS idx_sys_login_log_user ON sys_login_log (user_name);
 CREATE INDEX IF NOT EXISTS idx_sys_login_log_time ON sys_login_log (login_time);
 CREATE INDEX IF NOT EXISTS idx_sys_login_log_ip ON sys_login_log (login_ip);
@@ -850,6 +854,8 @@ COMMENT ON COLUMN sys_login_log.login_type IS '类型 1=登录 2=登出';
 COMMENT ON COLUMN sys_login_log.status IS '状态 0=失败 1=成功';
 COMMENT ON COLUMN sys_login_log.msg IS '提示消息';
 COMMENT ON COLUMN sys_login_log.login_time IS '登录时间';
+
+SET search_path TO job, public;
 
 create table if not exists sys_quartz_job_details
 (
@@ -1019,7 +1025,7 @@ create index if not exists idx_sys_quartz_ft_t_g on sys_quartz_fired_triggers (s
 create index if not exists idx_sys_quartz_ft_tg on sys_quartz_fired_triggers (sched_name, trigger_group);
 
 -- 自动维护 update_time（数据库兜底）
-CREATE OR REPLACE FUNCTION fn_sys_update_time()
+CREATE FUNCTION public.fn_sys_update_time()
     RETURNS TRIGGER AS
 $$
 BEGIN
@@ -1030,117 +1036,103 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_sys_user_update_time ON sys_user;
 CREATE TRIGGER trg_sys_user_update_time
     BEFORE UPDATE
-    ON sys_user
+    ON system.sys_user
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_dept_update_time ON sys_dept;
 CREATE TRIGGER trg_sys_dept_update_time
     BEFORE UPDATE
-    ON sys_dept
+    ON system.sys_dept
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_post_update_time ON sys_post;
 CREATE TRIGGER trg_sys_post_update_time
     BEFORE UPDATE
-    ON sys_post
+    ON system.sys_post
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_role_update_time ON sys_role;
 CREATE TRIGGER trg_sys_role_update_time
     BEFORE UPDATE
-    ON sys_role
+    ON system.sys_role
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_permission_update_time ON sys_permission;
 CREATE TRIGGER trg_sys_permission_update_time
     BEFORE UPDATE
-    ON sys_permission
+    ON system.sys_permission
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_menu_update_time ON sys_menu;
 CREATE TRIGGER trg_sys_menu_update_time
     BEFORE UPDATE
-    ON sys_menu
+    ON system.sys_menu
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_role_permission_update_time ON sys_role_permission;
 CREATE TRIGGER trg_sys_role_permission_update_time
     BEFORE UPDATE
-    ON sys_role_permission
+    ON system.sys_role_permission
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_role_menu_update_time ON sys_role_menu;
 CREATE TRIGGER trg_sys_role_menu_update_time
     BEFORE UPDATE
-    ON sys_role_menu
+    ON system.sys_role_menu
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_role_menu_dept_update_time ON sys_role_menu_dept;
 CREATE TRIGGER trg_sys_role_menu_dept_update_time
     BEFORE UPDATE
-    ON sys_role_menu_dept
+    ON system.sys_role_menu_dept
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_user_role_update_time ON sys_user_role;
 CREATE TRIGGER trg_sys_user_role_update_time
     BEFORE UPDATE
-    ON sys_user_role
+    ON system.sys_user_role
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_user_post_update_time ON sys_user_post;
 CREATE TRIGGER trg_sys_user_post_update_time
     BEFORE UPDATE
-    ON sys_user_post
+    ON system.sys_user_post
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_user_data_scope_update_time ON sys_user_data_scope;
 CREATE TRIGGER trg_sys_user_data_scope_update_time
     BEFORE UPDATE
-    ON sys_user_data_scope
+    ON system.sys_user_data_scope
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_data_scope_rule_update_time ON sys_data_scope_rule;
 CREATE TRIGGER trg_sys_data_scope_rule_update_time
     BEFORE UPDATE
-    ON sys_data_scope_rule
+    ON system.sys_data_scope_rule
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_order_update_time ON sys_order;
 CREATE TRIGGER trg_sys_order_update_time
     BEFORE UPDATE
-    ON sys_order
+    ON "order".sys_order
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_notice_update_time ON sys_notice;
 CREATE TRIGGER trg_sys_notice_update_time
     BEFORE UPDATE
-    ON sys_notice
+    ON notice.sys_notice
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
 
-DROP TRIGGER IF EXISTS trg_sys_notice_recipient_update_time ON sys_notice_recipient;
 CREATE TRIGGER trg_sys_notice_recipient_update_time
     BEFORE UPDATE
-    ON sys_notice_recipient
+    ON notice.sys_notice_recipient
     FOR EACH ROW
-EXECUTE FUNCTION fn_sys_update_time();
+EXECUTE FUNCTION public.fn_sys_update_time();
+
+SET search_path TO system, public;
 
 -- 初始化基础数据（默认密码示例：Passowrd@123）
 INSERT INTO sys_dept (id, name, code, parent_id, status, sort, remark)
@@ -1267,6 +1259,8 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (200, '订单管理', 'order', NULL, '/orders', 'OrderPage', 'order:query', 1, 20, '订单管理')
 ;
 
+SET search_path TO dict, public;
+
 INSERT INTO sys_dict_type (id, dict_type, dict_name, status, sort, remark)
 VALUES (1, 'sys_gender', '性别', 1, 10, '系统内置'),
        (2, 'sys_status', '状态', 1, 20, '系统内置')
@@ -1279,7 +1273,10 @@ VALUES (1, 'sys_gender', '男', 'M', 1, 10, NULL),
        (4, 'sys_status', '停用', '0', 1, 20, NULL)
 ;
 
-INSERT INTO sys_user (id, user_name, nick_name, phone, email, password, status, dept_id, data_scope_type, data_scope_value,
+SET search_path TO system, public;
+
+INSERT INTO sys_user (id, user_name, nick_name, phone, email, password, status, dept_id, data_scope_type,
+                      data_scope_value,
                       sex, remark)
 VALUES (1, 'admin', '管理员', NULL, NULL,
         'bb5446b87e58c601c59db53c17e4c11ef7e305e259697ec835e07e9735de7ff5', 1, 1, 'ALL', NULL, 'M',
@@ -1454,7 +1451,10 @@ VALUES (1, 10, NULL),
        (3, 200, NULL)
 ;
 
-INSERT INTO sys_order (id, user_id, amount, create_time, update_time, create_by, create_dept, update_by, is_deleted, version, remark)
+SET search_path TO "order", public;
+
+INSERT INTO sys_order (id, user_id, amount, create_time, update_time, create_by, create_dept, update_by, is_deleted,
+                       version, remark)
 VALUES (1, 2, 1999.00, '2026-02-01 09:12:00', '2026-02-01 09:12:00', 2, 100, 2, 0, 0, '研发采购'),
        (2, 3, 499.00, '2026-02-03 14:35:00', '2026-02-03 14:35:00', 3, 100, 3, 0, 0, '研发材料'),
        (3, 4, 129.90, '2026-02-05 10:20:00', '2026-02-05 10:20:00', 4, 200, 4, 0, 0, '运营投放'),
@@ -1463,24 +1463,231 @@ VALUES (1, 2, 1999.00, '2026-02-01 09:12:00', '2026-02-01 09:12:00', 2, 100, 2, 
        (6, 6, 89.00, '2026-02-12 11:15:00', '2026-02-12 11:15:00', 6, 100, 6, 0, 0, '测试订单')
 ;
 
-SELECT setval('sys_dept_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_dept));
-SELECT setval('sys_post_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_post));
-SELECT setval('sys_role_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_role));
-SELECT setval('sys_permission_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_permission));
-SELECT setval('sys_menu_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_menu));
-SELECT setval('sys_user_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_user));
-SELECT setval('sys_role_permission_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_role_permission));
-SELECT setval('sys_role_menu_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_role_menu));
-SELECT setval('sys_role_menu_dept_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_role_menu_dept));
-SELECT setval('sys_user_role_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_user_role));
-SELECT setval('sys_user_data_scope_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_user_data_scope));
-SELECT setval('sys_user_post_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_user_post));
-SELECT setval('sys_dict_type_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_dict_type));
-SELECT setval('sys_dict_data_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_dict_data));
-SELECT setval('sys_order_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_order));
-SELECT setval('sys_notice_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_notice));
-SELECT setval('sys_notice_recipient_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_notice_recipient));
-SELECT setval('sys_job_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_job));
-SELECT setval('sys_job_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_job_log));
-SELECT setval('sys_oper_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_oper_log));
-SELECT setval('sys_login_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM sys_login_log));
+SELECT setval('system.sys_dept_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_dept));
+SELECT setval('system.sys_post_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_post));
+SELECT setval('system.sys_role_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_role));
+SELECT setval('system.sys_permission_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_permission));
+SELECT setval('system.sys_menu_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_menu));
+SELECT setval('system.sys_user_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_user));
+SELECT setval('system.sys_role_permission_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_role_permission));
+SELECT setval('system.sys_role_menu_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_role_menu));
+SELECT setval('system.sys_role_menu_dept_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_role_menu_dept));
+SELECT setval('system.sys_user_role_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_user_role));
+SELECT setval('system.sys_user_data_scope_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_user_data_scope));
+SELECT setval('system.sys_user_post_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_user_post));
+SELECT setval('dict.sys_dict_type_id_seq', (SELECT COALESCE(MAX(id), 1) FROM dict.sys_dict_type));
+SELECT setval('dict.sys_dict_data_id_seq', (SELECT COALESCE(MAX(id), 1) FROM dict.sys_dict_data));
+SELECT setval('"order".sys_order_id_seq', (SELECT COALESCE(MAX(id), 1) FROM "order".sys_order));
+SELECT setval('notice.sys_notice_id_seq', (SELECT COALESCE(MAX(id), 1) FROM notice.sys_notice));
+SELECT setval('notice.sys_notice_recipient_id_seq', (SELECT COALESCE(MAX(id), 1) FROM notice.sys_notice_recipient));
+SELECT setval('job.sys_job_id_seq', (SELECT COALESCE(MAX(id), 1) FROM job.sys_job));
+SELECT setval('job.sys_job_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM job.sys_job_log));
+SELECT setval('log.sys_oper_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM log.sys_oper_log));
+SELECT setval('log.sys_login_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM log.sys_login_log));
+
+-- =========================
+-- 模块账号与最小权限隔离（需 DBA/Superuser 执行）
+-- 模块 -> schema -> 账号（rw/ro）
+-- =========================
+DO
+$$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_system_rw') THEN
+            CREATE ROLE demo_system_rw LOGIN PASSWORD 'demo_system_rw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_system_ro') THEN
+            CREATE ROLE demo_system_ro LOGIN PASSWORD 'demo_system_ro' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_order_rw') THEN
+            CREATE ROLE demo_order_rw LOGIN PASSWORD 'demo_order_rw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_order_ro') THEN
+            CREATE ROLE demo_order_ro LOGIN PASSWORD 'demo_order_ro' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_notice_rw') THEN
+            CREATE ROLE demo_notice_rw LOGIN PASSWORD 'demo_notice_rw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_notice_ro') THEN
+            CREATE ROLE demo_notice_ro LOGIN PASSWORD 'demo_notice_ro' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_job_rw') THEN
+            CREATE ROLE demo_job_rw LOGIN PASSWORD 'demo_job_rw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_job_ro') THEN
+            CREATE ROLE demo_job_ro LOGIN PASSWORD 'demo_job_ro' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_log_rw') THEN
+            CREATE ROLE demo_log_rw LOGIN PASSWORD 'demo_log_rw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_log_ro') THEN
+            CREATE ROLE demo_log_ro LOGIN PASSWORD 'demo_log_ro' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_dict_rw') THEN
+            CREATE ROLE demo_dict_rw LOGIN PASSWORD 'demo_dict_rw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_dict_ro') THEN
+            CREATE ROLE demo_dict_ro LOGIN PASSWORD 'demo_dict_ro' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_cache_rw') THEN
+            CREATE ROLE demo_cache_rw LOGIN PASSWORD 'demo_cache_rw' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'demo_cache_ro') THEN
+            CREATE ROLE demo_cache_ro LOGIN PASSWORD 'demo_cache_ro' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+        END IF;
+    END
+$$;
+
+DO
+$$
+    DECLARE
+        db_name TEXT := current_database();
+    BEGIN
+        EXECUTE format('REVOKE ALL ON DATABASE %I FROM PUBLIC', db_name);
+        EXECUTE format(
+                'GRANT CONNECT ON DATABASE %I TO demo_system_rw, demo_system_ro, demo_order_rw, demo_order_ro, demo_notice_rw, demo_notice_ro, demo_job_rw, demo_job_ro, demo_log_rw, demo_log_ro, demo_dict_rw, demo_dict_ro, demo_cache_rw, demo_cache_ro',
+                db_name
+                );
+
+        EXECUTE format('ALTER ROLE demo_system_rw IN DATABASE %I SET search_path = system, public', db_name);
+        EXECUTE format('ALTER ROLE demo_system_ro IN DATABASE %I SET search_path = system, public', db_name);
+        EXECUTE format('ALTER ROLE demo_order_rw IN DATABASE %I SET search_path = "order", public', db_name);
+        EXECUTE format('ALTER ROLE demo_order_ro IN DATABASE %I SET search_path = "order", public', db_name);
+        EXECUTE format('ALTER ROLE demo_notice_rw IN DATABASE %I SET search_path = notice, public', db_name);
+        EXECUTE format('ALTER ROLE demo_notice_ro IN DATABASE %I SET search_path = notice, public', db_name);
+        EXECUTE format('ALTER ROLE demo_job_rw IN DATABASE %I SET search_path = job, public', db_name);
+        EXECUTE format('ALTER ROLE demo_job_ro IN DATABASE %I SET search_path = job, public', db_name);
+        EXECUTE format('ALTER ROLE demo_log_rw IN DATABASE %I SET search_path = log, public', db_name);
+        EXECUTE format('ALTER ROLE demo_log_ro IN DATABASE %I SET search_path = log, public', db_name);
+        EXECUTE format('ALTER ROLE demo_dict_rw IN DATABASE %I SET search_path = dict, public', db_name);
+        EXECUTE format('ALTER ROLE demo_dict_ro IN DATABASE %I SET search_path = dict, public', db_name);
+        EXECUTE format('ALTER ROLE demo_cache_rw IN DATABASE %I SET search_path = cache, public', db_name);
+        EXECUTE format('ALTER ROLE demo_cache_ro IN DATABASE %I SET search_path = cache, public', db_name);
+    END
+$$;
+
+REVOKE ALL ON SCHEMA system FROM PUBLIC;
+REVOKE ALL ON SCHEMA "order" FROM PUBLIC;
+REVOKE ALL ON SCHEMA notice FROM PUBLIC;
+REVOKE ALL ON SCHEMA job FROM PUBLIC;
+REVOKE ALL ON SCHEMA log FROM PUBLIC;
+REVOKE ALL ON SCHEMA dict FROM PUBLIC;
+REVOKE ALL ON SCHEMA cache FROM PUBLIC;
+
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA system FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA "order" FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA notice FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA job FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA log FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA dict FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA cache FROM PUBLIC;
+
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA system FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA "order" FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA notice FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA job FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA log FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA dict FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA cache FROM PUBLIC;
+
+DO
+$$
+    DECLARE
+        role_name      TEXT;
+        schema_name    TEXT;
+        module_roles   TEXT[] := ARRAY [
+            'demo_system_rw', 'demo_system_ro',
+            'demo_order_rw', 'demo_order_ro',
+            'demo_notice_rw', 'demo_notice_ro',
+            'demo_job_rw', 'demo_job_ro',
+            'demo_log_rw', 'demo_log_ro',
+            'demo_dict_rw', 'demo_dict_ro',
+            'demo_cache_rw', 'demo_cache_ro'
+            ];
+        module_schemas TEXT[] := ARRAY ['system', 'order', 'notice', 'job', 'log', 'dict', 'cache'];
+    BEGIN
+        FOREACH role_name IN ARRAY module_roles
+            LOOP
+                FOREACH schema_name IN ARRAY module_schemas
+                    LOOP
+                        EXECUTE format('REVOKE ALL ON SCHEMA %I FROM %I', schema_name, role_name);
+                        EXECUTE format('REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA %I FROM %I', schema_name,
+                                       role_name);
+                        EXECUTE format('REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA %I FROM %I', schema_name,
+                                       role_name);
+                    END LOOP;
+            END LOOP;
+    END
+$$;
+
+-- system
+GRANT USAGE ON SCHEMA system TO demo_system_rw, demo_system_ro;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA system TO demo_system_rw;
+GRANT SELECT ON ALL TABLES IN SCHEMA system TO demo_system_ro;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA system TO demo_system_rw;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA system TO demo_system_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA system GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA system GRANT SELECT ON TABLES TO demo_system_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA system GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA system GRANT USAGE, SELECT ON SEQUENCES TO demo_system_ro;
+
+-- order
+GRANT USAGE ON SCHEMA "order" TO demo_order_rw, demo_order_ro;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA "order" TO demo_order_rw;
+GRANT SELECT ON ALL TABLES IN SCHEMA "order" TO demo_order_ro;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA "order" TO demo_order_rw;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA "order" TO demo_order_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA "order" GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_order_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA "order" GRANT SELECT ON TABLES TO demo_order_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA "order" GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_order_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA "order" GRANT USAGE, SELECT ON SEQUENCES TO demo_order_ro;
+
+-- notice
+GRANT USAGE ON SCHEMA notice TO demo_notice_rw, demo_notice_ro;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA notice TO demo_notice_rw;
+GRANT SELECT ON ALL TABLES IN SCHEMA notice TO demo_notice_ro;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA notice TO demo_notice_rw;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA notice TO demo_notice_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA notice GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_notice_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA notice GRANT SELECT ON TABLES TO demo_notice_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA notice GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_notice_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA notice GRANT USAGE, SELECT ON SEQUENCES TO demo_notice_ro;
+
+-- job
+GRANT USAGE ON SCHEMA job TO demo_job_rw, demo_job_ro;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA job TO demo_job_rw;
+GRANT SELECT ON ALL TABLES IN SCHEMA job TO demo_job_ro;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA job TO demo_job_rw;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA job TO demo_job_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA job GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_job_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA job GRANT SELECT ON TABLES TO demo_job_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA job GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_job_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA job GRANT USAGE, SELECT ON SEQUENCES TO demo_job_ro;
+
+-- log
+GRANT USAGE ON SCHEMA log TO demo_log_rw, demo_log_ro;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA log TO demo_log_rw;
+GRANT SELECT ON ALL TABLES IN SCHEMA log TO demo_log_ro;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA log TO demo_log_rw;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA log TO demo_log_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA log GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_log_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA log GRANT SELECT ON TABLES TO demo_log_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA log GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_log_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA log GRANT USAGE, SELECT ON SEQUENCES TO demo_log_ro;
+
+-- dict
+GRANT USAGE ON SCHEMA dict TO demo_dict_rw, demo_dict_ro;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA dict TO demo_dict_rw;
+GRANT SELECT ON ALL TABLES IN SCHEMA dict TO demo_dict_ro;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA dict TO demo_dict_rw;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA dict TO demo_dict_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA dict GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_dict_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA dict GRANT SELECT ON TABLES TO demo_dict_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA dict GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_dict_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA dict GRANT USAGE, SELECT ON SEQUENCES TO demo_dict_ro;
+
+-- cache
+GRANT USAGE ON SCHEMA cache TO demo_cache_rw, demo_cache_ro;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA cache TO demo_cache_rw;
+GRANT SELECT ON ALL TABLES IN SCHEMA cache TO demo_cache_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA cache GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_cache_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA cache GRANT SELECT ON TABLES TO demo_cache_ro;

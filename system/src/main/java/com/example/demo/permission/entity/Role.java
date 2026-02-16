@@ -20,7 +20,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TableName(value = "sys_role")
+@TableName(value = "system.sys_role")
 public class Role extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

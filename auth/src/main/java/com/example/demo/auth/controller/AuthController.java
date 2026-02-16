@@ -6,16 +6,15 @@ import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.auth.service.*;
 import com.example.demo.auth.support.AuthTokenResolver;
+import com.example.demo.common.config.CommonConstants;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequireLogin;
-import com.example.demo.dept.entity.Dept;
-import com.example.demo.dept.service.DeptService;
-import com.example.demo.log.event.LoginLogEvent;
-import com.example.demo.log.support.IpUtils;
-import com.example.demo.user.dto.SysUserProfileUpdateRequest;
-import com.example.demo.user.entity.SysUser;
-import com.example.demo.user.service.SysUserService;
+import com.example.demo.identity.api.dto.IdentityDataScopeProfileDTO;
+import com.example.demo.identity.api.dto.IdentityUserDTO;
+import com.example.demo.identity.api.dto.IdentityUserProfileUpdateRequest;
+import com.example.demo.identity.api.facade.IdentityReadFacade;
+import com.example.demo.log.api.event.LoginLogEvent;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,16 +40,15 @@ public class AuthController extends BaseController {
     private final TokenService tokenService;
     private final PasswordService passwordService;
     private final PasswordPolicyService passwordPolicyService;
-    private final SysUserService userService;
+    private final IdentityReadFacade identityReadFacade;
     private final LoginAttemptService loginAttemptService;
     private final LoginAnomalyAlertService loginAnomalyAlertService;
     private final OperationConfirmService operationConfirmService;
     private final UserProfileService userProfileService;
-    private final com.example.demo.datascope.service.DataScopeProfileService dataScopeProfileService;
-    private final DeptService deptService;
     private final ApplicationEventPublisher eventPublisher;
     private final AuthTokenResolver authTokenResolver;
     private final AuthConstants systemConstants;
+    private final CommonConstants commonConstants;
 
     /**
      * 生成验证码并返回验证码 ID 与图片数据。
@@ -104,14 +102,14 @@ public class AuthController extends BaseController {
                     i18n("auth.login.captcha.invalid"), httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), i18n("auth.login.captcha.invalid"));
         }
-        SysUser user = userService.getByUserName(request.getUserName());
+        IdentityUserDTO user = identityReadFacade.getUserByUserName(request.getUserName());
         if (user == null) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
                     credentialError, httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
-        if (user.getStatus() != null && user.getStatus().equals(SysUser.STATUS_DISABLED)) {
+        if (user.getStatus() != null && user.getStatus().equals(0)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
                     credentialError, httpRequest);
@@ -137,14 +135,14 @@ public class AuthController extends BaseController {
         authUser.setNickName(user.getNickName());
         authUser.setDeptId(user.getDeptId());
         if (user.getDeptId() != null) {
-            Dept dept = deptService.getById(user.getDeptId());
-            if (dept != null) {
-                authUser.setDeptName(dept.getName());
+            String deptName = identityReadFacade.getDeptNameById(user.getDeptId());
+            if (StringUtils.isNotBlank(deptName)) {
+                authUser.setDeptName(deptName);
             }
         }
         authUser.setDataScopeType(user.getDataScopeType());
         authUser.setDataScopeValue(user.getDataScopeValue());
-        com.example.demo.datascope.model.DataScopeProfile profile = dataScopeProfileService.buildProfile(user);
+        IdentityDataScopeProfileDTO profile = identityReadFacade.buildDataScopeProfile(user.getId());
         authUser.setDeptTreeIds(profile.getDeptTreeIds());
         authUser.setRoleDataScopes(profile.getRoleDataScopes());
         authUser.setUserScopeOverrides(profile.getUserScopeOverrides());
@@ -157,7 +155,7 @@ public class AuthController extends BaseController {
         loginResponse.setPasswordExpireDays(passwordPolicyService.getExpireDays());
         AuthConstants.Token tokenConstants = systemConstants.getToken();
         response.setHeader(tokenConstants.getAuthorizationHeader(), tokenConstants.getBearerPrefix() + loginResponse.getToken());
-        String loginIp = IpUtils.getClientIp(httpRequest);
+        String loginIp = resolveClientIp(httpRequest);
         String loginUserAgent = httpRequest == null ? null : httpRequest.getHeader(systemConstants.getProfile().getUserAgentHeader());
         loginAnomalyAlertService.checkAndNotify(user, loginIp, loginUserAgent, LocalDateTime.now());
         publishLoginLog(user.getUserName(), user.getId(), loginType, loginSuccessStatus,
@@ -223,7 +221,7 @@ public class AuthController extends BaseController {
         if (authUser == null || authUser.getId() == null) {
             return error(controllerConstants.getUnauthorizedCode(), i18n("auth.user.invalid"));
         }
-        SysUser dbUser = userService.getById(authUser.getId());
+        IdentityUserDTO dbUser = identityReadFacade.getUserById(authUser.getId());
         if (dbUser == null) {
             return error(controllerConstants.getNotFoundCode(), i18n("user.not.found"));
         }
@@ -250,13 +248,13 @@ public class AuthController extends BaseController {
                 return error(controllerConstants.getBadRequestCode(), i18n("user.password.weak"));
             }
         }
-        SysUserProfileUpdateRequest profileUpdate = new SysUserProfileUpdateRequest();
+        IdentityUserProfileUpdateRequest profileUpdate = new IdentityUserProfileUpdateRequest();
         profileUpdate.setNickName(request.getNickName());
         profileUpdate.setPhone(request.getPhone());
         profileUpdate.setEmail(request.getEmail());
         profileUpdate.setSex(request.getSex());
         profileUpdate.setRemark(request.getRemark());
-        if (!userService.updateSelfProfile(authUser.getId(), profileUpdate, newRawPassword)) {
+        if (!identityReadFacade.updateSelfProfile(authUser.getId(), profileUpdate, newRawPassword)) {
             return error(controllerConstants.getInternalServerErrorCode(), i18n("common.update.failed"));
         }
         return success();
@@ -318,7 +316,7 @@ public class AuthController extends BaseController {
         if (eventPublisher == null) {
             return;
         }
-        String ip = IpUtils.getClientIp(request);
+        String ip = resolveClientIp(request);
         String ua = request == null ? null : request.getHeader(systemConstants.getProfile().getUserAgentHeader());
         eventPublisher.publishEvent(new LoginLogEvent(
                 userName,
@@ -330,6 +328,22 @@ public class AuthController extends BaseController {
                 ua,
                 LocalDateTime.now()
         ));
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        String forwarded = request.getHeader(commonConstants.getHttp().getForwardedForHeader());
+        if (StringUtils.isNotBlank(forwarded)) {
+            int comma = forwarded.indexOf(',');
+            return comma > 0 ? forwarded.substring(0, comma).trim() : forwarded.trim();
+        }
+        String realIp = request.getHeader(commonConstants.getHttp().getRealIpHeader());
+        if (StringUtils.isNotBlank(realIp)) {
+            return realIp.trim();
+        }
+        return StringUtils.trimToNull(request.getRemoteAddr());
     }
 
 }

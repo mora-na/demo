@@ -19,7 +19,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName(value = "sys_menu")
+@TableName(value = "system.sys_menu")
 @EqualsAndHashCode(callSuper = true)
 public class Menu extends BaseEntity implements Serializable {
 

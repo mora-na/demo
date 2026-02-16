@@ -218,60 +218,140 @@ spring:
           select-where-alway-true-check: true
           # 是否允许 AND 条件恒真
           condition-and-alway-true-allow: false
+        # 初始化连接数
+        initial-size: 1
+        # 最小空闲连接数
+        min-idle: 1
+        # 最大活跃连接数
+        max-active: 3
+        # 获取连接最大等待时间（ms）
+        max-wait: 60000
+        # 连接检测间隔（ms）
+        time-between-eviction-runs-millis: 60000
+        # 连接最小空闲时间（ms）
+        min-evictable-idle-time-millis: 300000
+        # 连接校验 SQL
+        validation-query: SELECT 1
+        # 空闲时检测连接
+        test-while-idle: true
+        # 获取连接时检测
+        test-on-borrow: false
+        # 归还连接时检测
+        test-on-return: false
+        # 是否缓存预编译语句
+        pool-prepared-statements: true
+        # 每连接最大缓存 PS 数
+        max-pool-prepared-statement-per-connection-size: 20
+        # 启用过滤器
+        filters: stat,wall,slf4j
+        # 是否回收泄漏连接 建议：开发/联调环境：可以保留，便于发现连接泄漏。生产环境：关闭
+        remove-abandoned: true
+        # 泄漏连接回收超时（毫秒）
+        remove-abandoned-timeout-millis: 180000
+        # 是否记录泄漏连接日志
+        log-abandoned: false
+        # 保活检测
+        keep-alive: true
+        # 最大空闲时长（毫秒）
+        max-evictable-idle-time-millis: 900000
+        # 连接属性
+        connection-properties:
+          druid.stat.mergeSql: true
+          druid.stat.slowSqlMillis: 5000
+          wall.config.multiStatementAllow: true
+          wall.config.noneBaseStatementAllow: true
       # 默认数据源名称
-      primary: master
+      primary: system_rw
       # 严格匹配模式（true: 未匹配直接报错）
-      strict: false
+      strict: true
       # 数据源集合
       datasource:
-        # 主库配置
-        master:
+        system_rw:
           # JDBC 连接地址
-          url: jdbc:postgresql://localhost:5432/test?currentSchema=test
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
           # 数据库用户名
-          username: panpan
-          # 数据库密码 admin
-          password: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
+          username: ${DB_SYSTEM_RW_USER:demo_system_rw}
+          # 数据库密码
+          password: ${DB_SYSTEM_RW_PASSWORD:demo_system_rw}
           # JDBC 驱动类
           driver-class-name: org.postgresql.Driver
           # 连接池实现类
           type: com.alibaba.druid.pool.DruidDataSource
-          # Druid 连接池细项
-          druid:
-            # 初始化连接数
-            initial-size: 1
-            # 最小空闲连接数
-            min-idle: 1
-            # 最大活跃连接数
-            max-active: 3
-            # 获取连接最大等待时间（ms）
-            max-wait: 60000
-            # 连接检测间隔（ms）
-            time-between-eviction-runs-millis: 60000
-            # 连接最小空闲时间（ms）
-            min-evictable-idle-time-millis: 300000
-            # 连接校验 SQL
-            validation-query: SELECT 1
-            # 空闲时检测连接
-            test-while-idle: true
-            # 获取连接时检测
-            test-on-borrow: false
-            # 归还连接时检测
-            test-on-return: false
-            # 是否缓存预编译语句
-            pool-prepared-statements: true
-            # 每连接最大缓存 PS 数
-            max-pool-prepared-statement-per-connection-size: 20
-            # 启用过滤器
-            filters: stat,wall,slf4j
-            # 连接属性
-            connection-properties: >
-              druid.stat.mergeSql=true;
-              druid.stat.slowSqlMillis=5000;
-              wall.config.multiStatementAllow=true;
-              wall.config.noneBaseStatementAllow=true;
-              removeAbandoned=true;
-              removeAbandonedTimeout=180;
-              logAbandoned=false;
-              keepAlive=true;
-              maxEvictableIdleTimeMillis=900000
+        system_ro:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_SYSTEM_RO_USER:demo_system_ro}
+          password: ${DB_SYSTEM_RO_PASSWORD:demo_system_ro}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        order_rw:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_ORDER_RW_USER:demo_order_rw}
+          password: ${DB_ORDER_RW_PASSWORD:demo_order_rw}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        order_ro:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_ORDER_RO_USER:demo_order_ro}
+          password: ${DB_ORDER_RO_PASSWORD:demo_order_ro}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        notice_rw:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_NOTICE_RW_USER:demo_notice_rw}
+          password: ${DB_NOTICE_RW_PASSWORD:demo_notice_rw}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        notice_ro:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_NOTICE_RO_USER:demo_notice_ro}
+          password: ${DB_NOTICE_RO_PASSWORD:demo_notice_ro}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        job_rw:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_JOB_RW_USER:demo_job_rw}
+          password: ${DB_JOB_RW_PASSWORD:demo_job_rw}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        job_ro:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_JOB_RO_USER:demo_job_ro}
+          password: ${DB_JOB_RO_PASSWORD:demo_job_ro}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        log_rw:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_LOG_RW_USER:demo_log_rw}
+          password: ${DB_LOG_RW_PASSWORD:demo_log_rw}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        log_ro:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_LOG_RO_USER:demo_log_ro}
+          password: ${DB_LOG_RO_PASSWORD:demo_log_ro}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        dict_rw:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_DICT_RW_USER:demo_dict_rw}
+          password: ${DB_DICT_RW_PASSWORD:demo_dict_rw}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        dict_ro:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_DICT_RO_USER:demo_dict_ro}
+          password: ${DB_DICT_RO_PASSWORD:demo_dict_ro}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        cache_rw:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_CACHE_RW_USER:demo_cache_rw}
+          password: ${DB_CACHE_RW_PASSWORD:demo_cache_rw}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        cache_ro:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_CACHE_RO_USER:demo_cache_ro}
+          password: ${DB_CACHE_RO_PASSWORD:demo_cache_ro}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource

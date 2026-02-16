@@ -1,8 +1,8 @@
 package com.example.demo.log.listener;
 
+import com.example.demo.log.api.event.LoginLogEvent;
 import com.example.demo.log.config.LogConstants;
 import com.example.demo.log.entity.SysLoginLog;
-import com.example.demo.log.event.LoginLogEvent;
 import com.example.demo.log.service.SysLoginLogService;
 import com.example.demo.log.support.IpUtils;
 import com.example.demo.log.support.UserAgentUtils;

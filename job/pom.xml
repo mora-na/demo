@@ -58,4 +58,37 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>ban-system-impl-dependency</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>false</searchTransitive>
+                                    <excludes>
+                                        <exclude>com.example:system</exclude>
+                                        <exclude>com.example:auth</exclude>
+                                        <exclude>com.example:order</exclude>
+                                        <exclude>com.example:notice</exclude>
+                                        <exclude>com.example:log</exclude>
+                                    </excludes>
+                                    <message>job 模块禁止直接依赖 system，请改用 *-api 契约模块。</message>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

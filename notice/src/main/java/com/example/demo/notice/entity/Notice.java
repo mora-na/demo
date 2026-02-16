@@ -19,7 +19,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName(value = "sys_notice")
+@TableName(value = "notice.sys_notice")
 @EqualsAndHashCode(callSuper = true)
 public class Notice extends BaseEntity implements Serializable {
 

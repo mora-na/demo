@@ -15,23 +15,23 @@ import java.util.List;
  */
 public interface CacheMapper extends BaseMapper<CacheEntry> {
 
-    @Select("SELECT cache_key, cache_value, value_class, expire_at FROM sys_cache WHERE cache_key = #{key} FOR UPDATE")
+    @Select("SELECT cache_key, cache_value, value_class, expire_at FROM cache.sys_cache WHERE cache_key = #{key} FOR UPDATE")
     CacheEntry selectForUpdate(@Param("key") String key);
 
-    @Insert("INSERT INTO sys_cache (cache_key, cache_value, value_class, expire_at) " +
+    @Insert("INSERT INTO cache.sys_cache (cache_key, cache_value, value_class, expire_at) " +
             "VALUES (#{cacheKey}, #{cacheValue}, #{valueClass}, #{expireAt}) " +
             "ON CONFLICT (cache_key) DO NOTHING")
     int insertIgnore(CacheEntry entry);
 
-    @Update("UPDATE sys_cache SET cache_value = #{entry.cacheValue}, value_class = #{entry.valueClass}, " +
+    @Update("UPDATE cache.sys_cache SET cache_value = #{entry.cacheValue}, value_class = #{entry.valueClass}, " +
             "expire_at = #{entry.expireAt} WHERE cache_key = #{entry.cacheKey} " +
             "AND expire_at IS NOT NULL AND expire_at < #{now}")
     int updateIfExpired(@Param("entry") CacheEntry entry, @Param("now") long now);
 
-    @Select("SELECT cache_key FROM sys_cache ORDER BY CASE WHEN expire_at IS NULL THEN 1 ELSE 0 END, expire_at ASC, cache_key ASC LIMIT #{limit}")
+    @Select("SELECT cache_key FROM cache.sys_cache ORDER BY CASE WHEN expire_at IS NULL THEN 1 ELSE 0 END, expire_at ASC, cache_key ASC LIMIT #{limit}")
     List<String> selectKeysForEviction(@Param("limit") int limit);
 
-    @Delete("DELETE FROM sys_cache WHERE expire_at IS NOT NULL AND expire_at < #{now}")
+    @Delete("DELETE FROM cache.sys_cache WHERE expire_at IS NOT NULL AND expire_at < #{now}")
     int deleteExpired(@Param("now") long now);
 
     default int deleteBatchIds(List<String> keys) {

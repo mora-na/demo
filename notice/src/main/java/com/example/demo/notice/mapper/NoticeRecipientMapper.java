@@ -86,13 +86,26 @@ public interface NoticeRecipientMapper extends BaseMapper<NoticeRecipient> {
         return stats;
     }
 
-    @Select("select nr.id as id, nr.user_id as userId, u.user_name as userName, u.nick_name as nickName, " + "u.dept_id as deptId, nr.read_status as readStatus, nr.read_time as readTime " + "from sys_notice_recipient nr left join sys_user u on u.id = nr.user_id and u.is_deleted = 0 " + "where nr.notice_id = #{noticeId} and nr.is_deleted = 0 " + "order by nr.read_status asc, nr.read_time desc, nr.user_id asc")
+    @Select("select nr.id as id, nr.user_id as userId, nr.read_status as readStatus, nr.read_time as readTime " +
+            "from notice.sys_notice_recipient nr " +
+            "where nr.notice_id = #{noticeId} and nr.is_deleted = 0 " +
+            "order by nr.read_status asc, nr.read_time desc, nr.user_id asc")
     List<NoticeRecipientVO> selectRecipientsByNoticeId(@Param("noticeId") Long noticeId);
 
-    @Select("select n.id as id, n.title as title, n.content as content, " + "n.created_name as createdName, n.create_time as createdAt, " + "nr.read_status as readStatus, nr.read_time as readTime " + "from sys_notice n join sys_notice_recipient nr on nr.notice_id = n.id " + "where nr.user_id = #{userId} and n.is_deleted = 0 and nr.is_deleted = 0 " + "order by n.create_time desc, n.id desc")
+    @Select("select n.id as id, n.title as title, n.content as content, " +
+            "n.created_name as createdName, n.create_time as createdAt, " +
+            "nr.read_status as readStatus, nr.read_time as readTime " +
+            "from notice.sys_notice n join notice.sys_notice_recipient nr on nr.notice_id = n.id " +
+            "where nr.user_id = #{userId} and n.is_deleted = 0 and nr.is_deleted = 0 " +
+            "order by n.create_time desc, n.id desc")
     List<NoticeMyVO> selectMyNotices(@Param("userId") Long userId);
 
-    @Select("select n.id as id, n.title as title, n.content as content, " + "n.created_name as createdName, n.create_time as createdAt, " + "nr.read_status as readStatus, nr.read_time as readTime " + "from sys_notice n join sys_notice_recipient nr on nr.notice_id = n.id " + "where nr.user_id = #{userId} and n.is_deleted = 0 and nr.is_deleted = 0 " + "order by n.create_time desc, n.id desc")
+    @Select("select n.id as id, n.title as title, n.content as content, " +
+            "n.created_name as createdName, n.create_time as createdAt, " +
+            "nr.read_status as readStatus, nr.read_time as readTime " +
+            "from notice.sys_notice n join notice.sys_notice_recipient nr on nr.notice_id = n.id " +
+            "where nr.user_id = #{userId} and n.is_deleted = 0 and nr.is_deleted = 0 " +
+            "order by n.create_time desc, n.id desc")
     IPage<NoticeMyVO> selectMyNoticesPage(IPage<NoticeMyVO> page, @Param("userId") Long userId);
 
     default Long countUnreadByUserId(@Param("userId") Long userId) {
@@ -109,7 +122,7 @@ public interface NoticeRecipientMapper extends BaseMapper<NoticeRecipient> {
 
     @Select("select n.id as id, n.title as title, n.created_name as createdName, n.create_time as createdAt, " +
             "nr.read_status as readStatus, nr.read_time as readTime " +
-            "from sys_notice n join sys_notice_recipient nr on nr.notice_id = n.id " +
+            "from notice.sys_notice n join notice.sys_notice_recipient nr on nr.notice_id = n.id " +
             "where nr.user_id = #{userId} and n.is_deleted = 0 and nr.is_deleted = 0 " +
             "order by n.create_time desc, n.id desc " +
             "limit #{limit}")

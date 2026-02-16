@@ -33,11 +33,11 @@
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
-            <artifactId>system</artifactId>
+            <artifactId>identity-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
-            <artifactId>log</artifactId>
+            <artifactId>log-api</artifactId>
         </dependency>
 
         <dependency>
@@ -82,4 +82,37 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>ban-system-impl-dependency</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>false</searchTransitive>
+                                    <excludes>
+                                        <exclude>com.example:system</exclude>
+                                        <exclude>com.example:order</exclude>
+                                        <exclude>com.example:notice</exclude>
+                                        <exclude>com.example:job</exclude>
+                                        <exclude>com.example:log</exclude>
+                                    </excludes>
+                                    <message>auth 模块禁止直接依赖 system，请改用 *-api 契约模块。</message>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

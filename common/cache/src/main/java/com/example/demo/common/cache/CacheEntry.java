@@ -13,7 +13,7 @@ import lombok.Data;
  * @date 2026/2/9
  */
 @Data
-@TableName(value = "sys_cache")
+@TableName(value = "cache.sys_cache")
 public class CacheEntry {
 
     @TableId(value = "cache_key", type = IdType.INPUT)

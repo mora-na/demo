@@ -1,4 +1,4 @@
-package com.example.demo.log.event;
+package com.example.demo.log.api.event;
 
 import java.time.LocalDateTime;
 
@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
  * 登录日志事件。
  *
  * @author GPT-5.2-codex(high)
- * @date 2026/2/14
+ * @date 2026/2/16
  */
 public class LoginLogEvent {
 

@@ -6,6 +6,8 @@ import com.example.demo.datascope.service.DataScopeRuleService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -20,6 +22,7 @@ import java.util.Map;
  */
 @Component
 @ConditionalOnProperty(prefix = "security.data-scope", name = "source", havingValue = "db", matchIfMissing = true)
+@Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
 public class DbDataScopeRuleProvider implements DataScopeRuleProvider {
 
     private static final String DATA_SCOPE_RULE_KEY = "data-scope:rules";

@@ -6,6 +6,9 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.identity.api.dto.IdentityUserDTO;
+import com.example.demo.identity.api.facade.IdentityQueryApi;
+import com.example.demo.identity.api.facade.IdentityRoleApi;
 import com.example.demo.notice.config.NoticeConstants;
 import com.example.demo.notice.dto.*;
 import com.example.demo.notice.entity.Notice;
@@ -16,10 +19,6 @@ import com.example.demo.notice.model.NoticeScopeType;
 import com.example.demo.notice.service.NoticeRecipientService;
 import com.example.demo.notice.service.NoticeService;
 import com.example.demo.notice.service.NoticeStreamService;
-import com.example.demo.permission.entity.UserRole;
-import com.example.demo.permission.service.UserRoleService;
-import com.example.demo.user.entity.SysUser;
-import com.example.demo.user.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -42,8 +41,8 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     private final NoticeRecipientMapper noticeRecipientMapper;
     private final NoticeRecipientService noticeRecipientService;
     private final NoticeStreamService noticeStreamService;
-    private final SysUserService userService;
-    private final UserRoleService userRoleService;
+    private final IdentityQueryApi identityQueryApi;
+    private final IdentityRoleApi identityRoleApi;
     private final NoticeConstants noticeConstants;
 
     @Override
@@ -110,7 +109,9 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         if (noticeId == null) {
             return Collections.emptyList();
         }
-        return noticeRecipientMapper.selectRecipientsByNoticeId(noticeId);
+        List<NoticeRecipientVO> recipients = noticeRecipientMapper.selectRecipientsByNoticeId(noticeId);
+        fillRecipientUsers(recipients);
+        return recipients;
     }
 
     @Override
@@ -312,57 +313,53 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         if (deptIds == null || deptIds.isEmpty()) {
             return Collections.emptyList();
         }
-        List<SysUser> users = userService.list(Wrappers.lambdaQuery(SysUser.class)
-                .in(SysUser::getDeptId, deptIds)
-                .eq(SysUser::getStatus, noticeConstants.getUser().getEnabledStatus()));
-        return toIdList(users);
+        return identityRoleApi.listEnabledUserIdsByDeptIds(deptIds);
     }
 
     private List<Long> listEnabledUserIdsByRole(List<Long> roleIds) {
         if (roleIds == null || roleIds.isEmpty()) {
             return Collections.emptyList();
         }
-        List<Long> userIds = userRoleService.list(Wrappers.lambdaQuery(UserRole.class)
-                        .in(UserRole::getRoleId, roleIds))
-                .stream()
-                .map(UserRole::getUserId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-        return listEnabledUserIds(userIds);
+        return identityRoleApi.listEnabledUserIdsByRoleIds(roleIds);
     }
 
     private List<Long> listEnabledUserIds(List<Long> userIds) {
-        List<SysUser> users;
         if (userIds == null) {
-            users = userService.list(Wrappers.lambdaQuery(SysUser.class)
-                    .eq(SysUser::getStatus, noticeConstants.getUser().getEnabledStatus()));
-        } else if (userIds.isEmpty()) {
-            return Collections.emptyList();
-        } else {
-            users = userService.listByIds(userIds);
+            return identityRoleApi.listAllEnabledUserIds();
         }
-        if (users == null || users.isEmpty()) {
+        if (userIds.isEmpty()) {
             return Collections.emptyList();
         }
-        return users.stream()
-                .filter(user -> user != null && (user.getStatus() == null
-                        || user.getStatus() == noticeConstants.getUser().getEnabledStatus()))
-                .map(SysUser::getId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
+        return identityRoleApi.listEnabledUserIdsByIds(userIds);
     }
 
-    private List<Long> toIdList(List<SysUser> users) {
-        if (users == null || users.isEmpty()) {
-            return Collections.emptyList();
+    private void fillRecipientUsers(List<NoticeRecipientVO> recipients) {
+        if (recipients == null || recipients.isEmpty()) {
+            return;
         }
-        return users.stream()
-                .filter(Objects::nonNull)
-                .map(SysUser::getId)
+        List<Long> userIds = recipients.stream()
+                .map(NoticeRecipientVO::getUserId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
+        if (userIds.isEmpty()) {
+            return;
+        }
+        Map<Long, IdentityUserDTO> users = identityQueryApi.listUsersByIds(userIds).stream()
+                .filter(Objects::nonNull)
+                .filter(user -> user.getId() != null)
+                .collect(Collectors.toMap(IdentityUserDTO::getId, user -> user, (left, right) -> right));
+        for (NoticeRecipientVO recipient : recipients) {
+            if (recipient == null || recipient.getUserId() == null) {
+                continue;
+            }
+            IdentityUserDTO user = users.get(recipient.getUserId());
+            if (user == null) {
+                continue;
+            }
+            recipient.setUserName(user.getUserName());
+            recipient.setNickName(user.getNickName());
+            recipient.setDeptId(user.getDeptId());
+        }
     }
 }
