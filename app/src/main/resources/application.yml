@@ -248,7 +248,7 @@ security:
     # 是否阻止跨 schema JOIN
     block-cross-schema-join: true
     # 允许访问的业务 schema 白名单
-    allowed-schemas: [ system, order, notice, job, log, dict, cache ]
+    allowed-schemas: [ system, order, notice, job, log, dict, cache, demo ]
   # 频率限制配置
   rate-limit:
     # 是否启用限流

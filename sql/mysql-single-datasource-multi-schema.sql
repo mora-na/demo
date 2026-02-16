@@ -1,10 +1,18 @@
-CREATE DATABASE IF NOT EXISTS system DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE IF NOT EXISTS `order` DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE IF NOT EXISTS notice DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE IF NOT EXISTS job DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE IF NOT EXISTS log DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE IF NOT EXISTS dict DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE IF NOT EXISTS cache DEFAULT CHARACTER SET utf8mb4;
+DROP DATABASE IF EXISTS system;
+DROP DATABASE IF EXISTS ` order `;
+DROP DATABASE IF EXISTS notice;
+DROP DATABASE IF EXISTS job;
+DROP DATABASE IF EXISTS log;
+DROP DATABASE IF EXISTS dict;
+DROP DATABASE IF EXISTS cache;
+
+CREATE DATABASE system DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE ` order ` DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE notice DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE job DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE log DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE dict DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE cache DEFAULT CHARACTER SET utf8mb4;
 
 USE system;
 
@@ -38,7 +46,9 @@ CREATE TABLE IF NOT EXISTS sys_user
     KEY idx_sys_user_phone_deleted (phone, is_deleted),
     KEY idx_sys_user_email_deleted (email, is_deleted)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='系统用户表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='系统用户表';
 
 CREATE TABLE IF NOT EXISTS sys_dept
 (
@@ -60,7 +70,9 @@ CREATE TABLE IF NOT EXISTS sys_dept
     UNIQUE KEY uk_sys_dept_code (code, is_deleted),
     KEY idx_sys_dept_parent (parent_id)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='部门表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='部门表';
 
 CREATE TABLE IF NOT EXISTS sys_post
 (
@@ -83,29 +95,33 @@ CREATE TABLE IF NOT EXISTS sys_post
     KEY idx_sys_post_dept (dept_id),
     KEY idx_sys_post_dept_status_deleted (dept_id, status, is_deleted)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='岗位表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='岗位表';
 
 CREATE TABLE IF NOT EXISTS sys_role
 (
-    id              BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    code            VARCHAR(64)  NOT NULL COMMENT '角色编码（唯一）',
-    name            VARCHAR(128) NOT NULL COMMENT '角色名称',
-    status          TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
-    data_scope_type VARCHAR(32) COMMENT '数据范围类型：ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE',
+    id               BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    code             VARCHAR(64)  NOT NULL COMMENT '角色编码（唯一）',
+    name             VARCHAR(128) NOT NULL COMMENT '角色名称',
+    status           TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    data_scope_type  VARCHAR(32) COMMENT '数据范围类型：ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE',
     data_scope_value VARCHAR(512) COMMENT '数据范围值，CUSTOM_DEPT时存储部门ID列表',
-    create_time     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by       BIGINT                DEFAULT NULL COMMENT '创建人',
-    create_dept     BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
-    update_by       BIGINT                DEFAULT NULL COMMENT '更新人',
-    is_deleted      TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version         INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark          VARCHAR(500)          DEFAULT NULL COMMENT '备注',
+    create_time      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by        BIGINT                DEFAULT NULL COMMENT '创建人',
+    create_dept      BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
+    update_by        BIGINT                DEFAULT NULL COMMENT '更新人',
+    is_deleted       TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version          INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark           VARCHAR(500)          DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_role_code (code, is_deleted),
     KEY idx_sys_role_status_deleted (status, is_deleted)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='角色表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='角色表';
 
 CREATE TABLE IF NOT EXISTS sys_permission
 (
@@ -125,7 +141,9 @@ CREATE TABLE IF NOT EXISTS sys_permission
     UNIQUE KEY uk_sys_permission_code (code, is_deleted),
     KEY idx_sys_permission_status_deleted (status, is_deleted)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='权限表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='权限表';
 
 USE dict;
 
@@ -148,7 +166,9 @@ CREATE TABLE IF NOT EXISTS sys_dict_type
     UNIQUE KEY uk_sys_dict_type (dict_type, is_deleted),
     KEY idx_sys_dict_type_status_deleted_sort (status, is_deleted, sort, id)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='字典类型表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='字典类型表';
 
 CREATE TABLE IF NOT EXISTS sys_dict_data
 (
@@ -171,7 +191,9 @@ CREATE TABLE IF NOT EXISTS sys_dict_data
     KEY idx_sys_dict_data_type (dict_type),
     KEY idx_sys_dict_data_type_status_deleted_sort (dict_type, status, is_deleted, sort, id)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='字典数据表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='字典数据表';
 
 USE system;
 
@@ -201,7 +223,9 @@ CREATE TABLE IF NOT EXISTS sys_menu
     KEY idx_sys_menu_permission_deleted (permission, is_deleted),
     KEY idx_sys_menu_status_deleted_sort (status, is_deleted, sort, id)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='菜单表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='菜单表';
 
 CREATE TABLE IF NOT EXISTS sys_role_permission
 (
@@ -222,29 +246,33 @@ CREATE TABLE IF NOT EXISTS sys_role_permission
     KEY idx_sys_role_permission_perm (permission_id),
     KEY idx_sys_role_permission_perm_deleted (permission_id, is_deleted)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='角色-权限关联表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='角色-权限关联表';
 
 CREATE TABLE IF NOT EXISTS sys_role_menu
 (
-    id          BIGINT     NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    role_id     BIGINT     NOT NULL COMMENT '角色ID',
-    menu_id     BIGINT     NOT NULL COMMENT '菜单ID',
+    id              BIGINT     NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    role_id         BIGINT     NOT NULL COMMENT '角色ID',
+    menu_id         BIGINT     NOT NULL COMMENT '菜单ID',
     data_scope_type VARCHAR(32) COMMENT '菜单级数据范围类型',
-    create_time DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by   BIGINT              DEFAULT NULL COMMENT '创建人',
-    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
-    update_by   BIGINT              DEFAULT NULL COMMENT '更新人',
-    is_deleted  TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version     INT        NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark      VARCHAR(500)        DEFAULT NULL COMMENT '备注',
+    create_time     DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time     DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by       BIGINT              DEFAULT NULL COMMENT '创建人',
+    create_dept     BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
+    update_by       BIGINT              DEFAULT NULL COMMENT '更新人',
+    is_deleted      TINYINT(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version         INT        NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark          VARCHAR(500)        DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_role_menu_role_menu (role_id, menu_id, is_deleted),
     KEY idx_sys_role_menu_role (role_id),
     KEY idx_sys_role_menu_menu (menu_id),
     KEY idx_sys_role_menu_menu_deleted (menu_id, is_deleted)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='角色-菜单关联表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='角色-菜单关联表';
 
 CREATE TABLE IF NOT EXISTS sys_role_menu_dept
 (
@@ -266,7 +294,9 @@ CREATE TABLE IF NOT EXISTS sys_role_menu_dept
     KEY idx_sys_role_menu_dept_menu (menu_id),
     KEY idx_sys_role_menu_dept_dept (dept_id)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='角色-菜单-部门关联表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='角色-菜单-部门关联表';
 
 CREATE TABLE IF NOT EXISTS sys_user_role
 (
@@ -287,24 +317,26 @@ CREATE TABLE IF NOT EXISTS sys_user_role
     KEY idx_sys_user_role_role (role_id),
     KEY idx_sys_user_role_role_deleted (role_id, is_deleted)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='用户-角色关联表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='用户-角色关联表';
 
 CREATE TABLE IF NOT EXISTS sys_user_data_scope
 (
-    id              BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    user_id         BIGINT       NOT NULL COMMENT '用户ID',
-    scope_key       VARCHAR(200) NOT NULL COMMENT '数据范围标识（通常为菜单权限标识）',
-    data_scope_type VARCHAR(32) COMMENT '数据范围类型',
+    id               BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    user_id          BIGINT       NOT NULL COMMENT '用户ID',
+    scope_key        VARCHAR(200) NOT NULL COMMENT '数据范围标识（通常为菜单权限标识）',
+    data_scope_type  VARCHAR(32) COMMENT '数据范围类型',
     data_scope_value VARCHAR(512) COMMENT '数据范围值（自定义部门ID列表）',
-    status          TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
-    create_time     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by       BIGINT                DEFAULT NULL COMMENT '创建人',
-    create_dept     BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
-    update_by       BIGINT                DEFAULT NULL COMMENT '更新人',
-    is_deleted      TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version         INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark          VARCHAR(500)          DEFAULT NULL COMMENT '备注',
+    status           TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    create_time      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by        BIGINT                DEFAULT NULL COMMENT '创建人',
+    create_dept      BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
+    update_by        BIGINT                DEFAULT NULL COMMENT '更新人',
+    is_deleted       TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version          INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark           VARCHAR(500)          DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
     UNIQUE KEY uk_sys_user_data_scope_user_key (user_id, scope_key, is_deleted),
     KEY idx_sys_user_data_scope_user (user_id),
@@ -312,7 +344,9 @@ CREATE TABLE IF NOT EXISTS sys_user_data_scope
     KEY idx_sys_user_data_scope_user_status_deleted (user_id, status, is_deleted),
     KEY idx_sys_user_data_scope_scope_status_deleted (scope_key, status, is_deleted)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='用户数据范围覆盖表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='用户数据范围覆盖表';
 
 CREATE TABLE IF NOT EXISTS sys_user_post
 (
@@ -332,7 +366,9 @@ CREATE TABLE IF NOT EXISTS sys_user_post
     KEY idx_sys_user_post_user (user_id),
     KEY idx_sys_user_post_post (post_id)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='用户-岗位关联表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='用户-岗位关联表';
 
 CREATE TABLE IF NOT EXISTS sys_data_scope_rule
 (
@@ -356,7 +392,10 @@ CREATE TABLE IF NOT EXISTS sys_data_scope_rule
     UNIQUE KEY uk_sys_data_scope_rule_key (scope_key),
     KEY idx_sys_data_scope_rule_status_deleted (status, is_deleted)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='数据范围规则表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='数据范围规则表';
+
 
 INSERT INTO sys_data_scope_rule (id, scope_key, table_name, table_alias, dept_column, user_column, filter_type, status,
                                  create_time, update_time, remark)
@@ -384,7 +423,9 @@ CREATE TABLE IF NOT EXISTS sys_order
     KEY idx_sys_order_user_deleted_create_time (user_id, is_deleted, create_time, id),
     KEY idx_sys_order_user_deleted_amount (user_id, is_deleted, amount)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='订单表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='订单表';
 
 USE cache;
 
@@ -398,32 +439,36 @@ CREATE TABLE IF NOT EXISTS sys_cache
     KEY idx_sys_cache_expire_at (expire_at),
     KEY idx_sys_cache_expire_at_key (expire_at, cache_key)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='缓存表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='缓存表';
 
 USE notice;
 
 CREATE TABLE IF NOT EXISTS sys_notice
 (
-    id          BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    title       VARCHAR(200) NOT NULL COMMENT '通知标题',
-    content     TEXT         NOT NULL COMMENT '通知内容',
-    scope_type  VARCHAR(32)  NOT NULL COMMENT '通知范围类型',
-    scope_value VARCHAR(1024) COMMENT '通知范围值（ID列表）',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    create_by   BIGINT                DEFAULT NULL COMMENT '创建人',
-    create_dept BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
-    update_by   BIGINT                DEFAULT NULL COMMENT '更新人',
+    id           BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    title        VARCHAR(200) NOT NULL COMMENT '通知标题',
+    content      TEXT         NOT NULL COMMENT '通知内容',
+    scope_type   VARCHAR(32)  NOT NULL COMMENT '通知范围类型',
+    scope_value  VARCHAR(1024) COMMENT '通知范围值（ID列表）',
+    create_time  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by    BIGINT                DEFAULT NULL COMMENT '创建人',
+    create_dept  BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
+    update_by    BIGINT                DEFAULT NULL COMMENT '更新人',
     created_name VARCHAR(64) COMMENT '创建人名称',
-    is_deleted  TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
-    version     INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
-    remark      VARCHAR(500)          DEFAULT NULL COMMENT '备注',
+    is_deleted   TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version      INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark       VARCHAR(500)          DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
     KEY idx_sys_notice_create_time (create_time),
     KEY idx_sys_notice_deleted_create_time (is_deleted, create_time, id),
     KEY idx_sys_notice_scope_deleted_create_time (scope_type, is_deleted, create_time, id)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='系统通知表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='系统通知表';
 
 CREATE TABLE IF NOT EXISTS sys_notice_recipient
 (
@@ -449,7 +494,9 @@ CREATE TABLE IF NOT EXISTS sys_notice_recipient
     KEY idx_sys_notice_recipient_user_deleted_notice (user_id, is_deleted, notice_id),
     KEY idx_sys_notice_recipient_notice_deleted_read_time (notice_id, is_deleted, read_status, read_time, user_id)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='系统通知接收表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='系统通知接收表';
 
 USE job;
 
@@ -473,52 +520,56 @@ CREATE TABLE IF NOT EXISTS sys_job
     KEY idx_sys_job_handler (handler_name),
     KEY idx_sys_job_status_id (status, id)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='定时任务表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='定时任务表';
 
 CREATE TABLE IF NOT EXISTS sys_job_log
 (
-    id          BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    job_id      BIGINT       NOT NULL COMMENT '任务ID',
-    job_name    VARCHAR(128) NOT NULL COMMENT '任务名称',
+    id           BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    job_id       BIGINT       NOT NULL COMMENT '任务ID',
+    job_name     VARCHAR(128) NOT NULL COMMENT '任务名称',
     handler_name VARCHAR(128) NOT NULL COMMENT '处理器名称',
-    status      TINYINT      NOT NULL COMMENT '执行状态：1-成功，0-失败',
-    message     VARCHAR(512) COMMENT '执行信息',
-    log_detail  TEXT COMMENT '执行日志',
-    start_time  DATETIME     NOT NULL COMMENT '开始时间',
-    end_time    DATETIME COMMENT '结束时间',
-    duration_ms BIGINT COMMENT '耗时毫秒',
+    status       TINYINT      NOT NULL COMMENT '执行状态：1-成功，0-失败',
+    message      VARCHAR(512) COMMENT '执行信息',
+    log_detail   TEXT COMMENT '执行日志',
+    start_time   DATETIME     NOT NULL COMMENT '开始时间',
+    end_time     DATETIME COMMENT '结束时间',
+    duration_ms  BIGINT COMMENT '耗时毫秒',
     PRIMARY KEY (id),
     KEY idx_sys_job_log_job (job_id),
     KEY idx_sys_job_log_start (start_time),
     KEY idx_sys_job_log_job_start_id (job_id, start_time, id)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='定时任务日志表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='定时任务日志表';
 
 USE log;
 
 CREATE TABLE IF NOT EXISTS sys_oper_log
 (
-    id            BIGINT   NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    user_id       BIGINT COMMENT '操作人ID',
-    user_name     VARCHAR(64) COMMENT '操作人账号',
-    dept_id       BIGINT COMMENT '部门ID',
-    dept_name     VARCHAR(128) COMMENT '部门名称',
-    title         VARCHAR(128) COMMENT '模块标题',
-    operation     VARCHAR(256) COMMENT '操作描述',
-    business_type TINYINT  NOT NULL DEFAULT 0 COMMENT '业务类型',
-    method        VARCHAR(255) COMMENT '请求方法',
+    id             BIGINT   NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    user_id        BIGINT COMMENT '操作人ID',
+    user_name      VARCHAR(64) COMMENT '操作人账号',
+    dept_id        BIGINT COMMENT '部门ID',
+    dept_name      VARCHAR(128) COMMENT '部门名称',
+    title          VARCHAR(128) COMMENT '模块标题',
+    operation      VARCHAR(256) COMMENT '操作描述',
+    business_type  TINYINT  NOT NULL DEFAULT 0 COMMENT '业务类型',
+    method         VARCHAR(255) COMMENT '请求方法',
     request_method VARCHAR(16) COMMENT 'HTTP方法',
-    oper_url      VARCHAR(512) COMMENT '请求URL',
-    oper_ip       VARCHAR(128) COMMENT '操作IP',
-    oper_location VARCHAR(255) COMMENT 'IP归属地',
-    oper_param    TEXT COMMENT '请求参数',
-    oper_result   TEXT COMMENT '返回结果',
-    before_data   TEXT COMMENT '操作前数据',
-    after_data    TEXT COMMENT '操作后数据',
-    status        TINYINT  NOT NULL DEFAULT 1 COMMENT '操作状态',
-    error_msg     VARCHAR(2000) COMMENT '错误信息',
-    cost_time     BIGINT   NOT NULL DEFAULT 0 COMMENT '耗时毫秒',
-    oper_time     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+    oper_url       VARCHAR(512) COMMENT '请求URL',
+    oper_ip        VARCHAR(128) COMMENT '操作IP',
+    oper_location  VARCHAR(255) COMMENT 'IP归属地',
+    oper_param     TEXT COMMENT '请求参数',
+    oper_result    TEXT COMMENT '返回结果',
+    before_data    TEXT COMMENT '操作前数据',
+    after_data     TEXT COMMENT '操作后数据',
+    status         TINYINT  NOT NULL DEFAULT 1 COMMENT '操作状态',
+    error_msg      VARCHAR(2000) COMMENT '错误信息',
+    cost_time      BIGINT   NOT NULL DEFAULT 0 COMMENT '耗时毫秒',
+    oper_time      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
     PRIMARY KEY (id),
     KEY idx_sys_oper_log_user (user_id),
     KEY idx_sys_oper_log_type (business_type),
@@ -526,22 +577,24 @@ CREATE TABLE IF NOT EXISTS sys_oper_log
     KEY idx_sys_oper_log_time (oper_time),
     KEY idx_sys_oper_log_status_type_time (status, business_type, oper_time, id)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='操作日志表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='操作日志表';
 
 CREATE TABLE IF NOT EXISTS sys_login_log
 (
-    id          BIGINT   NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    user_id     BIGINT COMMENT '用户ID',
-    user_name   VARCHAR(64) COMMENT '登录账号',
-    login_ip    VARCHAR(128) COMMENT '登录IP',
+    id             BIGINT   NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    user_id        BIGINT COMMENT '用户ID',
+    user_name      VARCHAR(64) COMMENT '登录账号',
+    login_ip       VARCHAR(128) COMMENT '登录IP',
     login_location VARCHAR(255) COMMENT 'IP归属地',
-    browser     VARCHAR(128) COMMENT '浏览器',
-    os          VARCHAR(128) COMMENT '操作系统',
-    device_type VARCHAR(64) COMMENT '设备类型',
-    login_type  TINYINT  NOT NULL DEFAULT 1 COMMENT '类型 1=登录 2=登出',
-    status      TINYINT  NOT NULL DEFAULT 1 COMMENT '状态 0=失败 1=成功',
-    msg         VARCHAR(500) COMMENT '提示消息',
-    login_time  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '登录时间',
+    browser        VARCHAR(128) COMMENT '浏览器',
+    os             VARCHAR(128) COMMENT '操作系统',
+    device_type    VARCHAR(64) COMMENT '设备类型',
+    login_type     TINYINT  NOT NULL DEFAULT 1 COMMENT '类型 1=登录 2=登出',
+    status         TINYINT  NOT NULL DEFAULT 1 COMMENT '状态 0=失败 1=成功',
+    msg            VARCHAR(500) COMMENT '提示消息',
+    login_time     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '登录时间',
     PRIMARY KEY (id),
     KEY idx_sys_login_log_user (user_name),
     KEY idx_sys_login_log_time (login_time),
@@ -549,9 +602,26 @@ CREATE TABLE IF NOT EXISTS sys_login_log
     KEY idx_sys_login_log_status (status),
     KEY idx_sys_login_log_status_type_time (status, login_type, login_time, id)
 ) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='登录日志表';
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='登录日志表';
 
 USE job;
+
+-- 清理 Quartz 表，避免重复建索引失败
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS sys_quartz_fired_triggers;
+DROP TABLE IF EXISTS sys_quartz_paused_trigger_grps;
+DROP TABLE IF EXISTS sys_quartz_scheduler_state;
+DROP TABLE IF EXISTS sys_quartz_locks;
+DROP TABLE IF EXISTS sys_quartz_simple_triggers;
+DROP TABLE IF EXISTS sys_quartz_cron_triggers;
+DROP TABLE IF EXISTS sys_quartz_simprop_triggers;
+DROP TABLE IF EXISTS sys_quartz_blob_triggers;
+DROP TABLE IF EXISTS sys_quartz_triggers;
+DROP TABLE IF EXISTS sys_quartz_job_details;
+DROP TABLE IF EXISTS sys_quartz_calendars;
+SET FOREIGN_KEY_CHECKS = 1;
 
 create table if not exists sys_quartz_job_details
 (
@@ -1051,6 +1121,7 @@ VALUES (1, 10, NULL),
 
 USE `order`;
 
+
 INSERT INTO sys_order (id, user_id, amount, create_time, update_time, create_by, create_dept, update_by, is_deleted,
                        version, remark)
 VALUES (1, 2, 1999.00, '2026-02-01 09:12:00', '2026-02-01 09:12:00', 2, 100, 2, 0, 0, '研发采购'),
@@ -1061,59 +1132,23 @@ VALUES (1, 2, 1999.00, '2026-02-01 09:12:00', '2026-02-01 09:12:00', 2, 100, 2, 
        (6, 6, 89.00, '2026-02-12 11:15:00', '2026-02-12 11:15:00', 6, 100, 6, 0, 0, '测试订单')
 ;
 
+
+
 -- =========================
--- 模块账号与最小权限隔离（需 root/DBA 执行）
--- 模块 -> database(schema) -> 账号（rw/ro）
+-- 单数据源账号与权限（需 root/DBA 执行）
+-- 单账号覆盖全部模块 database（system/order/notice/job/log/dict/cache）
+-- 默认账号与 application-dev.yml 的单数据源默认值一致：demo_system_rw
 -- =========================
 CREATE USER IF NOT EXISTS 'demo_system_rw'@'%' IDENTIFIED BY 'demo_system_rw';
-CREATE USER IF NOT EXISTS 'demo_system_ro'@'%' IDENTIFIED BY 'demo_system_ro';
-CREATE USER IF NOT EXISTS 'demo_order_rw'@'%' IDENTIFIED BY 'demo_order_rw';
-CREATE USER IF NOT EXISTS 'demo_order_ro'@'%' IDENTIFIED BY 'demo_order_ro';
-CREATE USER IF NOT EXISTS 'demo_notice_rw'@'%' IDENTIFIED BY 'demo_notice_rw';
-CREATE USER IF NOT EXISTS 'demo_notice_ro'@'%' IDENTIFIED BY 'demo_notice_ro';
-CREATE USER IF NOT EXISTS 'demo_job_rw'@'%' IDENTIFIED BY 'demo_job_rw';
-CREATE USER IF NOT EXISTS 'demo_job_ro'@'%' IDENTIFIED BY 'demo_job_ro';
-CREATE USER IF NOT EXISTS 'demo_log_rw'@'%' IDENTIFIED BY 'demo_log_rw';
-CREATE USER IF NOT EXISTS 'demo_log_ro'@'%' IDENTIFIED BY 'demo_log_ro';
-CREATE USER IF NOT EXISTS 'demo_dict_rw'@'%' IDENTIFIED BY 'demo_dict_rw';
-CREATE USER IF NOT EXISTS 'demo_dict_ro'@'%' IDENTIFIED BY 'demo_dict_ro';
-CREATE USER IF NOT EXISTS 'demo_cache_rw'@'%' IDENTIFIED BY 'demo_cache_rw';
-CREATE USER IF NOT EXISTS 'demo_cache_ro'@'%' IDENTIFIED BY 'demo_cache_ro';
 
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_system_rw'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_system_ro'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_order_rw'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_order_ro'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_notice_rw'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_notice_ro'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_job_rw'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_job_ro'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_log_rw'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_log_ro'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_dict_rw'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_dict_ro'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_cache_rw'@'%';
-REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_cache_ro'@'%';
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON `system`.* TO 'demo_system_rw'@'%';
-GRANT SELECT ON `system`.* TO 'demo_system_ro'@'%';
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON `order`.* TO 'demo_order_rw'@'%';
-GRANT SELECT ON `order`.* TO 'demo_order_ro'@'%';
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON notice.* TO 'demo_notice_rw'@'%';
-GRANT SELECT ON notice.* TO 'demo_notice_ro'@'%';
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON job.* TO 'demo_job_rw'@'%';
-GRANT SELECT ON job.* TO 'demo_job_ro'@'%';
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON log.* TO 'demo_log_rw'@'%';
-GRANT SELECT ON log.* TO 'demo_log_ro'@'%';
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON dict.* TO 'demo_dict_rw'@'%';
-GRANT SELECT ON dict.* TO 'demo_dict_ro'@'%';
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON cache.* TO 'demo_cache_rw'@'%';
-GRANT SELECT ON cache.* TO 'demo_cache_ro'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON `order`.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON notice.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON job.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON log.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON dict.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON cache.* TO 'demo_system_rw'@'%';
 
 FLUSH PRIVILEGES;

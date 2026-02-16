@@ -9,6 +9,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.aop.support.AopUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.Order;
@@ -24,6 +25,7 @@ import java.util.*;
 @Aspect
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 20)
+@ConditionalOnProperty(prefix = "spring.datasource.dynamic", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class ModuleDataSourceRoutingAspect {
 
     private static final Set<String> READ_PREFIXES = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(

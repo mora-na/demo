@@ -1,0 +1,31 @@
+# 三种数据源模式示例（拷贝到你自己的 profile 文件中使用）
+
+# 1) 多数据源（模块级 rw/ro 切换）
+app:
+  datasource:
+    mode: multi-datasource
+
+---
+# 2) 单数据源 + 多 schema（SQL 保留模块 schema 前缀）
+app:
+  datasource:
+    mode: single-datasource-multi-schema
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/demo
+    username: demo_system_rw
+    password: demo_system_rw
+
+---
+# 3) 单数据源 + 单 schema（SQL 自动重写到 app.datasource.single-schema-name）
+app:
+  datasource:
+    mode: single-datasource-single-schema
+    single-schema-name: demo
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/demo
+    username: demo_system_rw
+    password: demo_system_rw

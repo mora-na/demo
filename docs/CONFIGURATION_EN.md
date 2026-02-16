@@ -984,5 +984,15 @@ Impact on development:
 
 - Main configs: `src/main/resources/application.yml` + `application-dev.yml`.
 - Default profile: `dev` (override with `SPRING_PROFILES_ACTIVE`).
-- DB scripts: `sql/mysql.sql`, `sql/postgresql.sql`.
+- Single-datasource example profile: `app/src/main/resources/application-single-datasource.yml` (recommended with
+  `dev,single-datasource`).
+- Three-mode example file: `app/src/main/resources/application-datasource-modes.example.yml`.
+- Datasource mode key: `app.datasource.mode` (`multi-datasource` / `single-datasource-multi-schema` /
+  `single-datasource-single-schema`).
+- DB scripts:
+  - Multi-module datasource: `sql/mysql-multi-datasource.sql`, `sql/postgresql-multi-datasource.sql`
+  - Single datasource + multi schema: `sql/mysql-single-datasource-multi-schema.sql`,
+    `sql/postgresql-single-datasource-multi-schema.sql`
+  - Single datasource + single schema: `sql/mysql-single-datasource-single-schema.sql`,
+    `sql/postgresql-single-datasource-single-schema.sql`
 - Druid monitor: `spring.datasource.druid.stat-view-servlet.*`.

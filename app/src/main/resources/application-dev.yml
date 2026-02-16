@@ -137,6 +137,17 @@ notify:
     # 邮件主题前缀（会自动拼接到业务主题前）
     subject-prefix: ${NOTIFY_MAIL_SUBJECT_PREFIX:[Demo]}
 
+# 数据源模式配置
+app:
+  datasource:
+    # 三种模式：
+    # 1) multi-datasource
+    # 2) single-datasource-multi-schema
+    # 3) single-datasource-single-schema
+    mode: ${APP_DATASOURCE_MODE:multi-datasource}
+    # 单 schema 模式下目标 schema 名称（mode=single-datasource-single-schema）
+    single-schema-name: ${APP_DATASOURCE_SINGLE_SCHEMA_NAME:demo}
+
 # 数据源与缓存配置
 spring:
   main:
@@ -188,6 +199,12 @@ spring:
 
   # 数据源配置
   datasource:
+    # 单数据源连接（两种单数据源模式都使用该连接）
+    url: ${DB_SINGLE_URL:${DB_URL:jdbc:postgresql://localhost:5432/demo}}
+    username: ${DB_SINGLE_USER:${DB_SYSTEM_RW_USER:demo_system_rw}}
+    password: ${DB_SINGLE_PASSWORD:${DB_SYSTEM_RW_PASSWORD:demo_system_rw}}
+    driver-class-name: org.postgresql.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
     # Druid 连接池通用配置
     druid:
       # Druid 监控页面配置
@@ -210,6 +227,7 @@ spring:
         exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
     # 动态数据源配置
     dynamic:
+      # 总开关由 app.datasource.mode 自动派生（本值会被运行时覆盖）
       # 动态数据源下 Druid 配置
       druid:
         # Wall 防火墙配置

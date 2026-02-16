@@ -14,10 +14,11 @@ import javax.sql.DataSource;
  * Quartz 数据源绑定：从动态数据源中选择 job_rw，而不是额外注册一个 DataSource Bean。
  */
 @Configuration
-@ConditionalOnProperty(prefix = "spring.datasource.dynamic.datasource.job_rw", name = "url")
+@ConditionalOnProperty(prefix = "spring.datasource.dynamic", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class QuartzSchedulerConfig {
 
     @Bean
+    @ConditionalOnProperty(prefix = "spring.datasource.dynamic.datasource.job_rw", name = "url")
     public SchedulerFactoryBeanCustomizer quartzSchedulerFactoryBeanCustomizer(ObjectProvider<DataSource> dataSourceProvider) {
         return schedulerFactoryBean -> {
             DataSource dataSource = dataSourceProvider.getIfAvailable();

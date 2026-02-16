@@ -982,5 +982,15 @@
 
 - 主配置：`src/main/resources/application.yml` 与 `application-dev.yml`。
 - 默认 profile：`dev`，可用 `SPRING_PROFILES_ACTIVE` 覆盖。
-- 数据库脚本：`sql/mysql.sql`、`sql/postgresql.sql`。
+- 单数据源示例 profile：`app/src/main/resources/application-single-datasource.yml`（推荐与 `dev` 组合：
+  `dev,single-datasource`）。
+- 三模式示例文件：`app/src/main/resources/application-datasource-modes.example.yml`。
+- 数据源模式配置：`app.datasource.mode`（`multi-datasource` / `single-datasource-multi-schema` /
+  `single-datasource-single-schema`）。
+- 数据库脚本：
+  - 多模块数据源：`sql/mysql-multi-datasource.sql`、`sql/postgresql-multi-datasource.sql`
+  - 单数据源多 schema：`sql/mysql-single-datasource-multi-schema.sql`、
+    `sql/postgresql-single-datasource-multi-schema.sql`
+  - 单数据源单 schema：`sql/mysql-single-datasource-single-schema.sql`、
+    `sql/postgresql-single-datasource-single-schema.sql`
 - Druid 监控：`spring.datasource.druid.stat-view-servlet.*`。
