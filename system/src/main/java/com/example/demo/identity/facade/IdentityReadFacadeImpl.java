@@ -8,7 +8,6 @@ import com.example.demo.dept.service.DeptService;
 import com.example.demo.identity.api.dto.IdentityDataScopeProfileDTO;
 import com.example.demo.identity.api.dto.IdentityMenuTreeDTO;
 import com.example.demo.identity.api.dto.IdentityUserDTO;
-import com.example.demo.identity.api.dto.IdentityUserProfileUpdateRequest;
 import com.example.demo.identity.api.facade.IdentityReadFacade;
 import com.example.demo.menu.entity.Menu;
 import com.example.demo.menu.entity.RoleMenu;
@@ -21,7 +20,6 @@ import com.example.demo.permission.mapper.PermissionMapper;
 import com.example.demo.permission.service.PermissionService;
 import com.example.demo.permission.service.RoleService;
 import com.example.demo.permission.service.UserRoleService;
-import com.example.demo.user.dto.SysUserProfileUpdateRequest;
 import com.example.demo.user.entity.SysUser;
 import com.example.demo.user.service.SysUserService;
 import lombok.RequiredArgsConstructor;
@@ -87,21 +85,6 @@ public class IdentityReadFacadeImpl implements IdentityReadFacade {
                 .map(this::toDto)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean updateSelfProfile(Long userId, IdentityUserProfileUpdateRequest request, String newPassword) {
-        if (userId == null || request == null) {
-            return false;
-        }
-        SysUserProfileUpdateRequest profile = new SysUserProfileUpdateRequest();
-        profile.setNickName(request.getNickName());
-        profile.setPhone(request.getPhone());
-        profile.setEmail(request.getEmail());
-        profile.setSex(request.getSex());
-        profile.setRemark(request.getRemark());
-        return userService.updateSelfProfile(userId, profile, newPassword);
     }
 
     @Override

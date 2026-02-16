@@ -13,6 +13,7 @@ import com.example.demo.common.web.permission.RequireLogin;
 import com.example.demo.identity.api.dto.IdentityDataScopeProfileDTO;
 import com.example.demo.identity.api.dto.IdentityUserDTO;
 import com.example.demo.identity.api.dto.IdentityUserProfileUpdateRequest;
+import com.example.demo.identity.api.event.IdentitySelfProfileUpdateCommand;
 import com.example.demo.identity.api.facade.IdentityReadFacade;
 import com.example.demo.log.api.event.LoginLogEvent;
 import lombok.RequiredArgsConstructor;
@@ -254,7 +255,7 @@ public class AuthController extends BaseController {
         profileUpdate.setEmail(request.getEmail());
         profileUpdate.setSex(request.getSex());
         profileUpdate.setRemark(request.getRemark());
-        if (!identityReadFacade.updateSelfProfile(authUser.getId(), profileUpdate, newRawPassword)) {
+        if (!publishProfileUpdateCommand(authUser.getId(), profileUpdate, newRawPassword)) {
             return error(controllerConstants.getInternalServerErrorCode(), i18n("common.update.failed"));
         }
         return success();
@@ -328,6 +329,21 @@ public class AuthController extends BaseController {
                 ua,
                 LocalDateTime.now()
         ));
+    }
+
+    private boolean publishProfileUpdateCommand(Long userId,
+                                                IdentityUserProfileUpdateRequest request,
+                                                String newPassword) {
+        if (eventPublisher == null) {
+            return false;
+        }
+        IdentitySelfProfileUpdateCommand command = new IdentitySelfProfileUpdateCommand(userId, request, newPassword);
+        try {
+            eventPublisher.publishEvent(command);
+            return command.isHandled() && command.isUpdated();
+        } catch (RuntimeException ex) {
+            return false;
+        }
     }
 
     private String resolveClientIp(HttpServletRequest request) {

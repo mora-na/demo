@@ -2,7 +2,6 @@ package com.example.demo.identity.api.facade;
 
 import com.example.demo.identity.api.dto.IdentityDataScopeProfileDTO;
 import com.example.demo.identity.api.dto.IdentityMenuTreeDTO;
-import com.example.demo.identity.api.dto.IdentityUserProfileUpdateRequest;
 
 import java.util.List;
 
@@ -13,8 +12,6 @@ import java.util.List;
  * @date 2026/2/16
  */
 public interface IdentityReadFacade extends IdentityQueryApi, IdentityRoleApi, OrgApi {
-
-    boolean updateSelfProfile(Long userId, IdentityUserProfileUpdateRequest request, String newPassword);
 
     List<IdentityMenuTreeDTO> listMenusByUserId(Long userId);
 
