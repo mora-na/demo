@@ -370,6 +370,15 @@ export default {
             loginLog: "Login Logs"
         }
     },
+    extensionPanel: {
+        title: "API Extension",
+        subtitle: "Manage dynamic endpoints and audit calls.",
+        placeholder: "Select an extension tab.",
+        tabs: {
+            dynamicApi: "Dynamic APIs",
+            dynamicApiLog: "API Logs"
+        }
+    },
     operLog: {
         title: "Operation Logs",
         subtitle: "Audit backend actions and API behavior.",
@@ -447,6 +456,109 @@ export default {
         },
         msg: {
             loadFailed: "Failed to load login logs"
+        }
+    },
+    dynamicApi: {
+        title: "Dynamic APIs",
+        subtitle: "Create internal endpoints safely.",
+        filter: {
+            path: "Path",
+            method: "Method",
+            status: "Status",
+            type: "Type",
+            authMode: "Auth",
+            reset: "Reset",
+            create: "New API",
+            reload: "Reload"
+        },
+        table: {
+            path: "Path",
+            method: "Method",
+            type: "Type",
+            status: "Status",
+            authMode: "Auth",
+            rateLimit: "Rate limit",
+            timeout: "Timeout",
+            config: "Config",
+            updatedAt: "Updated",
+            action: "Action"
+        },
+        dialog: {
+            createTitle: "Create Dynamic API",
+            editTitle: "Edit Dynamic API",
+            path: "Path",
+            pathPlaceholder: "/ext/your/path",
+            method: "Method",
+            methodPlaceholder: "Select method",
+            type: "Type",
+            typePlaceholder: "Select type",
+            status: "Status",
+            statusPlaceholder: "Select status",
+            authMode: "Auth mode",
+            authModePlaceholder: "Select auth mode",
+            rateLimit: "Rate limit policy",
+            rateLimitPlaceholder: "Optional policy key",
+            timeout: "Timeout (ms)",
+            timeoutPlaceholder: "Optional",
+            config: "Config JSON",
+            configPlaceholder: "{\"type\":\"BEAN\",\"beanName\":\"...\",\"method\":\"...\"}",
+            remark: "Remark"
+        },
+        status: {
+            draft: "Draft",
+            enabled: "Enabled",
+            disabled: "Disabled"
+        },
+        auth: {
+            inherit: "Inherit",
+            public: "Public"
+        },
+        action: {
+            enable: "Enable",
+            disable: "Disable"
+        },
+        msg: {
+            loadFailed: "Failed to load dynamic APIs",
+            reloadSuccess: "Reloaded",
+            reloadFailed: "Reload failed",
+            enableSuccess: "Enabled",
+            disableSuccess: "Disabled",
+            statusFailed: "Failed to change status",
+            deleteConfirm: "Delete dynamic API {path}?",
+            validate: "Fill path, method, type, and config."
+        }
+    },
+    dynamicApiLog: {
+        title: "Dynamic API Logs",
+        subtitle: "Trace dynamic endpoint calls.",
+        filter: {
+            apiPath: "API path",
+            apiMethod: "Method",
+            user: "User",
+            status: "Status",
+            begin: "Start time",
+            end: "End time",
+            reset: "Reset"
+        },
+        table: {
+            time: "Time",
+            api: "API",
+            method: "Method",
+            status: "Status",
+            code: "Code",
+            duration: "Duration",
+            user: "User",
+            ip: "IP",
+            error: "Error",
+            action: "Action"
+        },
+        status: {
+            success: "Success",
+            fail: "Failed"
+        },
+        msg: {
+            loadFailed: "Failed to load logs",
+            deleteConfirm: "Delete log #{id}?"
         }
     },
     dataScope: {

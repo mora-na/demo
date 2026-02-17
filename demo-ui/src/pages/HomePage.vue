@@ -163,6 +163,12 @@
           </div>
         </div>
         <OrderManagementPanel v-else-if="isOrderGroup"/>
+        <ExtensionPanel
+            v-else-if="isExtensionGroup"
+            :active-menu-id="activeMenuId"
+            :menus="activeChildren"
+            @menu-change="selectMenuById"
+        />
         <MonitorPanel
             v-else-if="isMonitorGroup"
             :active-menu-id="activeMenuId"
@@ -345,6 +351,7 @@ import SystemManagementPanel from "./system/SystemManagementPanel.vue";
 import DataScopePanel from "./system/DataScopePanel.vue";
 import MonitorPanel from "./monitor/MonitorPanel.vue";
 import OrderManagementPanel from "./order/OrderManagementPanel.vue";
+import ExtensionPanel from "./extension/ExtensionPanel.vue";
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -463,6 +470,14 @@ const isOrderGroup = computed(() => {
     return false;
   }
   return group.code === "order" || (group.path ? group.path.startsWith("/orders") : false);
+});
+
+const isExtensionGroup = computed(() => {
+  const group = activeGroup.value;
+  if (!group) {
+    return false;
+  }
+  return group.code === "extension" || (group.path ? group.path.startsWith("/extension") : false);
 });
 
 const roleSummary = computed(() =>
@@ -775,10 +790,13 @@ const MENU_ICON_MAP: Record<string, Component> = {
   log: ScrollText,
   report: BarChart3,
   monitor: Activity,
+  extension: Wrench,
   config: Settings2,
   file: Folder,
   dict: BookOpen,
-  tool: Wrench
+  tool: Wrench,
+  "dynamic-api": Wrench,
+  "dynamic-api-log": ScrollText
 };
 
 function menuIconComponent(menu: MenuTree): Component {

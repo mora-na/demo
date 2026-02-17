@@ -370,6 +370,15 @@ export default {
             loginLog: "登录日志"
         }
     },
+    extensionPanel: {
+        title: "接口扩展",
+        subtitle: "动态接口配置与调用审计。",
+        placeholder: "请选择扩展模块页签。",
+        tabs: {
+            dynamicApi: "动态接口",
+            dynamicApiLog: "调用日志"
+        }
+    },
     operLog: {
         title: "操作日志",
         subtitle: "记录后台操作与接口行为。",
@@ -447,6 +456,109 @@ export default {
         },
         msg: {
             loadFailed: "登录日志加载失败"
+        }
+    },
+    dynamicApi: {
+        title: "动态接口",
+        subtitle: "为内部系统按需扩展接口。",
+        filter: {
+            path: "路径",
+            method: "方法",
+            status: "状态",
+            type: "类型",
+            authMode: "鉴权",
+            reset: "重置",
+            create: "新建接口",
+            reload: "重新加载"
+        },
+        table: {
+            path: "路径",
+            method: "方法",
+            type: "类型",
+            status: "状态",
+            authMode: "鉴权",
+            rateLimit: "限流策略",
+            timeout: "超时",
+            config: "配置",
+            updatedAt: "更新时间",
+            action: "操作"
+        },
+        dialog: {
+            createTitle: "新建动态接口",
+            editTitle: "编辑动态接口",
+            path: "路径",
+            pathPlaceholder: "/ext/your/path",
+            method: "方法",
+            methodPlaceholder: "选择方法",
+            type: "类型",
+            typePlaceholder: "选择类型",
+            status: "状态",
+            statusPlaceholder: "选择状态",
+            authMode: "鉴权模式",
+            authModePlaceholder: "选择鉴权模式",
+            rateLimit: "限流策略",
+            rateLimitPlaceholder: "可选策略标识",
+            timeout: "超时(毫秒)",
+            timeoutPlaceholder: "可选",
+            config: "配置JSON",
+            configPlaceholder: "{\"type\":\"BEAN\",\"beanName\":\"...\",\"method\":\"...\"}",
+            remark: "备注"
+        },
+        status: {
+            draft: "草稿",
+            enabled: "启用",
+            disabled: "停用"
+        },
+        auth: {
+            inherit: "继承",
+            public: "公开"
+        },
+        action: {
+            enable: "启用",
+            disable: "停用"
+        },
+        msg: {
+            loadFailed: "加载动态接口失败",
+            reloadSuccess: "已重新加载",
+            reloadFailed: "重新加载失败",
+            enableSuccess: "已启用",
+            disableSuccess: "已停用",
+            statusFailed: "状态更新失败",
+            deleteConfirm: "确认删除动态接口 {path}？",
+            validate: "请填写路径、方法、类型和配置。"
+        }
+    },
+    dynamicApiLog: {
+        title: "动态接口日志",
+        subtitle: "跟踪动态接口调用情况。",
+        filter: {
+            apiPath: "接口路径",
+            apiMethod: "方法",
+            user: "用户",
+            status: "状态",
+            begin: "开始时间",
+            end: "结束时间",
+            reset: "重置"
+        },
+        table: {
+            time: "时间",
+            api: "接口",
+            method: "方法",
+            status: "状态",
+            code: "响应码",
+            duration: "耗时",
+            user: "用户",
+            ip: "IP",
+            error: "错误",
+            action: "操作"
+        },
+        status: {
+            success: "成功",
+            fail: "失败"
+        },
+        msg: {
+            loadFailed: "加载日志失败",
+            deleteConfirm: "确认删除日志 #{id}？"
         }
     },
     dataScope: {

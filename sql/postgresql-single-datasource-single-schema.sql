@@ -1321,7 +1321,15 @@ VALUES (1, 'user:query', '用户查询', 1),
        (71, 'dict:create', '字典创建', 1),
        (72, 'dict:update', '字典修改', 1),
        (73, 'dict:delete', '字典删除', 1),
-       (74, 'dict:cache:refresh', '字典缓存刷新', 1)
+       (74, 'dict:cache:refresh', '字典缓存刷新', 1),
+       (75, 'dynamic-api:query', '动态接口查询', 1),
+       (76, 'dynamic-api:create', '动态接口创建', 1),
+       (77, 'dynamic-api:update', '动态接口更新', 1),
+       (78, 'dynamic-api:status', '动态接口状态', 1),
+       (79, 'dynamic-api:delete', '动态接口删除', 1),
+       (80, 'dynamic-api:reload', '动态接口重载', 1),
+       (81, 'dynamic-api-log:query', '动态接口日志查询', 1),
+       (82, 'dynamic-api-log:delete', '动态接口日志删除', 1)
 ;
 
 INSERT INTO sys_menu (id, name, code, parent_id, path, component, permission, status, sort, remark)
@@ -1346,7 +1354,12 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (190, '系统监控', 'monitor', NULL, '/monitor', 'Layout', NULL, 1, 40, '系统监控'),
        (191, '操作日志', 'oper-log', 190, '/monitor/oper-log', 'OperLogPage', 'log:query', 1, 10, '操作日志'),
        (192, '登录日志', 'login-log', 190, '/monitor/login-log', 'LoginLogPage', 'login-log:query', 1, 20, '登录日志'),
-       (200, '订单管理', 'order', NULL, '/orders', 'OrderPage', 'order:query', 1, 20, '订单管理')
+       (200, '订单管理', 'order', NULL, '/orders', 'OrderPage', 'order:query', 1, 20, '订单管理'),
+       (210, '接口扩展', 'extension', NULL, '/extension', 'Layout', NULL, 1, 50, '接口扩展'),
+       (211, '动态接口', 'dynamic-api', 210, '/extension/dynamic-api', 'DynamicApiPage', 'dynamic-api:query', 1, 10,
+        '动态接口管理'),
+       (212, '调用日志', 'dynamic-api-log', 210, '/extension/dynamic-api-log', 'DynamicApiLogPage',
+        'dynamic-api-log:query', 1, 20, '动态接口日志')
 ;
 
 SET search_path TO demo, public;
@@ -1483,6 +1496,14 @@ VALUES (1, 1),
        (1, 72),
        (1, 73),
        (1, 74),
+       (1, 75),
+       (1, 76),
+       (1, 77),
+       (1, 78),
+       (1, 79),
+       (1, 80),
+       (1, 81),
+       (1, 82),
        (2, 1),
        (2, 4),
        (2, 5),
@@ -1524,6 +1545,9 @@ VALUES (1, 10, NULL),
        (1, 191, NULL),
        (1, 192, NULL),
        (1, 200, NULL),
+       (1, 210, NULL),
+       (1, 211, NULL),
+       (1, 212, NULL),
        (2, 10, NULL),
        (2, 11, NULL),
        (2, 20, NULL),
