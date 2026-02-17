@@ -236,7 +236,7 @@ security:
     # 是否启用 XSS 防护
     enabled: true
     # XSS 额外排除路径（会与 security.common.exclude-paths 合并）
-    exclude-paths: [ ]
+    additional-exclude-paths: [ ]
   # SQL 审计与防护配置
   sql-guard:
     # 是否启用 SQL 防护
@@ -262,7 +262,7 @@ security:
     # 限流 Key 是否包含路径
     include-path: true
     # 限流额外排除路径（会与 security.common.exclude-paths 合并）
-    exclude-paths: [ ]
+    additional-exclude-paths: [ ]
   # 重复提交防护配置
   duplicate-submit:
     # 是否启用重复提交防护
@@ -286,7 +286,7 @@ security:
       - PATCH # 方法：PATCH
       - DELETE # 方法：DELETE
     # 重复提交额外排除路径（会与 security.common.exclude-paths 合并）
-    exclude-paths: [ ]
+    additional-exclude-paths: [ ]
   # 权限配置
   permission:
     # 是否启用权限校验
@@ -300,9 +300,9 @@ security:
       - admin # 超级用户账号
     # 权限缓存时长（秒）
     cache-seconds: 600
-    # 权限校验排除路径（PermissionInterceptor 生效，跳过登录/权限校验）
+    # 权限校验额外排除路径（PermissionInterceptor 生效，跳过登录/权限校验）
     # 该列表会与 security.common.exclude-paths 合并
-    exclude-paths:
+    additional-exclude-paths:
       - /auth/** # 排除认证接口
       - /error # 排除错误接口
   # 数据范围配置

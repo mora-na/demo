@@ -4,9 +4,7 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * 认证模块配置项，绑定 auth 前缀。
@@ -122,6 +120,27 @@ public class AuthProperties {
         private List<String> excludePaths = new ArrayList<>(
                 Arrays.asList("/auth/**", "/error")
         );
+        private List<String> additionalExcludePaths = new ArrayList<>();
+
+        private static List<String> mergeExcludePaths(List<String> base, List<String> additional) {
+            boolean emptyBase = base == null || base.isEmpty();
+            boolean emptyAdditional = additional == null || additional.isEmpty();
+            if (emptyBase && emptyAdditional) {
+                return Collections.emptyList();
+            }
+            LinkedHashSet<String> merged = new LinkedHashSet<>();
+            if (!emptyBase) {
+                merged.addAll(base);
+            }
+            if (!emptyAdditional) {
+                merged.addAll(additional);
+            }
+            return new ArrayList<>(merged);
+        }
+
+        public List<String> getExcludePaths() {
+            return mergeExcludePaths(excludePaths, additionalExcludePaths);
+        }
     }
 
     /**

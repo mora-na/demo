@@ -968,7 +968,8 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 
 Impact on development:
 
-- Public endpoints must be added to `auth.filter.exclude-paths` and `security.permission.exclude-paths`.
+- Public endpoints should be added to `security.common.exclude-paths`; for auth- or permission-only cases,
+  use `auth.filter.additional-exclude-paths` and `security.permission.additional-exclude-paths`.
 - High-frequency APIs may hit 429; tune rate limits or exclude paths.
 - Write endpoints can be blocked for duplicate submits; use `Idempotency-Key` if needed.
 - Rich-text input should be excluded from XSS or handled in business logic.

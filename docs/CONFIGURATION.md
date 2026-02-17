@@ -966,7 +966,8 @@
 
 业务影响提示：
 
-- 匿名接口需加入 `auth.filter.exclude-paths` 与 `security.permission.exclude-paths`。
+- 匿名接口建议加入 `security.common.exclude-paths`；仅需针对认证或权限时，再加入 `auth.filter.additional-exclude-paths`
+  与 `security.permission.additional-exclude-paths`。
 - 高频接口可能触发 429，需要调整限流或加入排除路径。
 - 写操作短时间重复会被拒绝，可用 `Idempotency-Key`。
 - 富文本需从 XSS 过滤中排除或业务层处理。
