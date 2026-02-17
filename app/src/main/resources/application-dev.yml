@@ -150,10 +150,6 @@ app:
 
 # 数据源与缓存配置
 spring:
-  main:
-    # 延迟初始化非关键 Bean，缩短冷启动时间（首个请求可能略慢）
-    lazy-initialization: true
-
   data:
     redis:
       repositories:
