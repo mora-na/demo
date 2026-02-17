@@ -228,10 +228,14 @@ spring:
       druid:
         # Wall 防火墙配置
         wall:
-          # 是否拦截 where 条件恒真
+          # 是否拦截 where 条件恒真（如 WHERE 1=1）
           select-where-alway-true-check: true
-          # 是否允许 AND 条件恒真
+          # 是否允许 AND 条件恒真（如 AND 1=1）
           condition-and-alway-true-allow: false
+          # 是否检查 DELETE 语句必须带 WHERE 条件
+          delete-where-none-check: true
+          # 是否检查 UPDATE 语句必须带 WHERE 条件
+          update-where-none-check: true
         # 初始化连接数
         initial-size: 1
         # 最小空闲连接数
