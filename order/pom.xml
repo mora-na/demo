@@ -69,6 +69,8 @@
                                         <exclude>com.example:notice</exclude>
                                         <exclude>com.example:job</exclude>
                                         <exclude>com.example:log</exclude>
+                                        <exclude>com.example:core-http-extension</exclude>
+                                        <exclude>com.example:app</exclude>
                                     </excludes>
                                     <message>order 模块禁止直接依赖 system，请改用 *-api 契约模块。</message>
                                 </bannedDependencies>

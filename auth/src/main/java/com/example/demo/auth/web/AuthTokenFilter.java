@@ -11,12 +11,14 @@ import com.example.demo.common.config.CommonConstants;
 import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
+import com.example.demo.common.web.permission.AuthBypassEvaluator;
 import com.example.demo.identity.api.dto.IdentityUserDTO;
 import com.example.demo.identity.api.facade.IdentityReadFacade;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -52,6 +54,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private final CommonConstants commonConstants;
     private final AuthTokenResolver authTokenResolver;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private final ObjectProvider<AuthBypassEvaluator> bypassEvaluators;
 
     /**
      * 判断当前请求是否跳过认证过滤。
@@ -67,10 +70,29 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         if (authConstants.getFilter().getOptionsMethod().equalsIgnoreCase(request.getMethod())) {
             return true;
         }
+        if (shouldBypassByEvaluator(request)) {
+            return true;
+        }
         String path = request.getRequestURI();
         for (String pattern : commonExcludePaths.merge(authProperties.getFilter().getExcludePaths())) {
             if (pathMatcher.match(pattern, path)) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean shouldBypassByEvaluator(HttpServletRequest request) {
+        if (bypassEvaluators == null) {
+            return false;
+        }
+        for (AuthBypassEvaluator evaluator : bypassEvaluators) {
+            try {
+                if (evaluator != null && evaluator.shouldBypass(request)) {
+                    return true;
+                }
+            } catch (Exception ignored) {
+                // ignore evaluator errors to avoid blocking auth
             }
         }
         return false;

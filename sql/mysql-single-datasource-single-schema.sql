@@ -593,6 +593,61 @@ CREATE TABLE IF NOT EXISTS sys_login_log
     COMMENT
         ='登录日志表';
 
+CREATE TABLE IF NOT EXISTS sys_dynamic_api_log
+(
+    id            BIGINT   NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    api_id        BIGINT COMMENT '接口ID',
+    api_path      VARCHAR(256) COMMENT '接口路径',
+    api_method    VARCHAR(16) COMMENT 'HTTP方法',
+    api_type      VARCHAR(16) COMMENT '类型',
+    auth_mode     VARCHAR(16) COMMENT '认证模式',
+    status        TINYINT  NOT NULL DEFAULT 1 COMMENT '状态 0=失败 1=成功',
+    response_code INT COMMENT '响应码',
+    error_msg     VARCHAR(2000) COMMENT '错误信息',
+    trace_id      VARCHAR(128) COMMENT 'TraceId',
+    user_id       BIGINT COMMENT '用户ID',
+    user_name     VARCHAR(64) COMMENT '用户账号',
+    request_ip    VARCHAR(128) COMMENT '请求IP',
+    request_param TEXT COMMENT '请求参数',
+    duration_ms   BIGINT COMMENT '耗时毫秒',
+    request_time  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '请求时间',
+    PRIMARY KEY (id),
+    KEY idx_dynamic_api_log_api (api_id),
+    KEY idx_dynamic_api_log_status (status),
+    KEY idx_dynamic_api_log_time (request_time)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='动态接口日志表';
+
+CREATE TABLE IF NOT EXISTS dynamic_api
+(
+    id                BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    path              VARCHAR(256) NOT NULL COMMENT '接口路径',
+    method            VARCHAR(16)  NOT NULL COMMENT 'HTTP方法',
+    status            VARCHAR(16)  NOT NULL COMMENT '状态',
+    type              VARCHAR(16)  NOT NULL COMMENT '类型',
+    config            TEXT COMMENT '配置JSON',
+    auth_mode         VARCHAR(16) COMMENT '认证模式',
+    rate_limit_policy VARCHAR(64) COMMENT '限流策略',
+    timeout_ms        INT COMMENT '超时毫秒',
+    create_time       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by         BIGINT                DEFAULT NULL COMMENT '创建人',
+    create_dept       BIGINT COMMENT '创建人所属部门ID',
+    update_by         BIGINT                DEFAULT NULL COMMENT '更新人',
+    is_deleted        TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version           INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark            VARCHAR(500)          DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_dynamic_api_method_path (method, path, is_deleted),
+    KEY idx_dynamic_api_status (status),
+    KEY idx_dynamic_api_type (type)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='动态接口配置表';
+
 USE demo;
 
 -- 清理 Quartz 表，避免重复建索引失败

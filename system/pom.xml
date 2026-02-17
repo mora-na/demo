@@ -83,6 +83,7 @@
                                         <exclude>com.example:notice</exclude>
                                         <exclude>com.example:job</exclude>
                                         <exclude>com.example:log</exclude>
+                                        <exclude>com.example:core-http-extension</exclude>
                                         <exclude>com.example:app</exclude>
                                     </excludes>
                                     <message>system 模块禁止依赖业务实现模块，身份域能力应通过 *-api 对外暴露。</message>

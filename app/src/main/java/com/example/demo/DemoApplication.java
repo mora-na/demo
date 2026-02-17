@@ -22,7 +22,8 @@ import org.springframework.cache.annotation.EnableCaching;
         "com.example.demo.notice.mapper",
         "com.example.demo.job.mapper",
         "com.example.demo.log.mapper",
-        "com.example.demo.dict.mapper"
+        "com.example.demo.dict.mapper",
+        "com.example.demo.extension.repository"
 })
 public class DemoApplication extends SpringBootServletInitializer {
 

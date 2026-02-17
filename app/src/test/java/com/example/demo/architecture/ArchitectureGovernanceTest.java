@@ -6,6 +6,8 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
 import org.junit.jupiter.api.Test;
 
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideOutsideOfPackages;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 /**
@@ -17,6 +19,8 @@ class ArchitectureGovernanceTest {
     private static final String NOTICE = "com.example.demo.notice..";
     private static final String JOB = "com.example.demo.job..";
     private static final String LOG = "com.example.demo.log..";
+    private static final String EXTENSION = "com.example.demo.extension..";
+    private static final String[] CONTRACT_PACKAGES = {"com.example.demo..api.."};
 
     private static final String[] AUTH_MODULE_PACKAGES = {
             "com.example.demo.auth.config..",
@@ -28,7 +32,7 @@ class ArchitectureGovernanceTest {
     };
 
     private static final String[] BUSINESS_PACKAGES = {
-            ORDER, NOTICE, JOB, LOG,
+            ORDER, NOTICE, JOB, LOG, EXTENSION,
             "com.example.demo.auth.config..",
             "com.example.demo.auth.controller..",
             "com.example.demo.auth.dto..",
@@ -47,7 +51,7 @@ class ArchitectureGovernanceTest {
     };
 
     private static final String[] BUSINESS_IMPL_PACKAGES = {
-            ORDER, NOTICE, JOB,
+            ORDER, NOTICE, JOB, EXTENSION,
             "com.example.demo.auth.config..",
             "com.example.demo.auth.controller..",
             "com.example.demo.auth.dto..",
@@ -119,12 +123,14 @@ class ArchitectureGovernanceTest {
         noDependencyFrom(NOTICE, ORDER, JOB).check(classes);
         noDependencyFrom(JOB, ORDER, NOTICE).check(classes);
         noDependencyFrom(LOG, ORDER, NOTICE, JOB).check(classes);
+        noDependencyFrom(EXTENSION, ORDER, NOTICE, JOB, LOG).check(classes);
     }
 
     private ArchRule noDependencyFrom(String sourcePackage, String... targetPackages) {
         return noClasses()
                 .that().resideInAnyPackage(sourcePackage)
-                .should().dependOnClassesThat().resideInAnyPackage(targetPackages)
-                .because("业务模块之间禁止跨边界直连");
+                .should().dependOnClassesThat(resideInAnyPackage(targetPackages)
+                        .and(resideOutsideOfPackages(CONTRACT_PACKAGES)))
+                .because("业务模块之间禁止跨边界直连，必须通过 *-api 契约模块");
     }
 }

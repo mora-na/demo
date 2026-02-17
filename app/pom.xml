@@ -79,6 +79,10 @@
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
+            <artifactId>core-http-extension</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.example</groupId>
             <artifactId>notice</artifactId>
         </dependency>
         <dependency>

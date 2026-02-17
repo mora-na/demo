@@ -49,6 +49,7 @@
                                         <exclude>com.example:notice</exclude>
                                         <exclude>com.example:job</exclude>
                                         <exclude>com.example:log</exclude>
+                                        <exclude>com.example:core-http-extension</exclude>
                                         <exclude>com.example:app</exclude>
                                     </excludes>
                                     <message>log-api 只允许暴露契约，不允许依赖业务实现模块。</message>

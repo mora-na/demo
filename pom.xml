@@ -22,6 +22,8 @@
         <module>common</module>
         <module>identity-api</module>
         <module>log-api</module>
+        <module>extension-api</module>
+        <module>core-http-extension</module>
         <module>system</module>
         <module>log</module>
         <module>auth</module>
@@ -250,6 +252,16 @@
             <dependency>
                 <groupId>com.example</groupId>
                 <artifactId>log-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example</groupId>
+                <artifactId>extension-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example</groupId>
+                <artifactId>core-http-extension</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

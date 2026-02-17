@@ -29,7 +29,7 @@ logging:
 # SQL 日志配置
 sql-log:
   # 是否打印 SQL
-  enabled: true
+  enabled: false
 
 # 认证配置
 auth:

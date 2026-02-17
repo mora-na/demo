@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 public class SingleSchemaSqlRewriteInterceptor implements Interceptor {
 
     private static final Pattern SCHEMA_PREFIX_PATTERN = Pattern.compile(
-            "(?i)(?<![a-z0-9_`\"])(system|notice|job|log|dict|cache|\"order\"|`order`|order)\\s*\\."
+            "(?i)(?<![a-z0-9_`\"])(system|notice|job|log|dict|cache|extension|\"order\"|`order`|order)\\s*\\."
     );
 
     private final String replacementPrefix;

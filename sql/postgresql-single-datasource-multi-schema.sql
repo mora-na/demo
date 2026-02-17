@@ -5,6 +5,7 @@ DROP SCHEMA IF EXISTS job CASCADE;
 DROP SCHEMA IF EXISTS log CASCADE;
 DROP SCHEMA IF EXISTS dict CASCADE;
 DROP SCHEMA IF EXISTS cache CASCADE;
+DROP SCHEMA IF EXISTS extension CASCADE;
 
 CREATE SCHEMA system;
 CREATE SCHEMA "order";
@@ -13,6 +14,7 @@ CREATE SCHEMA job;
 CREATE SCHEMA log;
 CREATE SCHEMA dict;
 CREATE SCHEMA cache;
+CREATE SCHEMA extension;
 
 SET search_path TO system, public;
 
@@ -871,6 +873,92 @@ COMMENT ON COLUMN sys_login_log.status IS '状态 0=失败 1=成功';
 COMMENT ON COLUMN sys_login_log.msg IS '提示消息';
 COMMENT ON COLUMN sys_login_log.login_time IS '登录时间';
 
+CREATE SEQUENCE IF NOT EXISTS sys_dynamic_api_log_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_dynamic_api_log
+(
+    id            BIGINT PRIMARY KEY DEFAULT nextval('sys_dynamic_api_log_id_seq'),
+    api_id        BIGINT,
+    api_path      VARCHAR(256),
+    api_method    VARCHAR(16),
+    api_type      VARCHAR(16),
+    auth_mode     VARCHAR(16),
+    status        SMALLINT  NOT NULL DEFAULT 1,
+    response_code INT,
+    error_msg     VARCHAR(2000),
+    trace_id      VARCHAR(128),
+    user_id       BIGINT,
+    user_name     VARCHAR(64),
+    request_ip    VARCHAR(128),
+    request_param TEXT,
+    duration_ms   BIGINT,
+    request_time  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_sys_dynamic_api_log_api ON sys_dynamic_api_log (api_id);
+CREATE INDEX IF NOT EXISTS idx_sys_dynamic_api_log_status ON sys_dynamic_api_log (status);
+CREATE INDEX IF NOT EXISTS idx_sys_dynamic_api_log_time ON sys_dynamic_api_log (request_time);
+COMMENT ON TABLE sys_dynamic_api_log IS '动态接口日志表';
+COMMENT ON COLUMN sys_dynamic_api_log.id IS '主键ID';
+COMMENT ON COLUMN sys_dynamic_api_log.api_id IS '接口ID';
+COMMENT ON COLUMN sys_dynamic_api_log.api_path IS '接口路径';
+COMMENT ON COLUMN sys_dynamic_api_log.api_method IS 'HTTP方法';
+COMMENT ON COLUMN sys_dynamic_api_log.api_type IS '类型';
+COMMENT ON COLUMN sys_dynamic_api_log.auth_mode IS '认证模式';
+COMMENT ON COLUMN sys_dynamic_api_log.status IS '状态 0=失败 1=成功';
+COMMENT ON COLUMN sys_dynamic_api_log.response_code IS '响应码';
+COMMENT ON COLUMN sys_dynamic_api_log.error_msg IS '错误信息';
+COMMENT ON COLUMN sys_dynamic_api_log.trace_id IS 'TraceId';
+COMMENT ON COLUMN sys_dynamic_api_log.user_id IS '用户ID';
+COMMENT ON COLUMN sys_dynamic_api_log.user_name IS '用户账号';
+COMMENT ON COLUMN sys_dynamic_api_log.request_ip IS '请求IP';
+COMMENT ON COLUMN sys_dynamic_api_log.request_param IS '请求参数';
+COMMENT ON COLUMN sys_dynamic_api_log.duration_ms IS '耗时毫秒';
+COMMENT ON COLUMN sys_dynamic_api_log.request_time IS '请求时间';
+
+SET search_path TO extension, public;
+
+CREATE SEQUENCE IF NOT EXISTS dynamic_api_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS dynamic_api
+(
+    id                BIGINT PRIMARY KEY    DEFAULT nextval('dynamic_api_id_seq'),
+    path              VARCHAR(256) NOT NULL,
+    method            VARCHAR(16)  NOT NULL,
+    status            VARCHAR(16)  NOT NULL,
+    type              VARCHAR(16)  NOT NULL,
+    config            TEXT,
+    auth_mode         VARCHAR(16),
+    rate_limit_policy VARCHAR(64),
+    timeout_ms        INT,
+    create_time       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by         BIGINT,
+    create_dept       BIGINT,
+    update_by         BIGINT,
+    is_deleted        SMALLINT     NOT NULL DEFAULT 0,
+    version           INT          NOT NULL DEFAULT 0,
+    remark            VARCHAR(500)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_dynamic_api_method_path ON dynamic_api (method, path, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_dynamic_api_status ON dynamic_api (status);
+CREATE INDEX IF NOT EXISTS idx_dynamic_api_type ON dynamic_api (type);
+COMMENT ON TABLE dynamic_api IS '动态接口配置表';
+COMMENT ON COLUMN dynamic_api.id IS '主键ID';
+COMMENT ON COLUMN dynamic_api.path IS '接口路径';
+COMMENT ON COLUMN dynamic_api.method IS 'HTTP方法';
+COMMENT ON COLUMN dynamic_api.status IS '状态';
+COMMENT ON COLUMN dynamic_api.type IS '类型';
+COMMENT ON COLUMN dynamic_api.config IS '配置JSON';
+COMMENT ON COLUMN dynamic_api.auth_mode IS '认证模式';
+COMMENT ON COLUMN dynamic_api.rate_limit_policy IS '限流策略';
+COMMENT ON COLUMN dynamic_api.timeout_ms IS '超时毫秒';
+COMMENT ON COLUMN dynamic_api.create_time IS '创建时间';
+COMMENT ON COLUMN dynamic_api.update_time IS '更新时间';
+COMMENT ON COLUMN dynamic_api.create_by IS '创建人';
+COMMENT ON COLUMN dynamic_api.create_dept IS '创建人所属部门ID';
+COMMENT ON COLUMN dynamic_api.update_by IS '更新人';
+COMMENT ON COLUMN dynamic_api.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
+COMMENT ON COLUMN dynamic_api.version IS '乐观锁版本号';
+COMMENT ON COLUMN dynamic_api.remark IS '备注';
+
 SET search_path TO job, public;
 
 create table if not exists sys_quartz_job_details
@@ -1505,12 +1593,14 @@ SELECT setval('job.sys_job_id_seq', (SELECT COALESCE(MAX(id), 1) FROM job.sys_jo
 SELECT setval('job.sys_job_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM job.sys_job_log));
 SELECT setval('log.sys_oper_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM log.sys_oper_log));
 SELECT setval('log.sys_login_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM log.sys_login_log));
+SELECT setval('log.sys_dynamic_api_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM log.sys_dynamic_api_log));
+SELECT setval('extension.dynamic_api_id_seq', (SELECT COALESCE(MAX(id), 1) FROM extension.dynamic_api));
 
 
 
 -- =========================
 -- 单数据源账号与权限（需 DBA/Superuser 执行）
--- 单账号覆盖全部模块 schema（system/order/notice/job/log/dict/cache）
+-- 单账号覆盖全部模块 schema（system/order/notice/job/log/dict/cache/extension）
 -- 默认账号与 application-dev.yml 的单数据源默认值一致：demo_system_rw
 -- =========================
 DO
@@ -1540,6 +1630,7 @@ REVOKE ALL ON SCHEMA job FROM PUBLIC;
 REVOKE ALL ON SCHEMA log FROM PUBLIC;
 REVOKE ALL ON SCHEMA dict FROM PUBLIC;
 REVOKE ALL ON SCHEMA cache FROM PUBLIC;
+REVOKE ALL ON SCHEMA extension FROM PUBLIC;
 
 REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA system FROM PUBLIC;
 REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA "order" FROM PUBLIC;
@@ -1548,6 +1639,7 @@ REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA job FROM PUBLIC;
 REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA log FROM PUBLIC;
 REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA dict FROM PUBLIC;
 REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA cache FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA extension FROM PUBLIC;
 
 REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA system FROM PUBLIC;
 REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA "order" FROM PUBLIC;
@@ -1556,12 +1648,13 @@ REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA job FROM PUBLIC;
 REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA log FROM PUBLIC;
 REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA dict FROM PUBLIC;
 REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA cache FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA extension FROM PUBLIC;
 
 DO
 $$
     DECLARE
         schema_name    TEXT;
-        module_schemas TEXT[] := ARRAY ['system', 'order', 'notice', 'job', 'log', 'dict', 'cache'];
+        module_schemas TEXT[] := ARRAY ['system', 'order', 'notice', 'job', 'log', 'dict', 'cache', 'extension'];
     BEGIN
         FOREACH schema_name IN ARRAY module_schemas
             LOOP
@@ -1613,3 +1706,9 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA dict GRANT USAGE, SELECT, UPDATE ON SEQUENCES
 GRANT USAGE ON SCHEMA cache TO demo_system_rw;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA cache TO demo_system_rw;
 ALTER DEFAULT PRIVILEGES IN SCHEMA cache GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
+
+GRANT USAGE ON SCHEMA extension TO demo_system_rw;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA extension TO demo_system_rw;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA extension TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA extension GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA extension GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
