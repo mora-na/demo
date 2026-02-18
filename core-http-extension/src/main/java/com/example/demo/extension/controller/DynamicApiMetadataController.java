@@ -7,6 +7,8 @@ import com.example.demo.extension.api.handler.DynamicApiHandler;
 import com.example.demo.extension.config.DynamicApiProperties;
 import com.example.demo.extension.dto.DynamicApiBeanMeta;
 import com.example.demo.extension.dto.DynamicApiRateLimitPolicyMeta;
+import com.example.demo.extension.dto.DynamicApiTypeMeta;
+import com.example.demo.extension.executor.ExecuteStrategyFactory;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.support.AopUtils;
@@ -34,6 +36,7 @@ public class DynamicApiMetadataController extends BaseController {
 
     private final ApplicationContext applicationContext;
     private final DynamicApiProperties properties;
+    private final ExecuteStrategyFactory strategyFactory;
 
     @GetMapping("/beans")
     @RequirePermission("dynamic-api:query")
@@ -45,6 +48,12 @@ public class DynamicApiMetadataController extends BaseController {
     @RequirePermission("dynamic-api:query")
     public CommonResult<List<DynamicApiRateLimitPolicyMeta>> listRateLimitPolicies() {
         return success(loadRateLimitPolicies());
+    }
+
+    @GetMapping("/types")
+    @RequirePermission("dynamic-api:query")
+    public CommonResult<List<DynamicApiTypeMeta>> listTypes() {
+        return success(strategyFactory.listTypes());
     }
 
     private List<DynamicApiBeanMeta> loadBeanMetas() {

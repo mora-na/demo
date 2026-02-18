@@ -1,10 +1,13 @@
 package com.example.demo.extension.executor;
 
 import com.example.demo.extension.api.handler.DynamicApiHandler;
+import com.example.demo.extension.api.request.DynamicApiParamMode;
 import com.example.demo.extension.api.request.DynamicApiRequest;
 import com.example.demo.extension.config.DynamicApiConstants;
 import com.example.demo.extension.model.BeanExecuteConfig;
-import com.example.demo.extension.model.DynamicApiType;
+import com.example.demo.extension.model.DynamicApiTypeCodes;
+import com.example.demo.extension.support.DynamicApiException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
@@ -29,8 +32,32 @@ public class BeanExecuteStrategy implements ExecuteStrategy {
     }
 
     @Override
-    public DynamicApiType type() {
-        return DynamicApiType.BEAN;
+    public String type() {
+        return DynamicApiTypeCodes.BEAN;
+    }
+
+    @Override
+    public String displayName() {
+        return "Bean";
+    }
+
+    @Override
+    public Object parseConfig(String configJson, ObjectMapper objectMapper) throws Exception {
+        if (StringUtils.isBlank(configJson)) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getConfigInvalid());
+        }
+        BeanExecuteConfig config = objectMapper.readValue(configJson, BeanExecuteConfig.class);
+        if (config == null || StringUtils.isBlank(config.getBeanName())) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getBeanInvalid());
+        }
+        if (StringUtils.isNotBlank(config.getParamMode())
+                && DynamicApiParamMode.from(config.getParamMode()) == null) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getConfigInvalid());
+        }
+        return config;
     }
 
     @Override

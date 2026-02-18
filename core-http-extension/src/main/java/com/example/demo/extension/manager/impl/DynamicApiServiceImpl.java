@@ -219,10 +219,7 @@ public class DynamicApiServiceImpl implements DynamicApiService {
             return null;
         }
         String config = StringUtils.trimToNull(request.getConfig());
-        DynamicApiType type = DynamicApiType.from(request.getType());
-        if (type == null) {
-            return config;
-        }
+        String type = DynamicApiTypeCodes.normalize(request.getType());
         String built = buildConfig(type,
                 request.getBeanName(),
                 request.getParamMode(),
@@ -247,10 +244,7 @@ public class DynamicApiServiceImpl implements DynamicApiService {
             return null;
         }
         String config = StringUtils.trimToNull(request.getConfig());
-        DynamicApiType type = DynamicApiType.from(request.getType());
-        if (type == null) {
-            return config;
-        }
+        String type = DynamicApiTypeCodes.normalize(request.getType());
         String built = buildConfig(type,
                 request.getBeanName(),
                 request.getParamMode(),
@@ -270,7 +264,7 @@ public class DynamicApiServiceImpl implements DynamicApiService {
         return config;
     }
 
-    private String buildConfig(DynamicApiType type,
+    private String buildConfig(String type,
                                String beanName,
                                String paramMode,
                                String paramSchema,
@@ -280,7 +274,7 @@ public class DynamicApiServiceImpl implements DynamicApiService {
                                Boolean httpPassHeaders,
                                Boolean httpPassQuery) {
         try {
-            if (type == DynamicApiType.BEAN) {
+            if (DynamicApiTypeCodes.isBean(type)) {
                 boolean hasBeanInput = StringUtils.isNotBlank(beanName) || StringUtils.isNotBlank(paramMode)
                         || StringUtils.isNotBlank(paramSchema);
                 if (!hasBeanInput) {
@@ -297,7 +291,7 @@ public class DynamicApiServiceImpl implements DynamicApiService {
                 config.setParamSchema(StringUtils.trimToNull(paramSchema));
                 return objectMapper.writeValueAsString(config);
             }
-            if (type == DynamicApiType.SQL) {
+            if (DynamicApiTypeCodes.isSql(type)) {
                 if (StringUtils.isBlank(sql)) {
                     return null;
                 }
@@ -305,7 +299,7 @@ public class DynamicApiServiceImpl implements DynamicApiService {
                 config.setSql(sql.trim());
                 return objectMapper.writeValueAsString(config);
             }
-            if (type == DynamicApiType.HTTP) {
+            if (DynamicApiTypeCodes.isHttp(type)) {
                 if (StringUtils.isBlank(httpUrl)) {
                     return null;
                 }

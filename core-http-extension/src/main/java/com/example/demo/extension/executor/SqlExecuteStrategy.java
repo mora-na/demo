@@ -2,9 +2,11 @@ package com.example.demo.extension.executor;
 
 import com.example.demo.common.mybatis.SqlGuardProperties;
 import com.example.demo.extension.config.DynamicApiConstants;
-import com.example.demo.extension.model.DynamicApiType;
+import com.example.demo.extension.model.DynamicApiTypeCodes;
 import com.example.demo.extension.model.SqlExecuteConfig;
 import com.example.demo.extension.registry.DynamicApiMeta;
+import com.example.demo.extension.support.DynamicApiException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
@@ -42,8 +44,27 @@ public class SqlExecuteStrategy implements ExecuteStrategy {
     }
 
     @Override
-    public DynamicApiType type() {
-        return DynamicApiType.SQL;
+    public String type() {
+        return DynamicApiTypeCodes.SQL;
+    }
+
+    @Override
+    public String displayName() {
+        return "SQL";
+    }
+
+    @Override
+    public Object parseConfig(String configJson, ObjectMapper objectMapper) throws Exception {
+        if (StringUtils.isBlank(configJson)) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getConfigInvalid());
+        }
+        SqlExecuteConfig config = objectMapper.readValue(configJson, SqlExecuteConfig.class);
+        if (config == null || StringUtils.isBlank(config.getSql())) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getSqlInvalid());
+        }
+        return config;
     }
 
     @Override

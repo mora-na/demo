@@ -67,6 +67,11 @@ export interface RateLimitPolicyMeta {
     includePath?: boolean;
 }
 
+export interface DynamicApiTypeMeta {
+    code: string;
+    name?: string;
+}
+
 export interface DynamicApiLog {
     id: number;
     apiId?: number;
@@ -160,5 +165,10 @@ export async function listDynamicApiBeans(): Promise<ApiResponse<DynamicApiBeanM
 
 export async function listRateLimitPolicies(): Promise<ApiResponse<RateLimitPolicyMeta[]>> {
     const response = await api.get<ApiResponse<RateLimitPolicyMeta[]>>("/dynamic-api/metadata/rate-limit-policies");
+    return response.data;
+}
+
+export async function listDynamicApiTypes(): Promise<ApiResponse<DynamicApiTypeMeta[]>> {
+    const response = await api.get<ApiResponse<DynamicApiTypeMeta[]>>("/dynamic-api/metadata/types");
     return response.data;
 }

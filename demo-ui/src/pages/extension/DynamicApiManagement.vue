@@ -37,7 +37,7 @@
               class="filter-input filter-input--narrow"
               clearable
           >
-            <el-option v-for="item in typeOptions" :key="item" :label="item" :value="item"/>
+            <el-option v-for="item in typeOptions" :key="item.code" :label="item.label" :value="item.code"/>
           </el-select>
           <el-select
               v-model="filters.authMode"
@@ -151,10 +151,18 @@
         </el-form-item>
         <el-form-item :label="t('dynamicApi.dialog.type')">
           <el-select v-model="form.type" :placeholder="t('dynamicApi.dialog.typePlaceholder')">
-            <el-option v-for="item in typeOptions" :key="item" :label="item" :value="item"/>
+            <el-option v-for="item in typeOptions" :key="item.code" :label="item.label" :value="item.code"/>
           </el-select>
         </el-form-item>
-        <el-form-item v-if="form.type === 'BEAN'" :label="t('dynamicApi.dialog.beanName')">
+        <el-form-item v-if="isCustomType" :label="t('dynamicApi.dialog.config')" class="full-row">
+          <el-input
+              v-model.trim="form.config"
+              :placeholder="t('dynamicApi.dialog.configPlaceholder')"
+              :rows="6"
+              type="textarea"
+          />
+        </el-form-item>
+        <el-form-item v-if="currentType === 'BEAN'" :label="t('dynamicApi.dialog.beanName')">
           <el-select
               v-model="form.beanName"
               :placeholder="t('dynamicApi.dialog.beanNamePlaceholder')"
@@ -169,7 +177,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item v-if="form.type === 'BEAN'" :label="t('dynamicApi.dialog.paramMode')">
+        <el-form-item v-if="currentType === 'BEAN'" :label="t('dynamicApi.dialog.paramMode')">
           <el-select v-model="form.paramMode" :placeholder="t('dynamicApi.dialog.paramModePlaceholder')">
             <el-option :label="t('dynamicApi.paramMode.auto')" :value="'AUTO'"/>
             <el-option :label="t('dynamicApi.paramMode.query')" :value="'QUERY'"/>
@@ -179,7 +187,7 @@
           </el-select>
           <div class="form-hint">{{ t("dynamicApi.dialog.paramModeHint") }}</div>
         </el-form-item>
-        <el-form-item v-if="form.type === 'BEAN'" :label="t('dynamicApi.dialog.paramSchema')" class="full-row">
+        <el-form-item v-if="currentType === 'BEAN'" :label="t('dynamicApi.dialog.paramSchema')" class="full-row">
           <el-input
               v-model.trim="form.paramSchema"
               :placeholder="t('dynamicApi.dialog.paramSchemaPlaceholder')"
@@ -187,7 +195,7 @@
               type="textarea"
           />
         </el-form-item>
-        <el-form-item v-if="form.type === 'SQL'" :label="t('dynamicApi.dialog.sql')" class="full-row">
+        <el-form-item v-if="currentType === 'SQL'" :label="t('dynamicApi.dialog.sql')" class="full-row">
           <el-input
               v-model.trim="form.sql"
               :placeholder="t('dynamicApi.dialog.sqlPlaceholder')"
@@ -195,19 +203,19 @@
               type="textarea"
           />
         </el-form-item>
-        <el-form-item v-if="form.type === 'HTTP'" :label="t('dynamicApi.dialog.httpUrl')">
+        <el-form-item v-if="currentType === 'HTTP'" :label="t('dynamicApi.dialog.httpUrl')">
           <el-input v-model.trim="form.httpUrl" :placeholder="t('dynamicApi.dialog.httpUrlPlaceholder')"/>
         </el-form-item>
-        <el-form-item v-if="form.type === 'HTTP'" :label="t('dynamicApi.dialog.httpMethod')">
+        <el-form-item v-if="currentType === 'HTTP'" :label="t('dynamicApi.dialog.httpMethod')">
           <el-select v-model="form.httpMethod" :placeholder="t('dynamicApi.dialog.httpMethodPlaceholder')">
             <el-option :label="t('dynamicApi.http.followRequest')" :value="''"/>
             <el-option v-for="item in methodOptions" :key="item" :label="item" :value="item"/>
           </el-select>
         </el-form-item>
-        <el-form-item v-if="form.type === 'HTTP'" :label="t('dynamicApi.dialog.httpPassHeaders')">
+        <el-form-item v-if="currentType === 'HTTP'" :label="t('dynamicApi.dialog.httpPassHeaders')">
           <el-switch v-model="form.httpPassHeaders"/>
         </el-form-item>
-        <el-form-item v-if="form.type === 'HTTP'" :label="t('dynamicApi.dialog.httpPassQuery')">
+        <el-form-item v-if="currentType === 'HTTP'" :label="t('dynamicApi.dialog.httpPassQuery')">
           <el-switch v-model="form.httpPassQuery"/>
         </el-form-item>
         <el-form-item :label="t('dynamicApi.dialog.status')">
@@ -272,9 +280,11 @@ import {
   type DynamicApi,
   type DynamicApiBeanMeta,
   type DynamicApiPayload,
+  type DynamicApiTypeMeta,
   enableDynamicApi,
   listDynamicApiBeans,
   listDynamicApis,
+  listDynamicApiTypes,
   listRateLimitPolicies,
   type RateLimitPolicyMeta,
   reloadDynamicApis,
@@ -290,11 +300,25 @@ const pageSize = ref(10);
 const total = ref(0);
 const beanCatalog = ref<DynamicApiBeanMeta[]>([]);
 const rateLimitPolicies = ref<RateLimitPolicyMeta[]>([]);
+const typeCatalog = ref<DynamicApiTypeMeta[]>([]);
 const beanLoading = ref(false);
 const policyLoading = ref(false);
+const typeLoading = ref(false);
 
 const methodOptions = ["GET", "POST", "PUT", "DELETE"];
-const typeOptions = ["BEAN", "SQL", "HTTP"];
+const defaultTypeOptions: DynamicApiTypeMeta[] = [
+  {code: "BEAN", name: "BEAN"},
+  {code: "SQL", name: "SQL"},
+  {code: "HTTP", name: "HTTP"}
+];
+const typeOptions = computed(() =>
+    (typeCatalog.value && typeCatalog.value.length ? typeCatalog.value : defaultTypeOptions)
+        .map((item) => ({
+          code: item.code,
+          label: item.name || item.code
+        }))
+);
+const builtInTypes = new Set(defaultTypeOptions.map((item) => item.code));
 
 const filters = reactive({
   path: "",
@@ -333,6 +357,16 @@ const editorTitle = computed(() =>
 
 const beanOptions = computed(() => beanCatalog.value || []);
 const rateLimitOptions = computed(() => rateLimitPolicies.value || []);
+const currentType = computed(() => normalizeType(form.type));
+const isCustomType = computed(() => !isBuiltInType(form.type));
+
+function normalizeType(value?: string) {
+  return (value || "").trim().toUpperCase();
+}
+
+function isBuiltInType(value?: string) {
+  return builtInTypes.has(normalizeType(value));
+}
 
 function itemLabel(item: DynamicApiBeanMeta) {
   if (!item.className) {
@@ -423,6 +457,25 @@ async function loadRateLimitPolicies() {
   }
 }
 
+async function loadTypeCatalog() {
+  if (typeLoading.value) {
+    return;
+  }
+  typeLoading.value = true;
+  try {
+    const result = await listDynamicApiTypes();
+    if (result?.code === 200 && Array.isArray(result.data)) {
+      typeCatalog.value = result.data;
+    } else {
+      ElMessage.error(result?.message || t("dynamicApi.msg.typeLoadFailed"));
+    }
+  } catch (_error) {
+    ElMessage.error(t("dynamicApi.msg.typeLoadFailed"));
+  } finally {
+    typeLoading.value = false;
+  }
+}
+
 function handleSearch() {
   pageNum.value = 1;
   loadApis();
@@ -501,16 +554,21 @@ async function saveApi() {
     ElMessage.warning(t("dynamicApi.msg.validate"));
     return;
   }
-  if (form.type === "BEAN" && !form.beanName) {
+  const normalizedType = normalizeType(form.type);
+  if (normalizedType === "BEAN" && !form.beanName) {
     ElMessage.warning(t("dynamicApi.msg.validateBean"));
     return;
   }
-  if (form.type === "SQL" && !form.sql) {
+  if (normalizedType === "SQL" && !form.sql) {
     ElMessage.warning(t("dynamicApi.msg.validateSql"));
     return;
   }
-  if (form.type === "HTTP" && !form.httpUrl) {
+  if (normalizedType === "HTTP" && !form.httpUrl) {
     ElMessage.warning(t("dynamicApi.msg.validateHttp"));
+    return;
+  }
+  if (!isBuiltInType(form.type) && !form.config) {
+    ElMessage.warning(t("dynamicApi.msg.validateConfig"));
     return;
   }
   if (saving.value) {
@@ -519,24 +577,25 @@ async function saveApi() {
   saving.value = true;
   try {
     const timeoutMs = Number.isFinite(form.timeoutMs as number) ? form.timeoutMs : undefined;
+    const isCustom = !isBuiltInType(form.type);
     const payload: DynamicApiPayload = {
       path: form.path,
       method: form.method,
       type: form.type,
-      config: form.config || undefined,
+      config: isCustom ? form.config || undefined : undefined,
       status: form.status,
       authMode: form.authMode,
       rateLimitPolicy: form.rateLimitPolicy,
       timeoutMs,
       remark: form.remark,
-      beanName: form.type === "BEAN" ? form.beanName : undefined,
-      paramMode: form.type === "BEAN" ? form.paramMode : undefined,
-      paramSchema: form.type === "BEAN" ? form.paramSchema : undefined,
-      sql: form.type === "SQL" ? form.sql : undefined,
-      httpUrl: form.type === "HTTP" ? form.httpUrl : undefined,
-      httpMethod: form.type === "HTTP" ? form.httpMethod : undefined,
-      httpPassHeaders: form.type === "HTTP" ? form.httpPassHeaders : undefined,
-      httpPassQuery: form.type === "HTTP" ? form.httpPassQuery : undefined
+      beanName: normalizedType === "BEAN" ? form.beanName : undefined,
+      paramMode: normalizedType === "BEAN" ? form.paramMode : undefined,
+      paramSchema: normalizedType === "BEAN" ? form.paramSchema : undefined,
+      sql: normalizedType === "SQL" ? form.sql : undefined,
+      httpUrl: normalizedType === "HTTP" ? form.httpUrl : undefined,
+      httpMethod: normalizedType === "HTTP" ? form.httpMethod : undefined,
+      httpPassHeaders: normalizedType === "HTTP" ? form.httpPassHeaders : undefined,
+      httpPassQuery: normalizedType === "HTTP" ? form.httpPassQuery : undefined
     };
     const result = editorMode.value === "create"
         ? await createDynamicApi(payload)
@@ -614,22 +673,27 @@ function handleBeanChange() {
 }
 
 function applyConfigFromRow(row: DynamicApi) {
-  if (!row || !row.config) {
+  if (!row) {
+    return;
+  }
+  form.config = row.config || "";
+  if (!row.config) {
     return;
   }
   try {
     const config = JSON.parse(row.config);
-    if (row.type === "BEAN") {
+    const normalizedType = normalizeType(row.type);
+    if (normalizedType === "BEAN") {
       form.beanName = config.beanName || "";
       form.paramMode = config.paramMode || "AUTO";
       form.paramSchema = config.paramSchema || "";
       return;
     }
-    if (row.type === "SQL") {
+    if (normalizedType === "SQL") {
       form.sql = config.sql || "";
       return;
     }
-    if (row.type === "HTTP") {
+    if (normalizedType === "HTTP") {
       form.httpUrl = config.url || "";
       form.httpMethod = config.method || "";
       form.httpPassHeaders = config.passHeaders !== false;
@@ -683,7 +747,9 @@ watch(
       if (value === prev) {
         return;
       }
-      if (value === "BEAN") {
+      const normalizedType = normalizeType(value);
+      if (normalizedType === "BEAN") {
+        form.config = "";
         form.sql = "";
         form.httpUrl = "";
         form.httpMethod = "";
@@ -693,7 +759,8 @@ watch(
         form.paramSchema = form.paramSchema || "";
         loadBeanCatalog();
       }
-      if (value === "SQL") {
+      if (normalizedType === "SQL") {
+        form.config = "";
         form.beanName = "";
         form.paramMode = "AUTO";
         form.paramSchema = "";
@@ -702,7 +769,8 @@ watch(
         form.httpPassHeaders = true;
         form.httpPassQuery = true;
       }
-      if (value === "HTTP") {
+      if (normalizedType === "HTTP") {
+        form.config = "";
         form.beanName = "";
         form.paramMode = "AUTO";
         form.paramSchema = "";
@@ -710,11 +778,23 @@ watch(
         form.httpPassHeaders = form.httpPassHeaders ?? true;
         form.httpPassQuery = form.httpPassQuery ?? true;
       }
+      if (!isBuiltInType(value)) {
+        form.beanName = "";
+        form.paramMode = "AUTO";
+        form.paramSchema = "";
+        form.sql = "";
+        form.httpUrl = "";
+        form.httpMethod = "";
+        form.httpPassHeaders = true;
+        form.httpPassQuery = true;
+        form.config = form.config || "";
+      }
     }
 );
 
 onMounted(() => {
   loadApis();
+  loadTypeCatalog();
   loadBeanCatalog();
   loadRateLimitPolicies();
 });

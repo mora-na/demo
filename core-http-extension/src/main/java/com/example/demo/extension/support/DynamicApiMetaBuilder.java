@@ -1,8 +1,10 @@
 package com.example.demo.extension.support;
 
-import com.example.demo.extension.api.request.DynamicApiParamMode;
 import com.example.demo.extension.config.DynamicApiConstants;
-import com.example.demo.extension.model.*;
+import com.example.demo.extension.executor.ExecuteStrategy;
+import com.example.demo.extension.executor.ExecuteStrategyFactory;
+import com.example.demo.extension.model.DynamicApi;
+import com.example.demo.extension.model.DynamicApiAuthMode;
 import com.example.demo.extension.registry.DynamicApiMeta;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -18,11 +20,15 @@ public class DynamicApiMetaBuilder {
 
     private final ObjectMapper objectMapper;
     private final DynamicApiConstants constants;
+    private final ExecuteStrategyFactory strategyFactory;
     private final PathPatternParser pathPatternParser = new PathPatternParser();
 
-    public DynamicApiMetaBuilder(ObjectMapper objectMapper, DynamicApiConstants constants) {
+    public DynamicApiMetaBuilder(ObjectMapper objectMapper,
+                                 DynamicApiConstants constants,
+                                 ExecuteStrategyFactory strategyFactory) {
         this.objectMapper = objectMapper;
         this.constants = constants;
+        this.strategyFactory = strategyFactory;
     }
 
     public DynamicApiMeta build(DynamicApi api) {
@@ -40,8 +46,13 @@ public class DynamicApiMetaBuilder {
             throw new DynamicApiException(constants.getController().getBadRequestCode(),
                     constants.getMessage().getMethodInvalid());
         }
-        DynamicApiType type = DynamicApiType.from(api.getType());
-        if (type == null) {
+        String type = strategyFactory.normalizeType(api.getType());
+        if (StringUtils.isBlank(type)) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getTypeInvalid());
+        }
+        ExecuteStrategy strategy = strategyFactory.get(type);
+        if (strategy == null) {
             throw new DynamicApiException(constants.getController().getBadRequestCode(),
                     constants.getMessage().getTypeInvalid());
         }
@@ -51,8 +62,9 @@ public class DynamicApiMetaBuilder {
         }
         api.setMethod(method);
         api.setPath(path);
+        api.setType(type);
         api.setAuthMode(authMode.name());
-        Object config = parseConfig(type, api.getConfig());
+        Object config = parseConfig(strategy, api.getConfig());
         PathPattern pathPattern = null;
         if (DynamicApiPathUtils.isPatternPath(path)) {
             try {
@@ -65,49 +77,15 @@ public class DynamicApiMetaBuilder {
         return new DynamicApiMeta(api, type, authMode, config, pathPattern);
     }
 
-    private Object parseConfig(DynamicApiType type, String configJson) {
-        if (StringUtils.isBlank(configJson)) {
-            throw new DynamicApiException(constants.getController().getBadRequestCode(),
-                    constants.getMessage().getConfigInvalid());
-        }
+    private Object parseConfig(ExecuteStrategy strategy, String configJson) {
         try {
-            if (type == DynamicApiType.BEAN) {
-                BeanExecuteConfig config = objectMapper.readValue(configJson, BeanExecuteConfig.class);
-                if (config == null || StringUtils.isBlank(config.getBeanName())) {
-                    throw new DynamicApiException(constants.getController().getBadRequestCode(),
-                            constants.getMessage().getBeanInvalid());
-                }
-                if (StringUtils.isNotBlank(config.getParamMode())
-                        && DynamicApiParamMode.from(config.getParamMode()) == null) {
-                    throw new DynamicApiException(constants.getController().getBadRequestCode(),
-                            constants.getMessage().getConfigInvalid());
-                }
-                return config;
-            }
-            if (type == DynamicApiType.SQL) {
-                SqlExecuteConfig config = objectMapper.readValue(configJson, SqlExecuteConfig.class);
-                if (config == null || StringUtils.isBlank(config.getSql())) {
-                    throw new DynamicApiException(constants.getController().getBadRequestCode(),
-                            constants.getMessage().getSqlInvalid());
-                }
-                return config;
-            }
-            if (type == DynamicApiType.HTTP) {
-                HttpForwardConfig config = objectMapper.readValue(configJson, HttpForwardConfig.class);
-                if (config == null || StringUtils.isBlank(config.getUrl())) {
-                    throw new DynamicApiException(constants.getController().getBadRequestCode(),
-                            constants.getMessage().getHttpInvalid());
-                }
-                return config;
-            }
+            return strategy.parseConfig(configJson, objectMapper);
         } catch (DynamicApiException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new DynamicApiException(constants.getController().getBadRequestCode(),
                     constants.getMessage().getConfigInvalid());
         }
-        throw new DynamicApiException(constants.getController().getBadRequestCode(),
-                constants.getMessage().getTypeInvalid());
     }
 
     private String normalizeMethod(String method) {

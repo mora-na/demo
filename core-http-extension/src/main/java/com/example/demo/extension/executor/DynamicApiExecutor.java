@@ -1,7 +1,6 @@
 package com.example.demo.extension.executor;
 
 import com.example.demo.extension.config.DynamicApiConstants;
-import com.example.demo.extension.model.DynamicApiType;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,7 +34,7 @@ public class DynamicApiExecutor {
                     DynamicApiExecuteResult.error(constants.getController().getBadRequestCode(),
                             constants.getMessage().getExecuteFailed()));
         }
-        DynamicApiType type = context.getMeta().getType();
+        String type = context.getMeta().getType();
         ExecuteStrategy strategy = strategyFactory.get(type);
         if (strategy == null) {
             return CompletableFuture.completedFuture(

@@ -554,8 +554,10 @@ export default {
             validateBean: "请选择 Handler Bean。",
             validateSql: "请填写 SQL 语句。",
             validateHttp: "请填写转发地址。",
+            validateConfig: "请填写配置 JSON。",
             beanMetaFailed: "加载 Bean 列表失败。",
-            policyLoadFailed: "加载限流策略失败。"
+            policyLoadFailed: "加载限流策略失败。",
+            typeLoadFailed: "加载类型列表失败。"
         }
     },
     dynamicApiLog: {

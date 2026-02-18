@@ -2,9 +2,11 @@ package com.example.demo.extension.executor;
 
 import com.example.demo.extension.api.request.DynamicApiRequest;
 import com.example.demo.extension.config.DynamicApiConstants;
-import com.example.demo.extension.model.DynamicApiType;
+import com.example.demo.extension.model.DynamicApiTypeCodes;
 import com.example.demo.extension.model.HttpForwardConfig;
 import com.example.demo.extension.registry.DynamicApiMeta;
+import com.example.demo.extension.support.DynamicApiException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
@@ -34,8 +36,27 @@ public class HttpForwardStrategy implements ExecuteStrategy {
     }
 
     @Override
-    public DynamicApiType type() {
-        return DynamicApiType.HTTP;
+    public String type() {
+        return DynamicApiTypeCodes.HTTP;
+    }
+
+    @Override
+    public String displayName() {
+        return "HTTP";
+    }
+
+    @Override
+    public Object parseConfig(String configJson, ObjectMapper objectMapper) throws Exception {
+        if (StringUtils.isBlank(configJson)) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getConfigInvalid());
+        }
+        HttpForwardConfig config = objectMapper.readValue(configJson, HttpForwardConfig.class);
+        if (config == null || StringUtils.isBlank(config.getUrl())) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getHttpInvalid());
+        }
+        return config;
     }
 
     @Override

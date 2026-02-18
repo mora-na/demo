@@ -554,8 +554,10 @@ export default {
             validateBean: "Select handler bean.",
             validateSql: "Fill SQL statement.",
             validateHttp: "Fill forward URL.",
+            validateConfig: "Fill config JSON.",
             beanMetaFailed: "Failed to load bean list.",
-            policyLoadFailed: "Failed to load rate limit policies."
+            policyLoadFailed: "Failed to load rate limit policies.",
+            typeLoadFailed: "Failed to load type list."
         }
     },
     dynamicApiLog: {

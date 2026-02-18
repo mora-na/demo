@@ -2,7 +2,6 @@ package com.example.demo.extension.registry;
 
 import com.example.demo.extension.model.DynamicApi;
 import com.example.demo.extension.model.DynamicApiAuthMode;
-import com.example.demo.extension.model.DynamicApiType;
 import lombok.Getter;
 import org.springframework.web.util.pattern.PathPattern;
 
@@ -13,13 +12,13 @@ import org.springframework.web.util.pattern.PathPattern;
 public class DynamicApiMeta {
 
     private final DynamicApi api;
-    private final DynamicApiType type;
+    private final String type;
     private final DynamicApiAuthMode authMode;
     private final Object config;
     private final PathPattern pathPattern;
 
     public DynamicApiMeta(DynamicApi api,
-                          DynamicApiType type,
+                          String type,
                           DynamicApiAuthMode authMode,
                           Object config,
                           PathPattern pathPattern) {
