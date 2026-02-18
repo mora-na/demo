@@ -14,7 +14,12 @@ public class BeanExecuteConfig {
     private String beanName;
 
     /**
-     * Bean 方法名。
+     * 参数模式。
      */
-    private String method;
+    private String paramMode;
+
+    /**
+     * 参数结构描述（JSON 文本）。
+     */
+    private String paramSchema;
 }

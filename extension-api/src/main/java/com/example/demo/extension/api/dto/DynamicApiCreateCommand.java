@@ -29,4 +29,20 @@ public class DynamicApiCreateCommand implements Serializable {
     private Integer timeoutMs;
 
     private String remark;
+
+    private String beanName;
+
+    private String paramMode;
+
+    private String paramSchema;
+
+    private String sql;
+
+    private String httpUrl;
+
+    private String httpMethod;
+
+    private Boolean httpPassHeaders;
+
+    private Boolean httpPassQuery;
 }

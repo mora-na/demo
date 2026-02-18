@@ -348,3 +348,16 @@ dynamic:
       queue-capacity: 200
       keep-alive-seconds: 60
       thread-name-prefix: ext-exec-
+    rate-limit-policies:
+      - id: strict
+        name: 严格策略
+        window-seconds: 10
+        max-requests: 20
+        key-mode: ip-user
+        include-path: true
+      - id: relaxed
+        name: 宽松策略
+        window-seconds: 60
+        max-requests: 200
+        key-mode: ip
+        include-path: true

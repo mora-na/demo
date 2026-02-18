@@ -1,9 +1,12 @@
 package com.example.demo.extension.support;
 
+import com.example.demo.extension.api.handler.DynamicApiHandler;
 import com.example.demo.extension.config.DynamicApiConstants;
 import com.example.demo.extension.controller.DynamicDispatcherController;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.server.PathContainer;
 import org.springframework.stereotype.Component;
@@ -23,12 +26,15 @@ public class DynamicApiValidator {
 
     private final RequestMappingHandlerMapping handlerMapping;
     private final DynamicApiConstants constants;
+    private final ApplicationContext applicationContext;
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
 
     public DynamicApiValidator(@Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping,
-                               DynamicApiConstants constants) {
+                               DynamicApiConstants constants,
+                               ApplicationContext applicationContext) {
         this.handlerMapping = handlerMapping;
         this.constants = constants;
+        this.applicationContext = applicationContext;
     }
 
     public void validatePathAndMethod(String method, String path) {
@@ -50,6 +56,38 @@ public class DynamicApiValidator {
                     constants.getMessage().getPathInvalid());
         }
     }
+
+    public void validateBeanExposure(String beanName) {
+        if (StringUtils.isBlank(beanName)) {
+            return;
+        }
+        if (applicationContext == null) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getBeanInvalid());
+        }
+        Object bean;
+        try {
+            bean = applicationContext.getBean(beanName);
+        } catch (Exception ex) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getBeanInvalid());
+        }
+        if (bean == null) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getBeanInvalid());
+        }
+        Class<?> targetClass = AopUtils.getTargetClass(bean);
+        if (targetClass == null) {
+            targetClass = bean.getClass();
+        }
+        if (!DynamicApiHandler.class.isAssignableFrom(targetClass)) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getBeanInvalid());
+        }
+        // no additional expose check required
+    }
+
+    
 
     private boolean isConflictWithController(String method, String path) {
         if (handlerMapping == null) {

@@ -5,7 +5,7 @@
         <div class="module-title">{{ t("operLog.title") }}</div>
         <div class="module-sub">{{ t("operLog.subtitle") }}</div>
       </div>
-      <div class="module-actions">
+      <div class="module-actions" @keyup.enter="handleSearch">
         <el-input v-model.trim="filters.userName" clearable size="small" :placeholder="t('operLog.filter.user')"/>
         <el-input v-model.trim="filters.title" clearable size="small" :placeholder="t('operLog.filter.title')"/>
         <el-select v-model="filters.businessType" clearable size="small" :placeholder="t('operLog.filter.type')" style="width: 130px">

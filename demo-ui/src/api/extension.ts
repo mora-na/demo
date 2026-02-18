@@ -30,12 +30,41 @@ export interface DynamicApiPayload {
     path: string;
     method: string;
     type: string;
-    config: string;
+    config?: string;
     status?: string;
     authMode?: string;
     rateLimitPolicy?: string;
     timeoutMs?: number;
     remark?: string;
+    beanName?: string;
+    paramMode?: string;
+    paramSchema?: string;
+    sql?: string;
+    httpUrl?: string;
+    httpMethod?: string;
+    httpPassHeaders?: boolean;
+    httpPassQuery?: boolean;
+}
+
+export interface DynamicApiBeanMethod {
+    name: string;
+    signature: string;
+    parameterType?: string;
+}
+
+export interface DynamicApiBeanMeta {
+    beanName: string;
+    className: string;
+    methods?: DynamicApiBeanMethod[];
+}
+
+export interface RateLimitPolicyMeta {
+    id: string;
+    name?: string;
+    windowSeconds?: number;
+    maxRequests?: number;
+    keyMode?: string;
+    includePath?: boolean;
 }
 
 export interface DynamicApiLog {
@@ -121,5 +150,15 @@ export async function deleteDynamicApiLog(id: number): Promise<ApiResponse<void>
 
 export async function batchDeleteDynamicApiLogs(ids: number[]): Promise<ApiResponse<void>> {
     const response = await api.post<ApiResponse<void>>("/logs/dynamic-api/batch-delete", ids);
+    return response.data;
+}
+
+export async function listDynamicApiBeans(): Promise<ApiResponse<DynamicApiBeanMeta[]>> {
+    const response = await api.get<ApiResponse<DynamicApiBeanMeta[]>>("/dynamic-api/metadata/beans");
+    return response.data;
+}
+
+export async function listRateLimitPolicies(): Promise<ApiResponse<RateLimitPolicyMeta[]>> {
+    const response = await api.get<ApiResponse<RateLimitPolicyMeta[]>>("/dynamic-api/metadata/rate-limit-policies");
     return response.data;
 }

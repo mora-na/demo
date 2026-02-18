@@ -5,7 +5,7 @@
         <div class="module-title">{{ t("job.title") }}</div>
         <div class="module-sub">{{ t("job.subtitle") }}</div>
       </div>
-      <div class="module-actions">
+      <div class="module-actions" @keyup.enter="handleSearch">
         <el-input v-model.trim="filters.name" clearable :placeholder="t('job.filter.namePlaceholder')"/>
         <el-input v-model.trim="filters.handlerName" clearable :placeholder="t('job.filter.handlerPlaceholder')"/>
         <el-select v-model="filters.status" clearable :placeholder="t('job.filter.statusPlaceholder')" style="width: 120px">

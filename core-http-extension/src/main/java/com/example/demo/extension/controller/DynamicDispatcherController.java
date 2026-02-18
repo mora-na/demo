@@ -5,17 +5,19 @@ import com.example.demo.common.config.CommonConstants;
 import com.example.demo.common.i18n.I18nService;
 import com.example.demo.extension.adapter.RateLimitAdapter;
 import com.example.demo.extension.adapter.RateLimitDecision;
+import com.example.demo.extension.api.request.DynamicApiParamMode;
+import com.example.demo.extension.api.request.DynamicApiRequest;
 import com.example.demo.extension.config.DynamicApiConstants;
 import com.example.demo.extension.config.DynamicApiProperties;
 import com.example.demo.extension.executor.DynamicApiContext;
 import com.example.demo.extension.executor.DynamicApiExecuteResult;
 import com.example.demo.extension.executor.DynamicApiExecutor;
+import com.example.demo.extension.model.BeanExecuteConfig;
 import com.example.demo.extension.model.DynamicApiAuthMode;
 import com.example.demo.extension.model.DynamicApiResponse;
 import com.example.demo.extension.model.DynamicApiStatus;
 import com.example.demo.extension.registry.DynamicApiMatch;
 import com.example.demo.extension.registry.DynamicApiRegistry;
-import com.example.demo.extension.support.DynamicApiRequest;
 import com.example.demo.extension.support.DynamicApiRequestExtractor;
 import com.example.demo.log.api.event.DynamicApiLogEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -76,7 +78,8 @@ public class DynamicDispatcherController {
                     start);
             return immediate(response, properties.getDefaultTimeoutMs(), constants.getController().getNotFoundCode());
         }
-        DynamicApiRequest apiRequest = requestExtractor.extract(request, match.getPathVariables());
+        DynamicApiParamMode paramMode = resolveParamMode(match);
+        DynamicApiRequest apiRequest = requestExtractor.extract(request, match.getPathVariables(), paramMode);
         if (DynamicApiAuthMode.INHERIT.equals(match.getMeta().getAuthMode()) && AuthContext.get() == null) {
             DynamicApiResponse<Object> response = buildError(request, 401, "auth.permission.required", start);
             publishLog(match, apiRequest, null, response.getDurationMs(), request, "unauthorized");
@@ -96,6 +99,15 @@ public class DynamicDispatcherController {
         DynamicApiContext context = new DynamicApiContext(match.getMeta(), apiRequest, timeoutMs);
         final long finalStart = start;
         executor.executeAsync(context).whenComplete((executeResult, throwable) -> {
+            if (throwable != null) {
+                log.error("Dynamic api execute async error: apiId={}, path={}, method={}, type={}, traceId={}",
+                        match.getMeta().getApi().getId(),
+                        match.getMeta().getApi().getPath(),
+                        match.getMeta().getApi().getMethod(),
+                        match.getMeta().getType(),
+                        MDC.get(commonConstants.getTrace().getMdcKey()),
+                        throwable);
+            }
             DynamicApiExecuteResult payload = executeResult == null
                     ? DynamicApiExecuteResult.error(constants.getController().getInternalServerErrorCode(),
                     constants.getMessage().getExecuteFailed())
@@ -210,6 +222,19 @@ public class DynamicDispatcherController {
             }
             return raw;
         }
+    }
+
+    private DynamicApiParamMode resolveParamMode(DynamicApiMatch match) {
+        if (match == null || match.getMeta() == null) {
+            return DynamicApiParamMode.AUTO;
+        }
+        Object config = match.getMeta().getConfig();
+        if (config instanceof BeanExecuteConfig) {
+            BeanExecuteConfig beanConfig = (BeanExecuteConfig) config;
+            DynamicApiParamMode mode = DynamicApiParamMode.from(beanConfig.getParamMode());
+            return mode == null ? DynamicApiParamMode.AUTO : mode;
+        }
+        return DynamicApiParamMode.AUTO;
     }
 
     private String resolveClientIp(HttpServletRequest request) {

@@ -492,6 +492,21 @@ export default {
             methodPlaceholder: "Select method",
             type: "Type",
             typePlaceholder: "Select type",
+            beanName: "Bean",
+            beanNamePlaceholder: "Select bean",
+            paramMode: "Param mode",
+            paramModePlaceholder: "Select parameter mode",
+            paramModeHint: "AUTO merges path/query/JSON body. MULTIPART is for file uploads.",
+            paramSchema: "Param schema",
+            paramSchemaPlaceholder: "Optional JSON example or schema",
+            sql: "SQL",
+            sqlPlaceholder: "SELECT ...",
+            httpUrl: "Forward URL",
+            httpUrlPlaceholder: "https://internal/api",
+            httpMethod: "Forward method",
+            httpMethodPlaceholder: "Follow request",
+            httpPassHeaders: "Pass headers",
+            httpPassQuery: "Pass query",
             status: "Status",
             statusPlaceholder: "Select status",
             authMode: "Auth mode",
@@ -501,8 +516,18 @@ export default {
             timeout: "Timeout (ms)",
             timeoutPlaceholder: "Optional",
             config: "Config JSON",
-            configPlaceholder: "{\"type\":\"BEAN\",\"beanName\":\"...\",\"method\":\"...\"}",
+            configPlaceholder: "{\"beanName\":\"...\",\"paramMode\":\"AUTO\"}",
             remark: "Remark"
+        },
+        paramMode: {
+            auto: "Auto merge",
+            query: "Query params",
+            bodyJson: "JSON body",
+            form: "Form params",
+            multipart: "Multipart files"
+        },
+        http: {
+            followRequest: "Follow request"
         },
         status: {
             draft: "Draft",
@@ -525,7 +550,12 @@ export default {
             disableSuccess: "Disabled",
             statusFailed: "Failed to change status",
             deleteConfirm: "Delete dynamic API {path}?",
-            validate: "Fill path, method, type, and config."
+            validate: "Fill path, method, and type.",
+            validateBean: "Select handler bean.",
+            validateSql: "Fill SQL statement.",
+            validateHttp: "Fill forward URL.",
+            beanMetaFailed: "Failed to load bean list.",
+            policyLoadFailed: "Failed to load rate limit policies."
         }
     },
     dynamicApiLog: {

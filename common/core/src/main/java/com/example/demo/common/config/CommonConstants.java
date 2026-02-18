@@ -24,6 +24,7 @@ public class CommonConstants {
     private I18n i18n = new I18n();
     private Mdc mdc = new Mdc();
     private Cache cache = new Cache();
+    private ExceptionHandling exceptionHandling = new ExceptionHandling();
 
     @Data
     public static class Http {
@@ -126,5 +127,25 @@ public class CommonConstants {
 
         private String memoryCleanupThreadPrefix = DEFAULT_MEMORY_CLEANUP_THREAD_PREFIX;
         private String dbCleanupThreadPrefix = DEFAULT_DB_CLEANUP_THREAD_PREFIX;
+    }
+
+    @Data
+    public static class ExceptionHandling {
+        public static final long DEFAULT_CLIENT_ABORT_WINDOW_MILLIS = 60_000L;
+        public static final int DEFAULT_CLIENT_ABORT_WARN_THRESHOLD = 20;
+        public static final int DEFAULT_CLIENT_ABORT_MESSAGE_MAX_LENGTH = 200;
+
+        /**
+         * 统计客户端断开连接的时间窗口（毫秒）。
+         */
+        private long clientAbortWindowMillis = DEFAULT_CLIENT_ABORT_WINDOW_MILLIS;
+        /**
+         * 断开连接达到该阈值时输出告警日志。
+         */
+        private int clientAbortWarnThreshold = DEFAULT_CLIENT_ABORT_WARN_THRESHOLD;
+        /**
+         * 客户端断开连接日志消息最大长度。
+         */
+        private int clientAbortMessageMaxLength = DEFAULT_CLIENT_ABORT_MESSAGE_MAX_LENGTH;
     }
 }

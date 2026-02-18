@@ -5,7 +5,7 @@
         <div class="module-title">{{ t("notice.title") }}</div>
         <div class="module-sub">{{ t("notice.subtitle") }}</div>
       </div>
-      <div class="module-actions">
+      <div class="module-actions" @keyup.enter="handleSearch">
         <el-input v-model.trim="filters.keyword" clearable :placeholder="t('notice.filter.keywordPlaceholder')"/>
         <el-select v-model="filters.scopeType" clearable :placeholder="t('notice.filter.scopePlaceholder')" style="width: 140px">
           <el-option :label="t('notice.scope.all')" value="ALL"/>

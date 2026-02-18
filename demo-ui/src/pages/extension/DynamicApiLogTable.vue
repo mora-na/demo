@@ -5,58 +5,102 @@
         <div class="module-title">{{ t("dynamicApiLog.title") }}</div>
         <div class="module-sub">{{ t("dynamicApiLog.subtitle") }}</div>
       </div>
-      <div class="module-actions">
-        <el-input v-model.trim="filters.apiPath" :placeholder="t('dynamicApiLog.filter.apiPath')" clearable
-                  size="small"/>
-        <el-input v-model.trim="filters.apiMethod" :placeholder="t('dynamicApiLog.filter.apiMethod')" clearable
-                  size="small" style="width: 120px"/>
-        <el-input v-model.trim="filters.userName" :placeholder="t('dynamicApiLog.filter.user')" clearable size="small"/>
-        <el-select v-model="filters.status" :placeholder="t('dynamicApiLog.filter.status')" clearable size="small"
-                   style="width: 110px">
-          <el-option :label="t('dynamicApiLog.status.success')" :value="1"/>
-          <el-option :label="t('dynamicApiLog.status.fail')" :value="0"/>
-        </el-select>
-        <el-date-picker
-            v-model="filters.timeRange"
-            :end-placeholder="t('dynamicApiLog.filter.end')"
-            :start-placeholder="t('dynamicApiLog.filter.begin')"
-            clearable
-            range-separator="-"
-            size="small"
-            style="width: 260px"
-            type="datetimerange"
-            value-format="YYYY-MM-DD HH:mm:ss"
-        />
-        <el-button size="small" @click="handleSearch">{{ t("common.search") }}</el-button>
-        <el-button size="small" @click="handleReset">{{ t("dynamicApiLog.filter.reset") }}</el-button>
+      <div class="module-actions" @keyup.enter="handleSearch">
+        <div class="filter-group">
+          <el-input
+              v-model.trim="filters.apiPath"
+              :placeholder="t('dynamicApiLog.filter.apiPath')"
+              class="filter-input filter-input--wide"
+              clearable
+              size="small"
+          />
+          <el-input
+              v-model.trim="filters.apiMethod"
+              :placeholder="t('dynamicApiLog.filter.apiMethod')"
+              class="filter-input filter-input--narrow"
+              clearable
+              size="small"
+          />
+          <el-input
+              v-model.trim="filters.userName"
+              :placeholder="t('dynamicApiLog.filter.user')"
+              class="filter-input"
+              clearable
+              size="small"
+          />
+          <el-select
+              v-model="filters.status"
+              :placeholder="t('dynamicApiLog.filter.status')"
+              class="filter-input filter-input--narrow"
+              clearable
+              size="small"
+          >
+            <el-option :label="t('dynamicApiLog.status.success')" :value="1"/>
+            <el-option :label="t('dynamicApiLog.status.fail')" :value="0"/>
+          </el-select>
+          <el-date-picker
+              v-model="filters.timeRange"
+              :end-placeholder="t('dynamicApiLog.filter.end')"
+              :start-placeholder="t('dynamicApiLog.filter.begin')"
+              class="filter-input filter-date"
+              clearable
+              range-separator="-"
+              size="small"
+              type="datetimerange"
+              value-format="YYYY-MM-DD HH:mm:ss"
+          />
+          <el-button size="small" @click="handleSearch">{{ t("common.search") }}</el-button>
+          <el-button size="small" @click="handleReset">{{ t("dynamicApiLog.filter.reset") }}</el-button>
+        </div>
       </div>
     </div>
 
-    <el-table v-loading="loading" :data="logs" row-key="id" size="small">
-      <el-table-column :label="t('dynamicApiLog.table.time')" width="170">
+    <el-table v-loading="loading" :data="logs" row-key="id" size="small" table-layout="auto">
+      <el-table-column type="expand">
+        <template #default="{row}">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <div class="detail-label">{{ t("dynamicApiLog.table.code") }}</div>
+              <div class="detail-value">{{ row.responseCode ?? "-" }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">{{ t("dynamicApiLog.table.duration") }}</div>
+              <div class="detail-value">{{ row.durationMs != null ? `${row.durationMs}ms` : "-" }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">{{ t("dynamicApiLog.table.user") }}</div>
+              <div class="detail-value">{{ row.userName || "-" }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">{{ t("dynamicApiLog.table.ip") }}</div>
+              <div class="detail-value">{{ row.requestIp || "-" }}</div>
+            </div>
+            <div class="detail-item detail-item--full">
+              <div class="detail-label">{{ t("dynamicApiLog.table.error") }}</div>
+              <div class="detail-value detail-pre">{{ row.errorMsg || "-" }}</div>
+            </div>
+            <div class="detail-item detail-item--full">
+              <div class="detail-label">TraceId</div>
+              <div class="detail-value">{{ row.traceId || "-" }}</div>
+            </div>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('dynamicApiLog.table.time')" width="160">
         <template #default="{row}">
           {{ formatDateTime(row.requestTime) }}
         </template>
       </el-table-column>
-      <el-table-column :label="t('dynamicApiLog.table.api')" min-width="180" prop="apiPath" show-overflow-tooltip/>
-      <el-table-column :label="t('dynamicApiLog.table.method')" prop="apiMethod" width="90"/>
-      <el-table-column :label="t('dynamicApiLog.table.status')" width="90">
+      <el-table-column :label="t('dynamicApiLog.table.api')" min-width="200" prop="apiPath" show-overflow-tooltip/>
+      <el-table-column :label="t('dynamicApiLog.table.method')" prop="apiMethod" width="80"/>
+      <el-table-column :label="t('dynamicApiLog.table.status')" width="80">
         <template #default="{row}">
           <span :class="row.status === 1 ? 'tag-success' : 'tag-danger'">
             {{ row.status === 1 ? t('dynamicApiLog.status.success') : t('dynamicApiLog.status.fail') }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column :label="t('dynamicApiLog.table.code')" prop="responseCode" width="90"/>
-      <el-table-column :label="t('dynamicApiLog.table.duration')" width="110">
-        <template #default="{row}">
-          {{ row.durationMs != null ? `${row.durationMs}ms` : '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dynamicApiLog.table.user')" prop="userName" show-overflow-tooltip width="120"/>
-      <el-table-column :label="t('dynamicApiLog.table.ip')" prop="requestIp" show-overflow-tooltip width="130"/>
-      <el-table-column :label="t('dynamicApiLog.table.error')" min-width="160" prop="errorMsg" show-overflow-tooltip/>
-      <el-table-column :label="t('dynamicApiLog.table.action')" width="120">
+      <el-table-column :label="t('dynamicApiLog.table.action')" width="110">
         <template #default="{row}">
           <el-button v-permission="'dynamic-api-log:delete'" size="small" text type="danger" @click="removeLog(row)">
             {{ t("common.delete") }}
@@ -223,5 +267,103 @@ onMounted(loadLogs);
   font-size: 12px;
   color: #842029;
   background: rgba(220, 53, 69, 0.16);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 8px 4px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.detail-item--full {
+  grid-column: 1 / -1;
+}
+
+.detail-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.detail-value {
+  font-size: 13px;
+  color: var(--el-text-color-primary, var(--ink));
+  word-break: break-all;
+}
+
+.detail-pre {
+  white-space: pre-wrap;
+}
+
+.module-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  flex: 1 1 520px;
+  min-width: 0;
+}
+
+.filter-input {
+  width: 160px;
+}
+
+.filter-input--wide {
+  width: 220px;
+}
+
+.filter-input--narrow {
+  width: 120px;
+}
+
+.filter-date {
+  width: 240px;
+}
+
+@media (max-width: 900px) {
+  .module-actions {
+    justify-content: flex-start;
+  }
+
+  .filter-input {
+    width: 140px;
+  }
+
+  .filter-input--wide {
+    width: 200px;
+  }
+
+  .filter-input--narrow {
+    width: 110px;
+  }
+
+  .filter-date {
+    width: 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .filter-input,
+  .filter-input--wide,
+  .filter-input--narrow,
+  .filter-date {
+    width: 100%;
+  }
 }
 </style>

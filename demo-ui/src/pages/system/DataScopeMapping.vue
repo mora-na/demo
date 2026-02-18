@@ -1,7 +1,7 @@
 <template>
   <div class="mapping-panel">
     <div class="mapping-head">
-      <div class="filters">
+      <div class="filters" @keyup.enter="handleSearch">
         <el-input v-model.trim="filters.scopeKey" clearable :placeholder="t('dataScope.mapping.scopeKey')"/>
         <el-input v-model.trim="filters.tableName" clearable :placeholder="t('dataScope.mapping.tableName')"/>
         <el-button v-permission="'data-scope:rule:query'" @click="handleSearch">{{ t("common.search") }}</el-button>

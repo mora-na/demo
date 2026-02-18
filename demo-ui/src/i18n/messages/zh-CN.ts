@@ -492,6 +492,21 @@ export default {
             methodPlaceholder: "选择方法",
             type: "类型",
             typePlaceholder: "选择类型",
+            beanName: "Bean",
+            beanNamePlaceholder: "选择 Bean",
+            paramMode: "参数模式",
+            paramModePlaceholder: "选择参数模式",
+            paramModeHint: "AUTO 会合并路径/查询/JSON Body；MULTIPART 用于文件上传。",
+            paramSchema: "参数结构",
+            paramSchemaPlaceholder: "可选，JSON 示例或结构说明",
+            sql: "SQL",
+            sqlPlaceholder: "SELECT ...",
+            httpUrl: "转发地址",
+            httpUrlPlaceholder: "https://internal/api",
+            httpMethod: "转发方法",
+            httpMethodPlaceholder: "跟随请求",
+            httpPassHeaders: "透传请求头",
+            httpPassQuery: "透传查询参数",
             status: "状态",
             statusPlaceholder: "选择状态",
             authMode: "鉴权模式",
@@ -501,8 +516,18 @@ export default {
             timeout: "超时(毫秒)",
             timeoutPlaceholder: "可选",
             config: "配置JSON",
-            configPlaceholder: "{\"type\":\"BEAN\",\"beanName\":\"...\",\"method\":\"...\"}",
+            configPlaceholder: "{\"beanName\":\"...\",\"paramMode\":\"AUTO\"}",
             remark: "备注"
+        },
+        paramMode: {
+            auto: "自动合并",
+            query: "查询参数",
+            bodyJson: "JSON 请求体",
+            form: "表单参数",
+            multipart: "文件上传"
+        },
+        http: {
+            followRequest: "跟随请求"
         },
         status: {
             draft: "草稿",
@@ -525,7 +550,12 @@ export default {
             disableSuccess: "已停用",
             statusFailed: "状态更新失败",
             deleteConfirm: "确认删除动态接口 {path}？",
-            validate: "请填写路径、方法、类型和配置。"
+            validate: "请填写路径、方法与类型。",
+            validateBean: "请选择 Handler Bean。",
+            validateSql: "请填写 SQL 语句。",
+            validateHttp: "请填写转发地址。",
+            beanMetaFailed: "加载 Bean 列表失败。",
+            policyLoadFailed: "加载限流策略失败。"
         }
     },
     dynamicApiLog: {

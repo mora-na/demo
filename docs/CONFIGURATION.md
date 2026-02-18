@@ -813,38 +813,41 @@
 
 **Common 组**
 
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `common.constants.http.json-content-type` | `application/json;charset=UTF-8` | 认证/权限/限流/重复提交等 JSON 错误响应的 `Content-Type`。 |
-| `common.constants.http.forwarded-for-header` | `X-Forwarded-For` | 解析客户端 IP 时优先读取的代理头。 |
-| `common.constants.http.real-ip-header` | `X-Real-IP` | 解析客户端 IP 时的第二优先代理头。 |
-| `common.constants.http.multipart-prefix` | `multipart/` | 判断是否为 multipart 请求的 `Content-Type` 前缀。 |
-| `common.constants.http.idempotency-header-default` | `Idempotency-Key` | 幂等键默认请求头名（未显式配置时使用）。 |
-| `common.constants.trace.mdc-key` | `traceId` | TraceId 写入 MDC 的键名。 |
-| `common.constants.rate-limit.key-prefix` | `rl:` | 限流缓存键前缀。 |
-| `common.constants.rate-limit.response-status` | `429` | 限流命中时的 HTTP 状态码。 |
-| `common.constants.rate-limit.message-key` | `common.rate.limit.exceeded` | 限流命中时的 i18n 消息键。 |
-| `common.constants.duplicate-submit.key-prefix` | `dup:` | 重复提交缓存键前缀。 |
-| `common.constants.duplicate-submit.response-status` | `409` | 重复提交命中时的 HTTP 状态码。 |
-| `common.constants.duplicate-submit.message-key` | `common.duplicate.submission` | 重复提交命中时的 i18n 消息键。 |
-| `common.constants.duplicate-submit.key-idempotency-tag` | `k` | 重复提交键中幂等键片段标签。 |
-| `common.constants.duplicate-submit.key-query-tag` | `q` | 重复提交键中 Query 片段标签。 |
-| `common.constants.duplicate-submit.key-body-tag` | `b` | 重复提交键中 Body 摘要片段标签。 |
-| `common.constants.permission.required-message-key` | `auth.permission.required` | 未登录/需登录时的 i18n 消息键。 |
-| `common.constants.permission.denied-message-key` | `auth.permission.denied` | 权限不足时的 i18n 消息键。 |
-| `common.constants.mybatis.datasource-url-property` | `spring.datasource.url` | MyBatis 自动识别 DB 类型时读取的数据源 URL 属性键。 |
-| `common.constants.mybatis.postgres-token` | `:postgresql:` | JDBC URL 中识别 PostgreSQL 的标识片段。 |
-| `common.constants.mybatis.mysql-token` | `:mysql:` | JDBC URL 中识别 MySQL 的标识片段。 |
-| `common.constants.mybatis.mariadb-token` | `:mariadb:` | JDBC URL 中识别 MariaDB 的标识片段。 |
-| `common.constants.mybatis.oracle-token` | `:oracle:` | JDBC URL 中识别 Oracle 的标识片段。 |
-| `common.constants.i18n.basename` | `classpath:i18n/messages` | i18n 资源基名。 |
-| `common.constants.i18n.default-encoding` | `UTF-8` | i18n 资源默认编码。 |
-| `common.constants.i18n.fallback-to-system-locale` | `false` | i18n 未命中时是否回退系统 Locale。 |
-| `common.constants.i18n.use-code-as-default-message` | `true` | i18n 未命中时是否回退消息键本身。 |
-| `common.constants.i18n.default-locale-tag` | `zh-CN` | 默认 Locale（语言标签）。 |
-| `common.constants.mdc.thread-name-prefix` | `mdc-thread-` | MDC 线程工厂默认线程名前缀。 |
-| `common.constants.cache.memory-cleanup-thread-prefix` | `cache-cleanup` | 内存缓存清理线程名前缀。 |
-| `common.constants.cache.db-cleanup-thread-prefix` | `cache-db-cleanup` | 数据库缓存清理线程名前缀。 |
+| 配置键                                                                   | 默认值                              | 说明                                        |
+|-----------------------------------------------------------------------|----------------------------------|-------------------------------------------|
+| `common.constants.http.json-content-type`                             | `application/json;charset=UTF-8` | 认证/权限/限流/重复提交等 JSON 错误响应的 `Content-Type`。 |
+| `common.constants.http.forwarded-for-header`                          | `X-Forwarded-For`                | 解析客户端 IP 时优先读取的代理头。                       |
+| `common.constants.http.real-ip-header`                                | `X-Real-IP`                      | 解析客户端 IP 时的第二优先代理头。                       |
+| `common.constants.http.multipart-prefix`                              | `multipart/`                     | 判断是否为 multipart 请求的 `Content-Type` 前缀。    |
+| `common.constants.http.idempotency-header-default`                    | `Idempotency-Key`                | 幂等键默认请求头名（未显式配置时使用）。                      |
+| `common.constants.trace.mdc-key`                                      | `traceId`                        | TraceId 写入 MDC 的键名。                       |
+| `common.constants.rate-limit.key-prefix`                              | `rl:`                            | 限流缓存键前缀。                                  |
+| `common.constants.rate-limit.response-status`                         | `429`                            | 限流命中时的 HTTP 状态码。                          |
+| `common.constants.rate-limit.message-key`                             | `common.rate.limit.exceeded`     | 限流命中时的 i18n 消息键。                          |
+| `common.constants.duplicate-submit.key-prefix`                        | `dup:`                           | 重复提交缓存键前缀。                                |
+| `common.constants.duplicate-submit.response-status`                   | `409`                            | 重复提交命中时的 HTTP 状态码。                        |
+| `common.constants.duplicate-submit.message-key`                       | `common.duplicate.submission`    | 重复提交命中时的 i18n 消息键。                        |
+| `common.constants.duplicate-submit.key-idempotency-tag`               | `k`                              | 重复提交键中幂等键片段标签。                            |
+| `common.constants.duplicate-submit.key-query-tag`                     | `q`                              | 重复提交键中 Query 片段标签。                        |
+| `common.constants.duplicate-submit.key-body-tag`                      | `b`                              | 重复提交键中 Body 摘要片段标签。                       |
+| `common.constants.permission.required-message-key`                    | `auth.permission.required`       | 未登录/需登录时的 i18n 消息键。                       |
+| `common.constants.permission.denied-message-key`                      | `auth.permission.denied`         | 权限不足时的 i18n 消息键。                          |
+| `common.constants.mybatis.datasource-url-property`                    | `spring.datasource.url`          | MyBatis 自动识别 DB 类型时读取的数据源 URL 属性键。        |
+| `common.constants.mybatis.postgres-token`                             | `:postgresql:`                   | JDBC URL 中识别 PostgreSQL 的标识片段。            |
+| `common.constants.mybatis.mysql-token`                                | `:mysql:`                        | JDBC URL 中识别 MySQL 的标识片段。                 |
+| `common.constants.mybatis.mariadb-token`                              | `:mariadb:`                      | JDBC URL 中识别 MariaDB 的标识片段。               |
+| `common.constants.mybatis.oracle-token`                               | `:oracle:`                       | JDBC URL 中识别 Oracle 的标识片段。                |
+| `common.constants.i18n.basename`                                      | `classpath:i18n/messages`        | i18n 资源基名。                                |
+| `common.constants.i18n.default-encoding`                              | `UTF-8`                          | i18n 资源默认编码。                              |
+| `common.constants.i18n.fallback-to-system-locale`                     | `false`                          | i18n 未命中时是否回退系统 Locale。                   |
+| `common.constants.i18n.use-code-as-default-message`                   | `true`                           | i18n 未命中时是否回退消息键本身。                       |
+| `common.constants.i18n.default-locale-tag`                            | `zh-CN`                          | 默认 Locale（语言标签）。                          |
+| `common.constants.mdc.thread-name-prefix`                             | `mdc-thread-`                    | MDC 线程工厂默认线程名前缀。                          |
+| `common.constants.cache.memory-cleanup-thread-prefix`                 | `cache-cleanup`                  | 内存缓存清理线程名前缀。                              |
+| `common.constants.cache.db-cleanup-thread-prefix`                     | `cache-db-cleanup`               | 数据库缓存清理线程名前缀。                             |
+| `common.constants.exception-handling.client-abort-window-millis`      | `60000`                          | 统计客户端断开连接的时间窗口（毫秒）。                       |
+| `common.constants.exception-handling.client-abort-warn-threshold`     | `20`                             | 窗口内断开连接达到该阈值时输出告警日志。                      |
+| `common.constants.exception-handling.client-abort-message-max-length` | `200`                            | 断开连接日志消息最大长度（<=0 表示不截断）。                  |
 
 ### Auth 业务配置（auth.password）
 

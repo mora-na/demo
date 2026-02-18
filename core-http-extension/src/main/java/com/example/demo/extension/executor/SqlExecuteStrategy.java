@@ -5,10 +5,12 @@ import com.example.demo.extension.config.DynamicApiConstants;
 import com.example.demo.extension.model.DynamicApiType;
 import com.example.demo.extension.model.SqlExecuteConfig;
 import com.example.demo.extension.registry.DynamicApiMeta;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.Select;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -20,6 +22,7 @@ import java.util.regex.Pattern;
 /**
  * SQL 执行策略（仅支持 SELECT）。
  */
+@Slf4j
 @Component
 public class SqlExecuteStrategy implements ExecuteStrategy {
 
@@ -76,6 +79,13 @@ public class SqlExecuteStrategy implements ExecuteStrategy {
             List<Map<String, Object>> result = query(parsed, context.getTimeoutMs());
             return DynamicApiExecuteResult.success(result);
         } catch (Exception ex) {
+            String traceId = MDC.get("traceId");
+            log.error("Dynamic api sql execute failed: apiId={}, path={}, method={}, traceId={}",
+                    context.getMeta().getApi().getId(),
+                    context.getMeta().getApi().getPath(),
+                    context.getMeta().getApi().getMethod(),
+                    traceId,
+                    ex);
             return DynamicApiExecuteResult.error(constants.getController().getInternalServerErrorCode(),
                     constants.getMessage().getExecuteFailed());
         }

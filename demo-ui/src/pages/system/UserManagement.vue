@@ -5,7 +5,7 @@
         <div class="module-title">{{ t("user.title") }}</div>
         <div class="module-sub">{{ t("user.subtitle") }}</div>
       </div>
-      <div class="module-actions">
+      <div class="module-actions" @keyup.enter="handleSearch">
         <el-input v-model.trim="filters.userName" clearable size="small" :placeholder="t('user.filter.userNamePlaceholder')"/>
         <el-input v-model.trim="filters.nickName" clearable size="small" :placeholder="t('user.filter.nickNamePlaceholder')"/>
         <el-select v-model="filters.status" clearable size="small" :placeholder="t('user.filter.statusPlaceholder')" style="width: 120px">

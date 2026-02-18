@@ -1,7 +1,7 @@
 <template>
   <div class="override-panel">
     <div class="override-head">
-      <div class="filters">
+      <div class="filters" @keyup.enter="handleSearch">
         <el-input v-model.trim="filters.userName" clearable :placeholder="t('dataScope.user.userName')"/>
         <el-input v-model.trim="filters.menuKeyword" clearable :placeholder="t('dataScope.user.menuKeyword')"/>
         <el-select v-model="filters.status" clearable :placeholder="t('dataScope.user.statusPlaceholder')" style="width: 120px">

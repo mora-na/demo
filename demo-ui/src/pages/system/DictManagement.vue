@@ -5,7 +5,7 @@
         <div class="module-title">{{ t("dict.title") }}</div>
         <div class="module-sub">{{ t("dict.subtitle") }}</div>
       </div>
-      <div class="module-actions">
+      <div class="module-actions" @keyup.enter="handleSearch">
         <el-button v-permission="'dict:cache:refresh'" size="small" @click="refreshCache">
           {{ t("dict.cacheRefresh") }}
         </el-button>
@@ -16,7 +16,7 @@
       <section class="dict-panel">
         <div class="panel-head">
           <div class="panel-title">{{ t("dict.type.title") }}</div>
-          <div class="panel-actions">
+          <div class="panel-actions" @keyup.enter="handleTypeSearch">
             <el-input v-model.trim="typeFilters.dictType" clearable size="small" :placeholder="t('dict.type.filterType')"/>
             <el-input v-model.trim="typeFilters.dictName" clearable size="small" :placeholder="t('dict.type.filterName')"/>
             <el-select v-model="typeFilters.status" clearable size="small" :placeholder="t('dict.type.filterStatus')" style="width: 120px">
@@ -78,7 +78,7 @@
             {{ t("dict.data.title") }}
             <span v-if="activeType" class="panel-sub">({{ activeType.dictType }} - {{ activeType.dictName }})</span>
           </div>
-          <div class="panel-actions">
+          <div class="panel-actions" @keyup.enter="handleDataSearch">
             <el-input v-model.trim="dataFilters.dictLabel" clearable size="small" :placeholder="t('dict.data.filterLabel')"/>
             <el-input v-model.trim="dataFilters.dictValue" clearable size="small" :placeholder="t('dict.data.filterValue')"/>
             <el-select v-model="dataFilters.status" clearable size="small" :placeholder="t('dict.data.filterStatus')" style="width: 120px">

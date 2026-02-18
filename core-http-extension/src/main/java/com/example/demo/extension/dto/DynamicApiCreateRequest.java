@@ -23,7 +23,7 @@ public class DynamicApiCreateRequest {
     @Size(max = 16, message = "dynamic.api.type.invalid")
     private String type;
 
-    @NotBlank(message = "dynamic.api.config.invalid")
+    @Size(max = 4000, message = "dynamic.api.config.invalid")
     private String config;
 
     @Size(max = 16, message = "dynamic.api.config.invalid")
@@ -39,4 +39,26 @@ public class DynamicApiCreateRequest {
 
     @Size(max = 500, message = "dynamic.api.config.invalid")
     private String remark;
+
+    @Size(max = 128, message = "dynamic.api.config.invalid")
+    private String beanName;
+
+    @Size(max = 128, message = "dynamic.api.config.invalid")
+    private String paramMode;
+
+    @Size(max = 4000, message = "dynamic.api.config.invalid")
+    private String paramSchema;
+
+    @Size(max = 4000, message = "dynamic.api.config.invalid")
+    private String sql;
+
+    @Size(max = 512, message = "dynamic.api.config.invalid")
+    private String httpUrl;
+
+    @Size(max = 16, message = "dynamic.api.config.invalid")
+    private String httpMethod;
+
+    private Boolean httpPassHeaders;
+
+    private Boolean httpPassQuery;
 }

@@ -1,7 +1,7 @@
 package com.example.demo.extension.executor;
 
+import com.example.demo.extension.api.request.DynamicApiRequest;
 import com.example.demo.extension.registry.DynamicApiMeta;
-import com.example.demo.extension.support.DynamicApiRequest;
 import lombok.Getter;
 
 /**

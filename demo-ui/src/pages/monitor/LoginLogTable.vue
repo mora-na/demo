@@ -5,7 +5,7 @@
         <div class="module-title">{{ t("loginLog.title") }}</div>
         <div class="module-sub">{{ t("loginLog.subtitle") }}</div>
       </div>
-      <div class="module-actions">
+      <div class="module-actions" @keyup.enter="handleSearch">
         <el-input v-model.trim="filters.userName" clearable size="small" :placeholder="t('loginLog.filter.user')"/>
         <el-input v-model.trim="filters.loginIp" clearable size="small" :placeholder="t('loginLog.filter.ip')"/>
         <el-select v-model="filters.loginType" clearable size="small" :placeholder="t('loginLog.filter.type')" style="width: 120px">

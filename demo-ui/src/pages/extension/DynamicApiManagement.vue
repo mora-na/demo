@@ -5,59 +5,108 @@
         <div class="module-title">{{ t("dynamicApi.title") }}</div>
         <div class="module-sub">{{ t("dynamicApi.subtitle") }}</div>
       </div>
-      <div class="module-actions">
-        <el-input v-model.trim="filters.path" :placeholder="t('dynamicApi.filter.path')" clearable/>
-        <el-select v-model="filters.method" :placeholder="t('dynamicApi.filter.method')" clearable style="width: 120px">
-          <el-option v-for="item in methodOptions" :key="item" :label="item" :value="item"/>
-        </el-select>
-        <el-select v-model="filters.status" :placeholder="t('dynamicApi.filter.status')" clearable style="width: 130px">
-          <el-option :label="t('dynamicApi.status.draft')" :value="'DRAFT'"/>
-          <el-option :label="t('dynamicApi.status.enabled')" :value="'ENABLED'"/>
-          <el-option :label="t('dynamicApi.status.disabled')" :value="'DISABLED'"/>
-        </el-select>
-        <el-select v-model="filters.type" :placeholder="t('dynamicApi.filter.type')" clearable style="width: 120px">
-          <el-option v-for="item in typeOptions" :key="item" :label="item" :value="item"/>
-        </el-select>
-        <el-select v-model="filters.authMode" :placeholder="t('dynamicApi.filter.authMode')" clearable
-                   style="width: 120px">
-          <el-option :label="t('dynamicApi.auth.inherit')" :value="'INHERIT'"/>
-          <el-option :label="t('dynamicApi.auth.public')" :value="'PUBLIC'"/>
-        </el-select>
-        <el-button @click="handleSearch">{{ t("common.search") }}</el-button>
-        <el-button @click="handleReset">{{ t("dynamicApi.filter.reset") }}</el-button>
-        <el-button v-permission="'dynamic-api:create'" type="primary" @click="openCreate">
-          {{ t("dynamicApi.filter.create") }}
-        </el-button>
-        <el-button v-permission="'dynamic-api:reload'" @click="handleReload">
-          {{ t("dynamicApi.filter.reload") }}
-        </el-button>
+      <div class="module-actions" @keyup.enter="handleSearch">
+        <div class="filter-group">
+          <el-input
+              v-model.trim="filters.path"
+              :placeholder="t('dynamicApi.filter.path')"
+              class="filter-input filter-input--wide"
+              clearable
+          />
+          <el-select
+              v-model="filters.method"
+              :placeholder="t('dynamicApi.filter.method')"
+              class="filter-input filter-input--narrow"
+              clearable
+          >
+            <el-option v-for="item in methodOptions" :key="item" :label="item" :value="item"/>
+          </el-select>
+          <el-select
+              v-model="filters.status"
+              :placeholder="t('dynamicApi.filter.status')"
+              class="filter-input"
+              clearable
+          >
+            <el-option :label="t('dynamicApi.status.draft')" :value="'DRAFT'"/>
+            <el-option :label="t('dynamicApi.status.enabled')" :value="'ENABLED'"/>
+            <el-option :label="t('dynamicApi.status.disabled')" :value="'DISABLED'"/>
+          </el-select>
+          <el-select
+              v-model="filters.type"
+              :placeholder="t('dynamicApi.filter.type')"
+              class="filter-input filter-input--narrow"
+              clearable
+          >
+            <el-option v-for="item in typeOptions" :key="item" :label="item" :value="item"/>
+          </el-select>
+          <el-select
+              v-model="filters.authMode"
+              :placeholder="t('dynamicApi.filter.authMode')"
+              class="filter-input filter-input--narrow"
+              clearable
+          >
+            <el-option :label="t('dynamicApi.auth.inherit')" :value="'INHERIT'"/>
+            <el-option :label="t('dynamicApi.auth.public')" :value="'PUBLIC'"/>
+          </el-select>
+          <el-button @click="handleSearch">{{ t("common.search") }}</el-button>
+          <el-button @click="handleReset">{{ t("dynamicApi.filter.reset") }}</el-button>
+        </div>
+        <div class="action-group">
+          <el-button v-permission="'dynamic-api:create'" type="primary" @click="openCreate">
+            {{ t("dynamicApi.filter.create") }}
+          </el-button>
+          <el-button v-permission="'dynamic-api:reload'" @click="handleReload">
+            {{ t("dynamicApi.filter.reload") }}
+          </el-button>
+        </div>
       </div>
     </div>
 
-    <el-table v-loading="loading" :data="apis" row-key="id" size="small">
-      <el-table-column :label="t('dynamicApi.table.path')" min-width="180" prop="path" show-overflow-tooltip/>
-      <el-table-column :label="t('dynamicApi.table.method')" prop="method" width="90"/>
-      <el-table-column :label="t('dynamicApi.table.type')" prop="type" width="90"/>
-      <el-table-column :label="t('dynamicApi.table.status')" width="110">
+    <el-table v-loading="loading" :data="apis" row-key="id" size="small" table-layout="auto">
+      <el-table-column type="expand">
+        <template #default="{row}">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <div class="detail-label">{{ t("dynamicApi.table.authMode") }}</div>
+              <div class="detail-value">{{ row.authMode || "-" }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">{{ t("dynamicApi.table.rateLimit") }}</div>
+              <div class="detail-value">{{ row.rateLimitPolicy || "-" }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">{{ t("dynamicApi.table.timeout") }}</div>
+              <div class="detail-value">{{ row.timeoutMs != null ? `${row.timeoutMs}ms` : "-" }}</div>
+            </div>
+            <div class="detail-item detail-item--full">
+              <div class="detail-label">{{ t("dynamicApi.table.config") }}</div>
+              <div class="detail-value detail-pre">{{ row.config || "-" }}</div>
+            </div>
+            <div class="detail-item detail-item--full">
+              <div class="detail-label">{{ t("dynamicApi.dialog.remark") }}</div>
+              <div class="detail-value">{{ row.remark || "-" }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">{{ t("dynamicApi.table.updatedAt") }}</div>
+              <div class="detail-value">{{ formatDateTime(row.updateTime || row.createTime) }}</div>
+            </div>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('dynamicApi.table.path')" min-width="200" prop="path" show-overflow-tooltip/>
+      <el-table-column :label="t('dynamicApi.table.method')" prop="method" width="80"/>
+      <el-table-column :label="t('dynamicApi.table.type')" prop="type" width="80"/>
+      <el-table-column :label="t('dynamicApi.table.status')" width="100">
         <template #default="{row}">
           <span :class="statusClass(row.status)">{{ statusLabel(row.status) }}</span>
         </template>
       </el-table-column>
-      <el-table-column :label="t('dynamicApi.table.authMode')" prop="authMode" width="120"/>
-      <el-table-column :label="t('dynamicApi.table.rateLimit')" min-width="120" prop="rateLimitPolicy"
-                       show-overflow-tooltip/>
-      <el-table-column :label="t('dynamicApi.table.timeout')" width="110">
-        <template #default="{row}">
-          {{ row.timeoutMs != null ? `${row.timeoutMs}ms` : '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('dynamicApi.table.config')" min-width="160" prop="config" show-overflow-tooltip/>
-      <el-table-column :label="t('dynamicApi.table.updatedAt')" width="170">
+      <el-table-column :label="t('dynamicApi.table.updatedAt')" width="150">
         <template #default="{row}">
           {{ formatDateTime(row.updateTime || row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column :label="t('dynamicApi.table.action')" width="260">
+      <el-table-column :label="t('dynamicApi.table.action')" width="200">
         <template #default="{row}">
           <div class="action-buttons">
             <el-button v-permission="'dynamic-api:update'" size="small" text @click="openEdit(row)">
@@ -105,6 +154,62 @@
             <el-option v-for="item in typeOptions" :key="item" :label="item" :value="item"/>
           </el-select>
         </el-form-item>
+        <el-form-item v-if="form.type === 'BEAN'" :label="t('dynamicApi.dialog.beanName')">
+          <el-select
+              v-model="form.beanName"
+              :placeholder="t('dynamicApi.dialog.beanNamePlaceholder')"
+              filterable
+              @change="handleBeanChange"
+          >
+            <el-option
+                v-for="item in beanOptions"
+                :key="item.beanName"
+                :label="itemLabel(item)"
+                :value="item.beanName"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="form.type === 'BEAN'" :label="t('dynamicApi.dialog.paramMode')">
+          <el-select v-model="form.paramMode" :placeholder="t('dynamicApi.dialog.paramModePlaceholder')">
+            <el-option :label="t('dynamicApi.paramMode.auto')" :value="'AUTO'"/>
+            <el-option :label="t('dynamicApi.paramMode.query')" :value="'QUERY'"/>
+            <el-option :label="t('dynamicApi.paramMode.bodyJson')" :value="'BODY_JSON'"/>
+            <el-option :label="t('dynamicApi.paramMode.form')" :value="'FORM'"/>
+            <el-option :label="t('dynamicApi.paramMode.multipart')" :value="'MULTIPART'"/>
+          </el-select>
+          <div class="form-hint">{{ t("dynamicApi.dialog.paramModeHint") }}</div>
+        </el-form-item>
+        <el-form-item v-if="form.type === 'BEAN'" :label="t('dynamicApi.dialog.paramSchema')" class="full-row">
+          <el-input
+              v-model.trim="form.paramSchema"
+              :placeholder="t('dynamicApi.dialog.paramSchemaPlaceholder')"
+              :rows="4"
+              type="textarea"
+          />
+        </el-form-item>
+        <el-form-item v-if="form.type === 'SQL'" :label="t('dynamicApi.dialog.sql')" class="full-row">
+          <el-input
+              v-model.trim="form.sql"
+              :placeholder="t('dynamicApi.dialog.sqlPlaceholder')"
+              :rows="5"
+              type="textarea"
+          />
+        </el-form-item>
+        <el-form-item v-if="form.type === 'HTTP'" :label="t('dynamicApi.dialog.httpUrl')">
+          <el-input v-model.trim="form.httpUrl" :placeholder="t('dynamicApi.dialog.httpUrlPlaceholder')"/>
+        </el-form-item>
+        <el-form-item v-if="form.type === 'HTTP'" :label="t('dynamicApi.dialog.httpMethod')">
+          <el-select v-model="form.httpMethod" :placeholder="t('dynamicApi.dialog.httpMethodPlaceholder')">
+            <el-option :label="t('dynamicApi.http.followRequest')" :value="''"/>
+            <el-option v-for="item in methodOptions" :key="item" :label="item" :value="item"/>
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="form.type === 'HTTP'" :label="t('dynamicApi.dialog.httpPassHeaders')">
+          <el-switch v-model="form.httpPassHeaders"/>
+        </el-form-item>
+        <el-form-item v-if="form.type === 'HTTP'" :label="t('dynamicApi.dialog.httpPassQuery')">
+          <el-switch v-model="form.httpPassQuery"/>
+        </el-form-item>
         <el-form-item :label="t('dynamicApi.dialog.status')">
           <el-select v-model="form.status" :placeholder="t('dynamicApi.dialog.statusPlaceholder')">
             <el-option :label="t('dynamicApi.status.draft')" :value="'DRAFT'"/>
@@ -119,19 +224,24 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="t('dynamicApi.dialog.rateLimit')">
-          <el-input v-model.trim="form.rateLimitPolicy" :placeholder="t('dynamicApi.dialog.rateLimitPlaceholder')"/>
+          <el-select
+              v-model="form.rateLimitPolicy"
+              :placeholder="t('dynamicApi.dialog.rateLimitPlaceholder')"
+              allow-create
+              clearable
+              filterable
+          >
+            <el-option
+                v-for="policy in rateLimitOptions"
+                :key="policy.id"
+                :label="policyLabel(policy)"
+                :value="policy.id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item :label="t('dynamicApi.dialog.timeout')">
           <el-input v-model.number="form.timeoutMs" :placeholder="t('dynamicApi.dialog.timeoutPlaceholder')"
                     type="number"/>
-        </el-form-item>
-        <el-form-item :label="t('dynamicApi.dialog.config')" class="full-row">
-          <el-input
-              v-model.trim="form.config"
-              :placeholder="t('dynamicApi.dialog.configPlaceholder')"
-              :rows="5"
-              type="textarea"
-          />
         </el-form-item>
         <el-form-item :label="t('dynamicApi.dialog.remark')" class="full-row">
           <el-input v-model.trim="form.remark"/>
@@ -152,7 +262,7 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, onMounted, reactive, ref} from "vue";
+import {computed, onMounted, reactive, ref, watch} from "vue";
 import {ElMessage, ElMessageBox} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {
@@ -160,9 +270,13 @@ import {
   deleteDynamicApi,
   disableDynamicApi,
   type DynamicApi,
+  type DynamicApiBeanMeta,
   type DynamicApiPayload,
   enableDynamicApi,
+  listDynamicApiBeans,
   listDynamicApis,
+  listRateLimitPolicies,
+  type RateLimitPolicyMeta,
   reloadDynamicApis,
   updateDynamicApi
 } from "../../api/extension";
@@ -174,6 +288,10 @@ const apis = ref<DynamicApi[]>([]);
 const pageNum = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
+const beanCatalog = ref<DynamicApiBeanMeta[]>([]);
+const rateLimitPolicies = ref<RateLimitPolicyMeta[]>([]);
+const beanLoading = ref(false);
+const policyLoading = ref(false);
 
 const methodOptions = ["GET", "POST", "PUT", "DELETE"];
 const typeOptions = ["BEAN", "SQL", "HTTP"];
@@ -198,12 +316,42 @@ const form = reactive<DynamicApiPayload>({
   authMode: "INHERIT",
   rateLimitPolicy: "",
   timeoutMs: undefined,
-  remark: ""
+  remark: "",
+  beanName: "",
+  paramMode: "AUTO",
+  paramSchema: "",
+  sql: "",
+  httpUrl: "",
+  httpMethod: "",
+  httpPassHeaders: true,
+  httpPassQuery: true
 });
 
 const editorTitle = computed(() =>
     editorMode.value === "create" ? t("dynamicApi.dialog.createTitle") : t("dynamicApi.dialog.editTitle")
 );
+
+const beanOptions = computed(() => beanCatalog.value || []);
+const rateLimitOptions = computed(() => rateLimitPolicies.value || []);
+
+function itemLabel(item: DynamicApiBeanMeta) {
+  if (!item.className) {
+    return item.beanName;
+  }
+  const shortName = item.className.split(".").pop();
+  return shortName ? `${item.beanName} (${shortName})` : item.beanName;
+}
+
+function policyLabel(policy: RateLimitPolicyMeta) {
+  if (!policy) {
+    return "";
+  }
+  const name = policy.name ? `${policy.name} (${policy.id})` : policy.id;
+  if (policy.maxRequests && policy.windowSeconds) {
+    return `${name} · ${policy.maxRequests}/${policy.windowSeconds}s`;
+  }
+  return name;
+}
 
 function buildQuery() {
   return {
@@ -234,6 +382,44 @@ async function loadApis() {
     ElMessage.error(t("dynamicApi.msg.loadFailed"));
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadBeanCatalog() {
+  if (beanLoading.value) {
+    return;
+  }
+  beanLoading.value = true;
+  try {
+    const result = await listDynamicApiBeans();
+    if (result?.code === 200 && Array.isArray(result.data)) {
+      beanCatalog.value = result.data;
+    } else {
+      ElMessage.error(result?.message || t("dynamicApi.msg.beanMetaFailed"));
+    }
+  } catch (_error) {
+    ElMessage.error(t("dynamicApi.msg.beanMetaFailed"));
+  } finally {
+    beanLoading.value = false;
+  }
+}
+
+async function loadRateLimitPolicies() {
+  if (policyLoading.value) {
+    return;
+  }
+  policyLoading.value = true;
+  try {
+    const result = await listRateLimitPolicies();
+    if (result?.code === 200 && Array.isArray(result.data)) {
+      rateLimitPolicies.value = result.data;
+    } else {
+      ElMessage.error(result?.message || t("dynamicApi.msg.policyLoadFailed"));
+    }
+  } catch (_error) {
+    ElMessage.error(t("dynamicApi.msg.policyLoadFailed"));
+  } finally {
+    policyLoading.value = false;
   }
 }
 
@@ -275,6 +461,14 @@ function openCreate() {
   form.rateLimitPolicy = "";
   form.timeoutMs = undefined;
   form.remark = "";
+  form.beanName = "";
+  form.paramMode = "AUTO";
+  form.paramSchema = "";
+  form.sql = "";
+  form.httpUrl = "";
+  form.httpMethod = "";
+  form.httpPassHeaders = true;
+  form.httpPassQuery = true;
   editorVisible.value = true;
 }
 
@@ -290,12 +484,33 @@ function openEdit(row: DynamicApi) {
   form.rateLimitPolicy = row.rateLimitPolicy || "";
   form.timeoutMs = row.timeoutMs;
   form.remark = row.remark || "";
+  form.beanName = "";
+  form.paramMode = "AUTO";
+  form.paramSchema = "";
+  form.sql = "";
+  form.httpUrl = "";
+  form.httpMethod = "";
+  form.httpPassHeaders = true;
+  form.httpPassQuery = true;
+  applyConfigFromRow(row);
   editorVisible.value = true;
 }
 
 async function saveApi() {
-  if (!form.path || !form.method || !form.type || !form.config) {
+  if (!form.path || !form.method || !form.type) {
     ElMessage.warning(t("dynamicApi.msg.validate"));
+    return;
+  }
+  if (form.type === "BEAN" && !form.beanName) {
+    ElMessage.warning(t("dynamicApi.msg.validateBean"));
+    return;
+  }
+  if (form.type === "SQL" && !form.sql) {
+    ElMessage.warning(t("dynamicApi.msg.validateSql"));
+    return;
+  }
+  if (form.type === "HTTP" && !form.httpUrl) {
+    ElMessage.warning(t("dynamicApi.msg.validateHttp"));
     return;
   }
   if (saving.value) {
@@ -308,12 +523,20 @@ async function saveApi() {
       path: form.path,
       method: form.method,
       type: form.type,
-      config: form.config,
+      config: form.config || undefined,
       status: form.status,
       authMode: form.authMode,
       rateLimitPolicy: form.rateLimitPolicy,
       timeoutMs,
-      remark: form.remark
+      remark: form.remark,
+      beanName: form.type === "BEAN" ? form.beanName : undefined,
+      paramMode: form.type === "BEAN" ? form.paramMode : undefined,
+      paramSchema: form.type === "BEAN" ? form.paramSchema : undefined,
+      sql: form.type === "SQL" ? form.sql : undefined,
+      httpUrl: form.type === "HTTP" ? form.httpUrl : undefined,
+      httpMethod: form.type === "HTTP" ? form.httpMethod : undefined,
+      httpPassHeaders: form.type === "HTTP" ? form.httpPassHeaders : undefined,
+      httpPassQuery: form.type === "HTTP" ? form.httpPassQuery : undefined
     };
     const result = editorMode.value === "create"
         ? await createDynamicApi(payload)
@@ -386,6 +609,37 @@ async function handleReload() {
   }
 }
 
+function handleBeanChange() {
+  form.paramSchema = "";
+}
+
+function applyConfigFromRow(row: DynamicApi) {
+  if (!row || !row.config) {
+    return;
+  }
+  try {
+    const config = JSON.parse(row.config);
+    if (row.type === "BEAN") {
+      form.beanName = config.beanName || "";
+      form.paramMode = config.paramMode || "AUTO";
+      form.paramSchema = config.paramSchema || "";
+      return;
+    }
+    if (row.type === "SQL") {
+      form.sql = config.sql || "";
+      return;
+    }
+    if (row.type === "HTTP") {
+      form.httpUrl = config.url || "";
+      form.httpMethod = config.method || "";
+      form.httpPassHeaders = config.passHeaders !== false;
+      form.httpPassQuery = config.passQuery !== false;
+    }
+  } catch (_error) {
+    // keep raw config
+  }
+}
+
 function statusLabel(status?: string) {
   switch (status) {
     case "ENABLED":
@@ -423,8 +677,153 @@ function formatDateTime(value?: string) {
   )}:${pad(date.getMinutes())}`;
 }
 
-onMounted(loadApis);
+watch(
+    () => form.type,
+    (value, prev) => {
+      if (value === prev) {
+        return;
+      }
+      if (value === "BEAN") {
+        form.sql = "";
+        form.httpUrl = "";
+        form.httpMethod = "";
+        form.httpPassHeaders = true;
+        form.httpPassQuery = true;
+        form.paramMode = form.paramMode || "AUTO";
+        form.paramSchema = form.paramSchema || "";
+        loadBeanCatalog();
+      }
+      if (value === "SQL") {
+        form.beanName = "";
+        form.paramMode = "AUTO";
+        form.paramSchema = "";
+        form.httpUrl = "";
+        form.httpMethod = "";
+        form.httpPassHeaders = true;
+        form.httpPassQuery = true;
+      }
+      if (value === "HTTP") {
+        form.beanName = "";
+        form.paramMode = "AUTO";
+        form.paramSchema = "";
+        form.sql = "";
+        form.httpPassHeaders = form.httpPassHeaders ?? true;
+        form.httpPassQuery = form.httpPassQuery ?? true;
+      }
+    }
+);
+
+onMounted(() => {
+  loadApis();
+  loadBeanCatalog();
+  loadRateLimitPolicies();
+});
 </script>
+
+<style scoped>
+.module-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  flex: 1 1 520px;
+  min-width: 0;
+}
+
+.action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+.filter-input {
+  width: 160px;
+}
+
+.filter-input--wide {
+  width: 220px;
+}
+
+.filter-input--narrow {
+  width: 120px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 8px 4px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.detail-item--full {
+  grid-column: 1 / -1;
+}
+
+.detail-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.detail-value {
+  font-size: 13px;
+  color: var(--el-text-color-primary, var(--ink));
+  word-break: break-all;
+}
+
+.detail-pre {
+  white-space: pre-wrap;
+}
+
+@media (max-width: 900px) {
+  .module-actions {
+    justify-content: flex-start;
+  }
+
+  .filter-input {
+    width: 140px;
+  }
+
+  .filter-input--wide {
+    width: 200px;
+  }
+
+  .filter-input--narrow {
+    width: 110px;
+  }
+}
+
+@media (max-width: 640px) {
+  .filter-input,
+  .filter-input--wide,
+  .filter-input--narrow {
+    width: 100%;
+  }
+
+  .action-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+</style>
 
 <style scoped>
 .tag-success {
@@ -474,6 +873,12 @@ onMounted(loadApis);
 .job-editor-form :deep(.el-select),
 .job-editor-form :deep(.el-input) {
   width: 100%;
+}
+
+.form-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
 }
 
 .action-buttons {

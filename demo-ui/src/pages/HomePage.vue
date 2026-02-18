@@ -395,13 +395,14 @@ const profileForm = reactive({
 
 const menuItems = computed(() => authStore.menus || []);
 const menuQuery = ref("");
-const activeMenuId = ref<number | null>(null);
+const activeSelection = computed(() => resolveSelectionFromPath(menuItems.value, currentRoutePath()));
+const activeMenuId = computed(() => activeSelection.value?.menu.id ?? null);
 const navDrawerVisible = ref(true);
 const navDrawerReady = ref(false);
 const MENU_STORAGE_KEY = "demo.activeMenuId";
 const NAV_DRAWER_STORAGE_KEY = "demo.navDrawerOpen";
-const HOME_GROUP_ROUTE_NAME = "home-group";
-const HOME_MENU_ROUTE_NAME = "home-menu";
+const HOME_ROUTE_NAME = "home";
+const HOME_PATH_PREFIX = "/home";
 const expandedGroupId = ref<number | null>(null);
 
 const menuTotal = computed(() => countMenuItems(menuItems.value));
@@ -417,18 +418,9 @@ const submenuCount = computed(() => Math.max(menuTotal.value - menuGroupCount.va
 const roleCount = computed(() => authStore.roles.length);
 const permissionCount = computed(() => authStore.permissions.length);
 
-const activeGroup = computed(() => {
-  const items = menuItems.value;
-  if (!items.length) {
-    return null;
-  }
-  if (activeMenuId.value == null) {
-    return items[0];
-  }
-  return findGroupById(items, activeMenuId.value) || items[0];
-});
+const activeGroup = computed(() => activeSelection.value?.group || null);
 
-const activeMenuItem = computed(() => findMenuById(menuItems.value, activeMenuId.value));
+const activeMenuItem = computed(() => activeSelection.value?.menu || null);
 
 const activeChildren = computed(() => {
   if (!activeGroup.value) {
@@ -484,8 +476,10 @@ const roleSummary = computed(() =>
     authStore.roles.length ? authStore.roles.join(" / ") : t("common.roleEmpty")
 );
 
+let syncingMenuRoute = false;
+
 watch(
-    () => [menuItems.value, route.params.groupCode, route.params.menuCode, route.name],
+    () => [menuItems.value, route.fullPath, route.name],
     () => {
       void syncMenuRouteState();
     },
@@ -544,42 +538,97 @@ watch(
     {immediate: true}
 );
 
-let syncingMenuRoute = false;
-
-function normalizeRouteParam(value: unknown): string {
-  const raw = Array.isArray(value) ? value[0] : value;
-  return typeof raw === "string" ? raw.trim() : "";
-}
-
-function menuRouteCode(menu: MenuTree): string {
-  const code = menu.code?.trim();
-  if (code) {
-    return code;
+function normalizePath(path?: string): string {
+  if (!path) {
+    return "";
   }
-  return String(menu.id);
+  const trimmed = path.trim();
+  if (!trimmed) {
+    return "";
+  }
+  const normalized = trimmed.startsWith("/") ? trimmed.slice(1) : trimmed;
+  return normalized
+      .split("/")
+      .filter(Boolean)
+      .join("/")
+      .toLowerCase();
 }
 
-function codesMatch(menu: MenuTree, code: string): boolean {
-  return menuRouteCode(menu).toLowerCase() === code.toLowerCase();
+function currentRoutePath(): string {
+  const raw = route.fullPath || route.path || window.location.pathname || "";
+  const pure = raw.split("?")[0].split("#")[0];
+  if (pure.startsWith(HOME_PATH_PREFIX)) {
+    return normalizePath(pure.slice(HOME_PATH_PREFIX.length));
+  }
+  const fallback = window.location.pathname || "";
+  if (!fallback.startsWith(HOME_PATH_PREFIX)) {
+    return "";
+  }
+  return normalizePath(fallback.slice(HOME_PATH_PREFIX.length));
 }
 
-function findGroupByCode(items: MenuTree[], code: string): MenuTree | null {
-  for (const item of items) {
-    if (codesMatch(item, code)) {
-      return item;
+function menuPath(menu: MenuTree): string {
+  return normalizePath(menu.path);
+}
+
+function findGroupByPath(items: MenuTree[], path: string): MenuTree | null {
+  const target = normalizePath(path);
+  if (!target) {
+    return null;
+  }
+  for (const group of items) {
+    if (menuPath(group) === target) {
+      return group;
     }
   }
   return null;
 }
 
-function findChildByCode(group: MenuTree, code: string): MenuTree | null {
-  const children = group.children || [];
+function findMenuByPath(items: MenuTree[], path: string): { group: MenuTree; menu: MenuTree } | null {
+  const target = normalizePath(path);
+  if (!target) {
+    return null;
+  }
+  const index = buildMenuPathIndex(items);
+  return index.get(target) || null;
+}
+
+function buildMenuPathIndex(items: MenuTree[]): Map<string, { group: MenuTree; menu: MenuTree }> {
+  const index = new Map<string, { group: MenuTree; menu: MenuTree }>();
+  for (const group of items) {
+    const groupPath = menuPath(group);
+    if (groupPath) {
+      index.set(groupPath, {group, menu: group});
+    }
+    const children = group.children || [];
+    for (const child of children) {
+      const childPath = menuPath(child);
+      if (childPath) {
+        index.set(childPath, {group, menu: child});
+      }
+      if (child.children?.length) {
+        addNestedMenuPaths(index, group, child);
+      }
+    }
+  }
+  return index;
+}
+
+function addNestedMenuPaths(
+    index: Map<string, { group: MenuTree; menu: MenuTree }>,
+    group: MenuTree,
+    menu: MenuTree
+) {
+  const children = menu.children || [];
   for (const child of children) {
-    if (codesMatch(child, code)) {
-      return child;
+    const childPath = menuPath(child);
+    if (childPath) {
+      index.set(childPath, {group, menu: child});
+    }
+    if (child.children?.length) {
+      addNestedMenuPaths(index, group, child);
     }
   }
-  return null;
 }
 
 function resolveStoredMenuForGroup(group: MenuTree): MenuTree | null {
@@ -620,29 +669,27 @@ function getDefaultSelection(items: MenuTree[]): { group: MenuTree; menu: MenuTr
   return {group: firstGroup, menu: firstGroup};
 }
 
-function resolveSelectionFromRoute(
+function resolveSelectionFromPath(
     items: MenuTree[],
-    groupCode: string,
-    menuCode: string
+    path: string
 ): { group: MenuTree; menu: MenuTree } | null {
   if (!items.length) {
     return null;
   }
-  if (!groupCode) {
+  const normalized = normalizePath(path);
+  if (!normalized) {
     return getDefaultSelection(items);
   }
-  const group = findGroupByCode(items, groupCode);
+  const exact = findMenuByPath(items, normalized);
+  if (exact) {
+    return exact;
+  }
+  const group = findGroupByPath(items, normalized);
   if (!group) {
-    return getDefaultSelection(items);
+    return null;
   }
   if (!group.children?.length) {
     return {group, menu: group};
-  }
-  if (menuCode) {
-    const child = findChildByCode(group, menuCode);
-    if (child) {
-      return {group, menu: child};
-    }
   }
   const storedChild = resolveStoredMenuForGroup(group);
   if (storedChild) {
@@ -651,34 +698,45 @@ function resolveSelectionFromRoute(
   return {group, menu: group.children[0]};
 }
 
-function buildHomeRouteTarget(selection: { group: MenuTree; menu: MenuTree }) {
-  const groupCode = menuRouteCode(selection.group);
-  if (selection.group.children?.length) {
-    return {
-      name: HOME_MENU_ROUTE_NAME,
-      params: {
-        groupCode,
-        menuCode: menuRouteCode(selection.menu)
-      }
-    };
+function buildHomePath(path?: string): string {
+  const normalized = normalizePath(path);
+  if (!normalized) {
+    return HOME_PATH_PREFIX;
   }
-  return {
-    name: HOME_GROUP_ROUTE_NAME,
-    params: {
-      groupCode
-    }
-  };
+  return `${HOME_PATH_PREFIX}/${normalized}`;
 }
 
-function isCurrentHomeRoute(target: { name: string; params: { groupCode: string; menuCode?: string } }): boolean {
-  if (route.name !== target.name) {
+function isCurrentHomePath(path?: string): boolean {
+  if (route.name !== HOME_ROUTE_NAME) {
     return false;
   }
-  if (normalizeRouteParam(route.params.groupCode) !== target.params.groupCode) {
-    return false;
+  return currentRoutePath() === normalizePath(path);
+}
+
+function resolvePreferredMenu(menu: MenuTree): MenuTree | null {
+  if (!menu) {
+    return null;
   }
-  const targetMenuCode = target.params.menuCode || "";
-  return normalizeRouteParam(route.params.menuCode) === targetMenuCode;
+  if (!menu.children?.length) {
+    return menu;
+  }
+  const storedId = readStoredMenuId();
+  if (storedId != null) {
+    const storedChild = menu.children.find((item) => item.id === storedId);
+    if (storedChild) {
+      return storedChild;
+    }
+  }
+  return menu.children[0] || menu;
+}
+
+function resolveMenuPathForNavigation(menu: MenuTree): string | null {
+  const targetMenu = resolvePreferredMenu(menu);
+  if (!targetMenu) {
+    return null;
+  }
+  const path = menuPath(targetMenu);
+  return path || null;
 }
 
 async function syncMenuRouteState() {
@@ -687,26 +745,38 @@ async function syncMenuRouteState() {
   }
   const items = menuItems.value;
   if (!items.length) {
-    activeMenuId.value = null;
     expandedGroupId.value = null;
     return;
   }
-  const groupCode = normalizeRouteParam(route.params.groupCode);
-  const menuCode = normalizeRouteParam(route.params.menuCode);
-  const selection = resolveSelectionFromRoute(items, groupCode, menuCode);
+  const routePath = currentRoutePath();
+  let selection = resolveSelectionFromPath(items, routePath);
   if (!selection) {
-    activeMenuId.value = null;
-    expandedGroupId.value = null;
+    const fallback = getDefaultSelection(items);
+    if (!fallback) {
+      expandedGroupId.value = null;
+      return;
+    }
+    selection = fallback;
+    const targetPath = resolveMenuPathForNavigation(selection.menu);
+    expandedGroupId.value = selection.group.id;
+    storeMenuId(selection.menu.id);
+    if (targetPath && !isCurrentHomePath(targetPath)) {
+      syncingMenuRoute = true;
+      try {
+        await router.replace(buildHomePath(targetPath));
+      } finally {
+        syncingMenuRoute = false;
+      }
+    }
     return;
   }
-  activeMenuId.value = selection.menu.id;
   expandedGroupId.value = selection.group.id;
   storeMenuId(selection.menu.id);
-  const target = buildHomeRouteTarget(selection);
-  if (!isCurrentHomeRoute(target)) {
+  const targetPath = resolveMenuPathForNavigation(selection.menu);
+  if (targetPath && targetPath !== routePath) {
     syncingMenuRoute = true;
     try {
-      await router.replace(target);
+      await router.replace(buildHomePath(targetPath));
     } finally {
       syncingMenuRoute = false;
     }
@@ -714,29 +784,31 @@ async function syncMenuRouteState() {
 }
 
 function routeToMenu(menu: MenuTree) {
-  const group = findGroupById(menuItems.value, menu.id);
-  if (!group) {
+  const targetMenu = resolvePreferredMenu(menu);
+  if (!targetMenu) {
     return null;
   }
-  if (!group.children?.length) {
-    return buildHomeRouteTarget({group, menu: group});
-  }
-  const selectedChild = group.children.find((item) => item.id === menu.id) || group.children[0];
-  if (!selectedChild) {
-    return null;
-  }
-  return buildHomeRouteTarget({group, menu: selectedChild});
+  const path = menuPath(targetMenu);
+  return path || null;
 }
 
 async function selectMenu(menu: MenuTree) {
   if (menu?.id == null) {
     return;
   }
-  const target = routeToMenu(menu);
-  if (!target || isCurrentHomeRoute(target)) {
+  const targetPath = routeToMenu(menu);
+  if (!targetPath) {
     return;
   }
-  await router.push(target);
+  if (isCurrentHomePath(targetPath)) {
+    const selection = resolveSelectionFromPath(menuItems.value, targetPath);
+    if (selection) {
+      expandedGroupId.value = selection.group.id;
+      storeMenuId(selection.menu.id);
+    }
+    return;
+  }
+  await router.push(buildHomePath(targetPath));
 }
 
 function handleGroupClick(menu: MenuTree) {

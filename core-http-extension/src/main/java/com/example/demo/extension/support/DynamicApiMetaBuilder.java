@@ -1,5 +1,6 @@
 package com.example.demo.extension.support;
 
+import com.example.demo.extension.api.request.DynamicApiParamMode;
 import com.example.demo.extension.config.DynamicApiConstants;
 import com.example.demo.extension.model.*;
 import com.example.demo.extension.registry.DynamicApiMeta;
@@ -72,9 +73,14 @@ public class DynamicApiMetaBuilder {
         try {
             if (type == DynamicApiType.BEAN) {
                 BeanExecuteConfig config = objectMapper.readValue(configJson, BeanExecuteConfig.class);
-                if (config == null || StringUtils.isBlank(config.getBeanName()) || StringUtils.isBlank(config.getMethod())) {
+                if (config == null || StringUtils.isBlank(config.getBeanName())) {
                     throw new DynamicApiException(constants.getController().getBadRequestCode(),
                             constants.getMessage().getBeanInvalid());
+                }
+                if (StringUtils.isNotBlank(config.getParamMode())
+                        && DynamicApiParamMode.from(config.getParamMode()) == null) {
+                    throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                            constants.getMessage().getConfigInvalid());
                 }
                 return config;
             }

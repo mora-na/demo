@@ -32,17 +32,19 @@ public class AuthTokenResolver {
             return null;
         }
         AuthConstants.Token tokenConstants = systemConstants.getToken();
-        String authorization = request.getHeader(tokenConstants.getAuthorizationHeader());
+        String authorization = StringUtils.trimToNull(request.getHeader(tokenConstants.getAuthorizationHeader()));
         if (StringUtils.isNotBlank(authorization)) {
             String bearerPrefix = tokenConstants.getBearerPrefix();
-            if (authorization.startsWith(bearerPrefix)) {
-                return authorization.substring(bearerPrefix.length());
+            if (StringUtils.isNotBlank(bearerPrefix)
+                    && authorization.regionMatches(true, 0, bearerPrefix, 0, bearerPrefix.length())) {
+                String token = authorization.substring(bearerPrefix.length()).trim();
+                return StringUtils.isNotBlank(token) ? token : null;
             }
-            return authorization;
+            return authorization.trim();
         }
-        String token = request.getHeader(tokenConstants.getFallbackTokenHeader());
+        String token = StringUtils.trimToNull(request.getHeader(tokenConstants.getFallbackTokenHeader()));
         if (StringUtils.isNotBlank(token)) {
-            return token;
+            return token.trim();
         }
         String queryToken = request.getParameter(tokenConstants.getQueryTokenParameter());
         if (StringUtils.isNotBlank(queryToken)) {

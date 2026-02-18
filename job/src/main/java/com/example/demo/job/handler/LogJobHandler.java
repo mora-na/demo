@@ -1,6 +1,8 @@
 package com.example.demo.job.handler;
 
 import com.example.demo.common.async.MdcUtils;
+import com.example.demo.extension.api.handler.DynamicApiHandler;
+import com.example.demo.extension.api.request.DynamicApiRequest;
 import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.support.JobContext;
 import com.example.demo.job.support.JobHandler;
@@ -8,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -22,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component("logJobHandler")
 @RequiredArgsConstructor
-public class LogJobHandler implements JobHandler {
+public class LogJobHandler implements JobHandler, DynamicApiHandler {
 
     private final JobConstants jobConstants;
 
@@ -77,5 +82,47 @@ public class LogJobHandler implements JobHandler {
         scheduled.shutdown();
 
         context.appendLog(jobConstants.getHandlerDemo().getManualLogEnd());
+    }
+
+    @Override
+    public Object handle(DynamicApiRequest request) throws Exception {
+        if (request == null) {
+            log.warn("[DynamicApi] request is null");
+            return Collections.singletonMap("message", "empty request");
+        }
+
+        String mode = request.getParamMode() == null ? "AUTO" : request.getParamMode().name();
+        String rawBody = request.abbreviateRawBody(200);
+
+        log.info("[DynamicApi] path={}, method={}, mode={}", request.getPath(), request.getMethod(), mode);
+        log.info("[DynamicApi] pathVars={}, queryParams={}, params={}",
+                request.getPathVariables(), request.getQueryParams(), request.getParams());
+
+        if (!request.getHeaders().isEmpty()) {
+            log.info("[DynamicApi] headerKeys={}", request.getHeaderKeys());
+        }
+
+        String files = request.getFileSummary();
+        if (!"[]".equals(files)) {
+            log.info("[DynamicApi] files={}", files);
+        }
+
+        if (rawBody != null && !rawBody.isEmpty()) {
+            log.info("[DynamicApi] rawBody={}", rawBody);
+        }
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("message", "log demo ok");
+        response.put("path", request.getPath());
+        response.put("method", request.getMethod());
+        response.put("paramMode", mode);
+        response.put("pathVariables", request.getPathVariables());
+        response.put("queryParams", request.getQueryParams());
+        response.put("params", request.getParams());
+        response.put("headerKeys", request.getHeaderKeys());
+        response.put("files", files);
+        response.put("rawBody", rawBody);
+        response.put("note", "Authorization and sensitive headers are not logged");
+        return response;
     }
 }

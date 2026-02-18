@@ -4,6 +4,9 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 动态接口扩展配置。
  */
@@ -21,6 +24,11 @@ public class DynamicApiProperties {
 
     private Executor executor = new Executor();
 
+    /**
+     * 动态限流策略列表（可选）。
+     */
+    private List<RateLimitPolicy> rateLimitPolicies = new ArrayList<>();
+
     @Data
     public static class Global {
         private boolean enabled = true;
@@ -33,5 +41,15 @@ public class DynamicApiProperties {
         private int queueCapacity = 200;
         private int keepAliveSeconds = 60;
         private String threadNamePrefix = "ext-exec-";
+    }
+
+    @Data
+    public static class RateLimitPolicy {
+        private String id;
+        private String name;
+        private long windowSeconds;
+        private int maxRequests;
+        private String keyMode;
+        private boolean includePath = true;
     }
 }

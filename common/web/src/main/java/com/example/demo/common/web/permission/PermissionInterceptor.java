@@ -8,12 +8,14 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import javax.servlet.DispatcherType;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -39,6 +41,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
     private final I18nService i18nService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final CommonConstants systemConstants;
+    private final ObjectProvider<PermissionBypassEvaluator> bypassEvaluators;
 
     /**
      * 构造函数，注入权限配置、服务与公共排除路径。
@@ -53,12 +56,14 @@ public class PermissionInterceptor implements HandlerInterceptor {
                                  PermissionService permissionService,
                                  CommonExcludePathsProperties commonExcludePaths,
                                  I18nService i18nService,
-                                 CommonConstants systemConstants) {
+                                 CommonConstants systemConstants,
+                                 ObjectProvider<PermissionBypassEvaluator> bypassEvaluators) {
         this.properties = properties;
         this.permissionService = permissionService;
         this.commonExcludePaths = commonExcludePaths;
         this.i18nService = i18nService;
         this.systemConstants = systemConstants;
+        this.bypassEvaluators = bypassEvaluators;
     }
 
     /**
@@ -75,7 +80,13 @@ public class PermissionInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler)
             throws Exception {
+        if (request.getDispatcherType() == DispatcherType.ASYNC) {
+            return true;
+        }
         if (!properties.isEnabled()) {
+            return true;
+        }
+        if (shouldBypassByEvaluator(request)) {
             return true;
         }
         if (isExcluded(request)) {
@@ -174,6 +185,22 @@ public class PermissionInterceptor implements HandlerInterceptor {
         }
         return AnnotatedElementUtils.findMergedAnnotation(
                 handlerMethod.getBeanType(), RequireLogin.class);
+    }
+
+    private boolean shouldBypassByEvaluator(HttpServletRequest request) {
+        if (bypassEvaluators == null) {
+            return false;
+        }
+        for (PermissionBypassEvaluator evaluator : bypassEvaluators) {
+            try {
+                if (evaluator != null && evaluator.shouldBypass(request)) {
+                    return true;
+                }
+            } catch (Exception ignored) {
+                // ignore evaluator errors to avoid blocking permission
+            }
+        }
+        return false;
     }
 
     /**

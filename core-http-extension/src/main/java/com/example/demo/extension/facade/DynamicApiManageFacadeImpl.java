@@ -127,6 +127,14 @@ public class DynamicApiManageFacadeImpl implements DynamicApiManageFacade {
         request.setRateLimitPolicy(command.getRateLimitPolicy());
         request.setTimeoutMs(command.getTimeoutMs());
         request.setRemark(command.getRemark());
+        request.setBeanName(command.getBeanName());
+        request.setParamMode(command.getParamMode());
+        request.setParamSchema(command.getParamSchema());
+        request.setSql(command.getSql());
+        request.setHttpUrl(command.getHttpUrl());
+        request.setHttpMethod(command.getHttpMethod());
+        request.setHttpPassHeaders(command.getHttpPassHeaders());
+        request.setHttpPassQuery(command.getHttpPassQuery());
         return request;
     }
 
@@ -144,6 +152,14 @@ public class DynamicApiManageFacadeImpl implements DynamicApiManageFacade {
         request.setRateLimitPolicy(command.getRateLimitPolicy());
         request.setTimeoutMs(command.getTimeoutMs());
         request.setRemark(command.getRemark());
+        request.setBeanName(command.getBeanName());
+        request.setParamMode(command.getParamMode());
+        request.setParamSchema(command.getParamSchema());
+        request.setSql(command.getSql());
+        request.setHttpUrl(command.getHttpUrl());
+        request.setHttpMethod(command.getHttpMethod());
+        request.setHttpPassHeaders(command.getHttpPassHeaders());
+        request.setHttpPassQuery(command.getHttpPassQuery());
         return request;
     }
 

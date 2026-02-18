@@ -814,38 +814,41 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 
 **Common Group**
 
-| Key | Default | Description |
-|---|---|---|
-| `common.constants.http.json-content-type` | `application/json;charset=UTF-8` | `Content-Type` for JSON error responses in auth/permission/rate-limit/duplicate-submit flows. |
-| `common.constants.http.forwarded-for-header` | `X-Forwarded-For` | Primary proxy header for client IP extraction. |
-| `common.constants.http.real-ip-header` | `X-Real-IP` | Secondary proxy header for client IP extraction. |
-| `common.constants.http.multipart-prefix` | `multipart/` | `Content-Type` prefix used to identify multipart requests. |
-| `common.constants.http.idempotency-header-default` | `Idempotency-Key` | Default idempotency header name when not explicitly configured. |
-| `common.constants.trace.mdc-key` | `traceId` | MDC key for request trace id. |
-| `common.constants.rate-limit.key-prefix` | `rl:` | Rate-limit cache key prefix. |
-| `common.constants.rate-limit.response-status` | `429` | HTTP status for rate-limit rejection. |
-| `common.constants.rate-limit.message-key` | `common.rate.limit.exceeded` | i18n message key for rate-limit rejection. |
-| `common.constants.duplicate-submit.key-prefix` | `dup:` | Duplicate-submit cache key prefix. |
-| `common.constants.duplicate-submit.response-status` | `409` | HTTP status for duplicate-submit rejection. |
-| `common.constants.duplicate-submit.message-key` | `common.duplicate.submission` | i18n message key for duplicate-submit rejection. |
-| `common.constants.duplicate-submit.key-idempotency-tag` | `k` | Idempotency segment tag in duplicate-submit key composition. |
-| `common.constants.duplicate-submit.key-query-tag` | `q` | Query-string segment tag in duplicate-submit key composition. |
-| `common.constants.duplicate-submit.key-body-tag` | `b` | Body-hash segment tag in duplicate-submit key composition. |
-| `common.constants.permission.required-message-key` | `auth.permission.required` | i18n message key when login is required. |
-| `common.constants.permission.denied-message-key` | `auth.permission.denied` | i18n message key when permission check fails. |
-| `common.constants.mybatis.datasource-url-property` | `spring.datasource.url` | Datasource URL property key used for DB type detection. |
-| `common.constants.mybatis.postgres-token` | `:postgresql:` | JDBC URL token for PostgreSQL detection. |
-| `common.constants.mybatis.mysql-token` | `:mysql:` | JDBC URL token for MySQL detection. |
-| `common.constants.mybatis.mariadb-token` | `:mariadb:` | JDBC URL token for MariaDB detection. |
-| `common.constants.mybatis.oracle-token` | `:oracle:` | JDBC URL token for Oracle detection. |
-| `common.constants.i18n.basename` | `classpath:i18n/messages` | i18n bundle basename. |
-| `common.constants.i18n.default-encoding` | `UTF-8` | i18n bundle default encoding. |
-| `common.constants.i18n.fallback-to-system-locale` | `false` | Whether i18n falls back to system locale. |
-| `common.constants.i18n.use-code-as-default-message` | `true` | Whether message code itself is used when no translation exists. |
-| `common.constants.i18n.default-locale-tag` | `zh-CN` | Default locale language tag. |
-| `common.constants.mdc.thread-name-prefix` | `mdc-thread-` | Default thread name prefix for MDC thread factory. |
-| `common.constants.cache.memory-cleanup-thread-prefix` | `cache-cleanup` | Memory-cache cleanup thread name prefix. |
-| `common.constants.cache.db-cleanup-thread-prefix` | `cache-db-cleanup` | DB-cache cleanup thread name prefix. |
+| Key                                                                   | Default                          | Description                                                                                   |
+|-----------------------------------------------------------------------|----------------------------------|-----------------------------------------------------------------------------------------------|
+| `common.constants.http.json-content-type`                             | `application/json;charset=UTF-8` | `Content-Type` for JSON error responses in auth/permission/rate-limit/duplicate-submit flows. |
+| `common.constants.http.forwarded-for-header`                          | `X-Forwarded-For`                | Primary proxy header for client IP extraction.                                                |
+| `common.constants.http.real-ip-header`                                | `X-Real-IP`                      | Secondary proxy header for client IP extraction.                                              |
+| `common.constants.http.multipart-prefix`                              | `multipart/`                     | `Content-Type` prefix used to identify multipart requests.                                    |
+| `common.constants.http.idempotency-header-default`                    | `Idempotency-Key`                | Default idempotency header name when not explicitly configured.                               |
+| `common.constants.trace.mdc-key`                                      | `traceId`                        | MDC key for request trace id.                                                                 |
+| `common.constants.rate-limit.key-prefix`                              | `rl:`                            | Rate-limit cache key prefix.                                                                  |
+| `common.constants.rate-limit.response-status`                         | `429`                            | HTTP status for rate-limit rejection.                                                         |
+| `common.constants.rate-limit.message-key`                             | `common.rate.limit.exceeded`     | i18n message key for rate-limit rejection.                                                    |
+| `common.constants.duplicate-submit.key-prefix`                        | `dup:`                           | Duplicate-submit cache key prefix.                                                            |
+| `common.constants.duplicate-submit.response-status`                   | `409`                            | HTTP status for duplicate-submit rejection.                                                   |
+| `common.constants.duplicate-submit.message-key`                       | `common.duplicate.submission`    | i18n message key for duplicate-submit rejection.                                              |
+| `common.constants.duplicate-submit.key-idempotency-tag`               | `k`                              | Idempotency segment tag in duplicate-submit key composition.                                  |
+| `common.constants.duplicate-submit.key-query-tag`                     | `q`                              | Query-string segment tag in duplicate-submit key composition.                                 |
+| `common.constants.duplicate-submit.key-body-tag`                      | `b`                              | Body-hash segment tag in duplicate-submit key composition.                                    |
+| `common.constants.permission.required-message-key`                    | `auth.permission.required`       | i18n message key when login is required.                                                      |
+| `common.constants.permission.denied-message-key`                      | `auth.permission.denied`         | i18n message key when permission check fails.                                                 |
+| `common.constants.mybatis.datasource-url-property`                    | `spring.datasource.url`          | Datasource URL property key used for DB type detection.                                       |
+| `common.constants.mybatis.postgres-token`                             | `:postgresql:`                   | JDBC URL token for PostgreSQL detection.                                                      |
+| `common.constants.mybatis.mysql-token`                                | `:mysql:`                        | JDBC URL token for MySQL detection.                                                           |
+| `common.constants.mybatis.mariadb-token`                              | `:mariadb:`                      | JDBC URL token for MariaDB detection.                                                         |
+| `common.constants.mybatis.oracle-token`                               | `:oracle:`                       | JDBC URL token for Oracle detection.                                                          |
+| `common.constants.i18n.basename`                                      | `classpath:i18n/messages`        | i18n bundle basename.                                                                         |
+| `common.constants.i18n.default-encoding`                              | `UTF-8`                          | i18n bundle default encoding.                                                                 |
+| `common.constants.i18n.fallback-to-system-locale`                     | `false`                          | Whether i18n falls back to system locale.                                                     |
+| `common.constants.i18n.use-code-as-default-message`                   | `true`                           | Whether message code itself is used when no translation exists.                               |
+| `common.constants.i18n.default-locale-tag`                            | `zh-CN`                          | Default locale language tag.                                                                  |
+| `common.constants.mdc.thread-name-prefix`                             | `mdc-thread-`                    | Default thread name prefix for MDC thread factory.                                            |
+| `common.constants.cache.memory-cleanup-thread-prefix`                 | `cache-cleanup`                  | Memory-cache cleanup thread name prefix.                                                      |
+| `common.constants.cache.db-cleanup-thread-prefix`                     | `cache-db-cleanup`               | DB-cache cleanup thread name prefix.                                                          |
+| `common.constants.exception-handling.client-abort-window-millis`      | `60000`                          | Time window (ms) for tracking client disconnects.                                             |
+| `common.constants.exception-handling.client-abort-warn-threshold`     | `20`                             | Emit a warning when disconnects reach this threshold within the window.                       |
+| `common.constants.exception-handling.client-abort-message-max-length` | `200`                            | Max length of disconnect log message (<=0 means no truncation).                               |
 
 ### Auth Runtime Settings (`auth.password`)
 

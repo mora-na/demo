@@ -9,14 +9,14 @@ import com.example.demo.extension.dto.DynamicApiCreateRequest;
 import com.example.demo.extension.dto.DynamicApiQuery;
 import com.example.demo.extension.dto.DynamicApiUpdateRequest;
 import com.example.demo.extension.manager.DynamicApiService;
-import com.example.demo.extension.model.DynamicApi;
-import com.example.demo.extension.model.DynamicApiStatus;
+import com.example.demo.extension.model.*;
 import com.example.demo.extension.registry.DynamicApiMeta;
 import com.example.demo.extension.registry.DynamicApiRegistry;
 import com.example.demo.extension.repository.DynamicApiMapper;
 import com.example.demo.extension.support.DynamicApiException;
 import com.example.demo.extension.support.DynamicApiMetaBuilder;
 import com.example.demo.extension.support.DynamicApiValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
@@ -38,6 +38,7 @@ public class DynamicApiServiceImpl implements DynamicApiService {
     private final DynamicApiValidator validator;
     private final DynamicApiConstants constants;
     private final ApplicationEventPublisher eventPublisher;
+    private final ObjectMapper objectMapper;
 
     @Override
     public DynamicApi createApi(DynamicApiCreateRequest request) {
@@ -49,7 +50,7 @@ public class DynamicApiServiceImpl implements DynamicApiService {
         api.setPath(StringUtils.trimToEmpty(request.getPath()));
         api.setMethod(StringUtils.trimToEmpty(request.getMethod()));
         api.setType(StringUtils.trimToEmpty(request.getType()));
-        api.setConfig(request.getConfig());
+        api.setConfig(resolveConfig(request));
         api.setStatus(resolveStatus(request.getStatus(), DynamicApiStatus.DRAFT));
         api.setAuthMode(StringUtils.trimToEmpty(request.getAuthMode()));
         api.setRateLimitPolicy(StringUtils.trimToEmpty(request.getRateLimitPolicy()));
@@ -84,7 +85,7 @@ public class DynamicApiServiceImpl implements DynamicApiService {
         existing.setPath(StringUtils.trimToEmpty(request.getPath()));
         existing.setMethod(StringUtils.trimToEmpty(request.getMethod()));
         existing.setType(StringUtils.trimToEmpty(request.getType()));
-        existing.setConfig(request.getConfig());
+        existing.setConfig(resolveConfig(request));
         existing.setStatus(resolveStatus(request.getStatus(), DynamicApiStatus.DRAFT));
         existing.setAuthMode(StringUtils.trimToEmpty(request.getAuthMode()));
         existing.setRateLimitPolicy(StringUtils.trimToEmpty(request.getRateLimitPolicy()));
@@ -210,6 +211,123 @@ public class DynamicApiServiceImpl implements DynamicApiService {
             throw new DynamicApiException(constants.getController().getBadRequestCode(),
                     constants.getMessage().getPathInvalid());
         }
+    }
+
+    private String resolveConfig(DynamicApiCreateRequest request) {
+        if (request == null) {
+            return null;
+        }
+        String config = StringUtils.trimToNull(request.getConfig());
+        DynamicApiType type = DynamicApiType.from(request.getType());
+        if (type == null) {
+            return config;
+        }
+        String built = buildConfig(type,
+                request.getBeanName(),
+                request.getParamMode(),
+                request.getParamSchema(),
+                request.getSql(),
+                request.getHttpUrl(),
+                request.getHttpMethod(),
+                request.getHttpPassHeaders(),
+                request.getHttpPassQuery());
+        if (StringUtils.isNotBlank(built)) {
+            return built;
+        }
+        if (StringUtils.isBlank(config)) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getConfigInvalid());
+        }
+        return config;
+    }
+
+    private String resolveConfig(DynamicApiUpdateRequest request) {
+        if (request == null) {
+            return null;
+        }
+        String config = StringUtils.trimToNull(request.getConfig());
+        DynamicApiType type = DynamicApiType.from(request.getType());
+        if (type == null) {
+            return config;
+        }
+        String built = buildConfig(type,
+                request.getBeanName(),
+                request.getParamMode(),
+                request.getParamSchema(),
+                request.getSql(),
+                request.getHttpUrl(),
+                request.getHttpMethod(),
+                request.getHttpPassHeaders(),
+                request.getHttpPassQuery());
+        if (StringUtils.isNotBlank(built)) {
+            return built;
+        }
+        if (StringUtils.isBlank(config)) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getConfigInvalid());
+        }
+        return config;
+    }
+
+    private String buildConfig(DynamicApiType type,
+                               String beanName,
+                               String paramMode,
+                               String paramSchema,
+                               String sql,
+                               String httpUrl,
+                               String httpMethod,
+                               Boolean httpPassHeaders,
+                               Boolean httpPassQuery) {
+        try {
+            if (type == DynamicApiType.BEAN) {
+                boolean hasBeanInput = StringUtils.isNotBlank(beanName) || StringUtils.isNotBlank(paramMode)
+                        || StringUtils.isNotBlank(paramSchema);
+                if (!hasBeanInput) {
+                    return null;
+                }
+                if (StringUtils.isBlank(beanName)) {
+                    throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                            constants.getMessage().getBeanInvalid());
+                }
+                validator.validateBeanExposure(beanName.trim());
+                BeanExecuteConfig config = new BeanExecuteConfig();
+                config.setBeanName(beanName.trim());
+                config.setParamMode(StringUtils.trimToNull(paramMode));
+                config.setParamSchema(StringUtils.trimToNull(paramSchema));
+                return objectMapper.writeValueAsString(config);
+            }
+            if (type == DynamicApiType.SQL) {
+                if (StringUtils.isBlank(sql)) {
+                    return null;
+                }
+                SqlExecuteConfig config = new SqlExecuteConfig();
+                config.setSql(sql.trim());
+                return objectMapper.writeValueAsString(config);
+            }
+            if (type == DynamicApiType.HTTP) {
+                if (StringUtils.isBlank(httpUrl)) {
+                    return null;
+                }
+                HttpForwardConfig config = new HttpForwardConfig();
+                config.setUrl(httpUrl.trim());
+                if (StringUtils.isNotBlank(httpMethod)) {
+                    config.setMethod(httpMethod.trim());
+                }
+                if (httpPassHeaders != null) {
+                    config.setPassHeaders(httpPassHeaders);
+                }
+                if (httpPassQuery != null) {
+                    config.setPassQuery(httpPassQuery);
+                }
+                return objectMapper.writeValueAsString(config);
+            }
+        } catch (DynamicApiException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getConfigInvalid());
+        }
+        return null;
     }
 
     private LambdaQueryWrapper<DynamicApi> buildQuery(DynamicApiQuery query) {

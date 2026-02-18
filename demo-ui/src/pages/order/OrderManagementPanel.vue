@@ -5,7 +5,7 @@
         <div class="module-title">{{ t("order.title") }}</div>
         <div class="module-sub">{{ t("order.subtitle") }}</div>
       </div>
-      <div class="module-actions">
+      <div class="module-actions" @keyup.enter="handleSearch">
         <el-input-number
             v-model="filters.userId"
             :min="1"
