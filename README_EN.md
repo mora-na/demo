@@ -21,6 +21,7 @@ A front-end/back-end separated sample system focused on authentication/authoriza
 - Constant governance: magic values are centralized in module-level `*Constants` with defaults and config overrides.
 - Data scope control: ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE.
 - Security protections: SQL guard, XSS filter, rate limiting, duplicate-submit protection.
+- Dynamic APIs: Bean / SQL / HTTP forwarders and extensible executors.
 - Excel import/export: user batch import/export example.
 - Scheduled jobs: Quartz persistent scheduling, handler management, execution logs.
 - Notifications: publish/read states, SSE pushes unread counts and latest list.
@@ -90,22 +91,23 @@ npm run dev
 
 ## Module Capability Map
 
-| Module       | Responsibility           | Key Capabilities                                                                                          |
-|--------------|--------------------------|-----------------------------------------------------------------------------------------------------------|
-| `auth`       | Authentication & session | Captcha login, JWT issue/verify, logout revocation, login security policy, email confirmation             |
-| `user`       | User management          | User profile, status lifecycle, password updates, user-level data-scope overrides                         |
-| `dept`       | Organization structure   | Department tree, hierarchy management, ownership baseline                                                 |
-| `menu`       | Menu management          | Menu tree, route menu payloads, menu permission identifiers                                               |
-| `permission` | Roles & permissions      | Role authorization, permission-point control, API access control                                          |
-| `datascope`  | Data authorization       | 3-layer scope merge (role/menu/user), SQL data filtering                                                  |
-| `dict`       | Dictionary management    | Dict type/data maintenance, caching, dict label mapping                                                   |
-| `notice`     | Notification center      | Notification publish/read state, SSE real-time push                                                       |
-| `job`        | Job scheduling           | Quartz job management, execution logs and result tracking                                                 |
-| `log`        | Audit logging            | Login logs, operation logs, audit event persistence                                                       |
-| `post`       | Position management      | Position maintenance, user-position association                                                           |
-| `order`      | Business sample          | Order sample module (demonstrates CRUD + permission/data-scope integration)                               |
-| `common`     | Shared infrastructure    | Unified response, exception handling, cache abstraction, mail sender abstraction, common utilities/config |
-| `ai`         | AI extension entry       | AI capability integration and extensibility (enabled per business needs)                                  |
+| Module                | Responsibility           | Key Capabilities                                                                                          |
+|-----------------------|--------------------------|-----------------------------------------------------------------------------------------------------------|
+| `auth`                | Authentication & session | Captcha login, JWT issue/verify, logout revocation, login security policy, email confirmation             |
+| `user`                | User management          | User profile, status lifecycle, password updates, user-level data-scope overrides                         |
+| `dept`                | Organization structure   | Department tree, hierarchy management, ownership baseline                                                 |
+| `menu`                | Menu management          | Menu tree, route menu payloads, menu permission identifiers                                               |
+| `permission`          | Roles & permissions      | Role authorization, permission-point control, API access control                                          |
+| `datascope`           | Data authorization       | 3-layer scope merge (role/menu/user), SQL data filtering                                                  |
+| `dict`                | Dictionary management    | Dict type/data maintenance, caching, dict label mapping                                                   |
+| `notice`              | Notification center      | Notification publish/read state, SSE real-time push                                                       |
+| `job`                 | Job scheduling           | Quartz job management, execution logs and result tracking                                                 |
+| `log`                 | Audit logging            | Login logs, operation logs, audit event persistence                                                       |
+| `post`                | Position management      | Position maintenance, user-position association                                                           |
+| `order`               | Business sample          | Order sample module (demonstrates CRUD + permission/data-scope integration)                               |
+| `core-http-extension` | Dynamic API extension    | Dynamic API management, runtime routing and execution (Bean / SQL / HTTP / custom executors)              |
+| `common`              | Shared infrastructure    | Unified response, exception handling, cache abstraction, mail sender abstraction, common utilities/config |
+| `ai`                  | AI extension entry       | AI capability integration and extensibility (enabled per business needs)                                  |
 
 ## Usage and Configuration
 

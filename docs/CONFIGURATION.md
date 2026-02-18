@@ -690,6 +690,136 @@
 - 重复提交：`security.duplicate-submit.*`。
 - 排除路径会与 `security.common.exclude-paths` 合并。
 
+### 动态接口（core-http-extension）
+
+**入口与管理接口**
+
+- 运行时入口：`/ext/**`（由动态接口注册表匹配路由）。
+- 管理接口：`/dynamic-api/**`（增删改查、启用/停用、重载）。
+- 元数据接口：`/dynamic-api/metadata/beans`、`/dynamic-api/metadata/rate-limit-policies`、`/dynamic-api/metadata/types`。
+
+**类型与扩展**
+
+- 内置类型：`BEAN` / `SQL` / `HTTP`。
+- 自定义类型：实现 `ExecuteStrategy` 并注册为 Spring Bean；前端类型下拉由 `/dynamic-api/metadata/types` 动态读取。
+- 自定义类型配置由 `ExecuteStrategy.parseConfig` 解析，未提供时将原始 `config` 作为字符串传入。
+
+**SQL 类型限制（`type=SQL`）**
+
+- 仅允许 `SELECT`（非 `SELECT` 会被拒绝）。
+- `security.sql-guard.block-multi-statement=true` 时禁止多语句。
+- `security.sql-guard.block-cross-schema-join=true` 时禁止跨 schema JOIN，且 schema 必须在 `allowed-schemas` 白名单内。
+- 支持命名参数（形如 `:name`），会从请求参数中绑定。
+
+**数据源模式影响**
+
+- `multi-datasource`：动态 SQL 使用动态数据源的 primary（默认 `system_rw`），不会按模块包名自动切换数据源。
+- `single-datasource-multi-schema`：动态 SQL 使用 `spring.datasource`。
+- `single-datasource-single-schema`：启动时将 `security.sql-guard.allowed-schemas` 覆盖为
+  `app.datasource.single-schema-name`。注意单 schema SQL 重写仅对 MyBatis 生效，动态 SQL 不会自动改写 schema 前缀。
+
+**动态接口配置（`dynamic.api.*`）**
+
+| 配置键                                       | 默认值         | 说明                   |
+|-------------------------------------------|-------------|----------------------|
+| `dynamic.api.global.enabled`              | `true`      | 全局开关。                |
+| `dynamic.api.default-timeout-ms`          | `3000`      | 默认超时（毫秒）。            |
+| `dynamic.api.executor.core-pool-size`     | `8`         | 执行线程池核心线程数。          |
+| `dynamic.api.executor.max-pool-size`      | `16`        | 执行线程池最大线程数。          |
+| `dynamic.api.executor.queue-capacity`     | `200`       | 执行队列容量。              |
+| `dynamic.api.executor.keep-alive-seconds` | `60`        | 空闲线程保活秒数。            |
+| `dynamic.api.executor.thread-name-prefix` | `ext-exec-` | 线程名前缀。               |
+| `dynamic.api.rate-limit-policies`         | `[]`        | 动态限流策略列表（用于动态接口级限流）。 |
+
+**动态限流策略项（`dynamic.api.rate-limit-policies[]`）**
+
+| 配置键              | 默认值    | 说明                 |
+|------------------|--------|--------------------|
+| `id`             | -      | 策略标识（必填）。          |
+| `name`           | -      | 策略名称。              |
+| `window-seconds` | `0`    | 窗口大小（秒）。           |
+| `max-requests`   | `0`    | 窗口内最大请求数。          |
+| `key-mode`       | -      | Key 生成方式（与全局限流一致）。 |
+| `include-path`   | `true` | Key 是否包含路径。        |
+
+**常量覆盖（`dynamic.api.constants.*`）**
+
+**Controller 组**
+
+| 配置键                                                           | 默认值   | 说明         |
+|---------------------------------------------------------------|-------|------------|
+| `dynamic.api.constants.controller.bad-request-code`           | `400` | 参数非法场景错误码。 |
+| `dynamic.api.constants.controller.not-found-code`             | `404` | 资源不存在错误码。  |
+| `dynamic.api.constants.controller.internal-server-error-code` | `500` | 执行失败错误码。   |
+| `dynamic.api.constants.controller.service-unavailable-code`   | `503` | 服务不可用错误码。  |
+| `dynamic.api.constants.controller.rate-limit-code`            | `429` | 限流错误码。     |
+
+**Message 组**
+
+| 配置键                                                  | 默认值                                | 说明         |
+|------------------------------------------------------|------------------------------------|------------|
+| `dynamic.api.constants.message.not-found`            | `dynamic.api.not.found`            | 未找到。       |
+| `dynamic.api.constants.message.global-disabled`      | `dynamic.api.global.disabled`      | 全局关闭。      |
+| `dynamic.api.constants.message.path-invalid`         | `dynamic.api.path.invalid`         | 路径非法。      |
+| `dynamic.api.constants.message.method-invalid`       | `dynamic.api.method.invalid`       | 方法非法。      |
+| `dynamic.api.constants.message.type-invalid`         | `dynamic.api.type.invalid`         | 类型非法。      |
+| `dynamic.api.constants.message.config-invalid`       | `dynamic.api.config.invalid`       | 配置非法。      |
+| `dynamic.api.constants.message.bean-invalid`         | `dynamic.api.bean.invalid`         | Bean 配置非法。 |
+| `dynamic.api.constants.message.sql-invalid`          | `dynamic.api.sql.invalid`          | SQL 配置非法。  |
+| `dynamic.api.constants.message.http-invalid`         | `dynamic.api.http.invalid`         | HTTP 配置非法。 |
+| `dynamic.api.constants.message.create-failed`        | `dynamic.api.create.failed`        | 创建失败。      |
+| `dynamic.api.constants.message.update-failed`        | `dynamic.api.update.failed`        | 更新失败。      |
+| `dynamic.api.constants.message.delete-failed`        | `dynamic.api.delete.failed`        | 删除失败。      |
+| `dynamic.api.constants.message.status-update-failed` | `dynamic.api.status.update.failed` | 状态更新失败。    |
+| `dynamic.api.constants.message.execute-failed`       | `dynamic.api.execute.failed`       | 执行失败。      |
+| `dynamic.api.constants.message.timeout`              | `dynamic.api.timeout`              | 执行超时。      |
+
+**HTTP 组**
+
+| 配置键                                            | 默认值                         | 说明                 |
+|------------------------------------------------|-----------------------------|--------------------|
+| `dynamic.api.constants.http.ext-prefix`        | `/ext/`                     | 动态接口前缀。            |
+| `dynamic.api.constants.http.error-path`        | `/error`                    | 错误路径前缀（禁止注册）。      |
+| `dynamic.api.constants.http.actuator-prefix`   | `/actuator`                 | Actuator 前缀（禁止注册）。 |
+| `dynamic.api.constants.http.supported-methods` | `GET,POST,PUT,PATCH,DELETE` | 允许的 HTTP 方法。       |
+
+**Execute 组**
+
+| 配置键                                            | 默认值    | 说明          |
+|------------------------------------------------|--------|-------------|
+| `dynamic.api.constants.execute.log-max-length` | `2000` | 动态接口日志最大长度。 |
+
+**配置示例（`type` 与 `config`）**
+
+```json
+// BEAN
+{
+  "beanName": "orderSummaryHandler",
+  "paramMode": "AUTO",
+  "paramSchema": "{\"orderId\":\"string\"}"
+}
+```
+
+```json
+// SQL
+{
+  "sql": "SELECT * FROM order.orders WHERE id = :id"
+}
+```
+
+```json
+// HTTP
+{
+  "url": "https://internal/api",
+  "method": "POST",
+  "passHeaders": true,
+  "passQuery": true,
+  "headers": {
+    "X-Token": "secret"
+  }
+}
+```
+
 ### Log 模块常量覆盖（log.constants）
 
 - 默认值集中定义在 `src/main/java/com/example/demo/log/config/LogConstants.java`。

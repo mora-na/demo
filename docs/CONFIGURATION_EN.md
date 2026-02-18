@@ -691,6 +691,126 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 - Duplicate-submit: `security.duplicate-submit.*`.
 - Exclude paths are merged with `security.common.exclude-paths`.
 
+### Dynamic API (core-http-extension)
+
+**Entry and Management APIs**
+
+- Runtime entry: `/ext/**` (matched by the dynamic API registry).
+- Management APIs: `/dynamic-api/**` (CRUD, enable/disable, reload).
+- Metadata APIs: `/dynamic-api/metadata/beans`, `/dynamic-api/metadata/rate-limit-policies`,
+  `/dynamic-api/metadata/types`.
+
+**Types and Extensibility**
+
+- Built-in types: `BEAN` / `SQL` / `HTTP`.
+- Custom types: implement `ExecuteStrategy` and register as a Spring bean; the UI type list is loaded from
+  `/dynamic-api/metadata/types`.
+- Custom configs are parsed by `ExecuteStrategy.parseConfig`; if not provided, raw `config` is passed through as a
+  string.
+
+**SQL Type Restrictions (`type=SQL`)**
+
+- Only `SELECT` is allowed (non-SELECT will be rejected).
+- `security.sql-guard.block-multi-statement=true` blocks multi-statements.
+- `security.sql-guard.block-cross-schema-join=true` blocks cross-schema JOINs and enforces `allowed-schemas`.
+- Named parameters are supported (e.g. `:name`), bound from request params.
+
+**Datasource Mode Notes**
+
+- `multi-datasource`: dynamic SQL runs on the dynamic datasource primary (default `system_rw`); it does not auto-route
+  by module package.
+- `single-datasource-multi-schema`: dynamic SQL uses `spring.datasource`.
+- `single-datasource-single-schema`: startup overrides `security.sql-guard.allowed-schemas` to
+  `app.datasource.single-schema-name`. Schema rewrite only applies to MyBatis, not dynamic SQL.
+
+**Dynamic API Config (`dynamic.api.*`)**
+
+| Key                                       | Default     | Description                              |
+|-------------------------------------------|-------------|------------------------------------------|
+| `dynamic.api.global.enabled`              | `true`      | Global switch.                           |
+| `dynamic.api.default-timeout-ms`          | `3000`      | Default timeout in ms.                   |
+| `dynamic.api.executor.core-pool-size`     | `8`         | Executor core pool size.                 |
+| `dynamic.api.executor.max-pool-size`      | `16`        | Executor max pool size.                  |
+| `dynamic.api.executor.queue-capacity`     | `200`       | Executor queue capacity.                 |
+| `dynamic.api.executor.keep-alive-seconds` | `60`        | Thread keep-alive seconds.               |
+| `dynamic.api.executor.thread-name-prefix` | `ext-exec-` | Thread name prefix.                      |
+| `dynamic.api.rate-limit-policies`         | `[]`        | Rate limit policy list for dynamic APIs. |
+
+**Rate Limit Policy Item (`dynamic.api.rate-limit-policies[]`)**
+
+| Key              | Default | Description                           |
+|------------------|---------|---------------------------------------|
+| `id`             | -       | Policy id (required).                 |
+| `name`           | -       | Policy name.                          |
+| `window-seconds` | `0`     | Window size (seconds).                |
+| `max-requests`   | `0`     | Max requests in the window.           |
+| `key-mode`       | -       | Key mode (same as global rate limit). |
+| `include-path`   | `true`  | Whether to include path in key.       |
+
+**Constants Override (`dynamic.api.constants.*`)**
+
+**Controller**
+
+| Key                                                           | Default | Description               |
+|---------------------------------------------------------------|---------|---------------------------|
+| `dynamic.api.constants.controller.bad-request-code`           | `400`   | Bad request code.         |
+| `dynamic.api.constants.controller.not-found-code`             | `404`   | Not found code.           |
+| `dynamic.api.constants.controller.internal-server-error-code` | `500`   | Execution error code.     |
+| `dynamic.api.constants.controller.service-unavailable-code`   | `503`   | Service unavailable code. |
+| `dynamic.api.constants.controller.rate-limit-code`            | `429`   | Rate limit code.          |
+
+**Message**
+
+| Key                                                  | Default                            | Description           |
+|------------------------------------------------------|------------------------------------|-----------------------|
+| `dynamic.api.constants.message.not-found`            | `dynamic.api.not.found`            | Not found.            |
+| `dynamic.api.constants.message.global-disabled`      | `dynamic.api.global.disabled`      | Globally disabled.    |
+| `dynamic.api.constants.message.path-invalid`         | `dynamic.api.path.invalid`         | Invalid path.         |
+| `dynamic.api.constants.message.method-invalid`       | `dynamic.api.method.invalid`       | Invalid method.       |
+| `dynamic.api.constants.message.type-invalid`         | `dynamic.api.type.invalid`         | Invalid type.         |
+| `dynamic.api.constants.message.config-invalid`       | `dynamic.api.config.invalid`       | Invalid config.       |
+| `dynamic.api.constants.message.bean-invalid`         | `dynamic.api.bean.invalid`         | Invalid bean config.  |
+| `dynamic.api.constants.message.sql-invalid`          | `dynamic.api.sql.invalid`          | Invalid SQL config.   |
+| `dynamic.api.constants.message.http-invalid`         | `dynamic.api.http.invalid`         | Invalid HTTP config.  |
+| `dynamic.api.constants.message.create-failed`        | `dynamic.api.create.failed`        | Create failed.        |
+| `dynamic.api.constants.message.update-failed`        | `dynamic.api.update.failed`        | Update failed.        |
+| `dynamic.api.constants.message.delete-failed`        | `dynamic.api.delete.failed`        | Delete failed.        |
+| `dynamic.api.constants.message.status-update-failed` | `dynamic.api.status.update.failed` | Status update failed. |
+| `dynamic.api.constants.message.execute-failed`       | `dynamic.api.execute.failed`       | Execute failed.       |
+| `dynamic.api.constants.message.timeout`              | `dynamic.api.timeout`              | Timeout.              |
+
+**HTTP**
+
+| Key                                            | Default                     | Description                  |
+|------------------------------------------------|-----------------------------|------------------------------|
+| `dynamic.api.constants.http.ext-prefix`        | `/ext/`                     | Dynamic API prefix.          |
+| `dynamic.api.constants.http.error-path`        | `/error`                    | Error prefix (forbidden).    |
+| `dynamic.api.constants.http.actuator-prefix`   | `/actuator`                 | Actuator prefix (forbidden). |
+| `dynamic.api.constants.http.supported-methods` | `GET,POST,PUT,PATCH,DELETE` | Supported HTTP methods.      |
+
+**Execute**
+
+| Key                                            | Default | Description                     |
+|------------------------------------------------|---------|---------------------------------|
+| `dynamic.api.constants.execute.log-max-length` | `2000`  | Max log length for dynamic API. |
+
+**Config Examples (`type` and `config`)**
+
+```json
+// BEAN
+{"beanName":"orderSummaryHandler","paramMode":"AUTO","paramSchema":"{\"orderId\":\"string\"}"}
+```
+
+```json
+// SQL
+{"sql":"SELECT * FROM order.orders WHERE id = :id"}
+```
+
+```json
+// HTTP
+{"url":"https://internal/api","method":"POST","passHeaders":true,"passQuery":true,"headers":{"X-Token":"secret"}}
+```
+
 ### Log Constants Override (`log.constants`)
 
 - Defaults are centralized in `src/main/java/com/example/demo/log/config/LogConstants.java`.
