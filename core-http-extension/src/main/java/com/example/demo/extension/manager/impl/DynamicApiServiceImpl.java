@@ -130,6 +130,7 @@ public class DynamicApiServiceImpl implements DynamicApiService {
     public boolean deleteApi(Long id) {
         DynamicApi api = requireApi(id);
         api.setStatus(DynamicApiStatus.DELETED.name());
+        api.setIsDeleted(1);
         mapper.updateById(api);
         registry.remove(api.getMethod(), api.getPath());
         publishChange(api, "delete");
@@ -339,6 +340,8 @@ public class DynamicApiServiceImpl implements DynamicApiService {
                     .eq(StringUtils.isNotBlank(query.getType()), DynamicApi::getType, query.getType())
                     .eq(StringUtils.isNotBlank(query.getAuthMode()), DynamicApi::getAuthMode, query.getAuthMode());
         }
+        wrapper.ne(query == null || StringUtils.isBlank(query.getStatus()),
+                DynamicApi::getStatus, DynamicApiStatus.DELETED.name());
         wrapper.orderByDesc(DynamicApi::getUpdateTime)
                 .orderByDesc(DynamicApi::getId);
         return wrapper;
