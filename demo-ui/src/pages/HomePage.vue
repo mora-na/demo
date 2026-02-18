@@ -30,7 +30,7 @@
                     :class="{ active: activeGroup?.id === group.id }"
                     class="nav-item nav-root"
                     type="button"
-                    @click="handleGroupClick(group)"
+                    @click="handleGroupClick(group, $event)"
                 >
                   <span class="nav-icon">
                     <component :is="menuIconComponent(group)" class="nav-icon-svg"/>
@@ -40,6 +40,7 @@
                       v-if="group.children?.length"
                       :class="{ expanded: isGroupExpanded(group) }"
                       class="nav-arrow"
+                      @click.stop.prevent="toggleGroup(group.id)"
                   >
                     ▾
                   </span>
@@ -811,8 +812,14 @@ async function selectMenu(menu: MenuTree) {
   await router.push(buildHomePath(targetPath));
 }
 
-function handleGroupClick(menu: MenuTree) {
+function handleGroupClick(menu: MenuTree, event?: MouseEvent) {
   if (menu?.id == null) {
+    return;
+  }
+  if (event?.defaultPrevented) {
+    return;
+  }
+  if (event?.target instanceof Element && event.target.closest(".nav-arrow")) {
     return;
   }
   if (menu.children?.length) {
