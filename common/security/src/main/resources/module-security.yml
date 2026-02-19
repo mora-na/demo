@@ -1,0 +1,92 @@
+# 安全与权限配置
+security:
+  # 公共排除路径配置
+  common:
+    # 公共排除路径列表
+    exclude-paths:
+      - /druid/** # 排除 Druid 监控
+  # XSS 防护配置
+  xss:
+    # 是否启用 XSS 防护
+    enabled: true
+    # XSS 额外排除路径（会与 security.common.exclude-paths 合并）
+    additional-exclude-paths: [ ]
+  # SQL 审计与防护配置
+  sql-guard:
+    # 是否启用 SQL 防护
+    enabled: true
+    # 是否阻止全表操作
+    block-full-table: true
+    # 是否阻止多语句执行
+    block-multi-statement: true
+    # 是否阻止跨 schema JOIN
+    block-cross-schema-join: true
+    # 允许访问的业务 schema 白名单
+    allowed-schemas: [ system, order, notice, job, log, dict, cache, extension, demo ]
+  # 频率限制配置
+  rate-limit:
+    # 是否启用限流
+    enabled: true
+    # 限流窗口时长（秒）
+    window-seconds: 60
+    # 窗口内最大请求数
+    max-requests: 100
+    # 限流 Key 生成方式
+    key-mode: ip
+    # 限流 Key 是否包含路径
+    include-path: true
+    # 限流额外排除路径（会与 security.common.exclude-paths 合并）
+    additional-exclude-paths:
+      - /ext/** # 动态接口由模块内部限流
+  # 重复提交防护配置
+  duplicate-submit:
+    # 是否启用重复提交防护
+    enabled: true
+    # 判定时间窗口（ms）
+    interval-millis: 3000
+    # 重复提交 Key 生成方式
+    key-mode: ip
+    # 重复提交 Key 是否包含路径
+    include-path: true
+    # 是否使用幂等键头
+    use-idempotency-key: true
+    # 幂等键 Header 名称
+    header-name: Idempotency-Key
+    # 是否包含请求体生成 Key
+    include-body: true
+    # 保护的 HTTP 方法
+    methods:
+      - POST # 方法：POST
+      - PUT # 方法：PUT
+      - PATCH # 方法：PATCH
+      - DELETE # 方法：DELETE
+    # 重复提交额外排除路径（会与 security.common.exclude-paths 合并）
+    additional-exclude-paths: [ ]
+  # 权限配置
+  permission:
+    # 是否启用权限校验
+    enabled: true
+    # 默认要求登录
+    require-login-by-default: true
+    # 权限数据源
+    source: db
+    # 超级用户列表
+    super-users:
+      - admin # 超级用户账号
+    # 权限缓存时长（秒）
+    cache-seconds: 600
+    # 权限校验额外排除路径（PermissionInterceptor 生效，跳过登录/权限校验）
+    # 该列表会与 security.common.exclude-paths 合并
+    additional-exclude-paths:
+      - /auth/** # 排除认证接口
+      - /error # 排除错误接口
+  # 数据范围配置
+  data-scope:
+    # 是否启用数据范围控制
+    enabled: true
+    # 默认数据范围类型
+    default-type: SELF
+    # 数据范围来源
+    source: db
+    # 数据范围缓存时长（秒）
+    cache-seconds: 180

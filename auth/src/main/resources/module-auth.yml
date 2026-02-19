@@ -1,0 +1,18 @@
+# 认证配置
+auth:
+  # 验证码配置
+  captcha:
+    # 图片宽度
+    width: 120
+    # 图片高度
+    height: 40
+    # 干扰线宽度
+    thickness: 2
+    # 旋转范围（弧度）
+    rotate-min: -0.5
+    rotate-max: 0.5
+    # 斜切范围（X/Y）
+    shear-x-min: -0.5
+    shear-x-max: 0.5
+    shear-y-min: -0.5
+    shear-y-max: 0.5

@@ -7,6 +7,7 @@ import com.example.demo.common.spring.SpringContextHolder;
 import com.example.demo.notice.config.NoticeConstants;
 import com.example.demo.notice.dto.*;
 import com.example.demo.notice.entity.NoticeRecipient;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -21,6 +22,9 @@ import java.util.Map;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/12
  */
+
+
+@Mapper
 public interface NoticeRecipientMapper extends BaseMapper<NoticeRecipient> {
 
     static NoticeConstants constants() {

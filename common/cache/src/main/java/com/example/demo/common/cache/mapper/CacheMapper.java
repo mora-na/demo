@@ -13,6 +13,9 @@ import java.util.List;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
+
+
+@Mapper
 public interface CacheMapper extends BaseMapper<CacheEntry> {
 
     @Select("SELECT cache_key, cache_value, value_class, expire_at FROM cache.sys_cache WHERE cache_key = #{key} FOR UPDATE")

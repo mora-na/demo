@@ -1,0 +1,79 @@
+app:
+  datasource:
+    routing:
+      # 只使用显式标记（@Transactional(readOnly=true) 或 @ReadOnlyRoute）判定只读，避免方法名误判
+      read-only-detection: explicit
+      read-only-method-prefixes:
+        - get
+        - find
+        - list
+        - page
+        - query
+        - select
+        - count
+        - search
+        - load
+        - read
+        - fetch
+        - resolve
+        - exists
+      modules:
+        - name: system
+          rw-data-source: system_rw
+          ro-data-source: system_ro
+          packages:
+            - com.example.demo.user
+            - com.example.demo.dept
+            - com.example.demo.menu
+            - com.example.demo.permission
+            - com.example.demo.post
+            - com.example.demo.datascope
+            - com.example.demo.identity.facade
+            - com.example.demo.common.mybatis
+            - com.example.demo.common.web.permission
+        - name: order
+          rw-data-source: order_rw
+          ro-data-source: order_ro
+          packages:
+            - com.example.demo.order
+        - name: notice
+          rw-data-source: notice_rw
+          ro-data-source: notice_ro
+          packages:
+            - com.example.demo.notice
+        - name: job
+          rw-data-source: job_rw
+          ro-data-source: job_ro
+          packages:
+            - com.example.demo.job
+        - name: log
+          rw-data-source: log_rw
+          ro-data-source: log_ro
+          packages:
+            - com.example.demo.log
+        - name: dict
+          rw-data-source: dict_rw
+          ro-data-source: dict_ro
+          packages:
+            - com.example.demo.dict
+        - name: cache
+          rw-data-source: cache_rw
+          ro-data-source: cache_ro
+          force-read-write: true
+          packages:
+            - com.example.demo.common.cache
+
+    sql-rewrite:
+      # 是否启用单 schema SQL 重写由 app.datasource.mode 自动派生
+      target-schema: demo
+      source-schemas:
+        - system
+        - notice
+        - job
+        - log
+        - dict
+        - cache
+        - extension
+        - order
+      cache-size: 512
+      fallback-to-regex: true

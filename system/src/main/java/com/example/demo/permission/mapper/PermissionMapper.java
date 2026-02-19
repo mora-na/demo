@@ -2,6 +2,7 @@ package com.example.demo.permission.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.demo.permission.entity.Permission;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -13,6 +14,9 @@ import java.util.List;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/9
  */
+
+
+@Mapper
 public interface PermissionMapper extends BaseMapper<Permission> {
 
     /**

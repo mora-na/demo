@@ -1,0 +1,10 @@
+# 系统通知 SSE 配置
+notice:
+  constants:
+    stream:
+      # 心跳间隔（毫秒），<=0 表示禁用心跳
+      heartbeat-interval-millis: 60000
+      # 断线判定超时（毫秒）
+      heartbeat-timeout-millis: 180000
+      # 推送最新通知数量
+      latest-limit: 5

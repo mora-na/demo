@@ -1,0 +1,18 @@
+# Excel 导出性能配置
+excel:
+  # Excel 导出配置
+  export:
+    # 分页导出每页大小
+    page-size: 1000
+    # SXSSF 内存窗口行数
+    row-window-size: 200
+    # 是否启用共享字符串表
+    use-shared-strings: false
+    # 是否启用列宽自动计算
+    auto-size: true
+    # 自动列宽允许的最大行数
+    auto-size-max-rows: 30
+    # 分页时是否执行 count 查询
+    count-enabled: false
+    # 是否压缩临时文件
+    compress-temp-files: true

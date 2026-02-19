@@ -1,0 +1,6 @@
+# 字典缓存配置
+dict:
+  constants:
+    cache:
+      # 字典缓存时长（秒），<=0 表示不缓存
+      ttl-seconds: 600

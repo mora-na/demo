@@ -1,4 +1,4 @@
-package com.example.demo.config;
+package com.example.demo.common.datasource;
 
 import java.util.Locale;
 

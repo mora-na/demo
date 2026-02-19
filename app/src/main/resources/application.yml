@@ -15,6 +15,19 @@ server:
 
 # Spring Boot 核心配置
 spring:
+  config:
+    import:
+      - classpath:module-datasource-routing.yml
+      - classpath:module-job.yml
+      - classpath:module-cache.yml
+      - classpath:module-dict.yml
+      - classpath:module-notice.yml
+      - classpath:module-mybatis.yml
+      - classpath:module-excel.yml
+      - classpath:module-security.yml
+      - classpath:module-auth.yml
+      - classpath:module-dynamic-api.yml
+
   # 应用元信息
   application:
     # 应用名称（用于注册、日志等）
@@ -38,58 +51,6 @@ spring:
       max-file-size: 120MB
       # 单请求最大大小
       max-request-size: 120MB
-  quartz:
-    # Quartz 是否自动启动
-    auto-startup: true
-    # 启动延迟（秒，0 表示立即启动）
-    startup-delay: 5
-    # 是否覆盖已存在的 Job/Trigger（JDBC 模式建议谨慎开启）
-    overwrite-existing-jobs: false
-    # 关闭应用时是否等待任务执行完成
-    wait-for-jobs-to-complete-on-shutdown: false
-    # 持久化任务到数据库
-    job-store-type: jdbc
-    jdbc:
-      # 禁止自动建表，使用 SQL 脚本初始化
-      initialize-schema: never
-    properties:
-      org:
-        quartz:
-          scheduler:
-            # 调度器名称（需与表中 SCHED_NAME 一致）
-            instanceName: DemoQuartzScheduler
-            # 节点 ID（AUTO 表示自动生成）
-            instanceId: AUTO
-            # 禁用版本更新检查
-            skipUpdateCheck: true
-          threadPool:
-            # 线程池实现类
-            class: org.quartz.simpl.SimpleThreadPool
-            # 线程数（按并发任务量配置）
-            threadCount: 10
-            # 线程优先级（1-10）
-            threadPriority: 5
-            # 继承初始化线程的上下文类加载器
-            threadsInheritContextClassLoaderOfInitializingThread: true
-          jobStore:
-            # 使用 Spring 托管的数据源（默认 DataSource）
-            class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
-            # JDBC 方言委托类
-            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-            # 表前缀（需与建表脚本保持一致）
-            tablePrefix: job.sys_quartz_
-            # Misfire 判定阈值（毫秒）
-            misfireThreshold: 60000
-            # 单次处理的 misfire 数量上限
-            maxMisfiresToHandleAtATime: 20
-            # 是否启用集群
-            isClustered: false
-            # 集群心跳间隔（毫秒，开启集群时生效）
-            clusterCheckinInterval: 20000
-            # JobDataMap 是否仅支持字符串属性
-            useProperties: false
-            # 获取触发器时加锁（高并发 DB 建议开启）
-            acquireTriggersWithinLock: true
 
 # Actuator 健康检查配置
 management:
@@ -97,109 +58,6 @@ management:
     mail:
       # 默认跟随 NOTIFY_MAIL_ENABLED，未启用邮件时不探测 SMTP，避免无密码告警
       enabled: ${MANAGEMENT_HEALTH_MAIL_ENABLED:${NOTIFY_MAIL_ENABLED:false}}
-
-# 定时任务日志收集配置
-job:
-  constants:
-    log-collect:
-      # 是否启用自动收集
-      enabled: true
-      # 收集范围：MDC | THREAD
-      scope: MDC
-      # 最低收集级别（含）：TRACE/DEBUG/INFO/WARN/ERROR
-      min-level: INFO
-      # 单次执行最大日志长度（字符）
-      max-length: 65536
-      # 延迟合并时间（毫秒）
-      merge-delay-millis: 3000
-      # 最大缓冲保留时间（毫秒）
-      max-hold-millis: 60000
-      # 是否启用 InheritableThreadLocal 兜底透传
-      inherit-thread-context: true
-      # MDC 关联键
-      mdc-key: jobLogId
-      # 线程名 MDC 键（scope=THREAD 生效）
-      thread-key: jobLogThread
-
-# 缓存配置
-cache:
-  # 缓存位置：redis | memory | db
-  location: redis
-  memory:
-    # 内存缓存最大条目数（避免 OOM）
-    maximum-size: 10000
-    # 最大权重（MB，按估算内存权重限制），0 表示不启用权重限制
-    maximum-weight-mb: 64
-    # 清理间隔（秒），0 表示关闭定时清理
-    cleanup-interval-seconds: 60
-  db:
-    # 数据库缓存最大行数，0 表示不启用限制
-    maximum-rows: 100000
-    # 清理间隔（秒），0 表示关闭定时清理
-    cleanup-interval-seconds: 300
-
-# 字典缓存配置
-dict:
-  constants:
-    cache:
-      # 字典缓存时长（秒），<=0 表示不缓存
-      ttl-seconds: 600
-
-# 系统通知 SSE 配置
-notice:
-  constants:
-    stream:
-      # 心跳间隔（毫秒），<=0 表示禁用心跳
-      heartbeat-interval-millis: 60000
-      # 断线判定超时（毫秒）
-      heartbeat-timeout-millis: 180000
-      # 推送最新通知数量
-      latest-limit: 5
-
-# MyBatis-Plus 配置
-mybatis-plus:
-  # Mapper XML 文件路径
-  mapper-locations: classpath*:/mapper/**/*.xml
-  # MyBatis 原生配置
-  configuration:
-    # 是否启用懒加载
-    lazy-loading-enabled: true
-    # 是否启用激进懒加载
-    aggressive-lazy-loading: false
-  # 全局配置
-  global-config:
-    # 数据库配置
-    db-config:
-      # 逻辑删除字段
-      logic-delete-field: is_deleted
-      # 逻辑删除值
-      logic-delete-value: 1
-      # 逻辑未删除值
-      logic-not-delete-value: 0
-
-# SQL 日志配置
-sql-log:
-  # 是否打印 SQL（关闭后禁用 MyBatis SQL 日志）
-  enabled: false
-
-# Excel 导出性能配置
-excel:
-  # Excel 导出配置
-  export:
-    # 分页导出每页大小
-    page-size: 1000
-    # SXSSF 内存窗口行数
-    row-window-size: 200
-    # 是否启用共享字符串表
-    use-shared-strings: false
-    # 是否启用列宽自动计算
-    auto-size: true
-    # 自动列宽允许的最大行数
-    auto-size-max-rows: 30
-    # 分页时是否执行 count 查询
-    count-enabled: false
-    # 是否压缩临时文件
-    compress-temp-files: true
 
 # 日志配置
 logging:
@@ -225,143 +83,3 @@ logging:
       max-history: 30
       # 日志总大小上限
       total-size-cap: 1GB
-
-# 安全与权限配置
-security:
-  # 公共排除路径配置
-  common:
-    # 公共排除路径列表
-    exclude-paths:
-      - /druid/** # 排除 Druid 监控
-  # XSS 防护配置
-  xss:
-    # 是否启用 XSS 防护
-    enabled: true
-    # XSS 额外排除路径（会与 security.common.exclude-paths 合并）
-    additional-exclude-paths: [ ]
-  # SQL 审计与防护配置
-  sql-guard:
-    # 是否启用 SQL 防护
-    enabled: true
-    # 是否阻止全表操作
-    block-full-table: true
-    # 是否阻止多语句执行
-    block-multi-statement: true
-    # 是否阻止跨 schema JOIN
-    block-cross-schema-join: true
-    # 允许访问的业务 schema 白名单
-    allowed-schemas: [ system, order, notice, job, log, dict, cache, extension, demo ]
-  # 频率限制配置
-  rate-limit:
-    # 是否启用限流
-    enabled: true
-    # 限流窗口时长（秒）
-    window-seconds: 60
-    # 窗口内最大请求数
-    max-requests: 100
-    # 限流 Key 生成方式
-    key-mode: ip
-    # 限流 Key 是否包含路径
-    include-path: true
-    # 限流额外排除路径（会与 security.common.exclude-paths 合并）
-    additional-exclude-paths:
-      - /ext/** # 动态接口由模块内部限流
-  # 重复提交防护配置
-  duplicate-submit:
-    # 是否启用重复提交防护
-    enabled: true
-    # 判定时间窗口（ms）
-    interval-millis: 3000
-    # 重复提交 Key 生成方式
-    key-mode: ip
-    # 重复提交 Key 是否包含路径
-    include-path: true
-    # 是否使用幂等键头
-    use-idempotency-key: true
-    # 幂等键 Header 名称
-    header-name: Idempotency-Key
-    # 是否包含请求体生成 Key
-    include-body: true
-    # 保护的 HTTP 方法
-    methods:
-      - POST # 方法：POST
-      - PUT # 方法：PUT
-      - PATCH # 方法：PATCH
-      - DELETE # 方法：DELETE
-    # 重复提交额外排除路径（会与 security.common.exclude-paths 合并）
-    additional-exclude-paths: [ ]
-  # 权限配置
-  permission:
-    # 是否启用权限校验
-    enabled: true
-    # 默认要求登录
-    require-login-by-default: true
-    # 权限数据源
-    source: db
-    # 超级用户列表
-    super-users:
-      - admin # 超级用户账号
-    # 权限缓存时长（秒）
-    cache-seconds: 600
-    # 权限校验额外排除路径（PermissionInterceptor 生效，跳过登录/权限校验）
-    # 该列表会与 security.common.exclude-paths 合并
-    additional-exclude-paths:
-      - /auth/** # 排除认证接口
-      - /error # 排除错误接口
-  # 数据范围配置
-  data-scope:
-    # 是否启用数据范围控制
-    enabled: true
-    # 默认数据范围类型
-    default-type: SELF
-    # 数据范围来源
-    source: db
-    # 数据范围缓存时长（秒）
-    cache-seconds: 180
-
-# 认证配置
-auth:
-  # 验证码配置
-  captcha:
-    # 图片宽度
-    width: 120
-    # 图片高度
-    height: 40
-    # 干扰线宽度
-    thickness: 2
-    # 旋转范围（弧度）
-    rotate-min: -0.5
-    rotate-max: 0.5
-    # 斜切范围（X/Y）
-    shear-x-min: -0.5
-    shear-x-max: 0.5
-    shear-y-min: -0.5
-    shear-y-max: 0.5
-
-# 动态接口扩展配置
-dynamic:
-  api:
-    global:
-      enabled: true
-    constants:
-      execute:
-        default-timeout-ms: 3000
-    executor:
-      core-pool-size: 8
-      max-pool-size: 16
-      queue-capacity: 200
-      keep-alive-seconds: 60
-      thread-name-prefix: ext-exec-
-    rate-limit-policies:
-      - id: strict
-        name: 严格策略
-        window-seconds: 10
-        max-requests: 20
-        key-mode: ip-user
-        include-path: true
-      - id: relaxed
-        name: 宽松策略
-        window-seconds: 60
-        max-requests: 200
-        key-mode: ip
-        include-path: true

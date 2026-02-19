@@ -1,8 +1,8 @@
-package com.example.demo.config;
+package com.example.demo.common.datasource;
 
 import org.apache.ibatis.plugin.Interceptor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -13,13 +13,12 @@ import org.springframework.core.annotation.Order;
  */
 @Configuration
 @ConditionalOnProperty(prefix = "app.datasource.sql-rewrite", name = "enabled", havingValue = "true")
+@EnableConfigurationProperties(SingleSchemaSqlRewriteProperties.class)
 public class SingleSchemaSqlRewriteConfiguration {
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    public Interceptor singleSchemaSqlRewriteInterceptor(
-            @Value("${app.datasource.sql-rewrite.target-schema:demo}") String targetSchema
-    ) {
-        return new SingleSchemaSqlRewriteInterceptor(targetSchema);
+    public Interceptor singleSchemaSqlRewriteInterceptor(SingleSchemaSqlRewriteProperties properties) {
+        return new SingleSchemaSqlRewriteInterceptor(properties);
     }
 }
