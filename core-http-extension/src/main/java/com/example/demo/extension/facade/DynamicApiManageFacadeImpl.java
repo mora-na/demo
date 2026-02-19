@@ -38,7 +38,7 @@ public class DynamicApiManageFacadeImpl implements DynamicApiManageFacade {
             DynamicApi api = dynamicApiService.createApi(request);
             return toDto(api);
         } catch (DynamicApiException ex) {
-            throw new DynamicApiFacadeException(ex.getCode(), ex.getMessageKey());
+            throw new DynamicApiFacadeException(ex.getCode(), ex.getMessageKey(), ex.getDetails());
         }
     }
 
@@ -49,7 +49,7 @@ public class DynamicApiManageFacadeImpl implements DynamicApiManageFacade {
             DynamicApi api = dynamicApiService.updateApi(id, request);
             return toDto(api);
         } catch (DynamicApiException ex) {
-            throw new DynamicApiFacadeException(ex.getCode(), ex.getMessageKey());
+            throw new DynamicApiFacadeException(ex.getCode(), ex.getMessageKey(), ex.getDetails());
         }
     }
 
@@ -58,7 +58,7 @@ public class DynamicApiManageFacadeImpl implements DynamicApiManageFacade {
         try {
             return dynamicApiService.enableApi(id);
         } catch (DynamicApiException ex) {
-            throw new DynamicApiFacadeException(ex.getCode(), ex.getMessageKey());
+            throw new DynamicApiFacadeException(ex.getCode(), ex.getMessageKey(), ex.getDetails());
         }
     }
 
@@ -67,7 +67,7 @@ public class DynamicApiManageFacadeImpl implements DynamicApiManageFacade {
         try {
             return dynamicApiService.disableApi(id);
         } catch (DynamicApiException ex) {
-            throw new DynamicApiFacadeException(ex.getCode(), ex.getMessageKey());
+            throw new DynamicApiFacadeException(ex.getCode(), ex.getMessageKey(), ex.getDetails());
         }
     }
 
@@ -76,7 +76,7 @@ public class DynamicApiManageFacadeImpl implements DynamicApiManageFacade {
         try {
             return dynamicApiService.deleteApi(id);
         } catch (DynamicApiException ex) {
-            throw new DynamicApiFacadeException(ex.getCode(), ex.getMessageKey());
+            throw new DynamicApiFacadeException(ex.getCode(), ex.getMessageKey(), ex.getDetails());
         }
     }
 
@@ -85,7 +85,7 @@ public class DynamicApiManageFacadeImpl implements DynamicApiManageFacade {
         try {
             return dynamicApiService.reloadAll();
         } catch (DynamicApiException ex) {
-            throw new DynamicApiFacadeException(ex.getCode(), ex.getMessageKey());
+            throw new DynamicApiFacadeException(ex.getCode(), ex.getMessageKey(), ex.getDetails());
         }
     }
 

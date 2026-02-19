@@ -84,16 +84,52 @@ public class DynamicApiConstants {
         public static final String DEFAULT_EXT_PREFIX = "/ext/";
         public static final String DEFAULT_ERROR_PATH = "/error";
         public static final String DEFAULT_ACTUATOR_PREFIX = "/actuator";
+        public static final String DEFAULT_REQUEST_ID_HEADER = "X-Request-Id";
+        public static final String DEFAULT_TENANT_ID_HEADER = "X-Tenant-Id";
+        public static final String DEFAULT_TRACE_ID_HEADER = "X-Trace-Id";
+        public static final boolean DEFAULT_BLOCK_UNKNOWN_HOST = true;
         public static final int DEFAULT_MAX_TOTAL_CONNECTIONS = 200;
         public static final int DEFAULT_MAX_CONNECTIONS_PER_ROUTE = 50;
         public static final int DEFAULT_IDLE_EVICT_SECONDS = 30;
+        public static final List<String> DEFAULT_ALLOWED_SCHEMES = Arrays.asList("http", "https");
 
         private String extPrefix = DEFAULT_EXT_PREFIX;
         private String errorPath = DEFAULT_ERROR_PATH;
         private String actuatorPrefix = DEFAULT_ACTUATOR_PREFIX;
+        private String requestIdHeader = DEFAULT_REQUEST_ID_HEADER;
+        private String tenantIdHeader = DEFAULT_TENANT_ID_HEADER;
+        private String traceIdHeader = DEFAULT_TRACE_ID_HEADER;
         private int maxTotalConnections = DEFAULT_MAX_TOTAL_CONNECTIONS;
         private int maxConnectionsPerRoute = DEFAULT_MAX_CONNECTIONS_PER_ROUTE;
         private int idleEvictSeconds = DEFAULT_IDLE_EVICT_SECONDS;
+        /**
+         * HTTP 转发允许的协议（小写）。
+         */
+        private List<String> allowedSchemes = new ArrayList<>(DEFAULT_ALLOWED_SCHEMES);
+        /**
+         * HTTP 转发允许的目标主机（为空表示不限制，支持通配符）。
+         */
+        private List<String> allowedHosts = new ArrayList<>();
+        /**
+         * HTTP 转发禁止的目标主机（支持通配符）。
+         */
+        private List<String> blockedHosts = new ArrayList<>();
+        /**
+         * HTTP 转发允许的目标 CIDR（为空表示不限制）。
+         */
+        private List<String> allowedCidrs = new ArrayList<>();
+        /**
+         * HTTP 转发禁止的目标 CIDR。
+         */
+        private List<String> blockedCidrs = new ArrayList<>();
+        /**
+         * 是否禁止访问私有网段/回环地址。
+         */
+        private boolean blockPrivateNetwork = false;
+        /**
+         * DNS 解析失败是否阻止访问。
+         */
+        private boolean blockUnknownHost = DEFAULT_BLOCK_UNKNOWN_HOST;
         private List<String> supportedMethods = new ArrayList<>(
                 Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE")
         );

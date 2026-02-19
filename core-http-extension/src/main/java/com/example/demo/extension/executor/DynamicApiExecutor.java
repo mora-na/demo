@@ -79,6 +79,7 @@ public class DynamicApiExecutor {
         }
         CompletableFuture<DynamicApiExecuteResult> resultFuture = new CompletableFuture<>();
         AtomicBoolean cleanupInvoked = new AtomicBoolean(false);
+        AtomicBoolean afterInvoked = new AtomicBoolean(false);
         AtomicBoolean completionRecorded = new AtomicBoolean(false);
         AtomicLong startNanos = new AtomicLong(0L);
         long submitNanos = System.nanoTime();
@@ -96,12 +97,16 @@ public class DynamicApiExecutor {
                 }
                 boolean success = false;
                 DynamicApiTerminationReason reason = null;
+                DynamicApiExecuteResult result = null;
+                Throwable error = null;
                 try {
-                    DynamicApiExecuteResult result = strategy.execute(context);
+                    strategy.beforeExecute(context);
+                    result = strategy.execute(context);
                     success = result != null && result.isSuccess();
                     reason = resolveReason(result);
                     resultFuture.complete(result);
                 } catch (Throwable ex) {
+                    error = ex;
                     if (resultFuture.isDone()) {
                         return;
                     }
@@ -139,6 +144,7 @@ public class DynamicApiExecutor {
                         }
                     }
                 } finally {
+                    invokeAfterHook(strategy, context, afterInvoked, result, error);
                     if (completionRecorded.compareAndSet(false, true)) {
                         long end = System.nanoTime();
                         long execMs = startNanos.get() == 0L ? 0L : toMillis(end - startNanos.get());
@@ -178,9 +184,12 @@ public class DynamicApiExecutor {
                 if (finalTask != null) {
                     finalTask.cancel(true);
                 }
-                resultFuture.complete(DynamicApiExecuteResult.error(constants.getController().getServiceUnavailableCode(),
+                DynamicApiExecuteResult timeoutResult = DynamicApiExecuteResult.error(
+                        constants.getController().getServiceUnavailableCode(),
                         constants.getMessage().getTimeout(),
-                        DynamicApiTerminationReason.TIMEOUT));
+                        DynamicApiTerminationReason.TIMEOUT);
+                resultFuture.complete(timeoutResult);
+                invokeAfterHook(strategy, context, afterInvoked, timeoutResult, cause);
                 if (completionRecorded.compareAndSet(false, true)) {
                     long end = System.nanoTime();
                     long execMs = startNanos.get() == 0L ? 0L : toMillis(end - startNanos.get());
@@ -196,6 +205,7 @@ public class DynamicApiExecutor {
             }
             if (reason == DynamicApiTerminationReason.ERROR) {
                 invokeCleanupOnce(strategy, context, cleanupInvoked, reason, cause);
+                invokeAfterHook(strategy, context, afterInvoked, null, cause);
                 if (completionRecorded.compareAndSet(false, true)) {
                     long end = System.nanoTime();
                     long execMs = startNanos.get() == 0L ? 0L : toMillis(end - startNanos.get());
@@ -214,9 +224,12 @@ public class DynamicApiExecutor {
                 if (finalTask != null) {
                     finalTask.cancel(true);
                 }
-                resultFuture.complete(DynamicApiExecuteResult.error(constants.getController().getRejectedCode(),
+                DynamicApiExecuteResult cancelResult = DynamicApiExecuteResult.error(
+                        constants.getController().getRejectedCode(),
                         constants.getMessage().getRejected(),
-                        DynamicApiTerminationReason.CANCELLED));
+                        DynamicApiTerminationReason.CANCELLED);
+                resultFuture.complete(cancelResult);
+                invokeAfterHook(strategy, context, afterInvoked, cancelResult, cause);
                 if (completionRecorded.compareAndSet(false, true)) {
                     long end = System.nanoTime();
                     long execMs = startNanos.get() == 0L ? 0L : toMillis(end - startNanos.get());
@@ -284,6 +297,48 @@ public class DynamicApiExecutor {
                             ? null : context.getMeta().getApi().getId(),
                     context == null || context.getMeta() == null ? null : context.getMeta().getType(),
                     reason);
+        }
+    }
+
+    private void invokeAfterHook(ExecuteStrategy strategy,
+                                 DynamicApiContext context,
+                                 AtomicBoolean guard,
+                                 DynamicApiExecuteResult result,
+                                 Throwable error) {
+        if (strategy == null || guard == null || !guard.compareAndSet(false, true)) {
+            return;
+        }
+        long timeoutMs = Math.max(1L, constants.getExecute().getCleanupTimeoutMs());
+        Runnable hookTask = () -> {
+            try {
+                strategy.afterExecute(context, result, error);
+            } catch (Throwable ex) {
+                log.warn("Dynamic api afterExecute failed: apiId={}, type={}, error={}",
+                        context == null || context.getMeta() == null || context.getMeta().getApi() == null
+                                ? null : context.getMeta().getApi().getId(),
+                        context == null || context.getMeta() == null ? null : context.getMeta().getType(),
+                        ex.getMessage());
+            }
+        };
+        try {
+            Future<?> future = cleanupExecutor.submit(hookTask);
+            if (timeoutMs > 0) {
+                cleanupScheduler.schedule(() -> {
+                    if (future.isDone()) {
+                        return;
+                    }
+                    future.cancel(true);
+                    log.warn("Dynamic api afterExecute timed out: apiId={}, type={}",
+                            context == null || context.getMeta() == null || context.getMeta().getApi() == null
+                                    ? null : context.getMeta().getApi().getId(),
+                            context == null || context.getMeta() == null ? null : context.getMeta().getType());
+                }, timeoutMs, TimeUnit.MILLISECONDS);
+            }
+        } catch (RejectedExecutionException ex) {
+            log.warn("Dynamic api afterExecute rejected: apiId={}, type={}",
+                    context == null || context.getMeta() == null || context.getMeta().getApi() == null
+                            ? null : context.getMeta().getApi().getId(),
+                    context == null || context.getMeta() == null ? null : context.getMeta().getType());
         }
     }
 

@@ -32,7 +32,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.annotation.PreDestroy;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -118,6 +121,11 @@ public class HttpForwardStrategy implements ExecuteStrategy {
                     DynamicApiTerminationReason.ERROR);
         }
         String targetUrl = resolveUrl(config, apiRequest, context.getRequest().getPathVariables());
+        if (!validateTargetUrl(targetUrl)) {
+            return DynamicApiExecuteResult.error(constants.getController().getBadRequestCode(),
+                    constants.getMessage().getHttpInvalid(),
+                    DynamicApiTerminationReason.ERROR);
+        }
         HttpHeaders headers = buildHeaders(config, apiRequest);
         String body = apiRequest == null ? null : apiRequest.getRawBody();
         HttpEntity<String> entity = new HttpEntity<>(body, headers);
@@ -187,6 +195,230 @@ public class HttpForwardStrategy implements ExecuteStrategy {
             }
         }
         return expanded;
+    }
+
+    private boolean validateTargetUrl(String targetUrl) {
+        if (StringUtils.isBlank(targetUrl)) {
+            return false;
+        }
+        URI uri;
+        try {
+            uri = URI.create(targetUrl);
+        } catch (Exception ex) {
+            return false;
+        }
+        String scheme = uri.getScheme();
+        if (StringUtils.isBlank(scheme)) {
+            return false;
+        }
+        List<String> allowedSchemes = constants.getHttp().getAllowedSchemes();
+        if (allowedSchemes != null && !allowedSchemes.isEmpty()) {
+            boolean match = false;
+            for (String allowed : allowedSchemes) {
+                if (allowed != null && scheme.equalsIgnoreCase(allowed.trim())) {
+                    match = true;
+                    break;
+                }
+            }
+            if (!match) {
+                return false;
+            }
+        }
+        String host = uri.getHost();
+        if (StringUtils.isBlank(host)) {
+            return false;
+        }
+        if (isHostBlocked(host, constants.getHttp().getBlockedHosts())) {
+            return false;
+        }
+        List<String> allowedHosts = constants.getHttp().getAllowedHosts();
+        if (allowedHosts != null && !allowedHosts.isEmpty() && !isHostAllowed(host, allowedHosts)) {
+            return false;
+        }
+        if (!validateHostByCidr(host)) {
+            return false;
+        }
+        if (constants.getHttp().isBlockPrivateNetwork() && isPrivateAddress(host)) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isHostAllowed(String host, List<String> allowedHosts) {
+        for (String pattern : allowedHosts) {
+            if (matchHostPattern(host, pattern)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isHostBlocked(String host, List<String> blockedHosts) {
+        if (blockedHosts == null || blockedHosts.isEmpty()) {
+            return false;
+        }
+        for (String pattern : blockedHosts) {
+            if (matchHostPattern(host, pattern)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean matchHostPattern(String host, String pattern) {
+        if (StringUtils.isBlank(pattern)) {
+            return false;
+        }
+        String normalized = pattern.trim().toLowerCase(Locale.ROOT);
+        String target = host.toLowerCase(Locale.ROOT);
+        if (normalized.equals(target)) {
+            return true;
+        }
+        if (normalized.contains("*")) {
+            String regex = "^" + wildcardToRegex(normalized) + "$";
+            return target.matches(regex);
+        }
+        return false;
+    }
+
+    private String wildcardToRegex(String pattern) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < pattern.length(); i++) {
+            char ch = pattern.charAt(i);
+            if (ch == '*') {
+                builder.append(".*");
+                continue;
+            }
+            if ("\\.[]{}()+-^$|?".indexOf(ch) >= 0) {
+                builder.append('\\');
+            }
+            builder.append(ch);
+        }
+        return builder.toString();
+    }
+
+    private boolean isPrivateAddress(String host) {
+        try {
+            InetAddress[] addresses = InetAddress.getAllByName(host);
+            for (InetAddress address : addresses) {
+                if (address.isAnyLocalAddress()
+                        || address.isLoopbackAddress()
+                        || address.isSiteLocalAddress()
+                        || address.isLinkLocalAddress()
+                        || address.isMulticastAddress()) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (UnknownHostException ex) {
+            return constants.getHttp().isBlockUnknownHost();
+        }
+    }
+
+    private boolean validateHostByCidr(String host) {
+        List<String> allowedCidrs = constants.getHttp().getAllowedCidrs();
+        List<String> blockedCidrs = constants.getHttp().getBlockedCidrs();
+        boolean hasAllowed = allowedCidrs != null && !allowedCidrs.isEmpty();
+        boolean hasBlocked = blockedCidrs != null && !blockedCidrs.isEmpty();
+        if (!hasAllowed && !hasBlocked) {
+            return true;
+        }
+        InetAddress[] addresses;
+        try {
+            addresses = InetAddress.getAllByName(host);
+        } catch (UnknownHostException ex) {
+            if (constants.getHttp().isBlockUnknownHost()) {
+                return false;
+            }
+            return !hasAllowed;
+        }
+        if (hasBlocked) {
+            for (InetAddress address : addresses) {
+                if (matchAnyCidr(address, blockedCidrs)) {
+                    return false;
+                }
+            }
+        }
+        if (hasAllowed) {
+            for (InetAddress address : addresses) {
+                if (matchAnyCidr(address, allowedCidrs)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private boolean matchAnyCidr(InetAddress address, List<String> cidrs) {
+        if (address == null || cidrs == null || cidrs.isEmpty()) {
+            return false;
+        }
+        for (String cidr : cidrs) {
+            CidrRange range = parseCidr(cidr);
+            if (range != null && range.matches(address)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private CidrRange parseCidr(String value) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
+        String trimmed = value.trim();
+        String[] parts = trimmed.split("/", 2);
+        String ipPart = parts[0].trim();
+        if (ipPart.isEmpty()) {
+            return null;
+        }
+        try {
+            InetAddress base = InetAddress.getByName(ipPart);
+            byte[] bytes = base.getAddress();
+            int bits = bytes.length * 8;
+            int prefix = bits;
+            if (parts.length == 2) {
+                String prefixText = parts[1].trim();
+                if (!prefixText.isEmpty()) {
+                    prefix = Integer.parseInt(prefixText);
+                }
+            }
+            if (prefix < 0 || prefix > bits) {
+                return null;
+            }
+            BigInteger baseInt = new BigInteger(1, bytes);
+            BigInteger allOnes = BigInteger.ONE.shiftLeft(bits).subtract(BigInteger.ONE);
+            BigInteger mask = prefix == 0 ? BigInteger.ZERO : allOnes.shiftLeft(bits - prefix).and(allOnes);
+            BigInteger network = baseInt.and(mask);
+            return new CidrRange(network, mask, bytes.length);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private static class CidrRange {
+        private final BigInteger network;
+        private final BigInteger mask;
+        private final int byteLength;
+
+        private CidrRange(BigInteger network, BigInteger mask, int byteLength) {
+            this.network = network;
+            this.mask = mask;
+            this.byteLength = byteLength;
+        }
+
+        private boolean matches(InetAddress address) {
+            if (address == null) {
+                return false;
+            }
+            byte[] bytes = address.getAddress();
+            if (bytes == null || bytes.length != byteLength) {
+                return false;
+            }
+            BigInteger value = new BigInteger(1, bytes);
+            return value.and(mask).equals(network);
+        }
     }
 
     private HttpHeaders buildHeaders(HttpForwardConfig config, DynamicApiRequest request) {

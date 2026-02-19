@@ -1,5 +1,6 @@
 package com.example.demo.extension.support;
 
+import com.example.demo.extension.api.executor.ConfigValidationResult;
 import com.example.demo.extension.api.executor.ExecuteStrategy;
 import com.example.demo.extension.config.DynamicApiConstants;
 import com.example.demo.extension.executor.ExecuteStrategyFactory;
@@ -79,7 +80,16 @@ public class DynamicApiMetaBuilder {
 
     private Object parseConfig(ExecuteStrategy strategy, String configJson) {
         try {
-            return strategy.parseConfig(configJson, objectMapper);
+            Object config = strategy.parseConfig(configJson, objectMapper);
+            ConfigValidationResult validation = strategy.validateConfig(config);
+            if (validation != null && !validation.isValid()) {
+                String messageKey = StringUtils.trimToNull(validation.getMessageKey());
+                Object details = validation.getFieldErrors().isEmpty() ? null : validation.getFieldErrors();
+                throw new DynamicApiException(constants.getController().getBadRequestCode(),
+                        messageKey == null ? constants.getMessage().getConfigInvalid() : messageKey,
+                        details);
+            }
+            return config;
         } catch (DynamicApiException ex) {
             throw ex;
         } catch (Exception ex) {

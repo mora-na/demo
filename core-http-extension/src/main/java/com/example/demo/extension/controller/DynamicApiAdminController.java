@@ -45,54 +45,54 @@ public class DynamicApiAdminController extends BaseController {
 
     @PostMapping
     @RequirePermission("dynamic-api:create")
-    public CommonResult<DynamicApi> create(@Validated @RequestBody DynamicApiCreateRequest request) {
+    public CommonResult<Object> create(@Validated @RequestBody DynamicApiCreateRequest request) {
         try {
             return success(dynamicApiService.createApi(request));
         } catch (DynamicApiException ex) {
-            return error(ex.getCode(), i18n(ex.getMessageKey()));
+            return error(ex.getCode(), i18n(ex.getMessageKey()), ex.getDetails());
         }
     }
 
     @PutMapping("/{id}")
     @RequirePermission("dynamic-api:update")
-    public CommonResult<DynamicApi> update(@PathVariable Long id, @Validated @RequestBody DynamicApiUpdateRequest request) {
+    public CommonResult<Object> update(@PathVariable Long id, @Validated @RequestBody DynamicApiUpdateRequest request) {
         try {
             return success(dynamicApiService.updateApi(id, request));
         } catch (DynamicApiException ex) {
-            return error(ex.getCode(), i18n(ex.getMessageKey()));
+            return error(ex.getCode(), i18n(ex.getMessageKey()), ex.getDetails());
         }
     }
 
     @PutMapping("/{id}/enable")
     @RequirePermission("dynamic-api:status")
-    public CommonResult<Void> enable(@PathVariable Long id) {
+    public CommonResult<Object> enable(@PathVariable Long id) {
         try {
             dynamicApiService.enableApi(id);
             return success();
         } catch (DynamicApiException ex) {
-            return error(ex.getCode(), i18n(ex.getMessageKey()));
+            return error(ex.getCode(), i18n(ex.getMessageKey()), ex.getDetails());
         }
     }
 
     @PutMapping("/{id}/disable")
     @RequirePermission("dynamic-api:status")
-    public CommonResult<Void> disable(@PathVariable Long id) {
+    public CommonResult<Object> disable(@PathVariable Long id) {
         try {
             dynamicApiService.disableApi(id);
             return success();
         } catch (DynamicApiException ex) {
-            return error(ex.getCode(), i18n(ex.getMessageKey()));
+            return error(ex.getCode(), i18n(ex.getMessageKey()), ex.getDetails());
         }
     }
 
     @DeleteMapping("/{id}")
     @RequirePermission("dynamic-api:delete")
-    public CommonResult<Void> delete(@PathVariable Long id) {
+    public CommonResult<Object> delete(@PathVariable Long id) {
         try {
             dynamicApiService.deleteApi(id);
             return success();
         } catch (DynamicApiException ex) {
-            return error(ex.getCode(), i18n(ex.getMessageKey()));
+            return error(ex.getCode(), i18n(ex.getMessageKey()), ex.getDetails());
         }
     }
 

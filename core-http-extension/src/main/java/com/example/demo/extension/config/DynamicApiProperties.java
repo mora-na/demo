@@ -45,6 +45,11 @@ public class DynamicApiProperties {
     private Metrics metrics = new Metrics();
 
     /**
+     * 执行策略扩展配置。
+     */
+    private Strategy strategy = new Strategy();
+
+    /**
      * 动态限流策略列表（可选）。
      */
     private List<RateLimitPolicy> rateLimitPolicies = new ArrayList<>();
@@ -106,6 +111,18 @@ public class DynamicApiProperties {
          * 返回明细上限，防止接口过多导致结果过大。
          */
         private int maxDetails = 200;
+    }
+
+    @Data
+    public static class Strategy {
+        /**
+         * 是否启用 ServiceLoader 扫描执行策略。
+         */
+        private boolean enableServiceLoader = false;
+        /**
+         * 重复类型处理策略：REPLACE / KEEP_FIRST / FAIL / PREFER_HIGHEST_VERSION。
+         */
+        private String duplicateTypePolicy = "REPLACE";
     }
 
     @Data
