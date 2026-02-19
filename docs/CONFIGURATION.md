@@ -700,6 +700,7 @@
 - 元数据接口：`/dynamic-api/metadata/beans`、`/dynamic-api/metadata/rate-limit-policies`、`/dynamic-api/metadata/types`、
   `/dynamic-api/metadata/metrics`。
 - 响应头：超时/取消/拒绝等情况下会返回 `X-Dynamic-Api-Termination` 标识终止原因。
+- 响应体：当执行策略返回 `meta` 或 `errorDetails` 时会下发到响应体。
 
 **类型与扩展**
 
@@ -707,6 +708,8 @@
 - 自定义类型：实现 `com.example.demo.extension.api.executor.ExecuteStrategy` 并注册为 Spring Bean；前端类型下拉由
   `/dynamic-api/metadata/types` 动态读取。
 - 自定义类型配置由 `ExecuteStrategy.parseConfig` 解析，未提供时将原始 `config` 作为字符串传入。
+- 可选启用 `ServiceLoader` 扫描执行策略：`dynamic.api.strategy.enable-service-loader=true`。
+- 重复类型处理策略：`dynamic.api.strategy.duplicate-type-policy=REPLACE|KEEP_FIRST|FAIL|PREFER_HIGHEST_VERSION`。
 
 **SQL 类型限制（`type=SQL`）**
 
@@ -719,6 +722,22 @@
 - `security.sql-guard.allowed-tables` / `security.sql-guard.allowed-columns` 可配置表/字段白名单（为空则不限制）。
 - SQL 返回行数受 `dynamic.api.constants.execute.sql-max-rows` 限制。
 - 支持命名参数（形如 `:name`），会从请求参数中绑定。
+
+**HTTP 转发安全（`type=HTTP`）**
+
+- 允许的协议：`dynamic.api.constants.http.allowed-schemes`（默认 `http/https`）。
+- 允许的目标主机（通配符）：`dynamic.api.constants.http.allowed-hosts`（为空表示不限制）。
+- 禁止的目标主机（通配符）：`dynamic.api.constants.http.blocked-hosts`。
+- 允许的目标 CIDR：`dynamic.api.constants.http.allowed-cidrs`（为空表示不限制）。
+- 禁止的目标 CIDR：`dynamic.api.constants.http.blocked-cidrs`。
+- 禁止访问私有网段/回环：`dynamic.api.constants.http.block-private-network=false`（建议线上开启）。
+- DNS 解析失败时是否阻止：`dynamic.api.constants.http.block-unknown-host=true`。
+
+**请求上下文标识**
+
+- 请求 ID 头：`dynamic.api.constants.http.request-id-header`（默认 `X-Request-Id`）。
+- 租户 ID 头：`dynamic.api.constants.http.tenant-id-header`（默认 `X-Tenant-Id`）。
+- Trace ID 头：`dynamic.api.constants.http.trace-id-header`（默认 `X-Trace-Id`）。
 
 **数据源模式影响**
 
@@ -829,6 +848,8 @@
 | `dynamic.api.constants.http.max-total-connections`     | `200`                       | HTTP 连接池最大连接数。     |
 | `dynamic.api.constants.http.max-connections-per-route` | `50`                        | HTTP 每路由最大连接数。     |
 | `dynamic.api.constants.http.idle-evict-seconds`        | `30`                        | HTTP 空闲连接回收秒数。     |
+| `dynamic.api.constants.http.allowed-cidrs`             | `[]`                        | 允许的目标 CIDR。        |
+| `dynamic.api.constants.http.blocked-cidrs`             | `[]`                        | 禁止的目标 CIDR。        |
 
 **Execute 组**
 

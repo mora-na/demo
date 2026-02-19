@@ -701,6 +701,7 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 - Metadata APIs: `/dynamic-api/metadata/beans`, `/dynamic-api/metadata/rate-limit-policies`,
   `/dynamic-api/metadata/types`, `/dynamic-api/metadata/metrics`.
 - Response header: `X-Dynamic-Api-Termination` is returned on timeout/cancel/reject.
+- Response body: strategy `meta` or `errorDetails` is surfaced when provided.
 
 **Types and Extensibility**
 
@@ -710,6 +711,8 @@ This document is split from `README_EN.md` and centralizes all configuration ref
   `/dynamic-api/metadata/types`.
 - Custom configs are parsed by `ExecuteStrategy.parseConfig`; if not provided, raw `config` is passed through as a
   string.
+- Optional ServiceLoader discovery: `dynamic.api.strategy.enable-service-loader=true`.
+- Duplicate type policy: `dynamic.api.strategy.duplicate-type-policy=REPLACE|KEEP_FIRST|FAIL|PREFER_HIGHEST_VERSION`.
 
 **SQL Type Restrictions (`type=SQL`)**
 
@@ -722,6 +725,22 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 - `security.sql-guard.allowed-tables` / `security.sql-guard.allowed-columns` configure table/column whitelists.
 - SQL rows are capped by `dynamic.api.constants.execute.sql-max-rows`.
 - Named parameters are supported (e.g. `:name`), bound from request params.
+
+**HTTP Forwarding Safety (`type=HTTP`)**
+
+- Allowed schemes: `dynamic.api.constants.http.allowed-schemes` (default `http/https`).
+- Allowed hosts (wildcards): `dynamic.api.constants.http.allowed-hosts` (empty = no restriction).
+- Blocked hosts (wildcards): `dynamic.api.constants.http.blocked-hosts`.
+- Allowed CIDRs: `dynamic.api.constants.http.allowed-cidrs` (empty = no restriction).
+- Blocked CIDRs: `dynamic.api.constants.http.blocked-cidrs`.
+- Block private/loopback: `dynamic.api.constants.http.block-private-network=false` (recommended in prod).
+- Block on DNS failure: `dynamic.api.constants.http.block-unknown-host=true`.
+
+**Request Context Headers**
+
+- Request ID header: `dynamic.api.constants.http.request-id-header` (default `X-Request-Id`).
+- Tenant ID header: `dynamic.api.constants.http.tenant-id-header` (default `X-Tenant-Id`).
+- Trace ID header: `dynamic.api.constants.http.trace-id-header` (default `X-Trace-Id`).
 
 **Datasource Mode Notes**
 
@@ -833,6 +852,8 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 | `dynamic.api.constants.http.max-total-connections`     | `200`                       | HTTP max total connections.         |
 | `dynamic.api.constants.http.max-connections-per-route` | `50`                        | HTTP max connections per route.     |
 | `dynamic.api.constants.http.idle-evict-seconds`        | `30`                        | HTTP idle connection evict seconds. |
+| `dynamic.api.constants.http.allowed-cidrs`             | `[]`                        | Allowed target CIDRs.               |
+| `dynamic.api.constants.http.blocked-cidrs`             | `[]`                        | Blocked target CIDRs.               |
 
 **Execute**
 

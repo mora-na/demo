@@ -149,6 +149,15 @@ common/*  ->  *-api  ->  业务实现/扩展实现  ->  app
 - 扩展实现（如动态接口）与业务实现隔离，避免实现层相互耦合。
 - `app` 仅作为装配层，禁止下沉到基础或业务模块中。
 
+### 扩展方式与契约
+
+- 契约统一由 `*-api` 模块暴露，实现模块禁止相互直接依赖。
+- 动态接口扩展通过实现 `com.example.demo.extension.api.executor.ExecuteStrategy` 完成。
+- 执行上下文由 `DynamicApiExecutionContext` 提供（含 `traceId/requestId/tenantId`）。
+- 生命周期钩子：`validateConfig`、`beforeExecute`、`afterExecute`、`onTimeout/onError/onCancel`。
+- 可选启用 `ServiceLoader` 扫描执行策略：`dynamic.api.strategy.enable-service-loader=true`。
+- 重复类型处理策略：`dynamic.api.strategy.duplicate-type-policy`。
+
 ## 模块职责一览
 
 | 模块                    | 类型    | 主要职责                                     |

@@ -109,6 +109,15 @@ npm run dev
 | `common`              | Shared infrastructure    | Unified response, exception handling, cache abstraction, mail sender abstraction, common utilities/config |
 | `ai`                  | AI extension entry       | AI capability integration and extensibility (enabled per business needs)                                  |
 
+## Extension Contract
+
+- Contracts are exposed via `*-api` modules; implementation modules should not depend on each other directly.
+- Dynamic API extension implements `com.example.demo.extension.api.executor.ExecuteStrategy`.
+- Execution context `DynamicApiExecutionContext` exposes `traceId/requestId/tenantId`.
+- Lifecycle hooks: `validateConfig`, `beforeExecute`, `afterExecute`, `onTimeout/onError/onCancel`.
+- Optional ServiceLoader discovery: `dynamic.api.strategy.enable-service-loader=true`.
+- Duplicate type policy: `dynamic.api.strategy.duplicate-type-policy`.
+
 ## Usage and Configuration
 
 ### Authentication & Login

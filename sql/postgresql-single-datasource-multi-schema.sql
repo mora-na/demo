@@ -885,6 +885,8 @@ CREATE TABLE IF NOT EXISTS sys_dynamic_api_log
     status        SMALLINT  NOT NULL DEFAULT 1,
     response_code INT,
     error_msg     VARCHAR(2000),
+    error_details TEXT,
+    meta          TEXT,
     trace_id      VARCHAR(128),
     user_id       BIGINT,
     user_name     VARCHAR(64),
@@ -906,6 +908,8 @@ COMMENT ON COLUMN sys_dynamic_api_log.auth_mode IS '认证模式';
 COMMENT ON COLUMN sys_dynamic_api_log.status IS '状态 0=失败 1=成功';
 COMMENT ON COLUMN sys_dynamic_api_log.response_code IS '响应码';
 COMMENT ON COLUMN sys_dynamic_api_log.error_msg IS '错误信息';
+COMMENT ON COLUMN sys_dynamic_api_log.error_details IS '错误详情';
+COMMENT ON COLUMN sys_dynamic_api_log.meta IS '元数据';
 COMMENT ON COLUMN sys_dynamic_api_log.trace_id IS 'TraceId';
 COMMENT ON COLUMN sys_dynamic_api_log.user_id IS '用户ID';
 COMMENT ON COLUMN sys_dynamic_api_log.user_name IS '用户账号';

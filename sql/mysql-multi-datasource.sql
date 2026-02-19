@@ -619,6 +619,8 @@ CREATE TABLE IF NOT EXISTS sys_dynamic_api_log
     status        TINYINT  NOT NULL DEFAULT 1 COMMENT '状态 0=失败 1=成功',
     response_code INT COMMENT '响应码',
     error_msg     VARCHAR(2000) COMMENT '错误信息',
+    error_details TEXT COMMENT '错误详情',
+    meta          TEXT COMMENT '元数据',
     trace_id      VARCHAR(128) COMMENT 'TraceId',
     user_id       BIGINT COMMENT '用户ID',
     user_name     VARCHAR(64) COMMENT '用户账号',
