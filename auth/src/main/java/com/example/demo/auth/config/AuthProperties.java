@@ -39,6 +39,18 @@ public class AuthProperties {
     public static class Jwt {
         private String secret = "change-me";
         private long ttlSeconds = 7200;
+        /**
+         * 最小密钥长度（字符）。
+         */
+        private int minSecretLength = 32;
+        /**
+         * 禁止使用的默认密钥（用于 fail-fast）。
+         */
+        private String forbiddenSecret = "change-me";
+        /**
+         * 是否允许通过 query 参数携带 token。
+         */
+        private boolean allowQueryToken = false;
     }
 
     /**

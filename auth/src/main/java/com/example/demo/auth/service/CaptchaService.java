@@ -88,6 +88,9 @@ public class CaptchaService {
     public CaptchaResponse createCaptcha() {
         ensureEmbeddedFontsInitialized();
         AuthProperties.Captcha config = authProperties.getCaptcha();
+        if (!captchaStore.allowCreate(config.getMaxEntries(), config.getCleanupIntervalSeconds())) {
+            return null;
+        }
         Captcha captcha = createCaptchaImage(
                 config.getWidth(),
                 config.getHeight(),

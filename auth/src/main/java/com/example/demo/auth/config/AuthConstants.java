@@ -41,6 +41,7 @@ public class AuthConstants {
         public static final String DEFAULT_JWT_CLAIM_ISSUED_AT = "iat";
         public static final String DEFAULT_JWT_CLAIM_EXPIRES_AT = "exp";
         public static final String DEFAULT_JWT_CLAIM_JWT_ID = "jti";
+        public static final String DEFAULT_JWT_CLAIM_TOKEN_VERSION = "ver";
         public static final String DEFAULT_SIGN_ALGORITHM = "HmacSHA256";
         public static final String DEFAULT_STORE_KEY_PREFIX = "auth:token:";
 
@@ -58,6 +59,7 @@ public class AuthConstants {
         private String jwtClaimIssuedAt = DEFAULT_JWT_CLAIM_ISSUED_AT;
         private String jwtClaimExpiresAt = DEFAULT_JWT_CLAIM_EXPIRES_AT;
         private String jwtClaimJwtId = DEFAULT_JWT_CLAIM_JWT_ID;
+        private String jwtClaimTokenVersion = DEFAULT_JWT_CLAIM_TOKEN_VERSION;
         private String signAlgorithm = DEFAULT_SIGN_ALGORITHM;
         private String storeKeyPrefix = DEFAULT_STORE_KEY_PREFIX;
     }

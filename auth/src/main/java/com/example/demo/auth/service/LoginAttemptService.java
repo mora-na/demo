@@ -174,7 +174,8 @@ public class LoginAttemptService {
     }
 
     private String normalizeUserName(String userName) {
-        return StringUtils.trimToNull(userName);
+        String normalized = StringUtils.trimToNull(userName);
+        return normalized == null ? null : normalized.toLowerCase(Locale.ROOT);
     }
 
     private String resolveIdentity(String userName, HttpServletRequest request) {

@@ -91,7 +91,7 @@ public class PasswordService {
         if (equalsMode(mode, constants.getTransportModeSm2())) {
             return decryptSm2(cipherText, authProperties.getPassword().getTransportSm2PrivateKey());
         }
-        return cipherText;
+        return null;
     }
 
     /**

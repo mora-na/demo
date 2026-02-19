@@ -58,7 +58,11 @@ public class AuthController extends BaseController {
      */
     @GetMapping("/captcha")
     public CommonResult<CaptchaResponse> captcha() {
-        return success(captchaService.createCaptcha());
+        CaptchaResponse response = captchaService.createCaptcha();
+        if (response == null) {
+            return error(systemConstants.getController().getTooManyRequestsCode(), i18n("auth.captcha.too.many"));
+        }
+        return success(response);
     }
 
     /**
@@ -94,11 +98,13 @@ public class AuthController extends BaseController {
             return error(controllerConstants.getTooManyRequestsCode(), i18n("auth.login.locked", remaining));
         }
         if (StringUtils.isBlank(request.getCaptchaId()) || StringUtils.isBlank(request.getCaptchaCode())) {
+            loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
                     i18n("auth.login.captcha.empty"), httpRequest);
             return error(controllerConstants.getBadRequestCode(), i18n("auth.login.captcha.empty"));
         }
         if (!captchaService.verify(request.getCaptchaId(), request.getCaptchaCode())) {
+            loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
                     i18n("auth.login.captcha.invalid"), httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), i18n("auth.login.captcha.invalid"));
@@ -257,6 +263,9 @@ public class AuthController extends BaseController {
         profileUpdate.setRemark(request.getRemark());
         if (!publishProfileUpdateCommand(authUser.getId(), profileUpdate, newRawPassword)) {
             return error(controllerConstants.getInternalServerErrorCode(), i18n("common.update.failed"));
+        }
+        if (wantsPasswordChange) {
+            tokenService.revokeByUserId(authUser.getId());
         }
         return success();
     }

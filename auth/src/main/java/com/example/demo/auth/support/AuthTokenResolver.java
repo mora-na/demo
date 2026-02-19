@@ -1,6 +1,7 @@
 package com.example.demo.auth.support;
 
 import com.example.demo.auth.config.AuthConstants;
+import com.example.demo.auth.config.AuthProperties;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -16,9 +17,12 @@ import javax.servlet.http.HttpServletRequest;
 public class AuthTokenResolver {
 
     private final AuthConstants systemConstants;
+    private final AuthProperties authProperties;
 
-    public AuthTokenResolver(AuthConstants systemConstants) {
+    public AuthTokenResolver(AuthConstants systemConstants,
+                             AuthProperties authProperties) {
         this.systemConstants = systemConstants;
+        this.authProperties = authProperties;
     }
 
     /**
@@ -46,9 +50,11 @@ public class AuthTokenResolver {
         if (StringUtils.isNotBlank(token)) {
             return token.trim();
         }
-        String queryToken = request.getParameter(tokenConstants.getQueryTokenParameter());
-        if (StringUtils.isNotBlank(queryToken)) {
-            return queryToken;
+        if (authProperties.getJwt().isAllowQueryToken()) {
+            String queryToken = request.getParameter(tokenConstants.getQueryTokenParameter());
+            if (StringUtils.isNotBlank(queryToken)) {
+                return queryToken;
+            }
         }
         return null;
     }

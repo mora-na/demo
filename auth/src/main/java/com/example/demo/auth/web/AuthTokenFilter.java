@@ -42,7 +42,7 @@ import java.io.IOException;
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class AuthTokenFilter extends OncePerRequestFilter {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     private final AuthProperties authProperties;
     private final CommonExcludePathsProperties commonExcludePaths;
@@ -163,7 +163,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         response.setStatus(status);
         response.setContentType(commonConstants.getHttp().getJsonContentType());
         CommonResult<Object> result = CommonResult.error(status, message);
-        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
+        response.getWriter().write(objectMapper.writeValueAsString(result));
     }
 
     /**
@@ -178,7 +178,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         response.setStatus(status);
         response.setContentType(commonConstants.getHttp().getJsonContentType());
         CommonResult<Object> result = CommonResult.error(status, message);
-        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
+        response.getWriter().write(objectMapper.writeValueAsString(result));
     }
 
     private boolean isPasswordChangeAllowedPath(HttpServletRequest request, AuthConstants.Filter filterConstants) {

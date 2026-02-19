@@ -68,6 +68,26 @@ public class CaptchaStore {
     }
 
     /**
+     * 限制验证码创建频率，避免无限制堆积。
+     *
+     * @param maxEntries             窗口内最大创建次数
+     * @param cleanupIntervalSeconds 窗口时长（秒）
+     * @return true 表示允许创建
+     */
+    public boolean allowCreate(int maxEntries, int cleanupIntervalSeconds) {
+        if (maxEntries <= 0 || cleanupIntervalSeconds <= 0) {
+            return true;
+        }
+        String key = buildCounterKey();
+        Long count = cacheTool.increment(key);
+        long value = count == null ? 1L : count.longValue();
+        if (value == 1L) {
+            cacheTool.expire(key, Duration.ofSeconds(cleanupIntervalSeconds));
+        }
+        return value <= maxEntries;
+    }
+
+    /**
      * 构建缓存 Key。
      *
      * @param captchaId 验证码 ID
@@ -75,5 +95,9 @@ public class CaptchaStore {
      */
     private String buildKey(String captchaId) {
         return systemConstants.getCaptcha().getStoreKeyPrefix() + captchaId;
+    }
+
+    private String buildCounterKey() {
+        return systemConstants.getCaptcha().getStoreKeyPrefix() + "counter";
     }
 }

@@ -47,6 +47,11 @@ public class TokenStore {
         if (token == null || user == null) {
             return;
         }
+        Long userId = user.getId();
+        if (userId != null) {
+            cacheTool.set(buildUserTokenKey(userId), token, Duration.ofSeconds(remainingSeconds(expireAtSeconds)));
+            ensureVersionKey(userId, remainingSeconds(expireAtSeconds));
+        }
         long ttlSeconds = expireAtSeconds - Instant.now().getEpochSecond();
         if (ttlSeconds <= 0) {
             return;
@@ -89,6 +94,24 @@ public class TokenStore {
     }
 
     /**
+     * 撤销用户的全部令牌，通过递增版本号使历史 token 失效。
+     *
+     * @param userId 用户 ID
+     */
+    public void revokeByUserId(Long userId, long ttlSeconds) {
+        if (userId == null) {
+            return;
+        }
+        String userKey = buildUserTokenKey(userId);
+        String token = cacheTool.get(userKey, String.class);
+        if (token != null) {
+            cacheTool.delete(buildKey(token));
+        }
+        cacheTool.delete(userKey);
+        bumpUserTokenVersion(userId, ttlSeconds);
+    }
+
+    /**
      * 构建缓存 Key。
      *
      * @param token 令牌字符串
@@ -96,6 +119,86 @@ public class TokenStore {
      */
     private String buildKey(String token) {
         return systemConstants.getToken().getStoreKeyPrefix() + token;
+    }
+
+    private String buildUserTokenKey(Long userId) {
+        return systemConstants.getToken().getStoreKeyPrefix() + "user:" + userId;
+    }
+
+    private String buildUserTokenVersionKey(Long userId) {
+        return systemConstants.getToken().getStoreKeyPrefix() + "ver:" + userId;
+    }
+
+    private long remainingSeconds(long expireAtSeconds) {
+        long ttlSeconds = expireAtSeconds - Instant.now().getEpochSecond();
+        return Math.max(ttlSeconds, 1);
+    }
+
+    public long getOrInitVersion(Long userId, long ttlSeconds) {
+        long current = getUserTokenVersion(userId);
+        if (current > 0) {
+            return current;
+        }
+        long initial = 1L;
+        setUserTokenVersion(userId, initial, ttlSeconds);
+        return initial;
+    }
+
+    public long getUserTokenVersion(Long userId) {
+        if (userId == null) {
+            return 0L;
+        }
+        Object value = cacheTool.get(buildUserTokenVersionKey(userId));
+        Long parsed = parseLong(value);
+        return parsed == null ? 0L : parsed;
+    }
+
+    public void setUserTokenVersion(Long userId, long version, long ttlSeconds) {
+        if (userId == null) {
+            return;
+        }
+        cacheTool.set(buildUserTokenVersionKey(userId), version, Duration.ofSeconds(versionTtlSeconds(ttlSeconds)));
+    }
+
+    public long bumpUserTokenVersion(Long userId, long ttlSeconds) {
+        if (userId == null) {
+            return 0L;
+        }
+        String key = buildUserTokenVersionKey(userId);
+        Long next = cacheTool.increment(key);
+        long value = next == null ? 1L : next.longValue();
+        cacheTool.expire(key, Duration.ofSeconds(versionTtlSeconds(ttlSeconds)));
+        return value;
+    }
+
+    private void ensureVersionKey(Long userId, long ttlSeconds) {
+        if (userId == null) {
+            return;
+        }
+        String key = buildUserTokenVersionKey(userId);
+        if (!cacheTool.hasKey(key)) {
+            setUserTokenVersion(userId, 1L, ttlSeconds);
+        }
+    }
+
+    private long versionTtlSeconds(long ttlSeconds) {
+        long base = Math.max(1L, ttlSeconds);
+        long doubled = base * 2;
+        return Math.max(doubled, base + 60);
+    }
+
+    private Long parseLong(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 
     private TokenRecord convertRecord(Object value) {

@@ -47,12 +47,17 @@ public class TokenService {
         AuthConstants.Token tokenConstants = systemConstants.getToken();
         long nowSeconds = Instant.now().getEpochSecond();
         long expireAt = nowSeconds + authProperties.getJwt().getTtlSeconds();
+        Long userId = user == null ? null : user.getId();
         Map<String, Object> payload = new HashMap<>();
         payload.put(tokenConstants.getJwtClaimSubject(), user.getUserName());
-        payload.put(tokenConstants.getJwtClaimUserId(), user.getId());
+        payload.put(tokenConstants.getJwtClaimUserId(), userId);
         payload.put(tokenConstants.getJwtClaimIssuedAt(), nowSeconds);
         payload.put(tokenConstants.getJwtClaimExpiresAt(), expireAt);
         payload.put(tokenConstants.getJwtClaimJwtId(), UUID.randomUUID().toString());
+        if (userId != null) {
+            long version = tokenStore.getOrInitVersion(userId, authProperties.getJwt().getTtlSeconds());
+            payload.put(tokenConstants.getJwtClaimTokenVersion(), version);
+        }
         String token = createToken(payload, getSecret());
         tokenStore.save(token, user, expireAt);
         LoginResponse response = new LoginResponse();
@@ -83,6 +88,21 @@ public class TokenService {
             tokenStore.revoke(token);
             return null;
         }
+        Long userId = getLongClaim(payload, systemConstants.getToken().getJwtClaimUserId());
+        if (userId == null) {
+            tokenStore.revoke(token);
+            return null;
+        }
+        Long version = getLongClaim(payload, systemConstants.getToken().getJwtClaimTokenVersion());
+        long currentVersion = tokenStore.getUserTokenVersion(userId);
+        if (currentVersion > 0) {
+            if (version == null || version.longValue() != currentVersion) {
+                tokenStore.revoke(token);
+                return null;
+            }
+        } else if (version != null) {
+            tokenStore.setUserTokenVersion(userId, version.longValue(), authProperties.getJwt().getTtlSeconds());
+        }
         TokenStore.TokenRecord record = tokenStore.get(token);
         return record == null ? null : record.getUser();
     }
@@ -94,6 +114,18 @@ public class TokenService {
      */
     public void revoke(String token) {
         tokenStore.revoke(token);
+    }
+
+    /**
+     * 撤销用户的全部令牌。
+     *
+     * @param userId 用户 ID
+     */
+    public void revokeByUserId(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        tokenStore.revokeByUserId(userId, authProperties.getJwt().getTtlSeconds());
     }
 
     /**
