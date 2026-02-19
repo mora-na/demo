@@ -37,7 +37,9 @@ public class CacheStoreConfig {
                                    ObjectMapper objectMapper,
                                    CacheProperties cacheProperties,
                                    CommonConstants systemConstants) {
-        CacheSerializer serializer = new CacheSerializer(objectMapper);
-        return new DbCacheStore(cacheMapper, serializer, cacheProperties == null ? null : cacheProperties.getDb(), systemConstants);
+        CacheProperties.Db db = cacheProperties == null ? null : cacheProperties.getDb();
+        CacheSerializer serializer = new CacheSerializer(objectMapper,
+                db == null ? null : db.getAllowedValueClassPrefixes());
+        return new DbCacheStore(cacheMapper, serializer, db, systemConstants);
     }
 }

@@ -12,9 +12,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class CacheSerializer {
 
     private final ObjectMapper objectMapper;
+    private final Iterable<String> allowedClassPrefixes;
 
-    public CacheSerializer(ObjectMapper objectMapper) {
+    public CacheSerializer(ObjectMapper objectMapper, Iterable<String> allowedClassPrefixes) {
         this.objectMapper = objectMapper;
+        this.allowedClassPrefixes = allowedClassPrefixes;
     }
 
     public String serialize(Object value) {
@@ -35,8 +37,11 @@ public class CacheSerializer {
         if (className == null || className.trim().isEmpty()) {
             return deserializeAsObject(json);
         }
+        if (!isAllowedClass(className)) {
+            throw new IllegalStateException("Cache value class is not allowed: " + className);
+        }
         try {
-            Class<?> clazz = Class.forName(className);
+            Class<?> clazz = resolveClass(className);
             return objectMapper.readValue(json, clazz);
         } catch (Exception ex) {
             throw new IllegalStateException("Failed to deserialize cache value", ex);
@@ -49,5 +54,33 @@ public class CacheSerializer {
         } catch (JsonProcessingException ex) {
             throw new IllegalStateException("Failed to deserialize cache value", ex);
         }
+    }
+
+    private boolean isAllowedClass(String className) {
+        if (allowedClassPrefixes == null) {
+            return true;
+        }
+        boolean hasRule = false;
+        for (String prefix : allowedClassPrefixes) {
+            if (prefix == null || prefix.trim().isEmpty()) {
+                continue;
+            }
+            hasRule = true;
+            if (className.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return !hasRule;
+    }
+
+    private Class<?> resolveClass(String className) throws ClassNotFoundException {
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        if (loader != null) {
+            try {
+                return Class.forName(className, false, loader);
+            } catch (ClassNotFoundException ignored) {
+            }
+        }
+        return Class.forName(className);
     }
 }

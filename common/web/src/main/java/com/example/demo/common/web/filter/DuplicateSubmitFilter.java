@@ -8,6 +8,7 @@ import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.common.web.limit.DuplicateSubmitProperties;
+import com.example.demo.common.web.support.ClientIpResolver;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.core.Ordered;
@@ -36,14 +37,14 @@ import java.util.Locale;
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
 public class DuplicateSubmitFilter extends OncePerRequestFilter {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
     private final DuplicateSubmitProperties properties;
     private final CommonExcludePathsProperties commonExcludePaths;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final CacheTool cacheTool;
     private final I18nService i18nService;
     private final CommonConstants systemConstants;
+    private final ObjectMapper objectMapper;
+    private final ClientIpResolver clientIpResolver;
 
     /**
      * 构造函数，注入重复提交配置与缓存工具。
@@ -58,12 +59,16 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
                                  CommonExcludePathsProperties commonExcludePaths,
                                  CacheTool cacheTool,
                                  I18nService i18nService,
-                                 CommonConstants systemConstants) {
+                                 CommonConstants systemConstants,
+                                 ObjectMapper objectMapper,
+                                 ClientIpResolver clientIpResolver) {
         this.properties = properties;
         this.commonExcludePaths = commonExcludePaths;
         this.cacheTool = cacheTool;
         this.i18nService = i18nService;
         this.systemConstants = systemConstants;
+        this.objectMapper = objectMapper;
+        this.clientIpResolver = clientIpResolver;
     }
 
     /**
@@ -114,13 +119,29 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         long interval = Math.max(1, properties.getIntervalMillis());
-        if (isMultipart(request) && !hasIdempotencyKey(request)) {
+        boolean multipart = isMultipart(request);
+        if (multipart && !hasIdempotencyKey(request)) {
             filterChain.doFilter(request, response);
             return;
         }
-        CachedBodyHttpServletRequest wrapped = isMultipart(request) ? null : new CachedBodyHttpServletRequest(request);
+        CachedBodyHttpServletRequest wrapped = null;
+        String bodyHash = null;
+        if (properties.isIncludeBody() && !multipart) {
+            long maxBodyBytes = Math.max(0, properties.getMaxBodyBytes());
+            if (maxBodyBytes <= 0) {
+                wrapped = new CachedBodyHttpServletRequest(request);
+                bodyHash = DigestUtils.md5DigestAsHex(wrapped.getCachedBody());
+            } else {
+                int length = request.getContentLength();
+                if (length >= 0 && length <= maxBodyBytes) {
+                    wrapped = new CachedBodyHttpServletRequest(request, (int) maxBodyBytes);
+                    if (!wrapped.isBodyTooLarge()) {
+                        bodyHash = DigestUtils.md5DigestAsHex(wrapped.getCachedBody());
+                    }
+                }
+            }
+        }
         HttpServletRequest keyRequest = wrapped == null ? request : wrapped;
-        String bodyHash = wrapped == null ? null : DigestUtils.md5DigestAsHex(wrapped.getCachedBody());
         String key = buildKey(keyRequest, bodyHash);
         if (isDuplicate(key, interval)) {
             writeDuplicate(request, response);
@@ -223,7 +244,7 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
         String normalized = mode == null ? "" : mode.toLowerCase(Locale.ROOT);
         AuthUser user = AuthContext.get();
         String userId = user == null ? null : String.valueOf(user.getId());
-        String ip = resolveClientIp(request);
+        String ip = clientIpResolver.resolve(request);
         if ("user".equals(normalized)) {
             return userId == null ? ip : userId;
         }
@@ -244,18 +265,6 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private String resolveClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader(systemConstants.getHttp().getForwardedForHeader());
-        if (forwarded != null && !forwarded.trim().isEmpty()) {
-            int comma = forwarded.indexOf(',');
-            return comma > 0 ? forwarded.substring(0, comma).trim() : forwarded.trim();
-        }
-        String realIp = request.getHeader(systemConstants.getHttp().getRealIpHeader());
-        if (realIp != null && !realIp.trim().isEmpty()) {
-            return realIp.trim();
-        }
-        return request.getRemoteAddr();
-    }
 
     /**
      * 判断请求是否为 multipart。
@@ -321,6 +330,6 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
         response.setContentType(systemConstants.getHttp().getJsonContentType());
         String message = i18nService.getMessage(request, systemConstants.getDuplicateSubmit().getMessageKey());
         CommonResult<Object> result = CommonResult.error(status, message);
-        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(result));
+        response.getWriter().write(objectMapper.writeValueAsString(result));
     }
 }

@@ -4,8 +4,11 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlFactory;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
+import javax.xml.stream.XMLInputFactory;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,8 +20,8 @@ import java.util.Set;
  */
 public final class XMLTool {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final XmlMapper XML_MAPPER = new XmlMapper();
+    private static volatile ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static volatile XmlMapper XML_MAPPER = createSafeXmlMapper();
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<Map<String, Object>>() {
     };
 
@@ -27,6 +30,24 @@ public final class XMLTool {
     }
 
     private XMLTool() {
+    }
+
+    /**
+     * 允许外部注入统一的 ObjectMapper（如 Spring 全局配置）。
+     */
+    public static void setObjectMapper(ObjectMapper objectMapper) {
+        if (objectMapper != null) {
+            OBJECT_MAPPER = objectMapper;
+        }
+    }
+
+    /**
+     * 允许外部注入统一的 XmlMapper（如 Spring 全局配置）。
+     */
+    public static void setXmlMapper(XmlMapper xmlMapper) {
+        if (xmlMapper != null) {
+            XML_MAPPER = xmlMapper;
+        }
     }
 
     /**
@@ -96,7 +117,7 @@ public final class XMLTool {
             Set<Map.Entry<String, Object>> entrySet = jsonObject.entrySet();
             StringBuilder xmlBuilder = new StringBuilder(entrySet.size() * 32);
             for (Map.Entry<String, Object> entry : entrySet) {
-                String tag = entry.getKey().toUpperCase();
+                String tag = entry.getKey().toUpperCase(Locale.ROOT);
                 xmlBuilder.append("<").append(tag).append(">");
                 xmlBuilder.append(escapeXmlValue(entry.getValue()));
                 xmlBuilder.append("</").append(tag).append(">\n");
@@ -118,5 +139,34 @@ public final class XMLTool {
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;")
                 .replace("'", "&apos;");
+    }
+
+    private static XmlMapper createSafeXmlMapper() {
+        XMLInputFactory inputFactory = XMLInputFactory.newFactory();
+        disableXmlExternalEntities(inputFactory);
+        XmlMapper xmlMapper = new XmlMapper(new XmlFactory(inputFactory));
+        xmlMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+        return xmlMapper;
+    }
+
+    private static void disableXmlExternalEntities(XMLInputFactory factory) {
+        if (factory == null) {
+            return;
+        }
+        try {
+            factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        } catch (Exception ignored) {
+            // ignore
+        }
+        try {
+            factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        } catch (Exception ignored) {
+            // ignore
+        }
+        try {
+            factory.setProperty("javax.xml.stream.isSupportingExternalEntities", false);
+        } catch (Exception ignored) {
+            // ignore
+        }
     }
 }

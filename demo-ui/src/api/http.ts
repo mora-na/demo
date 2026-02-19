@@ -4,9 +4,12 @@ const TOKEN_KEY = "demo-token";
 const USER_KEY = "demo-user";
 let redirectingToLogin = false;
 
+const withCredentials = String(import.meta.env.VITE_API_WITH_CREDENTIALS || "").toLowerCase() === "true";
+
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || "/prod-api",
-    timeout: 15000
+    timeout: 15000,
+    withCredentials
 });
 
 api.interceptors.request.use((config) => {

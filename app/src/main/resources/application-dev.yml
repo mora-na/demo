@@ -38,6 +38,24 @@ auth:
     # JWT 密钥
     # 建议通过环境变量 AUTH_JWT_SECRET 覆盖；默认值仅用于本地开发
     secret: ${AUTH_JWT_SECRET:dev-please-change-this-secret-32chars}
+    # 允许通过 query 参数传递 token（SSE/下载等无法设置 Header 的场景）
+    allow-query-token: false
+    # JWT Cookie 配置（SSE/下载等无法设置 Header 的场景）
+    cookie:
+      # 是否启用 JWT Cookie
+      enabled: true
+      # Cookie 名称
+      name: AUTH_TOKEN
+      # Cookie Path
+      path: /
+      # 是否 HttpOnly
+      http-only: true
+      # 是否 Secure（HTTPS 建议开启）
+      secure: false
+      # SameSite 策略：Lax / Strict / None
+      same-site: Strict
+      # Max-Age（秒）：<0 使用 JWT TTL；=0 会话 Cookie；>0 自定义
+      max-age-seconds: -1
     # Token 有效期（秒）
     ttl-seconds: 7200
   # 验证码配置

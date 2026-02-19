@@ -21,7 +21,7 @@ public enum CacheLocation {
         if (value == null) {
             return REDIS;
         }
-        String normalized = value.trim().toUpperCase();
+        String normalized = value.trim().toUpperCase(java.util.Locale.ROOT);
         for (CacheLocation location : values()) {
             if (location.name().equals(normalized)) {
                 return location;

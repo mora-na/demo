@@ -16,6 +16,9 @@ import java.util.*;
  */
 public final class XssCleaner {
 
+    private static final int DEFAULT_MAX_DEPTH = 8;
+    private static final int DEFAULT_MAX_NODES = 10000;
+
     /**
      * 私有构造函数，禁止实例化。
      */
@@ -46,7 +49,21 @@ public final class XssCleaner {
      * @date 2026/2/9
      */
     public static Object sanitizeObject(Object target) {
-        return sanitizeObject(target, new IdentityHashMap<>());
+        return sanitizeObject(target, DEFAULT_MAX_DEPTH, DEFAULT_MAX_NODES);
+    }
+
+    /**
+     * 对对象进行递归清洗，支持最大深度与节点数量限制。
+     *
+     * @param target   目标对象
+     * @param maxDepth 最大递归深度
+     * @param maxNodes 最大节点数
+     * @return 清洗后的对象（原对象被原地修改）
+     */
+    public static Object sanitizeObject(Object target, int maxDepth, int maxNodes) {
+        int depthLimit = maxDepth <= 0 ? DEFAULT_MAX_DEPTH : maxDepth;
+        int nodeLimit = maxNodes <= 0 ? DEFAULT_MAX_NODES : maxNodes;
+        return sanitizeObject(target, new IdentityHashMap<>(), 0, new int[]{0}, depthLimit, nodeLimit);
     }
 
     /**
@@ -58,9 +75,17 @@ public final class XssCleaner {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private static Object sanitizeObject(Object target, IdentityHashMap<Object, Boolean> visited) {
+    private static Object sanitizeObject(Object target,
+                                         IdentityHashMap<Object, Boolean> visited,
+                                         int depth,
+                                         int[] counter,
+                                         int maxDepth,
+                                         int maxNodes) {
         if (target == null) {
             return null;
+        }
+        if (depth > maxDepth || counter[0] >= maxNodes) {
+            return target;
         }
         if (target instanceof String) {
             return sanitize((String) target);
@@ -73,29 +98,26 @@ public final class XssCleaner {
             return target;
         }
         visited.put(target, Boolean.TRUE);
+        counter[0]++;
 
         if (target instanceof Map) {
-            sanitizeMap((Map<?, ?>) target, visited);
-            return target;
+            return sanitizeMap((Map<?, ?>) target, visited, depth, counter, maxDepth, maxNodes);
         }
         if (target instanceof List) {
-            sanitizeList((List<?>) target, visited);
-            return target;
+            return sanitizeList((List<?>) target, visited, depth, counter, maxDepth, maxNodes);
         }
         if (target instanceof Set) {
-            sanitizeSet((Set<?>) target, visited);
-            return target;
+            return sanitizeSet((Set<?>) target, visited, depth, counter, maxDepth, maxNodes);
         }
         if (target instanceof Collection) {
-            sanitizeCollection((Collection<?>) target, visited);
-            return target;
+            return sanitizeCollection((Collection<?>) target, visited, depth, counter, maxDepth, maxNodes);
         }
         if (type.isArray()) {
-            sanitizeArray(target, visited);
+            sanitizeArray(target, visited, depth, counter, maxDepth, maxNodes);
             return target;
         }
 
-        sanitizeFields(target, type, visited);
+        sanitizeFields(target, type, visited, depth, counter, maxDepth, maxNodes);
         return target;
     }
 
@@ -107,15 +129,36 @@ public final class XssCleaner {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private static void sanitizeMap(Map<?, ?> map, IdentityHashMap<Object, Boolean> visited) {
-        @SuppressWarnings("unchecked")
-        Map<Object, Object> mutable = (Map<Object, Object>) map;
-        for (Map.Entry<Object, Object> entry : mutable.entrySet()) {
+    private static Object sanitizeMap(Map<?, ?> map,
+                                      IdentityHashMap<Object, Boolean> visited,
+                                      int depth,
+                                      int[] counter,
+                                      int maxDepth,
+                                      int maxNodes) {
+        if (map == null || map.isEmpty()) {
+            return map;
+        }
+        Map<Object, Object> sanitizedMap = new LinkedHashMap<>(map.size());
+        boolean changed = false;
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
             Object value = entry.getValue();
-            Object sanitized = sanitizeObject(value, visited);
+            Object sanitized = sanitizeObject(value, visited, depth + 1, counter, maxDepth, maxNodes);
+            sanitizedMap.put(entry.getKey(), sanitized);
             if (value != sanitized) {
-                entry.setValue(sanitized);
+                changed = true;
             }
+        }
+        if (!changed) {
+            return map;
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            Map<Object, Object> mutable = (Map<Object, Object>) map;
+            mutable.clear();
+            mutable.putAll(sanitizedMap);
+            return map;
+        } catch (UnsupportedOperationException ex) {
+            return sanitizedMap;
         }
     }
 
@@ -127,15 +170,36 @@ public final class XssCleaner {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private static void sanitizeList(List<?> list, IdentityHashMap<Object, Boolean> visited) {
-        @SuppressWarnings("unchecked")
-        List<Object> mutable = (List<Object>) list;
-        for (int i = 0; i < mutable.size(); i++) {
-            Object value = mutable.get(i);
-            Object sanitized = sanitizeObject(value, visited);
+    private static Object sanitizeList(List<?> list,
+                                       IdentityHashMap<Object, Boolean> visited,
+                                       int depth,
+                                       int[] counter,
+                                       int maxDepth,
+                                       int maxNodes) {
+        if (list == null || list.isEmpty()) {
+            return list;
+        }
+        List<Object> sanitizedList = new ArrayList<>(list.size());
+        boolean changed = false;
+        for (Object value : list) {
+            Object sanitized = sanitizeObject(value, visited, depth + 1, counter, maxDepth, maxNodes);
+            sanitizedList.add(sanitized);
             if (value != sanitized) {
-                mutable.set(i, sanitized);
+                changed = true;
             }
+        }
+        if (!changed) {
+            return list;
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            List<Object> mutable = (List<Object>) list;
+            for (int i = 0; i < sanitizedList.size(); i++) {
+                mutable.set(i, sanitizedList.get(i));
+            }
+            return list;
+        } catch (UnsupportedOperationException ex) {
+            return sanitizedList;
         }
     }
 
@@ -147,21 +211,35 @@ public final class XssCleaner {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private static void sanitizeSet(Set<?> set, IdentityHashMap<Object, Boolean> visited) {
+    private static Object sanitizeSet(Set<?> set,
+                                      IdentityHashMap<Object, Boolean> visited,
+                                      int depth,
+                                      int[] counter,
+                                      int maxDepth,
+                                      int maxNodes) {
+        if (set == null || set.isEmpty()) {
+            return set;
+        }
         Set<Object> sanitizedSet = new LinkedHashSet<>(set.size());
         boolean changed = false;
         for (Object value : set) {
-            Object sanitized = sanitizeObject(value, visited);
+            Object sanitized = sanitizeObject(value, visited, depth + 1, counter, maxDepth, maxNodes);
             sanitizedSet.add(sanitized);
             if (value != sanitized) {
                 changed = true;
             }
         }
-        if (changed) {
+        if (!changed) {
+            return set;
+        }
+        try {
             set.clear();
             @SuppressWarnings("unchecked")
             Set<Object> mutable = (Set<Object>) set;
             mutable.addAll(sanitizedSet);
+            return set;
+        } catch (UnsupportedOperationException ex) {
+            return sanitizedSet;
         }
     }
 
@@ -173,21 +251,35 @@ public final class XssCleaner {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private static void sanitizeCollection(Collection<?> collection, IdentityHashMap<Object, Boolean> visited) {
+    private static Object sanitizeCollection(Collection<?> collection,
+                                             IdentityHashMap<Object, Boolean> visited,
+                                             int depth,
+                                             int[] counter,
+                                             int maxDepth,
+                                             int maxNodes) {
+        if (collection == null || collection.isEmpty()) {
+            return collection;
+        }
         List<Object> sanitizedList = new ArrayList<>(collection.size());
         boolean changed = false;
         for (Object value : collection) {
-            Object sanitized = sanitizeObject(value, visited);
+            Object sanitized = sanitizeObject(value, visited, depth + 1, counter, maxDepth, maxNodes);
             sanitizedList.add(sanitized);
             if (value != sanitized) {
                 changed = true;
             }
         }
-        if (changed) {
+        if (!changed) {
+            return collection;
+        }
+        try {
             collection.clear();
             @SuppressWarnings("unchecked")
             Collection<Object> mutable = (Collection<Object>) collection;
             mutable.addAll(sanitizedList);
+            return collection;
+        } catch (UnsupportedOperationException ex) {
+            return sanitizedList;
         }
     }
 
@@ -199,11 +291,16 @@ public final class XssCleaner {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private static void sanitizeArray(Object array, IdentityHashMap<Object, Boolean> visited) {
+    private static void sanitizeArray(Object array,
+                                      IdentityHashMap<Object, Boolean> visited,
+                                      int depth,
+                                      int[] counter,
+                                      int maxDepth,
+                                      int maxNodes) {
         int length = Array.getLength(array);
         for (int i = 0; i < length; i++) {
             Object value = Array.get(array, i);
-            Object sanitized = sanitizeObject(value, visited);
+            Object sanitized = sanitizeObject(value, visited, depth + 1, counter, maxDepth, maxNodes);
             if (value != sanitized) {
                 Array.set(array, i, sanitized);
             }
@@ -219,13 +316,22 @@ public final class XssCleaner {
      * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
-    private static void sanitizeFields(Object target, Class<?> type, IdentityHashMap<Object, Boolean> visited) {
+    private static void sanitizeFields(Object target,
+                                       Class<?> type,
+                                       IdentityHashMap<Object, Boolean> visited,
+                                       int depth,
+                                       int[] counter,
+                                       int maxDepth,
+                                       int maxNodes) {
         Class<?> current = type;
         while (current != null && current != Object.class) {
             Field[] fields = current.getDeclaredFields();
             for (Field field : fields) {
                 int modifiers = field.getModifiers();
                 if (Modifier.isStatic(modifiers) || Modifier.isFinal(modifiers) || field.isSynthetic()) {
+                    continue;
+                }
+                if (field.isAnnotationPresent(XssIgnore.class)) {
                     continue;
                 }
                 setAccessibleQuietly(field);
@@ -235,7 +341,7 @@ public final class XssCleaner {
                 } catch (IllegalAccessException e) {
                     continue;
                 }
-                Object sanitized = sanitizeObject(value, visited);
+                Object sanitized = sanitizeObject(value, visited, depth + 1, counter, maxDepth, maxNodes);
                 if (value != sanitized) {
                     try {
                         field.set(target, sanitized);

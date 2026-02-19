@@ -5,6 +5,7 @@ import com.example.demo.auth.config.AuthProperties;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -26,7 +27,7 @@ public class AuthTokenResolver {
     }
 
     /**
-     * 解析请求中的访问令牌，优先级：Authorization > X-Auth-Token。
+     * 解析请求中的访问令牌，优先级：Authorization > X-Auth-Token > Cookie > Query。
      *
      * @param request HTTP 请求
      * @return 解析到的令牌字符串，未找到返回 null
@@ -52,10 +53,41 @@ public class AuthTokenResolver {
         if (StringUtils.isNotBlank(token)) {
             return token.trim();
         }
+        String cookieToken = resolveCookieToken(request);
+        if (StringUtils.isNotBlank(cookieToken)) {
+            return cookieToken;
+        }
         if (authProperties.getJwt().isAllowQueryToken()) {
             String queryToken = request.getParameter(tokenConstants.getQueryTokenParameter());
             if (StringUtils.isNotBlank(queryToken)) {
                 return queryToken;
+            }
+        }
+        return null;
+    }
+
+    private String resolveCookieToken(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        AuthProperties.Jwt.Cookie cookieConfig = authProperties.getJwt().getCookie();
+        if (cookieConfig == null || !cookieConfig.isEnabled()) {
+            return null;
+        }
+        String cookieName = StringUtils.trimToNull(cookieConfig.getName());
+        if (StringUtils.isBlank(cookieName)) {
+            return null;
+        }
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null || cookies.length == 0) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if (cookie != null && cookieName.equals(cookie.getName())) {
+                String token = StringUtils.trimToNull(cookie.getValue());
+                if (StringUtils.isNotBlank(token)) {
+                    return token;
+                }
             }
         }
         return null;

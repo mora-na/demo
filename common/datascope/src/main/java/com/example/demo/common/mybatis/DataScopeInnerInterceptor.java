@@ -28,6 +28,8 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.sql.Connection;
@@ -45,6 +47,8 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
     private static final ThreadLocal<Boolean> LOADING_RULES = new ThreadLocal<>();
     private static final String DEFAULT_DEPT_COLUMN = "create_dept";
     private static final String DEFAULT_USER_COLUMN = "create_by";
+    private static final Logger log = LoggerFactory.getLogger(DataScopeInnerInterceptor.class);
+    private static final int MAX_SQL_LOG_LENGTH = 500;
 
     private final DataScopeProperties properties;
     private final DataScopeRuleProvider ruleProvider;
@@ -182,6 +186,13 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
             }
             return statement.toString();
         } catch (Exception ex) {
+            String scopeKey = scopeRequest == null ? null : scopeRequest.getScopeKey();
+            String safeSql = limitSql(sql);
+            if (properties != null && !properties.isFailOpenOnSqlParseError()) {
+                log.warn("DataScope SQL parse failed, blocking query. scopeKey={}, sql={}", scopeKey, safeSql, ex);
+                throw new IllegalStateException("DataScope SQL parse failed", ex);
+            }
+            log.warn("DataScope SQL parse failed, skip rewrite. scopeKey={}, sql={}", scopeKey, safeSql, ex);
             return sql;
         }
     }
@@ -256,6 +267,17 @@ public class DataScopeInnerInterceptor implements InnerInterceptor {
             return changed;
         }
         return changed;
+    }
+
+    private String limitSql(String sql) {
+        if (sql == null) {
+            return "";
+        }
+        String trimmed = sql.trim();
+        if (trimmed.length() <= MAX_SQL_LOG_LENGTH) {
+            return trimmed;
+        }
+        return trimmed.substring(0, MAX_SQL_LOG_LENGTH) + "...";
     }
 
     /**

@@ -4,7 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.Min;
 import java.util.*;
 
 /**
@@ -16,6 +19,7 @@ import java.util.*;
 @Setter
 @Getter
 @Component
+@Validated
 @ConfigurationProperties(prefix = "security.duplicate-submit")
 public class DuplicateSubmitProperties {
 
@@ -43,6 +47,7 @@ public class DuplicateSubmitProperties {
      * @param intervalMillis 判定间隔（毫秒）
      *
      */
+    @Min(0)
     private long intervalMillis = 3000;
 
     /**
@@ -112,6 +117,20 @@ public class DuplicateSubmitProperties {
 
     /**
      * -- GETTER --
+     * 获取允许参与请求体摘要的最大字节数（<=0 表示不限制）。
+     *
+     * @return 最大字节数
+     * <p>
+     * -- SETTER --
+     * 设置允许参与请求体摘要的最大字节数（<=0 表示不限制）。
+     * @param maxBodyBytes 最大字节数
+     *
+     */
+    @Min(0)
+    private int maxBodyBytes = 64 * 1024;
+
+    /**
+     * -- GETTER --
      * 获取需要保护的 HTTP 方法列表。
      *
      * @return 方法列表
@@ -167,6 +186,14 @@ public class DuplicateSubmitProperties {
 
     public List<String> getExcludePaths() {
         return mergeExcludePaths(excludePaths, additionalExcludePaths);
+    }
+
+    @AssertTrue(message = "security.duplicate-submit.interval-millis must be > 0 when enabled")
+    public boolean isValidIntervalConfig() {
+        if (!enabled) {
+            return true;
+        }
+        return intervalMillis > 0;
     }
 
 }

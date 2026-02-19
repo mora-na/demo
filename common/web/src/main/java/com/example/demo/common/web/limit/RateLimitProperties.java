@@ -4,7 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.Min;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -19,6 +22,7 @@ import java.util.List;
 @Setter
 @Getter
 @Component
+@Validated
 @ConfigurationProperties(prefix = "security.rate-limit")
 public class RateLimitProperties {
 
@@ -46,6 +50,7 @@ public class RateLimitProperties {
      * @param windowSeconds 时间窗口（秒）
      *
      */
+    @Min(0)
     private long windowSeconds = 60;
 
     /**
@@ -59,6 +64,7 @@ public class RateLimitProperties {
      * @param maxRequests 最大请求数
      *
      */
+    @Min(0)
     private int maxRequests = 100;
 
     /**
@@ -131,6 +137,14 @@ public class RateLimitProperties {
 
     public List<String> getExcludePaths() {
         return mergeExcludePaths(excludePaths, additionalExcludePaths);
+    }
+
+    @AssertTrue(message = "security.rate-limit.window-seconds and max-requests must be > 0 when enabled")
+    public boolean isValidLimitConfig() {
+        if (!enabled) {
+            return true;
+        }
+        return windowSeconds > 0 && maxRequests > 0;
     }
 
 }

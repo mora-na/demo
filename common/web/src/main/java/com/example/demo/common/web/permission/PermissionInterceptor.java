@@ -33,12 +33,11 @@ import java.util.stream.Collectors;
 @Component
 public class PermissionInterceptor implements HandlerInterceptor {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
     private final PermissionProperties properties;
     private final PermissionService permissionService;
     private final CommonExcludePathsProperties commonExcludePaths;
     private final I18nService i18nService;
+    private final ObjectMapper objectMapper;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final CommonConstants systemConstants;
     private final ObjectProvider<PermissionBypassEvaluator> bypassEvaluators;
@@ -56,12 +55,14 @@ public class PermissionInterceptor implements HandlerInterceptor {
                                  PermissionService permissionService,
                                  CommonExcludePathsProperties commonExcludePaths,
                                  I18nService i18nService,
+                                 ObjectMapper objectMapper,
                                  CommonConstants systemConstants,
                                  ObjectProvider<PermissionBypassEvaluator> bypassEvaluators) {
         this.properties = properties;
         this.permissionService = permissionService;
         this.commonExcludePaths = commonExcludePaths;
         this.i18nService = i18nService;
+        this.objectMapper = objectMapper;
         this.systemConstants = systemConstants;
         this.bypassEvaluators = bypassEvaluators;
     }
@@ -239,7 +240,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
         }
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(systemConstants.getHttp().getJsonContentType());
-        String body = OBJECT_MAPPER.writeValueAsString(result);
+        String body = objectMapper.writeValueAsString(result);
         try {
             response.getWriter().write(body);
         } catch (IllegalStateException ex) {

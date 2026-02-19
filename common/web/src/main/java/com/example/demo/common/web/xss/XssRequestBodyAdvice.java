@@ -82,7 +82,7 @@ public class XssRequestBodyAdvice extends RequestBodyAdviceAdapter {
                 return body;
             }
         }
-        return XssCleaner.sanitizeObject(body);
+        return XssCleaner.sanitizeObject(body, properties.getMaxScanDepth(), properties.getMaxScanNodes());
     }
 
     /**

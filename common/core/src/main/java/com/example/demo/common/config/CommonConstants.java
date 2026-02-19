@@ -33,12 +33,14 @@ public class CommonConstants {
         public static final String DEFAULT_REAL_IP_HEADER = "X-Real-IP";
         public static final String DEFAULT_MULTIPART_PREFIX = "multipart/";
         public static final String DEFAULT_IDEMPOTENCY_HEADER = "Idempotency-Key";
+        public static final boolean DEFAULT_TRUST_FORWARDED_HEADERS = false;
 
         private String jsonContentType = DEFAULT_JSON_CONTENT_TYPE;
         private String forwardedForHeader = DEFAULT_FORWARDED_FOR_HEADER;
         private String realIpHeader = DEFAULT_REAL_IP_HEADER;
         private String multipartPrefix = DEFAULT_MULTIPART_PREFIX;
         private String idempotencyHeaderDefault = DEFAULT_IDEMPOTENCY_HEADER;
+        private boolean trustForwardedHeaders = DEFAULT_TRUST_FORWARDED_HEADERS;
     }
 
     @Data
