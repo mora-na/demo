@@ -1,7 +1,7 @@
 package com.example.demo.extension.support;
 
+import com.example.demo.extension.api.executor.ExecuteStrategy;
 import com.example.demo.extension.config.DynamicApiConstants;
-import com.example.demo.extension.executor.ExecuteStrategy;
 import com.example.demo.extension.executor.ExecuteStrategyFactory;
 import com.example.demo.extension.model.DynamicApi;
 import com.example.demo.extension.model.DynamicApiAuthMode;

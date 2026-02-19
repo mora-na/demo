@@ -1,5 +1,9 @@
 package com.example.demo.extension.executor;
 
+import com.example.demo.extension.api.executor.DynamicApiExecuteResult;
+import com.example.demo.extension.api.executor.DynamicApiExecutionContext;
+import com.example.demo.extension.api.executor.DynamicApiTerminationReason;
+import com.example.demo.extension.api.executor.ExecuteStrategy;
 import com.example.demo.extension.api.handler.DynamicApiHandler;
 import com.example.demo.extension.api.request.DynamicApiParamMode;
 import com.example.demo.extension.api.request.DynamicApiRequest;
@@ -61,39 +65,53 @@ public class BeanExecuteStrategy implements ExecuteStrategy {
     }
 
     @Override
-    public DynamicApiExecuteResult execute(DynamicApiContext context) {
-        Object configObj = context.getMeta().getConfig();
+    public DynamicApiExecuteResult execute(DynamicApiExecutionContext context) {
+        Object configObj = context.getConfig();
         if (!(configObj instanceof BeanExecuteConfig)) {
             return DynamicApiExecuteResult.error(constants.getController().getBadRequestCode(),
-                    constants.getMessage().getBeanInvalid());
+                    constants.getMessage().getBeanInvalid(),
+                    DynamicApiTerminationReason.ERROR);
+        }
+        if (Thread.currentThread().isInterrupted()) {
+            return DynamicApiExecuteResult.error(constants.getController().getServiceUnavailableCode(),
+                    constants.getMessage().getTimeout(),
+                    DynamicApiTerminationReason.TIMEOUT);
         }
         BeanExecuteConfig config = (BeanExecuteConfig) configObj;
         String beanName = StringUtils.trimToNull(config.getBeanName());
         if (beanName == null) {
             return DynamicApiExecuteResult.error(constants.getController().getBadRequestCode(),
-                    constants.getMessage().getBeanInvalid());
+                    constants.getMessage().getBeanInvalid(),
+                    DynamicApiTerminationReason.ERROR);
         }
         Object bean = applicationContext.getBean(beanName);
         if (!(bean instanceof DynamicApiHandler)) {
             return DynamicApiExecuteResult.error(constants.getController().getBadRequestCode(),
-                    constants.getMessage().getBeanInvalid());
+                    constants.getMessage().getBeanInvalid(),
+                    DynamicApiTerminationReason.ERROR);
         }
         try {
             DynamicApiHandler handler = (DynamicApiHandler) bean;
             DynamicApiRequest request = context.getRequest();
             Object result = handler.handle(request);
+            if (Thread.currentThread().isInterrupted()) {
+                return DynamicApiExecuteResult.error(constants.getController().getServiceUnavailableCode(),
+                        constants.getMessage().getTimeout(),
+                        DynamicApiTerminationReason.TIMEOUT);
+            }
             return DynamicApiExecuteResult.success(result);
         } catch (Exception ex) {
             String traceId = MDC.get("traceId");
             log.error("Dynamic api bean execute failed: apiId={}, path={}, method={}, bean={}, traceId={}",
-                    context.getMeta().getApi().getId(),
-                    context.getMeta().getApi().getPath(),
-                    context.getMeta().getApi().getMethod(),
+                    context.getApiId(),
+                    context.getPath(),
+                    context.getMethod(),
                     beanName,
                     traceId,
                     ex);
             return DynamicApiExecuteResult.error(constants.getController().getInternalServerErrorCode(),
-                    constants.getMessage().getExecuteFailed());
+                    constants.getMessage().getExecuteFailed(),
+                    DynamicApiTerminationReason.ERROR);
         }
     }
 

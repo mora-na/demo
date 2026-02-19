@@ -685,6 +685,7 @@
 ### 安全防护
 
 - SQL 防护：`security.sql-guard.*`。
+- SQL 防护扩展：`block-with-clause`、`block-union`、`blocked-functions`、`allowed-tables`、`allowed-columns`。
 - XSS 过滤：`security.xss.*`。
 - 限流：`security.rate-limit.*`。
 - 重复提交：`security.duplicate-submit.*`。
@@ -696,12 +697,15 @@
 
 - 运行时入口：`/ext/**`（由动态接口注册表匹配路由）。
 - 管理接口：`/dynamic-api/**`（增删改查、启用/停用、重载）。
-- 元数据接口：`/dynamic-api/metadata/beans`、`/dynamic-api/metadata/rate-limit-policies`、`/dynamic-api/metadata/types`。
+- 元数据接口：`/dynamic-api/metadata/beans`、`/dynamic-api/metadata/rate-limit-policies`、`/dynamic-api/metadata/types`、
+  `/dynamic-api/metadata/metrics`。
+- 响应头：超时/取消/拒绝等情况下会返回 `X-Dynamic-Api-Termination` 标识终止原因。
 
 **类型与扩展**
 
 - 内置类型：`BEAN` / `SQL` / `HTTP`。
-- 自定义类型：实现 `ExecuteStrategy` 并注册为 Spring Bean；前端类型下拉由 `/dynamic-api/metadata/types` 动态读取。
+- 自定义类型：实现 `com.example.demo.extension.api.executor.ExecuteStrategy` 并注册为 Spring Bean；前端类型下拉由
+  `/dynamic-api/metadata/types` 动态读取。
 - 自定义类型配置由 `ExecuteStrategy.parseConfig` 解析，未提供时将原始 `config` 作为字符串传入。
 
 **SQL 类型限制（`type=SQL`）**
@@ -709,6 +713,11 @@
 - 仅允许 `SELECT`（非 `SELECT` 会被拒绝）。
 - `security.sql-guard.block-multi-statement=true` 时禁止多语句。
 - `security.sql-guard.block-cross-schema-join=true` 时禁止跨 schema JOIN，且 schema 必须在 `allowed-schemas` 白名单内。
+- `security.sql-guard.block-with-clause=true` 时禁止 `WITH` 语句。
+- `security.sql-guard.block-union=true` 时禁止 `UNION/UNION ALL`。
+- `security.sql-guard.blocked-functions` 可配置函数黑名单（大小写不敏感）。
+- `security.sql-guard.allowed-tables` / `security.sql-guard.allowed-columns` 可配置表/字段白名单（为空则不限制）。
+- SQL 返回行数受 `dynamic.api.constants.execute.sql-max-rows` 限制。
 - 支持命名参数（形如 `:name`），会从请求参数中绑定。
 
 **数据源模式影响**
@@ -720,16 +729,47 @@
 
 **动态接口配置（`dynamic.api.*`）**
 
-| 配置键                                       | 默认值         | 说明                   |
-|-------------------------------------------|-------------|----------------------|
-| `dynamic.api.global.enabled`              | `true`      | 全局开关。                |
-| `dynamic.api.default-timeout-ms`          | `3000`      | 默认超时（毫秒）。            |
-| `dynamic.api.executor.core-pool-size`     | `8`         | 执行线程池核心线程数。          |
-| `dynamic.api.executor.max-pool-size`      | `16`        | 执行线程池最大线程数。          |
-| `dynamic.api.executor.queue-capacity`     | `200`       | 执行队列容量。              |
-| `dynamic.api.executor.keep-alive-seconds` | `60`        | 空闲线程保活秒数。            |
-| `dynamic.api.executor.thread-name-prefix` | `ext-exec-` | 线程名前缀。               |
-| `dynamic.api.rate-limit-policies`         | `[]`        | 动态限流策略列表（用于动态接口级限流）。 |
+| 配置键                                            | 默认值         | 说明                                                     |
+|------------------------------------------------|-------------|--------------------------------------------------------|
+| `dynamic.api.global.enabled`                   | `true`      | 全局开关。                                                  |
+| `dynamic.api.executor.core-pool-size`          | `8`         | 执行线程池核心线程数。                                            |
+| `dynamic.api.executor.max-pool-size`           | `16`        | 执行线程池最大线程数。                                            |
+| `dynamic.api.executor.queue-capacity`          | `200`       | 执行队列容量。                                                |
+| `dynamic.api.executor.keep-alive-seconds`      | `60`        | 空闲线程保活秒数。                                              |
+| `dynamic.api.executor.thread-name-prefix`      | `ext-exec-` | 线程名前缀。                                                 |
+| `dynamic.api.executor.rejected-policy`         | `ABORT`     | 拒绝策略：`ABORT`/`CALLER_RUNS`/`DISCARD`/`DISCARD_OLDEST`。 |
+| `dynamic.api.executors`                        | `{}`        | 自定义执行器集合（名称 -> 配置）。                                    |
+| `dynamic.api.executor-routes`                  | `[]`        | 执行器路由规则（按 api/type/path 分流）。                           |
+| `dynamic.api.circuit-breaker.enabled`          | `false`     | 是否启用熔断。                                                |
+| `dynamic.api.circuit-breaker.window-seconds`   | `60`        | 统计窗口（秒）。                                               |
+| `dynamic.api.circuit-breaker.minimum-calls`    | `20`        | 最小样本数。                                                 |
+| `dynamic.api.circuit-breaker.failure-rate`     | `0.5`       | 失败率阈值（0-1）。                                            |
+| `dynamic.api.circuit-breaker.open-duration-ms` | `30000`     | 熔断打开持续时间（毫秒）。                                          |
+| `dynamic.api.metrics.enabled`                  | `true`      | 是否启用动态接口指标。                                            |
+| `dynamic.api.metrics.max-details`              | `200`       | 指标明细返回上限。                                              |
+| `dynamic.api.rate-limit-policies`              | `[]`        | 动态限流策略列表（用于动态接口级限流）。                                   |
+
+**执行器配置（`dynamic.api.executors`）**
+
+| 配置键                  | 默认值         | 说明        |
+|----------------------|-------------|-----------|
+| `core-pool-size`     | `8`         | 核心线程数。    |
+| `max-pool-size`      | `16`        | 最大线程数。    |
+| `queue-capacity`     | `200`       | 队列容量。     |
+| `keep-alive-seconds` | `60`        | 空闲线程保活秒数。 |
+| `thread-name-prefix` | `ext-exec-` | 线程名前缀。    |
+| `rejected-policy`    | `ABORT`     | 拒绝策略。     |
+
+**执行器路由（`dynamic.api.executor-routes[]`）**
+
+| 配置键           | 默认值 | 说明                  |
+|---------------|-----|---------------------|
+| `executor-id` | -   | 目标执行器名称（必填）。        |
+| `type`        | -   | 动态接口类型匹配（可选）。       |
+| `api-id`      | -   | 动态接口 API ID 匹配（可选）。 |
+| `path-prefix` | -   | 路径前缀匹配（可选）。         |
+
+- 路由按配置顺序匹配，命中即停止。
 
 **动态限流策略项（`dynamic.api.rate-limit-policies[]`）**
 
@@ -753,41 +793,62 @@
 | `dynamic.api.constants.controller.internal-server-error-code` | `500` | 执行失败错误码。   |
 | `dynamic.api.constants.controller.service-unavailable-code`   | `503` | 服务不可用错误码。  |
 | `dynamic.api.constants.controller.rate-limit-code`            | `429` | 限流错误码。     |
+| `dynamic.api.constants.controller.rejected-code`              | `429` | 执行被拒绝错误码。  |
 
 **Message 组**
 
-| 配置键                                                  | 默认值                                | 说明         |
-|------------------------------------------------------|------------------------------------|------------|
-| `dynamic.api.constants.message.not-found`            | `dynamic.api.not.found`            | 未找到。       |
-| `dynamic.api.constants.message.global-disabled`      | `dynamic.api.global.disabled`      | 全局关闭。      |
-| `dynamic.api.constants.message.path-invalid`         | `dynamic.api.path.invalid`         | 路径非法。      |
-| `dynamic.api.constants.message.method-invalid`       | `dynamic.api.method.invalid`       | 方法非法。      |
-| `dynamic.api.constants.message.type-invalid`         | `dynamic.api.type.invalid`         | 类型非法。      |
-| `dynamic.api.constants.message.config-invalid`       | `dynamic.api.config.invalid`       | 配置非法。      |
-| `dynamic.api.constants.message.bean-invalid`         | `dynamic.api.bean.invalid`         | Bean 配置非法。 |
-| `dynamic.api.constants.message.sql-invalid`          | `dynamic.api.sql.invalid`          | SQL 配置非法。  |
-| `dynamic.api.constants.message.http-invalid`         | `dynamic.api.http.invalid`         | HTTP 配置非法。 |
-| `dynamic.api.constants.message.create-failed`        | `dynamic.api.create.failed`        | 创建失败。      |
-| `dynamic.api.constants.message.update-failed`        | `dynamic.api.update.failed`        | 更新失败。      |
-| `dynamic.api.constants.message.delete-failed`        | `dynamic.api.delete.failed`        | 删除失败。      |
-| `dynamic.api.constants.message.status-update-failed` | `dynamic.api.status.update.failed` | 状态更新失败。    |
-| `dynamic.api.constants.message.execute-failed`       | `dynamic.api.execute.failed`       | 执行失败。      |
-| `dynamic.api.constants.message.timeout`              | `dynamic.api.timeout`              | 执行超时。      |
+| 配置键                                                  | 默认值                                | 说明          |
+|------------------------------------------------------|------------------------------------|-------------|
+| `dynamic.api.constants.message.not-found`            | `dynamic.api.not.found`            | 未找到。        |
+| `dynamic.api.constants.message.global-disabled`      | `dynamic.api.global.disabled`      | 全局关闭。       |
+| `dynamic.api.constants.message.path-invalid`         | `dynamic.api.path.invalid`         | 路径非法。       |
+| `dynamic.api.constants.message.method-invalid`       | `dynamic.api.method.invalid`       | 方法非法。       |
+| `dynamic.api.constants.message.type-invalid`         | `dynamic.api.type.invalid`         | 类型非法。       |
+| `dynamic.api.constants.message.config-invalid`       | `dynamic.api.config.invalid`       | 配置非法。       |
+| `dynamic.api.constants.message.bean-invalid`         | `dynamic.api.bean.invalid`         | Bean 配置非法。  |
+| `dynamic.api.constants.message.sql-invalid`          | `dynamic.api.sql.invalid`          | SQL 配置非法。   |
+| `dynamic.api.constants.message.http-invalid`         | `dynamic.api.http.invalid`         | HTTP 配置非法。  |
+| `dynamic.api.constants.message.create-failed`        | `dynamic.api.create.failed`        | 创建失败。       |
+| `dynamic.api.constants.message.update-failed`        | `dynamic.api.update.failed`        | 更新失败。       |
+| `dynamic.api.constants.message.delete-failed`        | `dynamic.api.delete.failed`        | 删除失败。       |
+| `dynamic.api.constants.message.status-update-failed` | `dynamic.api.status.update.failed` | 状态更新失败。     |
+| `dynamic.api.constants.message.execute-failed`       | `dynamic.api.execute.failed`       | 执行失败。       |
+| `dynamic.api.constants.message.timeout`              | `dynamic.api.timeout`              | 执行超时。       |
+| `dynamic.api.constants.message.rejected`             | `dynamic.api.rejected`             | 执行被拒绝/系统繁忙。 |
+| `dynamic.api.constants.message.circuit-open`         | `dynamic.api.circuit.open`         | 熔断打开。       |
+| `dynamic.api.constants.message.response-too-large`   | `dynamic.api.response.too.large`   | 响应过大。       |
 
 **HTTP 组**
 
-| 配置键                                            | 默认值                         | 说明                 |
-|------------------------------------------------|-----------------------------|--------------------|
-| `dynamic.api.constants.http.ext-prefix`        | `/ext/`                     | 动态接口前缀。            |
-| `dynamic.api.constants.http.error-path`        | `/error`                    | 错误路径前缀（禁止注册）。      |
-| `dynamic.api.constants.http.actuator-prefix`   | `/actuator`                 | Actuator 前缀（禁止注册）。 |
-| `dynamic.api.constants.http.supported-methods` | `GET,POST,PUT,PATCH,DELETE` | 允许的 HTTP 方法。       |
+| 配置键                                                    | 默认值                         | 说明                 |
+|--------------------------------------------------------|-----------------------------|--------------------|
+| `dynamic.api.constants.http.ext-prefix`                | `/ext/`                     | 动态接口前缀。            |
+| `dynamic.api.constants.http.error-path`                | `/error`                    | 错误路径前缀（禁止注册）。      |
+| `dynamic.api.constants.http.actuator-prefix`           | `/actuator`                 | Actuator 前缀（禁止注册）。 |
+| `dynamic.api.constants.http.supported-methods`         | `GET,POST,PUT,PATCH,DELETE` | 允许的 HTTP 方法。       |
+| `dynamic.api.constants.http.max-total-connections`     | `200`                       | HTTP 连接池最大连接数。     |
+| `dynamic.api.constants.http.max-connections-per-route` | `50`                        | HTTP 每路由最大连接数。     |
+| `dynamic.api.constants.http.idle-evict-seconds`        | `30`                        | HTTP 空闲连接回收秒数。     |
 
 **Execute 组**
 
-| 配置键                                            | 默认值    | 说明          |
-|------------------------------------------------|--------|-------------|
-| `dynamic.api.constants.execute.log-max-length` | `2000` | 动态接口日志最大长度。 |
+| 配置键                                                                  | 默认值                         | 说明                     |
+|----------------------------------------------------------------------|-----------------------------|------------------------|
+| `dynamic.api.constants.execute.log-max-length`                       | `2000`                      | 动态接口日志最大长度。            |
+| `dynamic.api.constants.execute.default-timeout-ms`                   | `3000`                      | 默认超时（毫秒）。              |
+| `dynamic.api.constants.execute.max-timeout-ms`                       | `60000`                     | 最大超时（毫秒），<=0 表示不限制。    |
+| `dynamic.api.constants.execute.cleanup-timeout-ms`                   | `1000`                      | 清理/终止回调最大执行时间（毫秒）。     |
+| `dynamic.api.constants.execute.max-response-bytes`                   | `1048576`                   | 最大响应体字节数（<=0 表示不限制）。   |
+| `dynamic.api.constants.execute.sql-max-rows`                         | `500`                       | SQL 最大返回行数（<=0 表示不限制）。 |
+| `dynamic.api.constants.execute.sql-fetch-size`                       | `200`                       | SQL 游标抓取大小（<=0 表示不设置）。 |
+| `dynamic.api.constants.execute.masked-keys`                          | `password,token,secret,...` | 日志脱敏字段列表（大小写不敏感）。      |
+| `dynamic.api.constants.execute.cleanup-executor-core-pool-size`      | `1`                         | 清理执行器核心线程数。            |
+| `dynamic.api.constants.execute.cleanup-executor-max-pool-size`       | `2`                         | 清理执行器最大线程数。            |
+| `dynamic.api.constants.execute.cleanup-executor-queue-capacity`      | `200`                       | 清理执行器队列容量。             |
+| `dynamic.api.constants.execute.cleanup-executor-keep-alive-seconds`  | `30`                        | 清理执行器线程保活秒数。           |
+| `dynamic.api.constants.execute.cleanup-executor-thread-name-prefix`  | `ext-cleanup-`              | 清理执行器线程名前缀。            |
+| `dynamic.api.constants.execute.cleanup-scheduler-pool-size`          | `1`                         | 清理调度器线程数。              |
+| `dynamic.api.constants.execute.cleanup-scheduler-thread-name-prefix` | `ext-cleanup-scheduler-`    | 清理调度器线程名前缀。            |
 
 **配置示例（`type` 与 `config`）**
 

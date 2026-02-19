@@ -343,7 +343,9 @@ dynamic:
   api:
     global:
       enabled: true
-    default-timeout-ms: 3000
+    constants:
+      execute:
+        default-timeout-ms: 3000
     executor:
       core-pool-size: 8
       max-pool-size: 16

@@ -132,6 +132,17 @@ public class DictLabelPreloadAdvice implements ResponseBodyAdvice<Object> {
         });
     }
 
+    private static void setAccessibleQuietly(Field field) {
+        if (field == null) {
+            return;
+        }
+        try {
+            field.setAccessible(true);
+        } catch (Exception ignored) {
+            // ignore
+        }
+    }
+
     private List<Field> resolveClassFields(Class<?> clazz) {
         return classFieldCache.computeIfAbsent(clazz, key -> {
             List<Field> fields = new ArrayList<>();
@@ -141,9 +152,7 @@ public class DictLabelPreloadAdvice implements ResponseBodyAdvice<Object> {
                     if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
                         continue;
                     }
-                    if (!field.isAccessible()) {
-                        field.setAccessible(true);
-                    }
+                    setAccessibleQuietly(field);
                     fields.add(field);
                 }
                 cursor = cursor.getSuperclass();

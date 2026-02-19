@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.ContextualSerializer;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.IOException;
 
@@ -44,7 +45,7 @@ public class DictLabelSerializer extends JsonSerializer<Object> implements Conte
         String targetName = StringUtils.isNotBlank(targetField)
                 ? targetField
                 : (currentName == null ? null : currentName + resolveLabelFieldSuffix());
-        if (StringUtils.isBlank(targetName) || StringUtils.equals(targetName, currentName)) {
+        if (StringUtils.isBlank(targetName) || Strings.CS.equals(targetName, currentName)) {
             return;
         }
         String label = DictTool.getLabel(dictType, value);

@@ -3,6 +3,7 @@ package com.example.demo.log.support;
 import com.example.demo.common.spring.SpringContextHolder;
 import com.example.demo.log.config.LogConstants;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -35,7 +36,7 @@ public final class IpUtils {
                 continue;
             }
             String ip = request.getHeader(header);
-            if (StringUtils.isNotBlank(ip) && !StringUtils.equalsIgnoreCase(ip, ipConstants.getUnknownToken())) {
+            if (StringUtils.isNotBlank(ip) && !Strings.CI.equals(ip, ipConstants.getUnknownToken())) {
                 if (StringUtils.isNotBlank(ipConstants.getMultiIpSeparator())
                         && ip.contains(ipConstants.getMultiIpSeparator())) {
                     return ip.split(Pattern.quote(ipConstants.getMultiIpSeparator()))[0].trim();

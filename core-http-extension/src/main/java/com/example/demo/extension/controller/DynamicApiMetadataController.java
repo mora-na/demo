@@ -6,9 +6,11 @@ import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.extension.api.handler.DynamicApiHandler;
 import com.example.demo.extension.config.DynamicApiProperties;
 import com.example.demo.extension.dto.DynamicApiBeanMeta;
+import com.example.demo.extension.dto.DynamicApiMetricsSnapshot;
 import com.example.demo.extension.dto.DynamicApiRateLimitPolicyMeta;
 import com.example.demo.extension.dto.DynamicApiTypeMeta;
 import com.example.demo.extension.executor.ExecuteStrategyFactory;
+import com.example.demo.extension.metrics.DynamicApiMetrics;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.support.AopUtils;
@@ -37,6 +39,7 @@ public class DynamicApiMetadataController extends BaseController {
     private final ApplicationContext applicationContext;
     private final DynamicApiProperties properties;
     private final ExecuteStrategyFactory strategyFactory;
+    private final DynamicApiMetrics metrics;
 
     @GetMapping("/beans")
     @RequirePermission("dynamic-api:query")
@@ -54,6 +57,12 @@ public class DynamicApiMetadataController extends BaseController {
     @RequirePermission("dynamic-api:query")
     public CommonResult<List<DynamicApiTypeMeta>> listTypes() {
         return success(strategyFactory.listTypes());
+    }
+
+    @GetMapping("/metrics")
+    @RequirePermission("dynamic-api:query")
+    public CommonResult<DynamicApiMetricsSnapshot> metrics() {
+        return success(metrics.snapshot());
     }
 
     private List<DynamicApiBeanMeta> loadBeanMetas() {

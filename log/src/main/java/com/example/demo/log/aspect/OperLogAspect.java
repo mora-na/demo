@@ -14,6 +14,7 @@ import com.example.demo.log.support.IpUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -136,7 +137,7 @@ public class OperLogAspect {
         if (httpMethod == null) {
             return false;
         }
-        if (StringUtils.equalsAnyIgnoreCase(httpMethod,
+        if (Strings.CI.equalsAny(httpMethod,
                 logConstants.getHttp().getGetMethod(),
                 logConstants.getHttp().getOptionsMethod())) {
             return false;
@@ -181,7 +182,7 @@ public class OperLogAspect {
         }
         String[] excludeParams = resolveExcludeParams(operLog);
         String paramJson;
-        if (request != null && StringUtils.equalsIgnoreCase(request.getMethod(), logConstants.getHttp().getGetMethod())) {
+        if (request != null && Strings.CI.equals(request.getMethod(), logConstants.getHttp().getGetMethod())) {
             paramJson = toJson(request.getParameterMap());
         } else {
             paramJson = toJson(filterArgs(joinPoint.getArgs()));
@@ -209,15 +210,15 @@ public class OperLogAspect {
         if (operLog != null) {
             return operLog.businessType().getCode();
         }
-        if (StringUtils.equalsIgnoreCase(httpMethod, logConstants.getHttp().getPostMethod())) {
+        if (Strings.CI.equals(httpMethod, logConstants.getHttp().getPostMethod())) {
             return BusinessType.INSERT.getCode();
         }
-        if (StringUtils.equalsAnyIgnoreCase(httpMethod,
+        if (Strings.CI.equalsAny(httpMethod,
                 logConstants.getHttp().getPutMethod(),
                 logConstants.getHttp().getPatchMethod())) {
             return BusinessType.UPDATE.getCode();
         }
-        if (StringUtils.equalsIgnoreCase(httpMethod, logConstants.getHttp().getDeleteMethod())) {
+        if (Strings.CI.equals(httpMethod, logConstants.getHttp().getDeleteMethod())) {
             return BusinessType.DELETE.getCode();
         }
         return BusinessType.OTHER.getCode();

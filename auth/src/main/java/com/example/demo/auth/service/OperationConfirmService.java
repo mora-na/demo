@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -122,7 +123,7 @@ public class OperationConfirmService {
             return VerifyCodeResult.fail(authConstants.getController().getBadRequestCode(),
                     "auth.operation.confirm.code.expired");
         }
-        if (!StringUtils.equals(cachedCode, inputCode)) {
+        if (!Strings.CS.equals(cachedCode, inputCode)) {
             String attemptKey = buildAttemptKey(userId, normalizedActionKey);
             long attempts = incrementAttempts(attemptKey, codeKey);
             if (attempts >= resolveMaxVerifyAttempts()) {
@@ -166,7 +167,7 @@ public class OperationConfirmService {
         }
         String ticketKey = buildTicketKey(userId, normalizedActionKey);
         String cachedTicket = toStringValue(cacheTool.get(ticketKey));
-        if (!StringUtils.equals(cachedTicket, ticket.trim())) {
+        if (!Strings.CS.equals(cachedTicket, ticket.trim())) {
             return false;
         }
         cacheTool.delete(ticketKey);
@@ -236,7 +237,7 @@ public class OperationConfirmService {
     private String resolveMailSubject() {
         AuthProperties.Security.OperationConfirm config = authProperties.getSecurity().getOperationConfirm();
         String subject = config == null ? null : config.getMailSubject();
-        return StringUtils.defaultIfBlank(subject, "敏感操作确认验证码");
+        return StringUtils.isBlank(subject) ? "敏感操作确认验证码" : subject;
     }
 
     private String buildMailContent(IdentityUserDTO user,

@@ -31,4 +31,29 @@ public class SqlGuardProperties {
             "system", "order", "notice", "job", "log", "dict", "cache", "extension", "demo"
     ));
 
+    /**
+     * 是否阻止 WITH 语句。
+     */
+    private boolean blockWithClause = false;
+
+    /**
+     * 是否阻止 UNION/UNION ALL。
+     */
+    private boolean blockUnion = false;
+
+    /**
+     * 禁止的函数名列表（大小写不敏感）。
+     */
+    private List<String> blockedFunctions = new ArrayList<>();
+
+    /**
+     * 允许访问的表名白名单（可选，支持 schema.table 或 table）。
+     */
+    private List<String> allowedTables = new ArrayList<>();
+
+    /**
+     * 允许访问的字段白名单（可选，支持 table.column 或 column）。
+     */
+    private List<String> allowedColumns = new ArrayList<>();
+
 }

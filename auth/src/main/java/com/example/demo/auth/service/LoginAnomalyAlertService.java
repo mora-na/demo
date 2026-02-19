@@ -10,6 +10,7 @@ import com.example.demo.log.api.facade.LoginLogReadFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -66,7 +67,7 @@ public class LoginAnomalyAlertService {
         if (!alert) {
             return;
         }
-        String subject = StringUtils.defaultIfBlank(config.getMailSubject(), "登录安全提醒");
+        String subject = StringUtils.isBlank(config.getMailSubject()) ? "登录安全提醒" : config.getMailSubject();
         String content = buildMailContent(user, previous, currentIp, currentUa, ipChanged, deviceChanged, loginTime);
         boolean sent = notifyMailSender.sendText(user.getEmail(), subject, content);
         if (!sent) {
@@ -88,7 +89,7 @@ public class LoginAnomalyAlertService {
         if (StringUtils.isBlank(previousIp) || StringUtils.isBlank(currentIp)) {
             return false;
         }
-        return !StringUtils.equals(previousIp.trim(), currentIp.trim());
+        return !Strings.CS.equals(previousIp.trim(), currentIp.trim());
     }
 
     private boolean isDeviceChanged(LoginLogRecordDTO previous, UserAgentInfoDTO currentUa) {
@@ -105,7 +106,7 @@ public class LoginAnomalyAlertService {
         if (StringUtils.isBlank(previousFingerprint) || StringUtils.isBlank(currentFingerprint)) {
             return false;
         }
-        return !StringUtils.equalsIgnoreCase(previousFingerprint, currentFingerprint);
+        return !Strings.CI.equals(previousFingerprint, currentFingerprint);
     }
 
     private String buildDeviceFingerprint(String deviceType, String os, String browser) {

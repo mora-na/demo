@@ -3,6 +3,7 @@ package com.example.demo.notice.model;
 import com.example.demo.common.spring.SpringContextHolder;
 import com.example.demo.notice.config.NoticeConstants;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.util.Locale;
 
@@ -45,10 +46,10 @@ public final class NoticeScopeType {
             return false;
         }
         String normalized = value.trim().toUpperCase(Locale.ROOT);
-        return StringUtils.equalsIgnoreCase(all(), normalized)
-                || StringUtils.equalsIgnoreCase(dept(), normalized)
-                || StringUtils.equalsIgnoreCase(role(), normalized)
-                || StringUtils.equalsIgnoreCase(user(), normalized);
+        return Strings.CI.equals(all(), normalized)
+                || Strings.CI.equals(dept(), normalized)
+                || Strings.CI.equals(role(), normalized)
+                || Strings.CI.equals(user(), normalized);
     }
 
     private static NoticeConstants constants() {

@@ -81,30 +81,91 @@ npm run dev
 
 ## 目录结构
 
-- `src/main/java` 后端源码
-- `src/main/resources` 配置与国际化资源
-- `sql/` 数据库建表脚本
-- `demo-ui/` 前端工程（如需）
+- `app/` 应用装配与启动入口
+- `common/` 公共基础能力（多子模块）
+- `identity-api/` 身份域对外契约
+- `log-api/` 日志域对外契约
+- `extension-api/` 扩展能力对外契约
+- `core-http-extension/` 动态接口扩展实现
+- `system/` 系统管理域
+- `auth/` 认证鉴权域
+- `log/` 审计日志域
+- `job/` 任务调度域
+- `notice/` 通知中心域
+- `order/` 业务示例域
+- `demo-ui/` 前端工程
+- `docs/` 文档
+- `sql/` 数据库脚本
 
-## 模块能力地图
+## 模块与依赖
 
-| 模块                    | 主要职责    | 关键能力                                        |
-|-----------------------|---------|---------------------------------------------|
-| `auth`                | 认证与会话   | 验证码登录、JWT 签发与校验、登出撤销、登录安全策略、邮箱二次确认          |
-| `user`                | 用户管理    | 用户资料、状态维护、密码修改、用户级数据范围覆盖                    |
-| `dept`                | 组织架构    | 部门树维护、上下级关系、数据归属基础                          |
-| `menu`                | 菜单管理    | 菜单树、路由菜单数据、菜单权限标识                           |
-| `permission`          | 角色与权限   | 角色授权、权限点控制、接口访问控制                           |
-| `datascope`           | 数据权限    | 角色/菜单/用户三级数据范围合并、SQL 数据过滤                   |
-| `dict`                | 字典管理    | 字典类型与数据维护、缓存、字典标签映射                         |
-| `notice`              | 通知中心    | 通知发布与阅读状态、SSE 实时推送                          |
-| `job`                 | 任务调度    | Quartz 任务管理、执行日志与结果追踪                       |
-| `log`                 | 日志审计    | 登录日志、操作日志、审计事件落库                            |
-| `post`                | 岗位管理    | 岗位信息维护、用户岗位关联                               |
-| `order`               | 业务示例    | 订单示例模块（用于展示业务层 CRUD + 权限/数据范围接入）            |
-| `core-http-extension` | 动态接口扩展  | 动态接口管理、运行时路由与执行（Bean / SQL / HTTP / 自定义执行器） |
-| `common`              | 公共基础设施  | 统一返回、异常处理、缓存抽象、邮件发送抽象、工具与通用配置               |
-| `ai`                  | AI 扩展入口 | AI 相关能力接入与扩展（按业务启用）                         |
+### 模块清单
+
+后端 Maven 模块包括：
+
+- `common`（聚合模块）
+- `identity-api`
+- `log-api`
+- `extension-api`
+- `core-http-extension`
+- `system`
+- `auth`
+- `log`
+- `job`
+- `notice`
+- `order`
+- `app`
+
+`common` 内部子模块：
+
+- `common/core`、`common/redis`、`common/security`、`common/mybatis`、`common/datascope`
+- `common/dict`、`common/web`、`common/cache`、`common/autoconfigure`、`common/i18n`、`common/log`
+
+### 依赖方向（高层）
+
+```
+common/*  ->  *-api  ->  业务实现/扩展实现  ->  app
+```
+
+依赖要点：
+
+- `*-api` 模块只暴露契约，依赖基础能力（`common/core` 等）。
+- `core-http-extension` 依赖 `extension-api` 与 `log-api`，并复用 `common` 能力。
+- 业务实现模块（`system/auth/log/job/notice/order`）依赖 `common` 与对应 `*-api`。
+- `app` 作为组装与启动入口，依赖全部业务与扩展模块。
+
+### 隔离与禁止依赖（maven-enforcer 约束）
+
+- `identity-api`、`log-api`、`extension-api` 禁止依赖 `system`/`auth`/`order`/`notice`/`job`/`log`/`core-http-extension`/
+  `app`。
+- `core-http-extension` 禁止依赖 `system`/`auth`/`order`/`notice`/`job`/`log`/`app`。
+- `system` 禁止依赖 `auth`/`order`/`notice`/`job`/`log`/`core-http-extension`/`app`。
+- `auth`、`order`、`notice`、`job`、`log` 禁止依赖 `system` 及其他业务实现模块（同时禁止 `core-http-extension`、`app`）。
+- `app` 仅用于最终装配，设计上不作为其他模块的依赖来源。
+
+这些规则体现了：
+
+- 业务模块之间不得直接相互依赖，跨域协作通过 `*-api` 契约模块完成。
+- 扩展实现（如动态接口）与业务实现隔离，避免实现层相互耦合。
+- `app` 仅作为装配层，禁止下沉到基础或业务模块中。
+
+## 模块职责一览
+
+| 模块                    | 类型    | 主要职责                                     |
+|-----------------------|-------|------------------------------------------|
+| `common/*`            | 基础设施  | 统一返回、异常处理、缓存抽象、安全、数据权限、工具与通用配置           |
+| `identity-api`        | 契约层   | 身份域对外接口定义                                |
+| `log-api`             | 契约层   | 日志域对外接口定义                                |
+| `extension-api`       | 契约层   | 扩展能力对外接口定义（如执行策略 SPI）                    |
+| `core-http-extension` | 扩展实现层 | 动态接口管理与运行时执行（Bean / SQL / HTTP / 自定义执行器） |
+| `system`              | 业务实现层 | 系统管理域能力                                  |
+| `auth`                | 业务实现层 | 认证与会话、登录安全、二次确认                          |
+| `log`                 | 业务实现层 | 登录日志、操作日志、审计事件落库                         |
+| `job`                 | 业务实现层 | Quartz 任务管理、执行日志与结果追踪                    |
+| `notice`              | 业务实现层 | 通知发布与阅读状态、SSE 实时推送                       |
+| `order`               | 业务实现层 | 订单示例模块（用于展示业务层 CRUD + 权限/数据范围接入）         |
+| `app`                 | 装配层   | 聚合启动、统一配置与运行                             |
+| `demo-ui`             | 前端    | Vue 3 + Element Plus 前端工程                |
 
 ## 使用说明与配置
 

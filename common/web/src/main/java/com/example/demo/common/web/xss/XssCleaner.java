@@ -108,11 +108,13 @@ public final class XssCleaner {
      * @date 2026/2/9
      */
     private static void sanitizeMap(Map<?, ?> map, IdentityHashMap<Object, Boolean> visited) {
-        for (Map.Entry<?, ?> entry : map.entrySet()) {
+        @SuppressWarnings("unchecked")
+        Map<Object, Object> mutable = (Map<Object, Object>) map;
+        for (Map.Entry<Object, Object> entry : mutable.entrySet()) {
             Object value = entry.getValue();
             Object sanitized = sanitizeObject(value, visited);
             if (value != sanitized) {
-                ((Map.Entry<Object, Object>) entry).setValue(sanitized);
+                entry.setValue(sanitized);
             }
         }
     }
@@ -126,11 +128,13 @@ public final class XssCleaner {
      * @date 2026/2/9
      */
     private static void sanitizeList(List<?> list, IdentityHashMap<Object, Boolean> visited) {
-        for (int i = 0; i < list.size(); i++) {
-            Object value = list.get(i);
+        @SuppressWarnings("unchecked")
+        List<Object> mutable = (List<Object>) list;
+        for (int i = 0; i < mutable.size(); i++) {
+            Object value = mutable.get(i);
             Object sanitized = sanitizeObject(value, visited);
             if (value != sanitized) {
-                ((List<Object>) list).set(i, sanitized);
+                mutable.set(i, sanitized);
             }
         }
     }
@@ -155,7 +159,9 @@ public final class XssCleaner {
         }
         if (changed) {
             set.clear();
-            ((Set<Object>) set).addAll(sanitizedSet);
+            @SuppressWarnings("unchecked")
+            Set<Object> mutable = (Set<Object>) set;
+            mutable.addAll(sanitizedSet);
         }
     }
 
@@ -179,7 +185,9 @@ public final class XssCleaner {
         }
         if (changed) {
             collection.clear();
-            ((Collection<Object>) collection).addAll(sanitizedList);
+            @SuppressWarnings("unchecked")
+            Collection<Object> mutable = (Collection<Object>) collection;
+            mutable.addAll(sanitizedList);
         }
     }
 
@@ -220,7 +228,7 @@ public final class XssCleaner {
                 if (Modifier.isStatic(modifiers) || Modifier.isFinal(modifiers) || field.isSynthetic()) {
                     continue;
                 }
-                field.setAccessible(true);
+                setAccessibleQuietly(field);
                 Object value;
                 try {
                     value = field.get(target);
@@ -237,6 +245,17 @@ public final class XssCleaner {
                 }
             }
             current = current.getSuperclass();
+        }
+    }
+
+    private static void setAccessibleQuietly(Field field) {
+        if (field == null) {
+            return;
+        }
+        try {
+            field.setAccessible(true);
+        } catch (Exception ignored) {
+            // ignore
         }
     }
 

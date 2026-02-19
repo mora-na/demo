@@ -686,6 +686,7 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 ### Security Protections
 
 - SQL guard: `security.sql-guard.*`.
+- SQL guard extras: `block-with-clause`, `block-union`, `blocked-functions`, `allowed-tables`, `allowed-columns`.
 - XSS filter: `security.xss.*`.
 - Rate limiting: `security.rate-limit.*`.
 - Duplicate-submit: `security.duplicate-submit.*`.
@@ -698,12 +699,14 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 - Runtime entry: `/ext/**` (matched by the dynamic API registry).
 - Management APIs: `/dynamic-api/**` (CRUD, enable/disable, reload).
 - Metadata APIs: `/dynamic-api/metadata/beans`, `/dynamic-api/metadata/rate-limit-policies`,
-  `/dynamic-api/metadata/types`.
+  `/dynamic-api/metadata/types`, `/dynamic-api/metadata/metrics`.
+- Response header: `X-Dynamic-Api-Termination` is returned on timeout/cancel/reject.
 
 **Types and Extensibility**
 
 - Built-in types: `BEAN` / `SQL` / `HTTP`.
-- Custom types: implement `ExecuteStrategy` and register as a Spring bean; the UI type list is loaded from
+- Custom types: implement `com.example.demo.extension.api.executor.ExecuteStrategy` and register as a Spring bean; the
+  UI type list is loaded from
   `/dynamic-api/metadata/types`.
 - Custom configs are parsed by `ExecuteStrategy.parseConfig`; if not provided, raw `config` is passed through as a
   string.
@@ -713,6 +716,11 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 - Only `SELECT` is allowed (non-SELECT will be rejected).
 - `security.sql-guard.block-multi-statement=true` blocks multi-statements.
 - `security.sql-guard.block-cross-schema-join=true` blocks cross-schema JOINs and enforces `allowed-schemas`.
+- `security.sql-guard.block-with-clause=true` blocks `WITH`.
+- `security.sql-guard.block-union=true` blocks `UNION/UNION ALL`.
+- `security.sql-guard.blocked-functions` configures a function blacklist (case-insensitive).
+- `security.sql-guard.allowed-tables` / `security.sql-guard.allowed-columns` configure table/column whitelists.
+- SQL rows are capped by `dynamic.api.constants.execute.sql-max-rows`.
 - Named parameters are supported (e.g. `:name`), bound from request params.
 
 **Datasource Mode Notes**
@@ -725,16 +733,47 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 
 **Dynamic API Config (`dynamic.api.*`)**
 
-| Key                                       | Default     | Description                              |
-|-------------------------------------------|-------------|------------------------------------------|
-| `dynamic.api.global.enabled`              | `true`      | Global switch.                           |
-| `dynamic.api.default-timeout-ms`          | `3000`      | Default timeout in ms.                   |
-| `dynamic.api.executor.core-pool-size`     | `8`         | Executor core pool size.                 |
-| `dynamic.api.executor.max-pool-size`      | `16`        | Executor max pool size.                  |
-| `dynamic.api.executor.queue-capacity`     | `200`       | Executor queue capacity.                 |
-| `dynamic.api.executor.keep-alive-seconds` | `60`        | Thread keep-alive seconds.               |
-| `dynamic.api.executor.thread-name-prefix` | `ext-exec-` | Thread name prefix.                      |
-| `dynamic.api.rate-limit-policies`         | `[]`        | Rate limit policy list for dynamic APIs. |
+| Key                                            | Default     | Description                                                         |
+|------------------------------------------------|-------------|---------------------------------------------------------------------|
+| `dynamic.api.global.enabled`                   | `true`      | Global switch.                                                      |
+| `dynamic.api.executor.core-pool-size`          | `8`         | Executor core pool size.                                            |
+| `dynamic.api.executor.max-pool-size`           | `16`        | Executor max pool size.                                             |
+| `dynamic.api.executor.queue-capacity`          | `200`       | Executor queue capacity.                                            |
+| `dynamic.api.executor.keep-alive-seconds`      | `60`        | Thread keep-alive seconds.                                          |
+| `dynamic.api.executor.thread-name-prefix`      | `ext-exec-` | Thread name prefix.                                                 |
+| `dynamic.api.executor.rejected-policy`         | `ABORT`     | Rejection policy: `ABORT`/`CALLER_RUNS`/`DISCARD`/`DISCARD_OLDEST`. |
+| `dynamic.api.executors`                        | `{}`        | Custom executors (name -> config).                                  |
+| `dynamic.api.executor-routes`                  | `[]`        | Executor routing rules (by api/type/path).                          |
+| `dynamic.api.circuit-breaker.enabled`          | `false`     | Enable circuit breaker.                                             |
+| `dynamic.api.circuit-breaker.window-seconds`   | `60`        | Window seconds.                                                     |
+| `dynamic.api.circuit-breaker.minimum-calls`    | `20`        | Minimum calls.                                                      |
+| `dynamic.api.circuit-breaker.failure-rate`     | `0.5`       | Failure rate threshold (0-1).                                       |
+| `dynamic.api.circuit-breaker.open-duration-ms` | `30000`     | Open duration in ms.                                                |
+| `dynamic.api.metrics.enabled`                  | `true`      | Enable dynamic API metrics.                                         |
+| `dynamic.api.metrics.max-details`              | `200`       | Max metrics items.                                                  |
+| `dynamic.api.rate-limit-policies`              | `[]`        | Rate limit policy list for dynamic APIs.                            |
+
+**Executors (`dynamic.api.executors`)**
+
+| Key                  | Default     | Description                                                         |
+|----------------------|-------------|---------------------------------------------------------------------|
+| `core-pool-size`     | `8`         | Core pool size.                                                     |
+| `max-pool-size`      | `16`        | Max pool size.                                                      |
+| `queue-capacity`     | `200`       | Queue capacity.                                                     |
+| `keep-alive-seconds` | `60`        | Keep-alive seconds.                                                 |
+| `thread-name-prefix` | `ext-exec-` | Thread name prefix.                                                 |
+| `rejected-policy`    | `ABORT`     | Rejection policy: `ABORT`/`CALLER_RUNS`/`DISCARD`/`DISCARD_OLDEST`. |
+
+**Executor Routes (`dynamic.api.executor-routes[]`)**
+
+| Key           | Default | Description                    |
+|---------------|---------|--------------------------------|
+| `executor-id` | -       | Target executor id (required). |
+| `type`        | -       | Dynamic API type (optional).   |
+| `api-id`      | -       | Dynamic API id (optional).     |
+| `path-prefix` | -       | Path prefix (optional).        |
+
+- Routes are matched in order; first match wins.
 
 **Rate Limit Policy Item (`dynamic.api.rate-limit-policies[]`)**
 
@@ -758,6 +797,7 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 | `dynamic.api.constants.controller.internal-server-error-code` | `500`   | Execution error code.     |
 | `dynamic.api.constants.controller.service-unavailable-code`   | `503`   | Service unavailable code. |
 | `dynamic.api.constants.controller.rate-limit-code`            | `429`   | Rate limit code.          |
+| `dynamic.api.constants.controller.rejected-code`              | `429`   | Rejected execution code.  |
 
 **Message**
 
@@ -778,21 +818,41 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 | `dynamic.api.constants.message.status-update-failed` | `dynamic.api.status.update.failed` | Status update failed. |
 | `dynamic.api.constants.message.execute-failed`       | `dynamic.api.execute.failed`       | Execute failed.       |
 | `dynamic.api.constants.message.timeout`              | `dynamic.api.timeout`              | Timeout.              |
+| `dynamic.api.constants.message.rejected`             | `dynamic.api.rejected`             | Rejected/overloaded.  |
+| `dynamic.api.constants.message.circuit-open`         | `dynamic.api.circuit.open`         | Circuit open.         |
+| `dynamic.api.constants.message.response-too-large`   | `dynamic.api.response.too.large`   | Response too large.   |
 
 **HTTP**
 
-| Key                                            | Default                     | Description                  |
-|------------------------------------------------|-----------------------------|------------------------------|
-| `dynamic.api.constants.http.ext-prefix`        | `/ext/`                     | Dynamic API prefix.          |
-| `dynamic.api.constants.http.error-path`        | `/error`                    | Error prefix (forbidden).    |
-| `dynamic.api.constants.http.actuator-prefix`   | `/actuator`                 | Actuator prefix (forbidden). |
-| `dynamic.api.constants.http.supported-methods` | `GET,POST,PUT,PATCH,DELETE` | Supported HTTP methods.      |
+| Key                                                    | Default                     | Description                         |
+|--------------------------------------------------------|-----------------------------|-------------------------------------|
+| `dynamic.api.constants.http.ext-prefix`                | `/ext/`                     | Dynamic API prefix.                 |
+| `dynamic.api.constants.http.error-path`                | `/error`                    | Error prefix (forbidden).           |
+| `dynamic.api.constants.http.actuator-prefix`           | `/actuator`                 | Actuator prefix (forbidden).        |
+| `dynamic.api.constants.http.supported-methods`         | `GET,POST,PUT,PATCH,DELETE` | Supported HTTP methods.             |
+| `dynamic.api.constants.http.max-total-connections`     | `200`                       | HTTP max total connections.         |
+| `dynamic.api.constants.http.max-connections-per-route` | `50`                        | HTTP max connections per route.     |
+| `dynamic.api.constants.http.idle-evict-seconds`        | `30`                        | HTTP idle connection evict seconds. |
 
 **Execute**
 
-| Key                                            | Default | Description                     |
-|------------------------------------------------|---------|---------------------------------|
-| `dynamic.api.constants.execute.log-max-length` | `2000`  | Max log length for dynamic API. |
+| Key                                                                  | Default                     | Description                               |
+|----------------------------------------------------------------------|-----------------------------|-------------------------------------------|
+| `dynamic.api.constants.execute.log-max-length`                       | `2000`                      | Max log length for dynamic API.           |
+| `dynamic.api.constants.execute.default-timeout-ms`                   | `3000`                      | Default timeout in ms.                    |
+| `dynamic.api.constants.execute.max-timeout-ms`                       | `60000`                     | Max timeout in ms, <=0 means no limit.    |
+| `dynamic.api.constants.execute.cleanup-timeout-ms`                   | `1000`                      | Max cleanup callback time in ms.          |
+| `dynamic.api.constants.execute.max-response-bytes`                   | `1048576`                   | Max response bytes (<=0 means unlimited). |
+| `dynamic.api.constants.execute.sql-max-rows`                         | `500`                       | SQL max rows (<=0 means unlimited).       |
+| `dynamic.api.constants.execute.sql-fetch-size`                       | `200`                       | SQL fetch size (<=0 means unset).         |
+| `dynamic.api.constants.execute.masked-keys`                          | `password,token,secret,...` | Sensitive keys for log masking.           |
+| `dynamic.api.constants.execute.cleanup-executor-core-pool-size`      | `1`                         | Cleanup executor core pool size.          |
+| `dynamic.api.constants.execute.cleanup-executor-max-pool-size`       | `2`                         | Cleanup executor max pool size.           |
+| `dynamic.api.constants.execute.cleanup-executor-queue-capacity`      | `200`                       | Cleanup executor queue capacity.          |
+| `dynamic.api.constants.execute.cleanup-executor-keep-alive-seconds`  | `30`                        | Cleanup executor keep-alive seconds.      |
+| `dynamic.api.constants.execute.cleanup-executor-thread-name-prefix`  | `ext-cleanup-`              | Cleanup executor thread name prefix.      |
+| `dynamic.api.constants.execute.cleanup-scheduler-pool-size`          | `1`                         | Cleanup scheduler pool size.              |
+| `dynamic.api.constants.execute.cleanup-scheduler-thread-name-prefix` | `ext-cleanup-scheduler-`    | Cleanup scheduler thread name prefix.     |
 
 **Config Examples (`type` and `config`)**
 
