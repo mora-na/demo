@@ -15,6 +15,8 @@ public class DynamicApiLogEvent {
     private final Integer status;
     private final Integer responseCode;
     private final String errorMsg;
+    private final String errorDetails;
+    private final String meta;
     private final String traceId;
     private final Long userId;
     private final String userName;
@@ -31,6 +33,8 @@ public class DynamicApiLogEvent {
                               Integer status,
                               Integer responseCode,
                               String errorMsg,
+                              String errorDetails,
+                              String meta,
                               String traceId,
                               Long userId,
                               String userName,
@@ -46,6 +50,8 @@ public class DynamicApiLogEvent {
         this.status = status;
         this.responseCode = responseCode;
         this.errorMsg = errorMsg;
+        this.errorDetails = errorDetails;
+        this.meta = meta;
         this.traceId = traceId;
         this.userId = userId;
         this.userName = userName;
@@ -85,6 +91,14 @@ public class DynamicApiLogEvent {
 
     public String getErrorMsg() {
         return errorMsg;
+    }
+
+    public String getErrorDetails() {
+        return errorDetails;
+    }
+
+    public String getMeta() {
+        return meta;
     }
 
     public String getTraceId() {

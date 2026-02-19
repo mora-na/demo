@@ -39,6 +39,8 @@ public class DynamicApiLogEventListener {
             logEntity.setStatus(event.getStatus());
             logEntity.setResponseCode(event.getResponseCode());
             logEntity.setErrorMsg(event.getErrorMsg());
+            logEntity.setErrorDetails(event.getErrorDetails());
+            logEntity.setMeta(event.getMeta());
             logEntity.setTraceId(event.getTraceId());
             logEntity.setUserId(event.getUserId());
             logEntity.setUserName(event.getUserName());

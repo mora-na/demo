@@ -45,6 +45,12 @@ public class SysDynamicApiLog implements Serializable {
     @TableField("error_msg")
     private String errorMsg;
 
+    @TableField("error_details")
+    private String errorDetails;
+
+    @TableField("meta")
+    private String meta;
+
     @TableField("trace_id")
     private String traceId;
 
