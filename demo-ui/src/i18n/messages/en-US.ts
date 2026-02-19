@@ -582,6 +582,10 @@ export default {
             user: "User",
             ip: "IP",
             error: "Error",
+            params: "Params",
+            errorDetails: "Error details",
+            meta: "Meta",
+            trace: "TraceId",
             action: "Action"
         },
         status: {

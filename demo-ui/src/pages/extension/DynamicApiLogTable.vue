@@ -80,7 +80,19 @@
               <div class="detail-value detail-pre">{{ row.errorMsg || "-" }}</div>
             </div>
             <div class="detail-item detail-item--full">
-              <div class="detail-label">TraceId</div>
+              <div class="detail-label">{{ t("dynamicApiLog.table.params") }}</div>
+              <div class="detail-value detail-pre">{{ row.requestParam || "-" }}</div>
+            </div>
+            <div v-if="row.errorDetails" class="detail-item detail-item--full">
+              <div class="detail-label">{{ t("dynamicApiLog.table.errorDetails") }}</div>
+              <div class="detail-value detail-pre">{{ row.errorDetails }}</div>
+            </div>
+            <div v-if="row.meta" class="detail-item detail-item--full">
+              <div class="detail-label">{{ t("dynamicApiLog.table.meta") }}</div>
+              <div class="detail-value detail-pre">{{ row.meta }}</div>
+            </div>
+            <div class="detail-item detail-item--full">
+              <div class="detail-label">{{ t("dynamicApiLog.table.trace") }}</div>
               <div class="detail-value">{{ row.traceId || "-" }}</div>
             </div>
           </div>

@@ -82,6 +82,8 @@ export interface DynamicApiLog {
     status?: number;
     responseCode?: number;
     errorMsg?: string;
+    errorDetails?: string;
+    meta?: string;
     traceId?: string;
     userId?: number;
     userName?: string;

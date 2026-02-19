@@ -582,6 +582,10 @@ export default {
             user: "用户",
             ip: "IP",
             error: "错误",
+            params: "参数",
+            errorDetails: "错误详情",
+            meta: "元数据",
+            trace: "TraceId",
             action: "操作"
         },
         status: {

@@ -141,20 +141,21 @@
 
     <el-dialog v-model="editorVisible" :title="editorTitle" align-center width="720px">
       <el-form :model="form" class="job-editor-form" label-position="top">
-        <el-form-item :label="t('dynamicApi.dialog.path')">
+        <el-form-item :error="fieldErrors.path" :label="t('dynamicApi.dialog.path')">
           <el-input v-model.trim="form.path" :placeholder="t('dynamicApi.dialog.pathPlaceholder')"/>
         </el-form-item>
-        <el-form-item :label="t('dynamicApi.dialog.method')">
+        <el-form-item :error="fieldErrors.method" :label="t('dynamicApi.dialog.method')">
           <el-select v-model="form.method" :placeholder="t('dynamicApi.dialog.methodPlaceholder')">
             <el-option v-for="item in methodOptions" :key="item" :label="item" :value="item"/>
           </el-select>
         </el-form-item>
-        <el-form-item :label="t('dynamicApi.dialog.type')">
+        <el-form-item :error="fieldErrors.type" :label="t('dynamicApi.dialog.type')">
           <el-select v-model="form.type" :placeholder="t('dynamicApi.dialog.typePlaceholder')">
             <el-option v-for="item in typeOptions" :key="item.code" :label="item.label" :value="item.code"/>
           </el-select>
         </el-form-item>
-        <el-form-item v-if="isCustomType" :label="t('dynamicApi.dialog.config')" class="full-row">
+        <el-form-item v-if="isCustomType" :error="fieldErrors.config" :label="t('dynamicApi.dialog.config')"
+                      class="full-row">
           <el-input
               v-model.trim="form.config"
               :placeholder="t('dynamicApi.dialog.configPlaceholder')"
@@ -162,7 +163,8 @@
               type="textarea"
           />
         </el-form-item>
-        <el-form-item v-if="currentType === 'BEAN'" :label="t('dynamicApi.dialog.beanName')">
+        <el-form-item v-if="currentType === 'BEAN'" :error="fieldErrors.beanName"
+                      :label="t('dynamicApi.dialog.beanName')">
           <el-select
               v-model="form.beanName"
               :placeholder="t('dynamicApi.dialog.beanNamePlaceholder')"
@@ -177,7 +179,8 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item v-if="currentType === 'BEAN'" :label="t('dynamicApi.dialog.paramMode')">
+        <el-form-item v-if="currentType === 'BEAN'" :error="fieldErrors.paramMode"
+                      :label="t('dynamicApi.dialog.paramMode')">
           <el-select v-model="form.paramMode" :placeholder="t('dynamicApi.dialog.paramModePlaceholder')">
             <el-option :label="t('dynamicApi.paramMode.auto')" :value="'AUTO'"/>
             <el-option :label="t('dynamicApi.paramMode.query')" :value="'QUERY'"/>
@@ -187,7 +190,8 @@
           </el-select>
           <div class="form-hint">{{ t("dynamicApi.dialog.paramModeHint") }}</div>
         </el-form-item>
-        <el-form-item v-if="currentType === 'BEAN'" :label="t('dynamicApi.dialog.paramSchema')" class="full-row">
+        <el-form-item v-if="currentType === 'BEAN'" :error="fieldErrors.paramSchema"
+                      :label="t('dynamicApi.dialog.paramSchema')" class="full-row">
           <el-input
               v-model.trim="form.paramSchema"
               :placeholder="t('dynamicApi.dialog.paramSchemaPlaceholder')"
@@ -195,7 +199,8 @@
               type="textarea"
           />
         </el-form-item>
-        <el-form-item v-if="currentType === 'SQL'" :label="t('dynamicApi.dialog.sql')" class="full-row">
+        <el-form-item v-if="currentType === 'SQL'" :error="fieldErrors.sql" :label="t('dynamicApi.dialog.sql')"
+                      class="full-row">
           <el-input
               v-model.trim="form.sql"
               :placeholder="t('dynamicApi.dialog.sqlPlaceholder')"
@@ -203,10 +208,12 @@
               type="textarea"
           />
         </el-form-item>
-        <el-form-item v-if="currentType === 'HTTP'" :label="t('dynamicApi.dialog.httpUrl')">
+        <el-form-item v-if="currentType === 'HTTP'" :error="fieldErrors.httpUrl"
+                      :label="t('dynamicApi.dialog.httpUrl')">
           <el-input v-model.trim="form.httpUrl" :placeholder="t('dynamicApi.dialog.httpUrlPlaceholder')"/>
         </el-form-item>
-        <el-form-item v-if="currentType === 'HTTP'" :label="t('dynamicApi.dialog.httpMethod')">
+        <el-form-item v-if="currentType === 'HTTP'" :error="fieldErrors.httpMethod"
+                      :label="t('dynamicApi.dialog.httpMethod')">
           <el-select v-model="form.httpMethod" :placeholder="t('dynamicApi.dialog.httpMethodPlaceholder')">
             <el-option :label="t('dynamicApi.http.followRequest')" :value="''"/>
             <el-option v-for="item in methodOptions" :key="item" :label="item" :value="item"/>
@@ -218,20 +225,20 @@
         <el-form-item v-if="currentType === 'HTTP'" :label="t('dynamicApi.dialog.httpPassQuery')">
           <el-switch v-model="form.httpPassQuery"/>
         </el-form-item>
-        <el-form-item :label="t('dynamicApi.dialog.status')">
+        <el-form-item :error="fieldErrors.status" :label="t('dynamicApi.dialog.status')">
           <el-select v-model="form.status" :placeholder="t('dynamicApi.dialog.statusPlaceholder')">
             <el-option :label="t('dynamicApi.status.draft')" :value="'DRAFT'"/>
             <el-option :label="t('dynamicApi.status.enabled')" :value="'ENABLED'"/>
             <el-option :label="t('dynamicApi.status.disabled')" :value="'DISABLED'"/>
           </el-select>
         </el-form-item>
-        <el-form-item :label="t('dynamicApi.dialog.authMode')">
+        <el-form-item :error="fieldErrors.authMode" :label="t('dynamicApi.dialog.authMode')">
           <el-select v-model="form.authMode" :placeholder="t('dynamicApi.dialog.authModePlaceholder')">
             <el-option :label="t('dynamicApi.auth.inherit')" :value="'INHERIT'"/>
             <el-option :label="t('dynamicApi.auth.public')" :value="'PUBLIC'"/>
           </el-select>
         </el-form-item>
-        <el-form-item :label="t('dynamicApi.dialog.rateLimit')">
+        <el-form-item :error="fieldErrors.rateLimitPolicy" :label="t('dynamicApi.dialog.rateLimit')">
           <el-select
               v-model="form.rateLimitPolicy"
               :placeholder="t('dynamicApi.dialog.rateLimitPlaceholder')"
@@ -247,7 +254,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="t('dynamicApi.dialog.timeout')">
+        <el-form-item :error="fieldErrors.timeoutMs" :label="t('dynamicApi.dialog.timeout')">
           <el-input v-model.number="form.timeoutMs" :placeholder="t('dynamicApi.dialog.timeoutPlaceholder')"
                     type="number"/>
         </el-form-item>
@@ -304,6 +311,7 @@ const typeCatalog = ref<DynamicApiTypeMeta[]>([]);
 const beanLoading = ref(false);
 const policyLoading = ref(false);
 const typeLoading = ref(false);
+const fieldErrors = reactive<Record<string, string>>({});
 
 const methodOptions = ["GET", "POST", "PUT", "DELETE"];
 const defaultTypeOptions: DynamicApiTypeMeta[] = [
@@ -366,6 +374,55 @@ function normalizeType(value?: string) {
 
 function isBuiltInType(value?: string) {
   return builtInTypes.has(normalizeType(value));
+}
+
+function clearFieldErrors() {
+  Object.keys(fieldErrors).forEach((key) => {
+    delete fieldErrors[key];
+  });
+}
+
+function extractErrorDetails(result: { data?: unknown } | undefined) {
+  const data = result?.data;
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return null;
+  }
+  const details: Record<string, string> = {};
+  Object.entries(data as Record<string, unknown>).forEach(([key, value]) => {
+    if (value == null) {
+      return;
+    }
+    details[key] = String(value);
+  });
+  return Object.keys(details).length ? details : null;
+}
+
+function applyFieldErrors(details: Record<string, string> | null) {
+  clearFieldErrors();
+  if (!details) {
+    return;
+  }
+  const alias: Record<string, string> = {
+    url: "httpUrl",
+    method: "httpMethod",
+    sql: "sql",
+    beanName: "beanName",
+    paramMode: "paramMode",
+    paramSchema: "paramSchema",
+    config: "config"
+  };
+  Object.entries(details).forEach(([key, value]) => {
+    const target = alias[key] || key;
+    fieldErrors[target] = value;
+  });
+}
+
+function buildErrorSummary(details: Record<string, string> | null) {
+  if (!details) {
+    return "";
+  }
+  const messages = Object.values(details).filter((item) => item && item.trim());
+  return messages.join("; ");
 }
 
 function itemLabel(item: DynamicApiBeanMeta) {
@@ -503,6 +560,7 @@ function handleSizeChange(value: number) {
 }
 
 function openCreate() {
+  clearFieldErrors();
   editorMode.value = "create";
   currentId.value = null;
   form.path = "";
@@ -526,6 +584,7 @@ function openCreate() {
 }
 
 function openEdit(row: DynamicApi) {
+  clearFieldErrors();
   editorMode.value = "edit";
   currentId.value = row.id;
   form.path = row.path || "";
@@ -550,6 +609,7 @@ function openEdit(row: DynamicApi) {
 }
 
 async function saveApi() {
+  clearFieldErrors();
   if (!form.path || !form.method || !form.type) {
     ElMessage.warning(t("dynamicApi.msg.validate"));
     return;
@@ -605,7 +665,11 @@ async function saveApi() {
       editorVisible.value = false;
       loadApis();
     } else {
-      ElMessage.error(result?.message || t("common.saveFailed"));
+      const details = extractErrorDetails(result);
+      applyFieldErrors(details);
+      const summary = buildErrorSummary(details);
+      const message = result?.message || t("common.saveFailed");
+      ElMessage.error(summary ? `${message}: ${summary}` : message);
     }
   } catch (_error) {
     ElMessage.error(t("common.saveFailed"));
@@ -747,6 +811,7 @@ watch(
       if (value === prev) {
         return;
       }
+      clearFieldErrors();
       const normalizedType = normalizeType(value);
       if (normalizedType === "BEAN") {
         form.config = "";
