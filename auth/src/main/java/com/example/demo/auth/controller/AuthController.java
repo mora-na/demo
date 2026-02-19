@@ -6,7 +6,7 @@ import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.auth.service.*;
 import com.example.demo.auth.support.AuthTokenResolver;
-import com.example.demo.common.config.CommonConstants;
+import com.example.demo.auth.support.ClientIpResolver;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequireLogin;
@@ -48,8 +48,9 @@ public class AuthController extends BaseController {
     private final UserProfileService userProfileService;
     private final ApplicationEventPublisher eventPublisher;
     private final AuthTokenResolver authTokenResolver;
+    private final CaptchaRateLimitKeyResolver captchaRateLimitKeyResolver;
+    private final ClientIpResolver clientIpResolver;
     private final AuthConstants systemConstants;
-    private final CommonConstants commonConstants;
 
     /**
      * 生成验证码并返回验证码 ID 与图片数据。
@@ -57,8 +58,9 @@ public class AuthController extends BaseController {
      * @return 包含验证码信息的通用响应
      */
     @GetMapping("/captcha")
-    public CommonResult<CaptchaResponse> captcha() {
-        CaptchaResponse response = captchaService.createCaptcha();
+    public CommonResult<CaptchaResponse> captcha(HttpServletRequest request) {
+        String scopeKey = captchaRateLimitKeyResolver.resolve(request);
+        CaptchaResponse response = captchaService.createCaptcha(scopeKey);
         if (response == null) {
             return error(systemConstants.getController().getTooManyRequestsCode(), i18n("auth.captcha.too.many"));
         }
@@ -356,19 +358,7 @@ public class AuthController extends BaseController {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        if (request == null) {
-            return null;
-        }
-        String forwarded = request.getHeader(commonConstants.getHttp().getForwardedForHeader());
-        if (StringUtils.isNotBlank(forwarded)) {
-            int comma = forwarded.indexOf(',');
-            return comma > 0 ? forwarded.substring(0, comma).trim() : forwarded.trim();
-        }
-        String realIp = request.getHeader(commonConstants.getHttp().getRealIpHeader());
-        if (StringUtils.isNotBlank(realIp)) {
-            return realIp.trim();
-        }
-        return StringUtils.trimToNull(request.getRemoteAddr());
+        return clientIpResolver.resolve(request);
     }
 
 }

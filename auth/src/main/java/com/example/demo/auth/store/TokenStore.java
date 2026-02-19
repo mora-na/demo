@@ -1,6 +1,7 @@
 package com.example.demo.auth.store;
 
 import com.example.demo.auth.config.AuthConstants;
+import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.cache.CacheTool;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,16 +25,21 @@ public class TokenStore {
     private final CacheTool cacheTool;
     private final ObjectMapper objectMapper;
     private final AuthConstants systemConstants;
+    private final AuthProperties authProperties;
 
     /**
      * 构造函数，注入缓存工具。
      *
      * @param cacheTool 缓存工具
      */
-    public TokenStore(CacheTool cacheTool, ObjectMapper objectMapper, AuthConstants systemConstants) {
+    public TokenStore(CacheTool cacheTool,
+                      ObjectMapper objectMapper,
+                      AuthConstants systemConstants,
+                      AuthProperties authProperties) {
         this.cacheTool = cacheTool;
         this.objectMapper = objectMapper;
         this.systemConstants = systemConstants;
+        this.authProperties = authProperties;
     }
 
     /**
@@ -182,9 +188,13 @@ public class TokenStore {
     }
 
     private long versionTtlSeconds(long ttlSeconds) {
+        long configured = authProperties.getJwt().getTokenVersionTtlSeconds();
+        if (configured > 0) {
+            return configured;
+        }
         long base = Math.max(1L, ttlSeconds);
         long doubled = base * 2;
-        return Math.max(doubled, base + 60);
+        return Math.max(doubled, base + 600);
     }
 
     private Long parseLong(Object value) {

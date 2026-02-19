@@ -74,11 +74,11 @@ public class CaptchaStore {
      * @param cleanupIntervalSeconds 窗口时长（秒）
      * @return true 表示允许创建
      */
-    public boolean allowCreate(int maxEntries, int cleanupIntervalSeconds) {
+    public boolean allowCreate(String scopeKey, int maxEntries, int cleanupIntervalSeconds) {
         if (maxEntries <= 0 || cleanupIntervalSeconds <= 0) {
             return true;
         }
-        String key = buildCounterKey();
+        String key = buildCounterKey(scopeKey);
         Long count = cacheTool.increment(key);
         long value = count == null ? 1L : count.longValue();
         if (value == 1L) {
@@ -97,7 +97,11 @@ public class CaptchaStore {
         return systemConstants.getCaptcha().getStoreKeyPrefix() + captchaId;
     }
 
-    private String buildCounterKey() {
-        return systemConstants.getCaptcha().getStoreKeyPrefix() + "counter";
+    private String buildCounterKey(String scopeKey) {
+        String scope = scopeKey == null ? "global" : scopeKey.trim();
+        if (scope.isEmpty()) {
+            scope = "global";
+        }
+        return systemConstants.getCaptcha().getStoreKeyPrefix() + "counter:" + scope;
     }
 }

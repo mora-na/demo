@@ -36,7 +36,8 @@ auth:
   # JWT 配置
   jwt:
     # JWT 密钥
-    secret: ENC(hf7z4h+P3Ranjc8Ana8ZQg==)
+    # 建议通过环境变量 AUTH_JWT_SECRET 覆盖；默认值仅用于本地开发
+    secret: ${AUTH_JWT_SECRET:dev-please-change-this-secret-32chars}
     # Token 有效期（秒）
     ttl-seconds: 7200
   # 验证码配置

@@ -2,8 +2,8 @@ package com.example.demo.auth.service;
 
 import com.example.demo.auth.config.AuthConstants;
 import com.example.demo.auth.config.AuthProperties;
+import com.example.demo.auth.support.ClientIpResolver;
 import com.example.demo.common.cache.CacheTool;
-import com.example.demo.common.config.CommonConstants;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -26,7 +26,7 @@ public class LoginAttemptService {
     private final CacheTool cacheTool;
     private final AuthProperties authProperties;
     private final AuthConstants authConstants;
-    private final CommonConstants commonConstants;
+    private final ClientIpResolver clientIpResolver;
 
     /**
      * Check whether the account is locked.
@@ -185,7 +185,7 @@ public class LoginAttemptService {
         }
         String keyMode = normalizeKeyMode();
         AuthConstants.LoginAttempt constants = authConstants.getLoginAttempt();
-        String ip = resolveClientIp(request);
+        String ip = clientIpResolver.resolve(request);
         if (normalizeModeValue(constants.getModeIp()).equals(keyMode)) {
             return StringUtils.isBlank(ip) ? normalized : ip;
         }
@@ -204,20 +204,7 @@ public class LoginAttemptService {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        if (request == null) {
-            return null;
-        }
-        String forwarded = request.getHeader(commonConstants.getHttp().getForwardedForHeader());
-        if (forwarded != null && !forwarded.trim().isEmpty()) {
-            int comma = forwarded.indexOf(',');
-            return comma > 0 ? forwarded.substring(0, comma).trim() : forwarded.trim();
-        }
-        String realIp = request.getHeader(commonConstants.getHttp().getRealIpHeader());
-        if (realIp != null && !realIp.trim().isEmpty()) {
-            return realIp.trim();
-        }
-        String remoteAddr = request.getRemoteAddr();
-        return StringUtils.trimToNull(remoteAddr);
+        return clientIpResolver.resolve(request);
     }
 
     private String buildFailKey(String identity) {

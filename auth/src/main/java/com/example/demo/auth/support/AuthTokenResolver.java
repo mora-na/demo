@@ -44,7 +44,9 @@ public class AuthTokenResolver {
                 String token = authorization.substring(bearerPrefix.length()).trim();
                 return StringUtils.isNotBlank(token) ? token : null;
             }
-            return authorization.trim();
+            if (!authProperties.getJwt().isStrictBearer()) {
+                return authorization.trim();
+            }
         }
         String token = StringUtils.trimToNull(request.getHeader(tokenConstants.getFallbackTokenHeader()));
         if (StringUtils.isNotBlank(token)) {

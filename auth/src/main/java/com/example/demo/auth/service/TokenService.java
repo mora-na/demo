@@ -27,7 +27,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class TokenService {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private final ObjectMapper objectMapper;
     private static final Base64.Encoder BASE64_URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
     private static final Base64.Decoder BASE64_URL_DECODER = Base64.getUrlDecoder();
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<Map<String, Object>>() {
@@ -164,8 +164,8 @@ public class TokenService {
             Map<String, Object> header = new HashMap<>();
             header.put(tokenConstants.getJwtHeaderAlgKey(), tokenConstants.getJwtHeaderAlgValue());
             header.put(tokenConstants.getJwtHeaderTypeKey(), tokenConstants.getJwtHeaderTypeValue());
-            String encodedHeader = base64UrlEncode(OBJECT_MAPPER.writeValueAsBytes(header));
-            String encodedPayload = base64UrlEncode(OBJECT_MAPPER.writeValueAsBytes(payload));
+            String encodedHeader = base64UrlEncode(objectMapper.writeValueAsBytes(header));
+            String encodedPayload = base64UrlEncode(objectMapper.writeValueAsBytes(payload));
             String signingInput = encodedHeader + "." + encodedPayload;
             String signature = base64UrlEncode(hmacSha256(signingInput, secret));
             return signingInput + "." + signature;
@@ -187,7 +187,7 @@ public class TokenService {
         }
         try {
             byte[] payloadBytes = base64UrlDecode(parts.get(1));
-            Map<String, Object> payload = OBJECT_MAPPER.readValue(payloadBytes, MAP_TYPE);
+            Map<String, Object> payload = objectMapper.readValue(payloadBytes, MAP_TYPE);
             return payload == null ? Collections.emptyMap() : payload;
         } catch (Exception e) {
             return null;

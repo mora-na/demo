@@ -3,7 +3,10 @@ package com.example.demo.auth.config;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.annotation.Validated;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import java.util.*;
 
 /**
@@ -14,20 +17,33 @@ import java.util.*;
  */
 @Data
 @Component
+@Validated
 @ConfigurationProperties(prefix = "auth")
 public class AuthProperties {
 
+    @javax.validation.Valid
     private Jwt jwt = new Jwt();
 
+    @javax.validation.Valid
     private Captcha captcha = new Captcha();
 
+    @javax.validation.Valid
     private Password password = new Password();
 
+    @javax.validation.Valid
     private LoginLimit loginLimit = new LoginLimit();
 
+    @javax.validation.Valid
     private Filter filter = new Filter();
 
+    @javax.validation.Valid
     private Security security = new Security();
+
+    @javax.validation.Valid
+    private Cache cache = new Cache();
+
+    @javax.validation.Valid
+    private Network network = new Network();
 
     /**
      * JWT 配置，定义密钥与过期时间。
@@ -37,11 +53,14 @@ public class AuthProperties {
      */
     @Data
     public static class Jwt {
+        @NotBlank
         private String secret = "change-me";
+        @Min(60)
         private long ttlSeconds = 7200;
         /**
          * 最小密钥长度（字符）。
          */
+        @Min(16)
         private int minSecretLength = 32;
         /**
          * 禁止使用的默认密钥（用于 fail-fast）。
@@ -51,6 +70,15 @@ public class AuthProperties {
          * 是否允许通过 query 参数携带 token。
          */
         private boolean allowQueryToken = false;
+        /**
+         * 是否要求 Authorization 仅接受 Bearer 前缀。
+         */
+        private boolean strictBearer = true;
+        /**
+         * Token 版本号缓存时长（秒）。<=0 使用默认策略。
+         */
+        @Min(0)
+        private long tokenVersionTtlSeconds = 0;
     }
 
     /**
@@ -61,9 +89,13 @@ public class AuthProperties {
      */
     @Data
     public static class Captcha {
+        @Min(1)
         private int width = 120;
+        @Min(1)
         private int height = 40;
+        @Min(1)
         private int codeLength = 4;
+        @Min(0)
         private int thickness = 2;
         private double rotateMin = -0.5;
         private double rotateMax = 0.5;
@@ -71,10 +103,17 @@ public class AuthProperties {
         private double shearXMax = 0.5;
         private double shearYMin = -0.5;
         private double shearYMax = 0.5;
+        @Min(30)
         private int expireSeconds = 120;
         private List<String> fontResources = new ArrayList<>();
+        @Min(0)
         private int maxEntries = 10000;
+        @Min(0)
         private int cleanupIntervalSeconds = 60;
+        /**
+         * 限流 Key 模式：global | ip | ip-ua
+         */
+        private String rateLimitKeyMode = "ip";
     }
 
     /**
@@ -93,6 +132,7 @@ public class AuthProperties {
         private String transportSm2PrivateKey = "";
         private String transportSm2PublicKey = "";
         private boolean strongCheckEnabled = false;
+        @Min(0)
         private int strongMinLength = 8;
         private String strongPattern = "";
         /**
@@ -102,6 +142,7 @@ public class AuthProperties {
         /**
          * 密码过期天数，<=0 表示不启用过期策略。
          */
+        @Min(-1)
         private int expireDays = 120;
     }
 
@@ -114,8 +155,11 @@ public class AuthProperties {
     @Data
     public static class LoginLimit {
         private boolean enabled = true;
+        @Min(0)
         private int maxErrors = 5;
+        @Min(0)
         private int lockSeconds = 900;
+        @Min(0)
         private int windowSeconds = 900;
         private String keyMode = "user";
     }
@@ -219,5 +263,42 @@ public class AuthProperties {
              */
             private String mailSubject = "敏感操作确认验证码";
         }
+    }
+
+    /**
+     * 认证缓存配置。
+     */
+    @Data
+    public static class Cache {
+        /**
+         * 用户状态缓存时长（秒）。
+         */
+        @Min(0)
+        private int userStatusTtlSeconds = 30;
+        /**
+         * 用户状态缓存最大条目数。
+         */
+        @Min(0)
+        private int userStatusMaxSize = 5000;
+        /**
+         * 未命中用户的缓存时长（秒）。
+         */
+        @Min(0)
+        private int userStatusNegativeTtlSeconds = 10;
+        /**
+         * 是否启用用户状态缓存。
+         */
+        private boolean userStatusCacheEnabled = true;
+    }
+
+    /**
+     * 网络相关配置。
+     */
+    @Data
+    public static class Network {
+        /**
+         * 是否信任代理头（X-Forwarded-For / X-Real-IP）。\n
+         */
+        private boolean trustForwardedHeaders = false;
     }
 }

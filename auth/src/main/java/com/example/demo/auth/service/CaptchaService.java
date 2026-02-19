@@ -85,12 +85,12 @@ public class CaptchaService {
      *
      * @return 验证码响应信息
      */
-    public CaptchaResponse createCaptcha() {
-        ensureEmbeddedFontsInitialized();
+    public CaptchaResponse createCaptcha(String scopeKey) {
         AuthProperties.Captcha config = authProperties.getCaptcha();
-        if (!captchaStore.allowCreate(config.getMaxEntries(), config.getCleanupIntervalSeconds())) {
+        if (!captchaStore.allowCreate(scopeKey, config.getMaxEntries(), config.getCleanupIntervalSeconds())) {
             return null;
         }
+        ensureEmbeddedFontsInitialized();
         Captcha captcha = createCaptchaImage(
                 config.getWidth(),
                 config.getHeight(),

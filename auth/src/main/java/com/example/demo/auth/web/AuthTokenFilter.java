@@ -4,6 +4,7 @@ import com.example.demo.auth.config.AuthConstants;
 import com.example.demo.auth.config.AuthProperties;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
+import com.example.demo.auth.service.AuthUserStatusCache;
 import com.example.demo.auth.service.PasswordPolicyService;
 import com.example.demo.auth.service.TokenService;
 import com.example.demo.auth.support.AuthTokenResolver;
@@ -49,6 +50,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private final TokenService tokenService;
     private final PasswordPolicyService passwordPolicyService;
     private final IdentityReadFacade identityReadFacade;
+    private final AuthUserStatusCache authUserStatusCache;
     private final I18nService i18nService;
     private final AuthConstants authConstants;
     private final CommonConstants commonConstants;
@@ -126,7 +128,17 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             writeUnauthorized(response, i18nService.getMessage(request, filterConstants.getUserInvalidMessageKey()));
             return;
         }
-        IdentityUserDTO dbUser = identityReadFacade.getUserById(user.getId());
+        IdentityUserDTO dbUser = authUserStatusCache.get(user.getId());
+        if (dbUser == null) {
+            dbUser = identityReadFacade.getUserById(user.getId());
+            int ttlSeconds = authProperties.getCache().getUserStatusTtlSeconds();
+            if (dbUser != null && ttlSeconds > 0) {
+                authUserStatusCache.put(user.getId(), dbUser, ttlSeconds);
+            } else if (dbUser == null) {
+                int negativeTtl = authProperties.getCache().getUserStatusNegativeTtlSeconds();
+                authUserStatusCache.putNegative(user.getId(), negativeTtl);
+            }
+        }
         if (dbUser == null) {
             writeUnauthorized(response, i18nService.getMessage(request, filterConstants.getUserNotFoundMessageKey()));
             return;

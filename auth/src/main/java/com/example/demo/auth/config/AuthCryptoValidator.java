@@ -2,9 +2,9 @@ package com.example.demo.auth.config;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 
 /**
  * 认证安全配置校验，避免弱配置导致降级。
@@ -16,7 +16,7 @@ public class AuthCryptoValidator {
     private final AuthProperties authProperties;
     private final AuthConstants authConstants;
 
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void validate() {
         validateJwtSecret();
         validateTransportMode();
