@@ -64,6 +64,12 @@ job:
       min-level: INFO
       # 单次执行最大日志长度（字符）
       max-length: 65536
+      # 最大缓冲实例数量
+      max-buffers: 2000
+      # 是否启用自动降级
+      auto-degrade-enabled: true
+      # 缓冲占用降级阈值比例（0-1）
+      degrade-buffer-ratio: 0.9
       # 延迟合并时间（毫秒）
       merge-delay-millis: 3000
       # 最大缓冲保留时间（毫秒）

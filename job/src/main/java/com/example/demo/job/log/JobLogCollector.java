@@ -1,19 +1,24 @@
 package com.example.demo.job.log;
 
 import com.example.demo.job.config.JobConstants;
+import com.example.demo.job.dto.JobLogCollectorMetricsVO;
 import com.example.demo.job.entity.SysJobLog;
 import com.example.demo.job.service.SysJobLogService;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.Map;
+import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 定时任务执行日志收集器，按运行实例缓存日志内容。
@@ -21,14 +26,16 @@ import java.util.concurrent.TimeUnit;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/13
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JobLogCollector {
 
     private final JobConstants jobConstants;
     private final SysJobLogService jobLogService;
-    private final Map<String, JobLogBuffer> buffers = new ConcurrentHashMap<>();
+    private final AtomicLong lastDegradeLogAt = new AtomicLong(0L);
     private ScheduledExecutorService scheduler;
+    private Cache<String, JobLogBuffer> buffers;
 
     public boolean isEnabled() {
         return jobConstants.getLogCollect().isEnabled();
@@ -62,6 +69,13 @@ public class JobLogCollector {
         if (!jobConstants.getLogCollect().isEnabled() || jobConstants.getLogCollect().getMaxLength() <= 0) {
             return null;
         }
+        if (buffers == null) {
+            return null;
+        }
+        if (isDegraded()) {
+            logDegradeOnce();
+            return null;
+        }
         String runId = UUID.randomUUID().toString();
         buffers.put(runId, new JobLogBuffer(jobConstants.getLogCollect().getMaxLength()));
         return runId;
@@ -71,7 +85,13 @@ public class JobLogCollector {
         if (!jobConstants.getLogCollect().isEnabled() || runId == null || line == null) {
             return;
         }
-        JobLogBuffer buffer = buffers.get(runId);
+        if (buffers == null) {
+            return;
+        }
+        if (isDegraded()) {
+            return;
+        }
+        JobLogBuffer buffer = buffers.getIfPresent(runId);
         if (buffer == null) {
             return;
         }
@@ -82,7 +102,10 @@ public class JobLogCollector {
         if (runId == null) {
             return null;
         }
-        JobLogBuffer buffer = buffers.get(runId);
+        if (buffers == null) {
+            return null;
+        }
+        JobLogBuffer buffer = buffers.getIfPresent(runId);
         if (buffer == null) {
             return null;
         }
@@ -94,7 +117,10 @@ public class JobLogCollector {
         if (runId == null) {
             return;
         }
-        buffers.remove(runId);
+        if (buffers == null) {
+            return;
+        }
+        buffers.invalidate(runId);
     }
 
     public boolean shouldDelayMerge() {
@@ -107,6 +133,13 @@ public class JobLogCollector {
         if (!shouldDelayMerge() || runId == null || logId == null) {
             close(runId);
             return;
+        }
+        if (buffers == null) {
+            return;
+        }
+        JobLogBuffer buffer = buffers.getIfPresent(runId);
+        if (buffer != null) {
+            buffer.attachLog(logId, manualLog);
         }
         long delay = jobConstants.getLogCollect().getMergeDelayMillis();
         scheduler.schedule(() -> mergeAndUpdate(runId, logId, manualLog), delay, TimeUnit.MILLISECONDS);
@@ -126,6 +159,7 @@ public class JobLogCollector {
 
     @PostConstruct
     public void startCleanup() {
+        this.buffers = buildBufferCache();
         scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread thread = new Thread(runnable, jobConstants.getLogCollect().getCollectorThreadName());
             thread.setDaemon(true);
@@ -150,9 +184,13 @@ public class JobLogCollector {
 
     private void mergeAndUpdate(String runId, Long logId, String manualLog) {
         try {
-            JobLogBuffer buffer = buffers.remove(runId);
-            String autoLog = buffer == null ? null : buffer.getContent();
-            String merged = mergeLogs(manualLog, autoLog);
+            JobLogBuffer buffer = buffers.getIfPresent(runId);
+            if (buffer == null) {
+                return;
+            }
+            String autoLog = buffer.getContent();
+            String storedManual = buffer.getManualLog();
+            String merged = mergeLogs(storedManual == null ? manualLog : storedManual, autoLog);
             if (merged == null) {
                 return;
             }
@@ -161,25 +199,15 @@ public class JobLogCollector {
             update.setLogDetail(merged);
             jobLogService.updateById(update);
         } finally {
-            buffers.remove(runId);
+            buffers.invalidate(runId);
         }
     }
 
     private void cleanupExpired() {
-        if (buffers.isEmpty() || jobConstants.getLogCollect().getMaxHoldMillis() <= 0) {
+        if (buffers == null || buffers.estimatedSize() == 0) {
             return;
         }
-        long now = System.currentTimeMillis();
-        long maxHoldMillis = jobConstants.getLogCollect().getMaxHoldMillis();
-        for (Map.Entry<String, JobLogBuffer> entry : buffers.entrySet()) {
-            JobLogBuffer buffer = entry.getValue();
-            if (buffer == null) {
-                continue;
-            }
-            if (buffer.isExpired(now, maxHoldMillis)) {
-                buffers.remove(entry.getKey());
-            }
-        }
+        buffers.cleanUp();
     }
 
     private String trim(String value) {
@@ -197,7 +225,90 @@ public class JobLogCollector {
     }
 
     public boolean isActive(String runId) {
-        return runId != null && buffers.containsKey(runId);
+        return runId != null && buffers.getIfPresent(runId) != null;
+    }
+
+    public JobLogCollectorMetricsVO snapshotMetrics() {
+        JobLogCollectorMetricsVO metrics = new JobLogCollectorMetricsVO();
+        JobConstants.LogCollect config = jobConstants.getLogCollect();
+        metrics.setEnabled(config.isEnabled());
+        metrics.setAutoDegradeEnabled(config.isAutoDegradeEnabled());
+        metrics.setDegraded(isDegraded());
+        metrics.setBufferSize(buffers == null ? 0 : buffers.estimatedSize());
+        metrics.setMaxBuffers(config.getMaxBuffers());
+        metrics.setMaxLength(config.getMaxLength());
+        metrics.setMaxHoldMillis(config.getMaxHoldMillis());
+        metrics.setMergeDelayMillis(config.getMergeDelayMillis());
+        metrics.setDegradeBufferRatio(resolveDegradeRatio());
+        return metrics;
+    }
+
+    private Cache<String, JobLogBuffer> buildBufferCache() {
+        JobConstants.LogCollect config = jobConstants.getLogCollect();
+        int maxBuffers = Math.max(1, config.getMaxBuffers());
+        long maxHoldMillis = Math.max(1000L, config.getMaxHoldMillis());
+        return Caffeine.newBuilder()
+                .maximumSize(maxBuffers)
+                .expireAfterAccess(Duration.ofMillis(maxHoldMillis))
+                .removalListener((String runId, JobLogBuffer buffer, RemovalCause cause) -> {
+                    if (buffer == null || cause == RemovalCause.EXPLICIT) {
+                        return;
+                    }
+                    flushBuffer(buffer);
+                })
+                .build();
+    }
+
+    private boolean isDegraded() {
+        JobConstants.LogCollect config = jobConstants.getLogCollect();
+        if (!config.isAutoDegradeEnabled() || buffers == null) {
+            return false;
+        }
+        long size = buffers.estimatedSize();
+        int max = Math.max(1, config.getMaxBuffers());
+        double ratio = resolveDegradeRatio();
+        return ratio > 0 && size >= Math.ceil(max * ratio);
+    }
+
+    private double resolveDegradeRatio() {
+        double ratio = jobConstants.getLogCollect().getDegradeBufferRatio();
+        return ratio <= 0 ? 0d : Math.min(1d, ratio);
+    }
+
+    private void logDegradeOnce() {
+        long now = System.currentTimeMillis();
+        long last = lastDegradeLogAt.get();
+        if (now - last < 60000L) {
+            return;
+        }
+        if (lastDegradeLogAt.compareAndSet(last, now)) {
+            log.warn("Job log collector degraded: buffer size={}, max={}, ratio={}",
+                    buffers == null ? 0 : buffers.estimatedSize(),
+                    jobConstants.getLogCollect().getMaxBuffers(),
+                    resolveDegradeRatio());
+        }
+    }
+
+    private void flushBuffer(JobLogBuffer buffer) {
+        if (buffer == null || buffer.getLogId() == null) {
+            return;
+        }
+        String autoLog = buffer.getContent();
+        if (autoLog == null) {
+            return;
+        }
+        String merged = mergeLogs(buffer.getManualLog(), autoLog);
+        if (merged == null) {
+            return;
+        }
+        try {
+            SysJobLog update = new SysJobLog();
+            update.setId(buffer.getLogId());
+            update.setLogDetail(merged);
+            jobLogService.updateById(update);
+        } catch (Exception ex) {
+            log.warn("Job log flush failed: logId={}, error={}", buffer.getLogId(), ex.getMessage());
+        }
     }
 
     private static final class JobLogBuffer {
@@ -205,7 +316,8 @@ public class JobLogCollector {
         private final StringBuilder builder = new StringBuilder();
         private boolean truncated = false;
         private volatile long closedAt = 0L;
-        private volatile long lastAppendAt = 0L;
+        private volatile Long logId;
+        private volatile String manualLog;
 
         private JobLogBuffer(int maxLength) {
             this.maxLength = Math.max(0, maxLength);
@@ -235,7 +347,6 @@ public class JobLogCollector {
                 builder.append('\n');
             }
             builder.append(line);
-            lastAppendAt = System.currentTimeMillis();
         }
 
         private synchronized String getContent() {
@@ -245,17 +356,28 @@ public class JobLogCollector {
             return builder.toString();
         }
 
+        private void attachLog(Long logId, String manualLog) {
+            if (logId != null) {
+                this.logId = logId;
+            }
+            if (manualLog != null) {
+                this.manualLog = manualLog;
+            }
+        }
+
+        private Long getLogId() {
+            return logId;
+        }
+
+        private String getManualLog() {
+            return manualLog;
+        }
+
         private void markClosed() {
             if (closedAt == 0L) {
                 closedAt = System.currentTimeMillis();
             }
         }
 
-        private boolean isExpired(long now, long maxHoldMillis) {
-            if (closedAt == 0L || maxHoldMillis <= 0) {
-                return false;
-            }
-            return now - closedAt > maxHoldMillis;
-        }
     }
 }

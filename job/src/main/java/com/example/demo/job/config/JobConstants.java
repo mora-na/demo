@@ -207,9 +207,12 @@ public class JobConstants {
         public static final Scope DEFAULT_SCOPE = Scope.MDC;
         public static final String DEFAULT_MIN_LEVEL = "INFO";
         public static final int DEFAULT_MAX_LENGTH = 65536;
+        public static final int DEFAULT_MAX_BUFFERS = 2000;
         public static final long DEFAULT_MERGE_DELAY_MILLIS = 3000L;
         public static final long DEFAULT_MAX_HOLD_MILLIS = 60000L;
         public static final boolean DEFAULT_INHERIT_THREAD_CONTEXT = true;
+        public static final boolean DEFAULT_AUTO_DEGRADE_ENABLED = true;
+        public static final double DEFAULT_DEGRADE_BUFFER_RATIO = 0.9d;
         public static final String DEFAULT_MDC_KEY = "jobLogId";
         public static final String DEFAULT_THREAD_KEY = "jobLogThread";
         public static final String DEFAULT_COLLECTOR_THREAD_NAME = "job-log-collector";
@@ -220,9 +223,12 @@ public class JobConstants {
         private Scope scope = DEFAULT_SCOPE;
         private String minLevel = DEFAULT_MIN_LEVEL;
         private int maxLength = DEFAULT_MAX_LENGTH;
+        private int maxBuffers = DEFAULT_MAX_BUFFERS;
         private long mergeDelayMillis = DEFAULT_MERGE_DELAY_MILLIS;
         private long maxHoldMillis = DEFAULT_MAX_HOLD_MILLIS;
         private boolean inheritThreadContext = DEFAULT_INHERIT_THREAD_CONTEXT;
+        private boolean autoDegradeEnabled = DEFAULT_AUTO_DEGRADE_ENABLED;
+        private double degradeBufferRatio = DEFAULT_DEGRADE_BUFFER_RATIO;
         private String mdcKey = DEFAULT_MDC_KEY;
         private String threadKey = DEFAULT_THREAD_KEY;
         private String collectorThreadName = DEFAULT_COLLECTOR_THREAD_NAME;

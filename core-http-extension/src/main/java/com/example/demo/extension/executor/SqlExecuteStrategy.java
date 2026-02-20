@@ -10,6 +10,9 @@ import com.example.demo.extension.model.DynamicApiTypeCodes;
 import com.example.demo.extension.model.SqlExecuteConfig;
 import com.example.demo.extension.support.DynamicApiException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
@@ -21,8 +24,8 @@ import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,7 +42,7 @@ public class SqlExecuteStrategy implements ExecuteStrategy {
     private final DataSource dataSource;
     private final SqlGuardProperties sqlGuardProperties;
     private final DynamicApiConstants constants;
-    private final ConcurrentHashMap<DynamicApiExecutionContext, JdbcHolder> running = new ConcurrentHashMap<>();
+    private final Cache<DynamicApiExecutionContext, JdbcHolder> running;
 
     public SqlExecuteStrategy(DataSource dataSource,
                               SqlGuardProperties sqlGuardProperties,
@@ -47,6 +50,7 @@ public class SqlExecuteStrategy implements ExecuteStrategy {
         this.dataSource = dataSource;
         this.sqlGuardProperties = sqlGuardProperties;
         this.constants = constants;
+        this.running = buildRunningCache();
     }
 
     @Override
@@ -217,7 +221,7 @@ public class SqlExecuteStrategy implements ExecuteStrategy {
                 }
             }
         } finally {
-            running.remove(context);
+            running.invalidate(context);
             if (holder != null) {
                 resetDatabaseTimeout(connection, holder.timeoutMode);
             } else {
@@ -286,7 +290,15 @@ public class SqlExecuteStrategy implements ExecuteStrategy {
         if (context == null) {
             return;
         }
-        JdbcHolder holder = running.remove(context);
+        JdbcHolder holder = running.getIfPresent(context);
+        if (holder == null) {
+            return;
+        }
+        running.invalidate(context);
+        cancelExecution(holder);
+    }
+
+    private void cancelExecution(JdbcHolder holder) {
         if (holder == null) {
             return;
         }
@@ -301,6 +313,34 @@ public class SqlExecuteStrategy implements ExecuteStrategy {
             closeQuietly(holder.statement);
             closeQuietly(holder.connection);
         }
+    }
+
+    private Cache<DynamicApiExecutionContext, JdbcHolder> buildRunningCache() {
+        long expireMs = resolveRunningExpireMs();
+        int maxEntries = resolveRunningMaxEntries();
+        return Caffeine.newBuilder()
+                .maximumSize(maxEntries)
+                .expireAfterWrite(Duration.ofMillis(expireMs))
+                .removalListener((DynamicApiExecutionContext context, JdbcHolder holder, RemovalCause cause) -> {
+                    if (holder == null || cause == RemovalCause.EXPLICIT) {
+                        return;
+                    }
+                    cancelExecution(holder);
+                })
+                .build();
+    }
+
+    private int resolveRunningMaxEntries() {
+        int maxEntries = constants.getExecute().getRunningMaxEntries();
+        return Math.max(1, maxEntries);
+    }
+
+    private long resolveRunningExpireMs() {
+        long maxTimeoutMs = constants.getExecute().getMaxTimeoutMs();
+        long defaultTimeoutMs = constants.getExecute().getDefaultTimeoutMs();
+        long base = maxTimeoutMs > 0 ? maxTimeoutMs : Math.max(1000L, defaultTimeoutMs);
+        long buffer = Math.max(0L, constants.getExecute().getRunningExpireBufferMs());
+        return base + buffer;
     }
 
     private void closeQuietly(AutoCloseable closeable) {

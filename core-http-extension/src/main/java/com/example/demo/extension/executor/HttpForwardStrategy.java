@@ -10,6 +10,9 @@ import com.example.demo.extension.model.DynamicApiTypeCodes;
 import com.example.demo.extension.model.HttpForwardConfig;
 import com.example.demo.extension.support.DynamicApiException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -38,10 +41,10 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -53,7 +56,7 @@ public class HttpForwardStrategy implements ExecuteStrategy {
 
     private final DynamicApiConstants constants;
     private final CloseableHttpClient httpClient;
-    private final ConcurrentHashMap<DynamicApiExecutionContext, HttpRequestBase> running = new ConcurrentHashMap<>();
+    private final Cache<DynamicApiExecutionContext, HttpRequestBase> running;
 
     public HttpForwardStrategy(DynamicApiConstants constants) {
         this.constants = constants;
@@ -67,6 +70,7 @@ public class HttpForwardStrategy implements ExecuteStrategy {
                 .evictExpiredConnections()
                 .evictIdleConnections(Math.max(1, http.getIdleEvictSeconds()), TimeUnit.SECONDS)
                 .build();
+        this.running = buildRunningCache();
     }
 
     @Override
@@ -160,8 +164,23 @@ public class HttpForwardStrategy implements ExecuteStrategy {
                     constants.getMessage().getExecuteFailed(),
                     DynamicApiTerminationReason.ERROR);
         } finally {
-            running.remove(context);
+            running.invalidate(context);
         }
+    }
+
+    @Override
+    public void onTimeout(DynamicApiExecutionContext context) {
+        cancelExecution(context);
+    }
+
+    @Override
+    public void onError(DynamicApiExecutionContext context, Throwable error) {
+        cancelExecution(context);
+    }
+
+    @Override
+    public void onCancel(DynamicApiExecutionContext context, Throwable cause) {
+        cancelExecution(context);
     }
 
     private String resolveMethod(HttpForwardConfig config, DynamicApiRequest request) {
@@ -169,6 +188,54 @@ public class HttpForwardStrategy implements ExecuteStrategy {
             return config.getMethod().trim().toUpperCase(Locale.ROOT);
         }
         return request == null ? "GET" : request.getMethod();
+    }
+
+    private void cancelExecution(DynamicApiExecutionContext context) {
+        if (context == null) {
+            return;
+        }
+        HttpRequestBase request = running.getIfPresent(context);
+        if (request == null) {
+            return;
+        }
+        running.invalidate(context);
+        try {
+            request.abort();
+        } catch (Exception ex) {
+            log.debug("Dynamic api http cancel failed: {}", ex.getMessage());
+        }
+    }
+
+    private Cache<DynamicApiExecutionContext, HttpRequestBase> buildRunningCache() {
+        long expireMs = resolveRunningExpireMs();
+        int maxEntries = resolveRunningMaxEntries();
+        return Caffeine.newBuilder()
+                .maximumSize(maxEntries)
+                .expireAfterWrite(Duration.ofMillis(expireMs))
+                .removalListener((DynamicApiExecutionContext context, HttpRequestBase request, RemovalCause cause) -> {
+                    if (request == null || cause == RemovalCause.EXPLICIT) {
+                        return;
+                    }
+                    try {
+                        request.abort();
+                    } catch (Exception ex) {
+                        log.debug("Dynamic api http cancel failed: {}", ex.getMessage());
+                    }
+                })
+                .build();
+    }
+
+    private int resolveRunningMaxEntries() {
+        int maxEntries = constants.getExecute().getRunningMaxEntries();
+        return Math.max(1, maxEntries);
+    }
+
+    private long resolveRunningExpireMs() {
+        long maxTimeoutMs = constants.getExecute().getMaxTimeoutMs();
+        long defaultTimeoutMs = constants.getExecute().getDefaultTimeoutMs();
+        long base = maxTimeoutMs > 0 ? maxTimeoutMs : Math.max(1000L, defaultTimeoutMs);
+        long buffer = Math.max(0L, constants.getExecute().getRunningExpireBufferMs());
+        return base + buffer;
     }
 
     private String resolveUrl(HttpForwardConfig config, DynamicApiRequest request, java.util.Map<String, String> pathVariables) {
@@ -458,21 +525,6 @@ public class HttpForwardStrategy implements ExecuteStrategy {
         return headers;
     }
 
-    @Override
-    public void onTimeout(DynamicApiExecutionContext context) {
-        cancelConnection(context);
-    }
-
-    @Override
-    public void onError(DynamicApiExecutionContext context, Throwable error) {
-        cancelConnection(context);
-    }
-
-    @Override
-    public void onCancel(DynamicApiExecutionContext context, Throwable cause) {
-        cancelConnection(context);
-    }
-
     private RestTemplate createRestTemplate(DynamicApiExecutionContext context, int timeoutMs) {
         CancellableClientHttpRequestFactory factory =
                 new CancellableClientHttpRequestFactory(httpClient, context, running);
@@ -540,20 +592,6 @@ public class HttpForwardStrategy implements ExecuteStrategy {
         return out.toByteArray();
     }
 
-    private void cancelConnection(DynamicApiExecutionContext context) {
-        if (context == null) {
-            return;
-        }
-        HttpRequestBase request = running.remove(context);
-        if (request != null) {
-            try {
-                request.abort();
-            } catch (Exception ignored) {
-                // ignore
-            }
-        }
-    }
-
     @PreDestroy
     public void closeClient() {
         try {
@@ -565,11 +603,11 @@ public class HttpForwardStrategy implements ExecuteStrategy {
 
     private static class CancellableClientHttpRequestFactory extends HttpComponentsClientHttpRequestFactory {
         private final DynamicApiExecutionContext context;
-        private final ConcurrentHashMap<DynamicApiExecutionContext, HttpRequestBase> running;
+        private final Cache<DynamicApiExecutionContext, HttpRequestBase> running;
 
         private CancellableClientHttpRequestFactory(CloseableHttpClient httpClient,
                                                     DynamicApiExecutionContext context,
-                                                    ConcurrentHashMap<DynamicApiExecutionContext, HttpRequestBase> running) {
+                                                    Cache<DynamicApiExecutionContext, HttpRequestBase> running) {
             super(httpClient);
             this.context = context;
             this.running = running;

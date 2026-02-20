@@ -102,6 +102,14 @@ public class DynamicApiProperties {
          */
         private double failureRate = 0.5d;
         private long openDurationMs = 30000L;
+        /**
+         * 状态缓存最大条数。
+         */
+        private int maxEntries = 10000;
+        /**
+         * 状态缓存空闲过期时间（秒）。
+         */
+        private int expireAfterAccessSeconds = 1800;
     }
 
     @Data
@@ -111,6 +119,22 @@ public class DynamicApiProperties {
          * 返回明细上限，防止接口过多导致结果过大。
          */
         private int maxDetails = 200;
+        /**
+         * 指标缓存最大条数。
+         */
+        private int maxEntries = 20000;
+        /**
+         * 指标缓存空闲过期时间（秒）。
+         */
+        private int expireAfterAccessSeconds = 900;
+        /**
+         * 是否启用自动降级。
+         */
+        private boolean autoDegradeEnabled = true;
+        /**
+         * 指标明细降级阈值比例（0-1）。
+         */
+        private double degradeRatio = 0.9d;
     }
 
     @Data

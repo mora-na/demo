@@ -3,7 +3,10 @@ package com.example.demo.notice.service;
 import com.example.demo.notice.config.NoticeConstants;
 import com.example.demo.notice.dto.NoticeLatestVO;
 import com.example.demo.notice.dto.NoticePushPayload;
+import com.example.demo.notice.dto.NoticeStreamMetricsVO;
 import com.example.demo.notice.entity.Notice;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,8 +15,10 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 通知 SSE 流管理，负责建立连接与推送新通知事件。
@@ -28,7 +33,9 @@ public class NoticeStreamService {
 
     private final NoticeConstants noticeConstants;
     private final Map<Long, CopyOnWriteArrayList<SseEmitter>> emitters = new ConcurrentHashMap<>();
-    private final Map<Long, Deque<NoticeLatestVO>> latestCache = new ConcurrentHashMap<>();
+    private final AtomicInteger totalConnections = new AtomicInteger();
+    private Cache<Long, Deque<NoticeLatestVO>> latestCache;
+    private Cache<Long, AtomicInteger> userConnectionCounter;
     private ScheduledExecutorService heartbeatExecutor;
 
     public SseEmitter connect(Long userId) {
@@ -36,15 +43,18 @@ public class NoticeStreamService {
     }
 
     public SseEmitter connect(Long userId, List<NoticeLatestVO> latestNotices, Long unreadCount) {
-        SseEmitter emitter = new SseEmitter(noticeConstants.getStream().getEmitterTimeoutMillis());
+        SseEmitter emitter = new SseEmitter(resolveEmitterTimeoutMillis());
         if (userId == null) {
             return emitter;
+        }
+        if (!tryAcquireConnection(userId)) {
+            return rejectConnection();
         }
         emitters.computeIfAbsent(userId, key -> new CopyOnWriteArrayList<>()).add(emitter);
         emitter.onCompletion(() -> removeEmitter(userId, emitter));
         emitter.onTimeout(() -> removeEmitter(userId, emitter));
         emitter.onError((ex) -> removeEmitter(userId, emitter));
-        if (latestNotices != null && latestLimit() > 0) {
+        if (latestNotices != null && isLatestCacheEnabled()) {
             latestCache.put(userId, buildLatestDeque(latestNotices));
         }
         sendInitEvent(userId, emitter, unreadCount);
@@ -130,8 +140,27 @@ public class NoticeStreamService {
         }
     }
 
+    public NoticeStreamMetricsVO snapshotMetrics() {
+        NoticeStreamMetricsVO metrics = new NoticeStreamMetricsVO();
+        metrics.setTotalConnections(Math.max(0, totalConnections.get()));
+        metrics.setActiveUsers(emitters.size());
+        metrics.setLatestCacheSize(latestCache == null ? 0 : latestCache.estimatedSize());
+        metrics.setConnectionCounterSize(userConnectionCounter == null ? 0 : userConnectionCounter.estimatedSize());
+        metrics.setLatestLimit(latestLimit());
+        metrics.setMaxTotalConnections(noticeConstants.getStream().getMaxTotalConnections());
+        metrics.setMaxConnectionsPerUser(noticeConstants.getStream().getMaxConnectionsPerUser());
+        metrics.setLatestCacheMaxSize(noticeConstants.getStream().getLatestCacheMaxSize());
+        metrics.setLatestCacheExpireMinutes(noticeConstants.getStream().getLatestCacheExpireMinutes());
+        metrics.setAutoDegradeEnabled(noticeConstants.getStream().isAutoDegradeEnabled());
+        metrics.setDegraded(isDegraded());
+        metrics.setDegradeConnectionRatio(resolveDegradeConnectionRatio());
+        metrics.setDegradeCacheRatio(resolveDegradeCacheRatio());
+        return metrics;
+    }
+
     @PostConstruct
     public void startHeartbeat() {
+        initCaches();
         heartbeatExecutor = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread thread = new Thread(runnable, noticeConstants.getStream().getHeartbeatThreadName());
             thread.setDaemon(true);
@@ -160,10 +189,15 @@ public class NoticeStreamService {
         if (userEmitters == null) {
             return;
         }
-        userEmitters.remove(emitter);
+        if (!userEmitters.remove(emitter)) {
+            return;
+        }
+        releaseConnection(userId);
         if (userEmitters.isEmpty()) {
             emitters.remove(userId);
-            latestCache.remove(userId);
+            if (latestCache != null) {
+                latestCache.invalidate(userId);
+            }
         }
     }
 
@@ -212,11 +246,11 @@ public class NoticeStreamService {
         if (userId == null || notice == null) {
             return latestSnapshot(userId);
         }
-        int limit = latestLimit();
-        if (limit <= 0) {
+        if (!isLatestCacheEnabled()) {
             return new ArrayList<>();
         }
-        Deque<NoticeLatestVO> deque = latestCache.computeIfAbsent(userId, key -> new ArrayDeque<>());
+        int limit = latestLimit();
+        Deque<NoticeLatestVO> deque = latestCache.get(userId, key -> new ArrayDeque<>());
         synchronized (deque) {
             if (notice.getId() != null) {
                 deque.removeIf(item -> Objects.equals(item.getId(), notice.getId()));
@@ -241,10 +275,10 @@ public class NoticeStreamService {
         if (userId == null) {
             return new ArrayList<>();
         }
-        if (latestLimit() <= 0) {
+        if (!isLatestCacheEnabled()) {
             return new ArrayList<>();
         }
-        Deque<NoticeLatestVO> deque = latestCache.get(userId);
+        Deque<NoticeLatestVO> deque = latestCache == null ? null : latestCache.getIfPresent(userId);
         if (deque == null || deque.isEmpty()) {
             return new ArrayList<>();
         }
@@ -257,10 +291,10 @@ public class NoticeStreamService {
         if (userId == null || removedNoticeIds == null || removedNoticeIds.isEmpty()) {
             return latestSnapshot(userId);
         }
-        if (latestLimit() <= 0) {
+        if (!isLatestCacheEnabled()) {
             return new ArrayList<>();
         }
-        Deque<NoticeLatestVO> deque = latestCache.get(userId);
+        Deque<NoticeLatestVO> deque = latestCache == null ? null : latestCache.getIfPresent(userId);
         if (deque == null || deque.isEmpty()) {
             return new ArrayList<>();
         }
@@ -272,6 +306,122 @@ public class NoticeStreamService {
 
     private int latestLimit() {
         return Math.max(noticeConstants.getNumeric().getZeroInt(), noticeConstants.getStream().getLatestLimit());
+    }
+
+    private long resolveEmitterTimeoutMillis() {
+        long timeout = noticeConstants.getStream().getEmitterTimeoutMillis();
+        return timeout > 0 ? timeout : 600000L;
+    }
+
+    private void initCaches() {
+        this.latestCache = buildLatestCache();
+        this.userConnectionCounter = buildUserConnectionCounter();
+    }
+
+    private Cache<Long, Deque<NoticeLatestVO>> buildLatestCache() {
+        NoticeConstants.Stream stream = noticeConstants.getStream();
+        long maxSize = stream.getLatestCacheMaxSize();
+        int expireMinutes = stream.getLatestCacheExpireMinutes();
+        if (maxSize <= 0 || expireMinutes <= 0) {
+            return Caffeine.newBuilder()
+                    .maximumSize(1)
+                    .expireAfterAccess(Duration.ofSeconds(1))
+                    .build();
+        }
+        return Caffeine.newBuilder()
+                .maximumSize(maxSize)
+                .expireAfterAccess(Duration.ofMinutes(expireMinutes))
+                .build();
+    }
+
+    private Cache<Long, AtomicInteger> buildUserConnectionCounter() {
+        NoticeConstants.Stream stream = noticeConstants.getStream();
+        int maxSize = Math.max(1, stream.getConnectionCounterMaxSize());
+        int expireMinutes = Math.max(1, stream.getConnectionCounterExpireMinutes());
+        return Caffeine.newBuilder()
+                .maximumSize(maxSize)
+                .expireAfterAccess(Duration.ofMinutes(expireMinutes))
+                .build();
+    }
+
+    private boolean isLatestCacheEnabled() {
+        return latestLimit() > 0
+                && noticeConstants.getStream().getLatestCacheMaxSize() > 0
+                && !isDegraded();
+    }
+
+    private boolean isDegraded() {
+        NoticeConstants.Stream stream = noticeConstants.getStream();
+        if (!stream.isAutoDegradeEnabled()) {
+            return false;
+        }
+        int maxTotal = stream.getMaxTotalConnections();
+        if (maxTotal > 0) {
+            double ratio = resolveDegradeConnectionRatio();
+            if (ratio > 0 && totalConnections.get() >= Math.ceil(maxTotal * ratio)) {
+                return true;
+            }
+        }
+        long maxCacheSize = stream.getLatestCacheMaxSize();
+        if (maxCacheSize > 0 && latestCache != null) {
+            double ratio = resolveDegradeCacheRatio();
+            if (ratio > 0 && latestCache.estimatedSize() >= Math.ceil(maxCacheSize * ratio)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private double resolveDegradeConnectionRatio() {
+        double ratio = noticeConstants.getStream().getDegradeConnectionRatio();
+        return ratio <= 0 ? 0d : Math.min(1d, ratio);
+    }
+
+    private double resolveDegradeCacheRatio() {
+        double ratio = noticeConstants.getStream().getDegradeCacheRatio();
+        return ratio <= 0 ? 0d : Math.min(1d, ratio);
+    }
+
+    private boolean tryAcquireConnection(Long userId) {
+        if (userId == null) {
+            return true;
+        }
+        int maxTotal = noticeConstants.getStream().getMaxTotalConnections();
+        int current = totalConnections.incrementAndGet();
+        if (maxTotal > 0 && current > maxTotal) {
+            totalConnections.decrementAndGet();
+            return false;
+        }
+        int maxPerUser = noticeConstants.getStream().getMaxConnectionsPerUser();
+        if (maxPerUser > 0) {
+            AtomicInteger counter = userConnectionCounter.get(userId, key -> new AtomicInteger());
+            if (counter != null && counter.incrementAndGet() > maxPerUser) {
+                counter.decrementAndGet();
+                totalConnections.decrementAndGet();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void releaseConnection(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        totalConnections.decrementAndGet();
+        AtomicInteger counter = userConnectionCounter == null ? null : userConnectionCounter.getIfPresent(userId);
+        if (counter == null) {
+            return;
+        }
+        if (counter.decrementAndGet() <= 0) {
+            userConnectionCounter.invalidate(userId);
+        }
+    }
+
+    private SseEmitter rejectConnection() {
+        SseEmitter emitter = new SseEmitter(1L);
+        emitter.complete();
+        return emitter;
     }
 
     private void sendHeartbeat() {

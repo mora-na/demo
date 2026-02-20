@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 身份域对外暴露的用户只读数据传输对象。
+ * 身份域对外暴露的用户只读数据传输对象（不含密码凭据）。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/16
@@ -26,8 +26,6 @@ public class IdentityUserDTO implements Serializable {
     private Long deptId;
     private String dataScopeType;
     private String dataScopeValue;
-
-    private String password;
     private LocalDateTime passwordUpdatedAt;
     private Integer forcePasswordChange;
 }

@@ -9,6 +9,7 @@ import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.dto.*;
 import com.example.demo.job.entity.SysJob;
+import com.example.demo.job.log.JobLogCollector;
 import com.example.demo.job.model.JobMisfirePolicy;
 import com.example.demo.job.service.SysJobLogService;
 import com.example.demo.job.service.SysJobService;
@@ -38,6 +39,7 @@ public class JobAdminController extends BaseController {
     private final SysJobLogService jobLogService;
     private final JobHandlerRegistry jobHandlerRegistry;
     private final JobConstants jobConstants;
+    private final JobLogCollector jobLogCollector;
 
     @GetMapping
     @RequirePermission("job:query")
@@ -170,5 +172,14 @@ public class JobAdminController extends BaseController {
             return error(jobConstants.getController().getNotFoundCode(), i18n(jobConstants.getMessage().getJobLogNotFound()));
         }
         return success(jobLogService.toDetailView(log));
+    }
+
+    /**
+     * JobLogCollector 指标（监控）。
+     */
+    @GetMapping("/logs/metrics")
+    @RequirePermission("job:log:metrics")
+    public CommonResult<JobLogCollectorMetricsVO> logCollectorMetrics() {
+        return success(jobLogCollector.snapshotMetrics());
     }
 }

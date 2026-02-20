@@ -2,9 +2,31 @@
 notice:
   constants:
     stream:
+      # SSE 连接超时（毫秒）
+      emitter-timeout-millis: 600000
+      # 匿名连接超时（毫秒）
+      anonymous-emitter-timeout-millis: 60000
       # 心跳间隔（毫秒），<=0 表示禁用心跳
       heartbeat-interval-millis: 60000
       # 断线判定超时（毫秒）
       heartbeat-timeout-millis: 180000
       # 推送最新通知数量
       latest-limit: 5
+      # 总连接上限（<=0 不限制）
+      max-total-connections: 2000
+      # 单用户连接上限（<=0 不限制）
+      max-connections-per-user: 5
+      # latestCache 最大用户数（<=0 禁用缓存）
+      latest-cache-max-size: 50000
+      # latestCache 空闲过期时间（分钟）
+      latest-cache-expire-minutes: 30
+      # 用户连接计数缓存最大条数
+      connection-counter-max-size: 100000
+      # 用户连接计数缓存空闲过期时间（分钟）
+      connection-counter-expire-minutes: 30
+      # 是否启用自动降级
+      auto-degrade-enabled: true
+      # 连接数降级阈值比例（0-1）
+      degrade-connection-ratio: 0.8
+      # 缓存占用降级阈值比例（0-1）
+      degrade-cache-ratio: 0.9

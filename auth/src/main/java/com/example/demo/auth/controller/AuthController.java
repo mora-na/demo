@@ -11,10 +11,11 @@ import com.example.demo.auth.support.ClientIpResolver;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequireLogin;
-import com.example.demo.identity.api.dto.IdentityDataScopeProfileDTO;
-import com.example.demo.identity.api.dto.IdentityUserDTO;
-import com.example.demo.identity.api.dto.IdentityUserProfileUpdateRequest;
+import com.example.demo.datascope.model.RoleDataScope;
+import com.example.demo.datascope.model.UserScopeOverride;
+import com.example.demo.identity.api.dto.*;
 import com.example.demo.identity.api.event.IdentitySelfProfileUpdateCommand;
+import com.example.demo.identity.api.facade.IdentityCredentialApi;
 import com.example.demo.identity.api.facade.IdentityReadFacade;
 import com.example.demo.log.api.event.LoginLogEvent;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * 认证接口控制器，处理验证码、登录与登出流程。
@@ -43,6 +45,7 @@ public class AuthController extends BaseController {
     private final PasswordService passwordService;
     private final PasswordPolicyService passwordPolicyService;
     private final IdentityReadFacade identityReadFacade;
+    private final IdentityCredentialApi identityCredentialApi;
     private final LoginAttemptService loginAttemptService;
     private final LoginAnomalyAlertService loginAnomalyAlertService;
     private final OperationConfirmService operationConfirmService;
@@ -120,6 +123,13 @@ public class AuthController extends BaseController {
                     credentialError, httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
+        IdentityUserCredentialDTO credential = identityCredentialApi.getUserCredentialById(user.getId());
+        if (credential == null || StringUtils.isBlank(credential.getPassword())) {
+            loginAttemptService.recordFailure(request.getUserName(), httpRequest);
+            publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
+                    credentialError, httpRequest);
+            return error(controllerConstants.getUnauthorizedCode(), credentialError);
+        }
         if (user.getStatus() != null && user.getStatus().equals(0)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
@@ -133,7 +143,7 @@ public class AuthController extends BaseController {
                     credentialError, httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
-        if (!passwordService.matches(rawPassword, user.getPassword())) {
+        if (!passwordService.matches(rawPassword, credential.getPassword())) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
                     credentialError, httpRequest);
@@ -155,8 +165,8 @@ public class AuthController extends BaseController {
         authUser.setDataScopeValue(user.getDataScopeValue());
         IdentityDataScopeProfileDTO profile = identityReadFacade.buildDataScopeProfile(user.getId());
         authUser.setDeptTreeIds(profile.getDeptTreeIds());
-        authUser.setRoleDataScopes(profile.getRoleDataScopes());
-        authUser.setUserScopeOverrides(profile.getUserScopeOverrides());
+        authUser.setRoleDataScopes(mapRoleDataScopes(profile.getRoleDataScopes()));
+        authUser.setUserScopeOverrides(mapUserScopeOverrides(profile.getUserScopeOverrides()));
         boolean firstLoginForceChange = passwordPolicyService.isFirstLoginForceChange(user);
         boolean passwordExpired = passwordPolicyService.isPasswordExpired(user);
         LoginResponse loginResponse = tokenService.issueToken(authUser);
@@ -253,7 +263,11 @@ public class AuthController extends BaseController {
             if (StringUtils.isBlank(oldRawPassword) || StringUtils.isBlank(newRawPassword)) {
                 return error(controllerConstants.getBadRequestCode(), i18n("user.password.invalid"));
             }
-            if (!passwordService.matches(oldRawPassword, dbUser.getPassword())) {
+            IdentityUserCredentialDTO credential = identityCredentialApi.getUserCredentialById(authUser.getId());
+            if (credential == null || StringUtils.isBlank(credential.getPassword())) {
+                return error(controllerConstants.getBadRequestCode(), i18n("user.password.old.invalid"));
+            }
+            if (!passwordService.matches(oldRawPassword, credential.getPassword())) {
                 return error(controllerConstants.getBadRequestCode(), i18n("user.password.old.invalid"));
             }
             if (newRawPassword.length() < systemConstants.getProfile().getNewPasswordMinLength()) {
@@ -365,6 +379,60 @@ public class AuthController extends BaseController {
 
     private String resolveClientIp(HttpServletRequest request) {
         return clientIpResolver.resolve(request);
+    }
+
+    private List<RoleDataScope> mapRoleDataScopes(List<IdentityRoleDataScopeDTO> sources) {
+        if (sources == null || sources.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<RoleDataScope> result = new ArrayList<>(sources.size());
+        for (IdentityRoleDataScopeDTO source : sources) {
+            if (source == null) {
+                continue;
+            }
+            RoleDataScope scope = new RoleDataScope();
+            scope.setRoleId(source.getRoleId());
+            scope.setRoleCode(source.getRoleCode());
+            scope.setDataScopeType(source.getDataScopeType());
+            if (source.getCustomDeptIds() != null) {
+                scope.setCustomDeptIds(new LinkedHashSet<>(source.getCustomDeptIds()));
+            }
+            if (source.getMenuDataScopes() != null) {
+                scope.setMenuDataScopes(new LinkedHashMap<>(source.getMenuDataScopes()));
+            }
+            if (source.getMenuCustomDepts() != null) {
+                LinkedHashMap<String, Set<Long>> menuCustoms = new LinkedHashMap<>();
+                for (Map.Entry<String, Set<Long>> entry : source.getMenuCustomDepts().entrySet()) {
+                    menuCustoms.put(entry.getKey(),
+                            entry.getValue() == null ? new LinkedHashSet<>() : new LinkedHashSet<>(entry.getValue()));
+                }
+                scope.setMenuCustomDepts(menuCustoms);
+            }
+            result.add(scope);
+        }
+        return result;
+    }
+
+    private Map<String, UserScopeOverride> mapUserScopeOverrides(Map<String, IdentityUserScopeOverrideDTO> sources) {
+        if (sources == null || sources.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, UserScopeOverride> result = new LinkedHashMap<>();
+        for (Map.Entry<String, IdentityUserScopeOverrideDTO> entry : sources.entrySet()) {
+            IdentityUserScopeOverrideDTO source = entry.getValue();
+            if (source == null) {
+                continue;
+            }
+            UserScopeOverride override = new UserScopeOverride();
+            override.setScopeKey(source.getScopeKey());
+            override.setDataScopeType(source.getDataScopeType());
+            if (source.getCustomDeptIds() != null) {
+                override.setCustomDeptIds(new LinkedHashSet<>(source.getCustomDeptIds()));
+            }
+            override.setStatus(source.getStatus());
+            result.put(entry.getKey(), override);
+        }
+        return result;
     }
 
 }

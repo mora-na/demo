@@ -163,11 +163,20 @@ public class NoticeConstants {
 
     @Data
     public static class Stream {
-        public static final long DEFAULT_ANONYMOUS_EMITTER_TIMEOUT_MILLIS = 0L;
-        public static final long DEFAULT_EMITTER_TIMEOUT_MILLIS = 0L;
+        public static final long DEFAULT_ANONYMOUS_EMITTER_TIMEOUT_MILLIS = 60000L;
+        public static final long DEFAULT_EMITTER_TIMEOUT_MILLIS = 600000L;
         public static final long DEFAULT_HEARTBEAT_INTERVAL_MILLIS = 30000L;
         public static final long DEFAULT_HEARTBEAT_TIMEOUT_MILLIS = 90000L;
         public static final int DEFAULT_LATEST_LIMIT = 5;
+        public static final int DEFAULT_MAX_TOTAL_CONNECTIONS = 2000;
+        public static final int DEFAULT_MAX_CONNECTIONS_PER_USER = 5;
+        public static final long DEFAULT_LATEST_CACHE_MAX_SIZE = 50000L;
+        public static final int DEFAULT_LATEST_CACHE_EXPIRE_MINUTES = 30;
+        public static final int DEFAULT_CONNECTION_COUNTER_MAX_SIZE = 100000;
+        public static final int DEFAULT_CONNECTION_COUNTER_EXPIRE_MINUTES = 30;
+        public static final boolean DEFAULT_AUTO_DEGRADE_ENABLED = true;
+        public static final double DEFAULT_DEGRADE_CONNECTION_RATIO = 0.8d;
+        public static final double DEFAULT_DEGRADE_CACHE_RATIO = 0.9d;
         public static final String DEFAULT_EVENT_NOTICE_NAME = "notice";
         public static final String DEFAULT_EVENT_INIT_NAME = "init";
         public static final String DEFAULT_EVENT_PING_NAME = "ping";
@@ -203,6 +212,42 @@ public class NoticeConstants {
          * SSE 最新通知列表缓存长度。
          */
         private int latestLimit = DEFAULT_LATEST_LIMIT;
+        /**
+         * SSE 总连接上限，<=0 表示不限制。
+         */
+        private int maxTotalConnections = DEFAULT_MAX_TOTAL_CONNECTIONS;
+        /**
+         * 单用户 SSE 连接上限，<=0 表示不限制。
+         */
+        private int maxConnectionsPerUser = DEFAULT_MAX_CONNECTIONS_PER_USER;
+        /**
+         * latestCache 最大用户数，<=0 表示禁用缓存。
+         */
+        private long latestCacheMaxSize = DEFAULT_LATEST_CACHE_MAX_SIZE;
+        /**
+         * latestCache 空闲过期时间（分钟）。
+         */
+        private int latestCacheExpireMinutes = DEFAULT_LATEST_CACHE_EXPIRE_MINUTES;
+        /**
+         * 用户连接计数缓存最大条数。
+         */
+        private int connectionCounterMaxSize = DEFAULT_CONNECTION_COUNTER_MAX_SIZE;
+        /**
+         * 用户连接计数缓存空闲过期时间（分钟）。
+         */
+        private int connectionCounterExpireMinutes = DEFAULT_CONNECTION_COUNTER_EXPIRE_MINUTES;
+        /**
+         * 是否启用自动降级（按负载）。
+         */
+        private boolean autoDegradeEnabled = DEFAULT_AUTO_DEGRADE_ENABLED;
+        /**
+         * 连接数降级阈值比例（0-1）。
+         */
+        private double degradeConnectionRatio = DEFAULT_DEGRADE_CONNECTION_RATIO;
+        /**
+         * 缓存占用降级阈值比例（0-1）。
+         */
+        private double degradeCacheRatio = DEFAULT_DEGRADE_CACHE_RATIO;
         /**
          * 新通知推送事件名。
          */

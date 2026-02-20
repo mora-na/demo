@@ -2,18 +2,16 @@ package com.example.demo.identity.facade;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.datascope.model.DataScopeProfile;
+import com.example.demo.datascope.model.RoleDataScope;
+import com.example.demo.datascope.model.UserScopeOverride;
 import com.example.demo.datascope.service.DataScopeProfileService;
 import com.example.demo.dept.entity.Dept;
 import com.example.demo.dept.service.DeptService;
-import com.example.demo.identity.api.dto.IdentityDataScopeProfileDTO;
-import com.example.demo.identity.api.dto.IdentityMenuTreeDTO;
-import com.example.demo.identity.api.dto.IdentityRoleDTO;
-import com.example.demo.identity.api.dto.IdentityUserDTO;
+import com.example.demo.identity.api.dto.*;
 import com.example.demo.identity.api.facade.IdentityReadFacade;
 import com.example.demo.menu.entity.Menu;
-import com.example.demo.menu.entity.RoleMenu;
+import com.example.demo.menu.mapper.MenuMapper;
 import com.example.demo.menu.service.MenuService;
-import com.example.demo.menu.service.RoleMenuService;
 import com.example.demo.permission.entity.Permission;
 import com.example.demo.permission.entity.Role;
 import com.example.demo.permission.entity.UserRole;
@@ -23,12 +21,15 @@ import com.example.demo.permission.service.RoleService;
 import com.example.demo.permission.service.UserRoleService;
 import com.example.demo.user.entity.SysUser;
 import com.example.demo.user.service.SysUserService;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,10 +49,14 @@ public class IdentityReadFacadeImpl implements IdentityReadFacade {
     private final RoleService roleService;
     private final PermissionService permissionService;
     private final PermissionMapper permissionMapper;
-    private final RoleMenuService roleMenuService;
     private final MenuService menuService;
+    private final MenuMapper menuMapper;
     private final DataScopeProfileService dataScopeProfileService;
     private final DeptService deptService;
+    private final Cache<Long, String> deptNameCache = Caffeine.newBuilder()
+            .maximumSize(5000)
+            .expireAfterWrite(Duration.ofMinutes(10))
+            .build();
 
     @Override
     public IdentityUserDTO getUserById(Long userId) {
@@ -206,36 +211,21 @@ public class IdentityReadFacadeImpl implements IdentityReadFacade {
         if (userId == null) {
             return Collections.emptyList();
         }
-        List<Long> roleIds = userRoleService.list(Wrappers.lambdaQuery(UserRole.class)
-                        .eq(UserRole::getUserId, userId))
-                .stream()
-                .map(UserRole::getRoleId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-        if (roleIds.isEmpty()) {
+        List<Menu> menus = menuMapper.selectMenusByUserId(userId);
+        if (menus == null || menus.isEmpty()) {
             return Collections.emptyList();
         }
-        List<Long> menuIds = roleMenuService.list(Wrappers.lambdaQuery(RoleMenu.class)
-                        .in(RoleMenu::getRoleId, roleIds))
-                .stream()
-                .map(RoleMenu::getMenuId)
+        return menus.stream()
                 .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-        if (menuIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return menuService.listByIds(menuIds).stream()
-                .filter(Objects::nonNull)
-                .filter(menu -> menu.getStatus() == null || menu.getStatus() == 1)
                 .map(this::toMenuDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<IdentityMenuTreeDTO> listActiveMenus() {
-        return menuService.list(Wrappers.lambdaQuery(Menu.class).eq(Menu::getStatus, 1)).stream()
+        return menuService.list(Wrappers.lambdaQuery(Menu.class)
+                        .and(wrapper -> wrapper.isNull(Menu::getStatus).or().eq(Menu::getStatus, 1)))
+                .stream()
                 .filter(Objects::nonNull)
                 .map(this::toMenuDto)
                 .collect(Collectors.toList());
@@ -255,9 +245,30 @@ public class IdentityReadFacadeImpl implements IdentityReadFacade {
         if (profile == null) {
             return dto;
         }
-        dto.setDeptTreeIds(profile.getDeptTreeIds());
-        dto.setRoleDataScopes(profile.getRoleDataScopes());
-        dto.setUserScopeOverrides(profile.getUserScopeOverrides());
+        Set<Long> deptTreeIds = profile.getDeptTreeIds();
+        dto.setDeptTreeIds(deptTreeIds == null ? new LinkedHashSet<>() : new LinkedHashSet<>(deptTreeIds));
+        List<RoleDataScope> roleScopes = profile.getRoleDataScopes();
+        List<IdentityRoleDataScopeDTO> roleDtos = new ArrayList<>();
+        if (roleScopes != null) {
+            for (RoleDataScope scope : roleScopes) {
+                IdentityRoleDataScopeDTO mapped = toRoleDataScopeDto(scope);
+                if (mapped != null) {
+                    roleDtos.add(mapped);
+                }
+            }
+        }
+        dto.setRoleDataScopes(roleDtos);
+        Map<String, UserScopeOverride> overrides = profile.getUserScopeOverrides();
+        Map<String, IdentityUserScopeOverrideDTO> overrideDtos = new LinkedHashMap<>();
+        if (overrides != null && !overrides.isEmpty()) {
+            for (Map.Entry<String, UserScopeOverride> entry : overrides.entrySet()) {
+                IdentityUserScopeOverrideDTO mapped = toUserScopeOverrideDto(entry.getKey(), entry.getValue());
+                if (mapped != null) {
+                    overrideDtos.put(entry.getKey(), mapped);
+                }
+            }
+        }
+        dto.setUserScopeOverrides(overrideDtos);
         return dto;
     }
 
@@ -266,8 +277,16 @@ public class IdentityReadFacadeImpl implements IdentityReadFacade {
         if (deptId == null) {
             return null;
         }
+        String cached = deptNameCache.getIfPresent(deptId);
+        if (cached != null) {
+            return cached;
+        }
         Dept dept = deptService.getById(deptId);
-        return dept == null ? null : dept.getName();
+        String name = dept == null ? null : dept.getName();
+        if (StringUtils.isNotBlank(name)) {
+            deptNameCache.put(deptId, name);
+        }
+        return name;
     }
 
     private List<Long> normalizeIds(Collection<Long> ids) {
@@ -293,11 +312,8 @@ public class IdentityReadFacadeImpl implements IdentityReadFacade {
         }
         return roleService.listByIds(roleIds).stream()
                 .filter(Objects::nonNull)
-                .filter(role -> role.getStatus() == null || role.getStatus() == 1)
-                .collect(Collectors.collectingAndThen(
-                        Collectors.toMap(Role::getId, role -> role, (left, right) -> left, LinkedHashMap::new),
-                        map -> new java.util.ArrayList<>(map.values())
-                ));
+                .filter(role -> isEnabled(role.getStatus()))
+                .collect(Collectors.toList());
     }
 
     private List<Long> toEnabledUserIds(List<SysUser> users) {
@@ -306,7 +322,7 @@ public class IdentityReadFacadeImpl implements IdentityReadFacade {
         }
         return users.stream()
                 .filter(Objects::nonNull)
-                .filter(user -> user.getStatus() == null || user.getStatus().equals(SysUser.STATUS_ENABLED))
+                .filter(user -> isEnabled(user.getStatus()))
                 .map(SysUser::getId)
                 .filter(Objects::nonNull)
                 .distinct()
@@ -328,10 +344,13 @@ public class IdentityReadFacadeImpl implements IdentityReadFacade {
         dto.setDeptId(user.getDeptId());
         dto.setDataScopeType(user.getDataScopeType());
         dto.setDataScopeValue(user.getDataScopeValue());
-        dto.setPassword(user.getPassword());
         dto.setPasswordUpdatedAt(user.getPasswordUpdatedAt());
         dto.setForcePasswordChange(user.getForcePasswordChange());
         return dto;
+    }
+
+    private boolean isEnabled(Integer status) {
+        return status == null || status == 1;
     }
 
     private IdentityMenuTreeDTO toMenuDto(Menu menu) {
@@ -346,6 +365,45 @@ public class IdentityReadFacadeImpl implements IdentityReadFacade {
         dto.setStatus(menu.getStatus());
         dto.setSort(menu.getSort());
         dto.setRemark(menu.getRemark());
+        return dto;
+    }
+
+    private IdentityRoleDataScopeDTO toRoleDataScopeDto(RoleDataScope scope) {
+        if (scope == null) {
+            return null;
+        }
+        IdentityRoleDataScopeDTO dto = new IdentityRoleDataScopeDTO();
+        dto.setRoleId(scope.getRoleId());
+        dto.setRoleCode(scope.getRoleCode());
+        dto.setDataScopeType(scope.getDataScopeType());
+        if (scope.getCustomDeptIds() != null) {
+            dto.setCustomDeptIds(new LinkedHashSet<>(scope.getCustomDeptIds()));
+        }
+        if (scope.getMenuDataScopes() != null) {
+            dto.setMenuDataScopes(new LinkedHashMap<>(scope.getMenuDataScopes()));
+        }
+        if (scope.getMenuCustomDepts() != null) {
+            LinkedHashMap<String, Set<Long>> menuCustoms = new LinkedHashMap<>();
+            for (Map.Entry<String, Set<Long>> entry : scope.getMenuCustomDepts().entrySet()) {
+                menuCustoms.put(entry.getKey(),
+                        entry.getValue() == null ? new LinkedHashSet<>() : new LinkedHashSet<>(entry.getValue()));
+            }
+            dto.setMenuCustomDepts(menuCustoms);
+        }
+        return dto;
+    }
+
+    private IdentityUserScopeOverrideDTO toUserScopeOverrideDto(String scopeKey, UserScopeOverride override) {
+        if (override == null) {
+            return null;
+        }
+        IdentityUserScopeOverrideDTO dto = new IdentityUserScopeOverrideDTO();
+        dto.setScopeKey(scopeKey);
+        dto.setDataScopeType(override.getDataScopeType());
+        if (override.getCustomDeptIds() != null) {
+            dto.setCustomDeptIds(new LinkedHashSet<>(override.getCustomDeptIds()));
+        }
+        dto.setStatus(override.getStatus());
         return dto;
     }
 }

@@ -144,6 +144,8 @@ public class DynamicApiConstants {
         public static final long DEFAULT_MAX_RESPONSE_BYTES = 1024 * 1024L;
         public static final int DEFAULT_SQL_MAX_ROWS = 500;
         public static final int DEFAULT_SQL_FETCH_SIZE = 200;
+        public static final int DEFAULT_RUNNING_MAX_ENTRIES = 10000;
+        public static final long DEFAULT_RUNNING_EXPIRE_BUFFER_MS = 10000L;
         public static final List<String> DEFAULT_MASKED_KEYS = Arrays.asList(
                 "password",
                 "pass",
@@ -187,6 +189,14 @@ public class DynamicApiConstants {
          * SQL 游标抓取大小，<=0 表示不设置。
          */
         private int sqlFetchSize = DEFAULT_SQL_FETCH_SIZE;
+        /**
+         * 运行中请求缓存上限（SQL/HTTP）。
+         */
+        private int runningMaxEntries = DEFAULT_RUNNING_MAX_ENTRIES;
+        /**
+         * 运行中请求缓存过期冗余时间（毫秒）。
+         */
+        private long runningExpireBufferMs = DEFAULT_RUNNING_EXPIRE_BUFFER_MS;
         /**
          * 日志脱敏字段列表（大小写不敏感）。
          */

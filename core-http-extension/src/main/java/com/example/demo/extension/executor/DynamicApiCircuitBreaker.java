@@ -3,9 +3,11 @@ package com.example.demo.extension.executor;
 import com.example.demo.extension.api.executor.DynamicApiTerminationReason;
 import com.example.demo.extension.config.DynamicApiProperties;
 import com.example.demo.extension.registry.DynamicApiMeta;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.Duration;
 
 /**
  * 简易动态接口熔断器。
@@ -14,10 +16,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DynamicApiCircuitBreaker {
 
     private final DynamicApiProperties properties;
-    private final ConcurrentHashMap<Long, CircuitState> states = new ConcurrentHashMap<>();
+    private final Cache<Long, CircuitState> states;
 
     public DynamicApiCircuitBreaker(DynamicApiProperties properties) {
         this.properties = properties;
+        this.states = buildStateCache();
     }
 
     public boolean allow(DynamicApiMeta meta) {
@@ -26,7 +29,7 @@ public class DynamicApiCircuitBreaker {
         }
         long apiId = meta.getApi().getId();
         long now = System.currentTimeMillis();
-        CircuitState state = states.computeIfAbsent(apiId, id -> new CircuitState());
+        CircuitState state = states.get(apiId, id -> new CircuitState());
         synchronized (state) {
             if (state.openUntil > 0 && now < state.openUntil) {
                 return false;
@@ -50,7 +53,7 @@ public class DynamicApiCircuitBreaker {
         }
         long apiId = meta.getApi().getId();
         long now = System.currentTimeMillis();
-        CircuitState state = states.computeIfAbsent(apiId, id -> new CircuitState());
+        CircuitState state = states.get(apiId, id -> new CircuitState());
         synchronized (state) {
             if (state.openUntil > 0 && now < state.openUntil) {
                 return;
@@ -97,6 +100,29 @@ public class DynamicApiCircuitBreaker {
 
     private long getOpenDurationMs() {
         return Math.max(1000L, properties.getCircuitBreaker().getOpenDurationMs());
+    }
+
+    private Cache<Long, CircuitState> buildStateCache() {
+        int maxEntries = resolveMaxEntries();
+        int expireSeconds = resolveExpireSeconds();
+        return Caffeine.newBuilder()
+                .maximumSize(maxEntries)
+                .expireAfterAccess(Duration.ofSeconds(expireSeconds))
+                .build();
+    }
+
+    private int resolveMaxEntries() {
+        if (properties == null || properties.getCircuitBreaker() == null) {
+            return 10000;
+        }
+        return Math.max(1, properties.getCircuitBreaker().getMaxEntries());
+    }
+
+    private int resolveExpireSeconds() {
+        if (properties == null || properties.getCircuitBreaker() == null) {
+            return 1800;
+        }
+        return Math.max(60, properties.getCircuitBreaker().getExpireAfterAccessSeconds());
     }
 
     private static class CircuitState {

@@ -151,13 +151,23 @@ public class NoticeController extends BaseController {
     public SseEmitter stream() {
         AuthUser user = AuthContext.get();
         if (user == null || user.getId() == null) {
-            return new SseEmitter(noticeConstants.getStream().getAnonymousEmitterTimeoutMillis());
+            long timeout = noticeConstants.getStream().getAnonymousEmitterTimeoutMillis();
+            return new SseEmitter(timeout > 0 ? timeout : 60000L);
         }
         Long userId = user.getId();
         int latestLimit = noticeConstants.getStream().getLatestLimit();
         List<NoticeLatestVO> latestNotices = noticeService.listMyLatestNotices(userId, latestLimit);
         long unreadCount = noticeService.countUnread(userId);
         return noticeStreamService.connect(userId, latestNotices, unreadCount);
+    }
+
+    /**
+     * SSE 连接指标（监控）。
+     */
+    @GetMapping("/stream/metrics")
+    @RequirePermission("notice:stream:metrics")
+    public CommonResult<NoticeStreamMetricsVO> streamMetrics() {
+        return success(noticeStreamService.snapshotMetrics());
     }
 
     /**

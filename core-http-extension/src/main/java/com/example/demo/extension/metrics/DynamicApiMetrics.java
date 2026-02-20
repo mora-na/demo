@@ -5,13 +5,15 @@ import com.example.demo.extension.config.DynamicApiProperties;
 import com.example.demo.extension.dto.DynamicApiMetricItem;
 import com.example.demo.extension.dto.DynamicApiMetricsSnapshot;
 import com.example.demo.extension.registry.DynamicApiMeta;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -23,21 +25,24 @@ public class DynamicApiMetrics {
 
     private final DynamicApiProperties properties;
     private final MetricBucket global = new MetricBucket();
-    private final ConcurrentHashMap<Long, MetricBucket> perApi = new ConcurrentHashMap<>();
+    private final Cache<Long, MetricBucket> perApi;
 
     public DynamicApiMetrics(DynamicApiProperties properties) {
         this.properties = properties;
+        this.perApi = buildCache();
     }
 
     public void recordSubmit(DynamicApiMeta meta) {
         if (!isEnabled() || meta == null || meta.getApi() == null || meta.getApi().getId() == null) {
             return;
         }
-        MetricBucket bucket = perApi.computeIfAbsent(meta.getApi().getId(), id -> new MetricBucket());
-        bucket.updateMeta(meta);
-        bucket.total.increment();
-        bucket.inflight.increment();
-        bucket.lastUpdate.set(System.currentTimeMillis());
+        if (shouldRecordDetail()) {
+            MetricBucket bucket = perApi.get(meta.getApi().getId(), id -> new MetricBucket());
+            bucket.updateMeta(meta);
+            bucket.total.increment();
+            bucket.inflight.increment();
+            bucket.lastUpdate.set(System.currentTimeMillis());
+        }
         global.total.increment();
         global.inflight.increment();
         global.lastUpdate.set(System.currentTimeMillis());
@@ -47,9 +52,11 @@ public class DynamicApiMetrics {
         if (!isEnabled() || meta == null || meta.getApi() == null || meta.getApi().getId() == null) {
             return;
         }
-        MetricBucket bucket = perApi.computeIfAbsent(meta.getApi().getId(), id -> new MetricBucket());
-        bucket.queueTimeMs.add(queueMs);
-        bucket.lastUpdate.set(System.currentTimeMillis());
+        if (shouldRecordDetail()) {
+            MetricBucket bucket = perApi.get(meta.getApi().getId(), id -> new MetricBucket());
+            bucket.queueTimeMs.add(queueMs);
+            bucket.lastUpdate.set(System.currentTimeMillis());
+        }
         global.queueTimeMs.add(queueMs);
         global.lastUpdate.set(System.currentTimeMillis());
     }
@@ -62,33 +69,43 @@ public class DynamicApiMetrics {
         if (!isEnabled() || meta == null || meta.getApi() == null || meta.getApi().getId() == null) {
             return;
         }
-        MetricBucket bucket = perApi.computeIfAbsent(meta.getApi().getId(), id -> new MetricBucket());
-        bucket.updateMeta(meta);
-        bucket.inflight.decrement();
         global.inflight.decrement();
-
-        bucket.completed.increment();
         global.completed.increment();
-        bucket.execTimeMs.add(execMs);
-        bucket.totalTimeMs.add(totalMs);
         global.execTimeMs.add(execMs);
         global.totalTimeMs.add(totalMs);
 
+        MetricBucket bucket = null;
+        if (shouldRecordDetail()) {
+            bucket = perApi.get(meta.getApi().getId(), id -> new MetricBucket());
+            bucket.updateMeta(meta);
+            bucket.inflight.decrement();
+            bucket.completed.increment();
+            bucket.execTimeMs.add(execMs);
+            bucket.totalTimeMs.add(totalMs);
+            bucket.lastUpdate.set(System.currentTimeMillis());
+        }
         if (success) {
-            bucket.success.increment();
             global.success.increment();
+            if (bucket != null) {
+                bucket.success.increment();
+            }
         } else {
-            bucket.failure.increment();
             global.failure.increment();
+            if (bucket != null) {
+                bucket.failure.increment();
+            }
             if (reason == DynamicApiTerminationReason.TIMEOUT) {
-                bucket.timeout.increment();
                 global.timeout.increment();
+                if (bucket != null) {
+                    bucket.timeout.increment();
+                }
             } else if (reason == DynamicApiTerminationReason.CANCELLED) {
-                bucket.cancelled.increment();
                 global.cancelled.increment();
+                if (bucket != null) {
+                    bucket.cancelled.increment();
+                }
             }
         }
-        bucket.lastUpdate.set(System.currentTimeMillis());
         global.lastUpdate.set(System.currentTimeMillis());
     }
 
@@ -104,23 +121,33 @@ public class DynamicApiMetrics {
         if (!isEnabled() || meta == null || meta.getApi() == null || meta.getApi().getId() == null) {
             return;
         }
-        MetricBucket bucket = perApi.computeIfAbsent(meta.getApi().getId(), id -> new MetricBucket());
-        bucket.updateMeta(meta);
+        MetricBucket bucket = null;
+        if (shouldRecordDetail()) {
+            bucket = perApi.get(meta.getApi().getId(), id -> new MetricBucket());
+            bucket.updateMeta(meta);
+            if (rollbackInflight) {
+                bucket.inflight.decrement();
+            } else {
+                bucket.total.increment();
+            }
+            bucket.lastUpdate.set(System.currentTimeMillis());
+        }
         if (rollbackInflight) {
-            bucket.inflight.decrement();
             global.inflight.decrement();
         } else {
-            bucket.total.increment();
             global.total.increment();
         }
         if (reason == DynamicApiTerminationReason.CIRCUIT_OPEN) {
-            bucket.circuitOpen.increment();
             global.circuitOpen.increment();
+            if (bucket != null) {
+                bucket.circuitOpen.increment();
+            }
         } else {
-            bucket.rejected.increment();
             global.rejected.increment();
+            if (bucket != null) {
+                bucket.rejected.increment();
+            }
         }
-        bucket.lastUpdate.set(System.currentTimeMillis());
         global.lastUpdate.set(System.currentTimeMillis());
     }
 
@@ -128,9 +155,12 @@ public class DynamicApiMetrics {
         if (!isEnabled()) {
             return new DynamicApiMetricsSnapshot(global.toSnapshot(null), Collections.emptyList());
         }
+        if (!shouldRecordDetail()) {
+            return new DynamicApiMetricsSnapshot(global.toSnapshot("global"), Collections.emptyList());
+        }
         int maxDetails = properties.getMetrics() == null ? 200 : Math.max(1, properties.getMetrics().getMaxDetails());
         List<DynamicApiMetricItem> items = new ArrayList<>();
-        for (MetricBucket bucket : perApi.values()) {
+        for (MetricBucket bucket : perApi.asMap().values()) {
             items.add(bucket.toSnapshot(null));
         }
         items.sort(Comparator.comparingLong(DynamicApiMetricItem::getTotal).reversed());
@@ -142,6 +172,51 @@ public class DynamicApiMetrics {
 
     private boolean isEnabled() {
         return properties != null && properties.getMetrics() != null && properties.getMetrics().isEnabled();
+    }
+
+    private Cache<Long, MetricBucket> buildCache() {
+        return Caffeine.newBuilder()
+                .maximumSize(resolveMaxEntries())
+                .expireAfterAccess(Duration.ofSeconds(resolveExpireSeconds()))
+                .build();
+    }
+
+    private int resolveMaxEntries() {
+        if (properties == null || properties.getMetrics() == null) {
+            return 20000;
+        }
+        return Math.max(1, properties.getMetrics().getMaxEntries());
+    }
+
+    private int resolveExpireSeconds() {
+        if (properties == null || properties.getMetrics() == null) {
+            return 900;
+        }
+        return Math.max(60, properties.getMetrics().getExpireAfterAccessSeconds());
+    }
+
+    private boolean shouldRecordDetail() {
+        if (properties == null || properties.getMetrics() == null) {
+            return true;
+        }
+        DynamicApiProperties.Metrics metrics = properties.getMetrics();
+        if (!metrics.isAutoDegradeEnabled()) {
+            return true;
+        }
+        double ratio = resolveDegradeRatio(metrics.getDegradeRatio());
+        if (ratio <= 0) {
+            return true;
+        }
+        long size = perApi.estimatedSize();
+        int max = Math.max(1, metrics.getMaxEntries());
+        return size < Math.ceil(max * ratio);
+    }
+
+    private double resolveDegradeRatio(double ratio) {
+        if (ratio <= 0) {
+            return 0d;
+        }
+        return Math.min(1d, ratio);
     }
 
     private static class MetricBucket {
