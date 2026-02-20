@@ -54,6 +54,8 @@ public class JobConstants {
         public static final String DEFAULT_JOB_CRON_INVALID = "job.cron.invalid";
         public static final String DEFAULT_JOB_HANDLER_INVALID = "job.handler.invalid";
         public static final String DEFAULT_JOB_MISFIRE_INVALID = "job.misfire.invalid";
+        public static final String DEFAULT_JOB_STATUS_INVALID = "job.status.invalid";
+        public static final String DEFAULT_JOB_CONCURRENT_INVALID = "job.concurrent.invalid";
         public static final String DEFAULT_JOB_CREATE_FAILED = "job.create.failed";
         public static final String DEFAULT_JOB_UPDATE_FAILED = "job.update.failed";
         public static final String DEFAULT_JOB_DELETE_FAILED = "job.delete.failed";
@@ -65,6 +67,8 @@ public class JobConstants {
         private String jobCronInvalid = DEFAULT_JOB_CRON_INVALID;
         private String jobHandlerInvalid = DEFAULT_JOB_HANDLER_INVALID;
         private String jobMisfireInvalid = DEFAULT_JOB_MISFIRE_INVALID;
+        private String jobStatusInvalid = DEFAULT_JOB_STATUS_INVALID;
+        private String jobConcurrentInvalid = DEFAULT_JOB_CONCURRENT_INVALID;
         private String jobCreateFailed = DEFAULT_JOB_CREATE_FAILED;
         private String jobUpdateFailed = DEFAULT_JOB_UPDATE_FAILED;
         private String jobDeleteFailed = DEFAULT_JOB_DELETE_FAILED;

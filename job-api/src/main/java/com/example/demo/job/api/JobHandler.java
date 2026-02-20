@@ -1,7 +1,7 @@
-package com.example.demo.job.support;
+package com.example.demo.job.api;
 
 /**
- * 定时任务处理器接口。
+ * Job handler contract.
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/12

@@ -1,6 +1,8 @@
 package com.example.demo.job.support;
 
 import com.example.demo.common.spring.SpringContextHolder;
+import com.example.demo.job.api.JobContext;
+import com.example.demo.job.api.JobHandler;
 import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.entity.SysJobLog;
 import com.example.demo.job.log.JobLogCollector;
@@ -27,6 +29,7 @@ public abstract class AbstractQuartzJob implements Job {
         JobConstants constants = resolveConstants();
         JobDataMap dataMap = context.getMergedJobDataMap();
         JobContext jobContext = buildContext(dataMap, constants);
+        jobContext.setMaxLogLength(constants.getExecution().getLogDetailMaxLength());
         SysJobLogService logService = SpringContextHolder.getBean(SysJobLogService.class);
         JobLogCollector logCollector = SpringContextHolder.getBean(JobLogCollector.class);
         LocalDateTime start = LocalDateTime.now();

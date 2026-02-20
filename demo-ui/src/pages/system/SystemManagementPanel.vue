@@ -24,6 +24,9 @@
       <DataScopePanel
           v-else-if="activeMenuCode === 'data-scope' || activeMenuCode.startsWith('data-scope')"
           :active-code="activeMenuCode"
+          :active-menu-id="activeMenuId"
+          :menus="menus"
+          @menu-change="emit('menu-change', $event)"
       />
       <div v-else class="system-placeholder">{{ t("systemPanel.placeholder") }}</div>
     </div>

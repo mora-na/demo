@@ -10,13 +10,12 @@ import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.dto.*;
 import com.example.demo.job.entity.SysJob;
 import com.example.demo.job.log.JobLogCollector;
-import com.example.demo.job.model.JobMisfirePolicy;
 import com.example.demo.job.service.SysJobLogService;
 import com.example.demo.job.service.SysJobService;
 import com.example.demo.job.support.JobHandlerRegistry;
+import com.example.demo.job.support.JobParamValidator;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.quartz.CronExpression;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,6 +39,7 @@ public class JobAdminController extends BaseController {
     private final JobHandlerRegistry jobHandlerRegistry;
     private final JobConstants jobConstants;
     private final JobLogCollector jobLogCollector;
+    private final JobParamValidator jobParamValidator;
 
     @GetMapping
     @RequirePermission("job:query")
@@ -70,15 +70,20 @@ public class JobAdminController extends BaseController {
     @RequirePermission("job:create")
     public CommonResult<JobVO> create(@Valid @RequestBody JobCreateRequest request) {
         String cron = request.getCronExpression();
-        if (!CronExpression.isValidExpression(cron)) {
+        if (!jobParamValidator.isValidCron(cron)) {
             return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobCronInvalid()));
         }
-        if (jobHandlerRegistry.getHandler(request.getHandlerName()) == null) {
+        if (!jobParamValidator.isValidHandler(request.getHandlerName())) {
             return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobHandlerInvalid()));
         }
-        if (StringUtils.isNotBlank(request.getMisfirePolicy())
-                && !JobMisfirePolicy.isSupported(request.getMisfirePolicy())) {
+        if (!jobParamValidator.isValidMisfirePolicy(request.getMisfirePolicy())) {
             return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobMisfireInvalid()));
+        }
+        if (!jobParamValidator.isValidStatus(request.getStatus())) {
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobStatusInvalid()));
+        }
+        if (!jobParamValidator.isValidConcurrent(request.getAllowConcurrent())) {
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobConcurrentInvalid()));
         }
         AuthUser user = AuthContext.get();
         SysJob job = jobService.createJob(request, user);
@@ -96,16 +101,21 @@ public class JobAdminController extends BaseController {
             return error(jobConstants.getController().getNotFoundCode(), i18n(jobConstants.getMessage().getJobNotFound()));
         }
         if (StringUtils.isNotBlank(request.getCronExpression())
-                && !CronExpression.isValidExpression(request.getCronExpression())) {
+                && !jobParamValidator.isValidCron(request.getCronExpression())) {
             return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobCronInvalid()));
         }
         if (StringUtils.isNotBlank(request.getHandlerName())
-                && jobHandlerRegistry.getHandler(request.getHandlerName()) == null) {
+                && !jobParamValidator.isValidHandler(request.getHandlerName())) {
             return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobHandlerInvalid()));
         }
-        if (StringUtils.isNotBlank(request.getMisfirePolicy())
-                && !JobMisfirePolicy.isSupported(request.getMisfirePolicy())) {
+        if (!jobParamValidator.isValidMisfirePolicy(request.getMisfirePolicy())) {
             return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobMisfireInvalid()));
+        }
+        if (request.getStatus() != null && !jobParamValidator.isValidStatus(request.getStatus())) {
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobStatusInvalid()));
+        }
+        if (request.getAllowConcurrent() != null && !jobParamValidator.isValidConcurrent(request.getAllowConcurrent())) {
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobConcurrentInvalid()));
         }
         if (!jobService.updateJob(id, request)) {
             return error(jobConstants.getController().getInternalServerErrorCode(), i18n(jobConstants.getMessage().getJobUpdateFailed()));
@@ -130,6 +140,9 @@ public class JobAdminController extends BaseController {
     public CommonResult<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody JobStatusRequest request) {
         if (jobService.getById(id) == null) {
             return error(jobConstants.getController().getNotFoundCode(), i18n(jobConstants.getMessage().getJobNotFound()));
+        }
+        if (!jobParamValidator.isValidStatus(request.getStatus())) {
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobStatusInvalid()));
         }
         if (!jobService.updateStatus(id, request.getStatus())) {
             return error(jobConstants.getController().getInternalServerErrorCode(), i18n(jobConstants.getMessage().getJobStatusUpdateFailed()));

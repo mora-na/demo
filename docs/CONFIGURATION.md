@@ -547,7 +547,8 @@
 ### 定时任务（Quartz）
 
 - 持久化调度配置：`spring.quartz.*`。
-- 任务处理器需实现 `JobHandler` 并注册为 Spring Bean。
+- 任务处理器需实现 `com.example.demo.job.api.JobHandler` 并注册为 Spring Bean。
+- 其他模块实现处理器时请依赖 `job-api` 模块（契约包为 `com.example.demo.job.api`）。
 - 记录存储：`sys_job_log`，详情日志使用 `log_detail` 字段。
 
 ### 执行日志自动收集（Job Log Collect）
@@ -573,18 +574,20 @@
 
 **Message 组（i18n 消息键）**
 
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `job.constants.message.job-not-found` | `job.not.found` | 任务不存在消息键。 |
-| `job.constants.message.job-log-not-found` | `job.log.not.found` | 任务日志不存在消息键。 |
-| `job.constants.message.job-cron-invalid` | `job.cron.invalid` | Cron 表达式非法消息键。 |
-| `job.constants.message.job-handler-invalid` | `job.handler.invalid` | 任务处理器非法消息键。 |
-| `job.constants.message.job-misfire-invalid` | `job.misfire.invalid` | Misfire 策略非法消息键。 |
-| `job.constants.message.job-create-failed` | `job.create.failed` | 创建任务失败消息键。 |
-| `job.constants.message.job-update-failed` | `job.update.failed` | 更新任务失败消息键。 |
-| `job.constants.message.job-delete-failed` | `job.delete.failed` | 删除任务失败消息键。 |
-| `job.constants.message.job-status-update-failed` | `job.status.update.failed` | 更新任务状态失败消息键。 |
-| `job.constants.message.job-run-failed` | `job.run.failed` | 手动执行任务失败消息键。 |
+| 配置键                                              | 默认值                        | 说明               |
+|--------------------------------------------------|----------------------------|------------------|
+| `job.constants.message.job-not-found`            | `job.not.found`            | 任务不存在消息键。        |
+| `job.constants.message.job-log-not-found`        | `job.log.not.found`        | 任务日志不存在消息键。      |
+| `job.constants.message.job-cron-invalid`         | `job.cron.invalid`         | Cron 表达式非法消息键。   |
+| `job.constants.message.job-handler-invalid`      | `job.handler.invalid`      | 任务处理器非法消息键。      |
+| `job.constants.message.job-misfire-invalid`      | `job.misfire.invalid`      | Misfire 策略非法消息键。 |
+| `job.constants.message.job-status-invalid`       | `job.status.invalid`       | 任务状态非法消息键。       |
+| `job.constants.message.job-concurrent-invalid`   | `job.concurrent.invalid`   | 任务并发配置非法消息键。     |
+| `job.constants.message.job-create-failed`        | `job.create.failed`        | 创建任务失败消息键。       |
+| `job.constants.message.job-update-failed`        | `job.update.failed`        | 更新任务失败消息键。       |
+| `job.constants.message.job-delete-failed`        | `job.delete.failed`        | 删除任务失败消息键。       |
+| `job.constants.message.job-status-update-failed` | `job.status.update.failed` | 更新任务状态失败消息键。     |
+| `job.constants.message.job-run-failed`           | `job.run.failed`           | 手动执行任务失败消息键。     |
 
 **Page 组（分页默认值）**
 

@@ -1,5 +1,6 @@
 package com.example.demo.job.support;
 
+import com.example.demo.job.api.JobHandler;
 import com.example.demo.job.dto.JobHandlerInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -7,9 +8,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 任务处理器注册表。
@@ -21,40 +20,41 @@ import java.util.Map;
 public class JobHandlerRegistry implements ApplicationContextAware {
 
     private ApplicationContext applicationContext;
+    private volatile Map<String, JobHandler> handlerCache;
+    private volatile Map<String, JobHandler> simpleNameCache;
 
     @Override
     public void setApplicationContext(@NonNull ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
+        this.handlerCache = null;
+        this.simpleNameCache = null;
     }
 
     public JobHandler getHandler(String name) {
-        if (applicationContext == null || StringUtils.isBlank(name)) {
+        if (StringUtils.isBlank(name)) {
             return null;
         }
-        Map<String, JobHandler> handlers = applicationContext.getBeansOfType(JobHandler.class);
-        if (handlers.containsKey(name)) {
-            return handlers.get(name);
+        ensureCache();
+        Map<String, JobHandler> handlers = handlerCache;
+        if (handlers == null || handlers.isEmpty()) {
+            return null;
         }
-        String normalized = name.trim();
-        for (Map.Entry<String, JobHandler> entry : handlers.entrySet()) {
-            JobHandler handler = entry.getValue();
-            if (handler == null) {
-                continue;
-            }
-            String simpleName = handler.getClass().getSimpleName();
-            if (simpleName.equalsIgnoreCase(normalized)) {
-                return handler;
-            }
+        JobHandler direct = handlers.get(name);
+        if (direct != null) {
+            return direct;
         }
-        return null;
+        String normalized = name.trim().toLowerCase(Locale.ROOT);
+        Map<String, JobHandler> bySimpleName = simpleNameCache;
+        return bySimpleName == null ? null : bySimpleName.get(normalized);
     }
 
     public List<JobHandlerInfo> listHandlers() {
-        if (applicationContext == null) {
-            return new ArrayList<>();
+        ensureCache();
+        Map<String, JobHandler> handlers = handlerCache;
+        if (handlers == null || handlers.isEmpty()) {
+            return Collections.emptyList();
         }
-        Map<String, JobHandler> handlers = applicationContext.getBeansOfType(JobHandler.class);
-        List<JobHandlerInfo> result = new ArrayList<>();
+        List<JobHandlerInfo> result = new ArrayList<>(handlers.size());
         for (Map.Entry<String, JobHandler> entry : handlers.entrySet()) {
             JobHandler handler = entry.getValue();
             if (handler == null) {
@@ -66,5 +66,33 @@ public class JobHandlerRegistry implements ApplicationContextAware {
             result.add(info);
         }
         return result;
+    }
+
+    private void ensureCache() {
+        if (handlerCache != null && simpleNameCache != null) {
+            return;
+        }
+        synchronized (this) {
+            if (handlerCache != null && simpleNameCache != null) {
+                return;
+            }
+            if (applicationContext == null) {
+                handlerCache = Collections.emptyMap();
+                simpleNameCache = Collections.emptyMap();
+                return;
+            }
+            Map<String, JobHandler> handlers = applicationContext.getBeansOfType(JobHandler.class);
+            Map<String, JobHandler> simpleNames = new HashMap<>();
+            for (Map.Entry<String, JobHandler> entry : handlers.entrySet()) {
+                JobHandler handler = entry.getValue();
+                if (handler == null) {
+                    continue;
+                }
+                String key = handler.getClass().getSimpleName().toLowerCase(Locale.ROOT);
+                simpleNames.putIfAbsent(key, handler);
+            }
+            handlerCache = handlers;
+            simpleNameCache = simpleNames;
+        }
     }
 }

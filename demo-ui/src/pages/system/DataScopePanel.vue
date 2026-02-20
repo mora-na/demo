@@ -7,7 +7,7 @@
       </div>
     </div>
 
-    <el-tabs v-model="activeTab" class="data-scope-tabs">
+    <el-tabs v-model="activeTab" class="data-scope-tabs" @tab-change="handleTabChange">
       <el-tab-pane :label="t('dataScope.tabs.overview')" name="overview" lazy>
         <DataScopeOverview/>
       </el-tab-pane>
@@ -24,29 +24,93 @@
 <script lang="ts" setup>
 import {computed, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
+import type {MenuTree} from "../../api/auth";
 import DataScopeOverview from "./DataScopeOverview.vue";
 import DataScopeMapping from "./DataScopeMapping.vue";
 import DataScopeUserOverrides from "./DataScopeUserOverrides.vue";
 
 const props = defineProps<{
   activeCode?: string;
+  activeMenuId?: number | null;
+  menus?: MenuTree[];
 }>();
+
+const emit = defineEmits<{ (e: "menu-change", id: number): void }>();
 
 const {t} = useI18n();
 const activeTab = ref("overview");
 
-const mappedTab = computed(() => {
-  if (!props.activeCode) {
-    return "overview";
+type DataScopeTab = "overview" | "mapping" | "user";
+
+const dataScopeMenus = computed(() => {
+  const items = props.menus || [];
+  return items.filter((menu) => {
+    const code = (menu.code || "").toLowerCase();
+    const path = (menu.path || "").toLowerCase();
+    return code.startsWith("data-scope") || path.startsWith("/data-scope");
+  });
+});
+
+function resolveTabFromMenu(menu?: MenuTree | null): DataScopeTab | null {
+  if (!menu) {
+    return null;
   }
-  if (props.activeCode.includes("mapping")) {
+  const code = (menu.code || "").toLowerCase();
+  const path = (menu.path || "").toLowerCase();
+  if (code.includes("mapping") || path.endsWith("/mapping")) {
     return "mapping";
   }
-  if (props.activeCode.includes("user")) {
+  if (code.includes("user") || path.endsWith("/user")) {
     return "user";
+  }
+  if (code.includes("overview") || path.endsWith("/overview")) {
+    return "overview";
+  }
+  return null;
+}
+
+const dataScopeMenuByTab = computed(() => {
+  const map: Record<DataScopeTab, MenuTree | null> = {
+    overview: null,
+    mapping: null,
+    user: null
+  };
+  for (const menu of dataScopeMenus.value) {
+    const tab = resolveTabFromMenu(menu);
+    if (tab && !map[tab]) {
+      map[tab] = menu;
+    }
+  }
+  return map;
+});
+
+const mappedTab = computed(() => {
+  if (props.activeMenuId != null) {
+    const match = dataScopeMenus.value.find((item) => item.id === props.activeMenuId);
+    const resolved = resolveTabFromMenu(match);
+    if (resolved) {
+      return resolved;
+    }
+  }
+  if (props.activeCode) {
+    const code = props.activeCode.toLowerCase();
+    if (code.includes("mapping")) {
+      return "mapping";
+    }
+    if (code.includes("user")) {
+      return "user";
+    }
   }
   return "overview";
 });
+
+function handleTabChange(name: string | number) {
+  const tab = String(name) as DataScopeTab;
+  const target = dataScopeMenuByTab.value[tab];
+  if (target && target.id != null && target.id !== props.activeMenuId) {
+    emit("menu-change", target.id);
+  }
+}
 
 watch(
     () => mappedTab.value,

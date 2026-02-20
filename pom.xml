@@ -23,6 +23,7 @@
         <module>identity-api</module>
         <module>log-api</module>
         <module>extension-api</module>
+        <module>job-api</module>
         <module>core-http-extension</module>
         <module>system</module>
         <module>log</module>
@@ -257,6 +258,11 @@
             <dependency>
                 <groupId>com.example</groupId>
                 <artifactId>extension-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example</groupId>
+                <artifactId>job-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -548,7 +548,8 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 ### Scheduled Jobs (Quartz)
 
 - Persistent scheduling: `spring.quartz.*`.
-- Handlers implement `JobHandler` and are Spring beans.
+- Handlers implement `com.example.demo.job.api.JobHandler` and are Spring beans.
+- If a handler lives in another module, depend on `job-api` (contract package `com.example.demo.job.api`).
 - Logs in `sys_job_log` with detail in `log_detail`.
 
 ### Job Log Auto Collection
@@ -574,18 +575,20 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 
 **Message Group**
 
-| Key | Default | Description |
-|---|---|---|
-| `job.constants.message.job-not-found` | `job.not.found` | i18n key for missing job. |
-| `job.constants.message.job-log-not-found` | `job.log.not.found` | i18n key for missing job log. |
-| `job.constants.message.job-cron-invalid` | `job.cron.invalid` | i18n key for invalid cron expression. |
-| `job.constants.message.job-handler-invalid` | `job.handler.invalid` | i18n key for invalid handler name. |
-| `job.constants.message.job-misfire-invalid` | `job.misfire.invalid` | i18n key for invalid misfire policy. |
-| `job.constants.message.job-create-failed` | `job.create.failed` | i18n key for job creation failure. |
-| `job.constants.message.job-update-failed` | `job.update.failed` | i18n key for job update failure. |
-| `job.constants.message.job-delete-failed` | `job.delete.failed` | i18n key for job delete failure. |
-| `job.constants.message.job-status-update-failed` | `job.status.update.failed` | i18n key for status update failure. |
-| `job.constants.message.job-run-failed` | `job.run.failed` | i18n key for manual run failure. |
+| Key                                              | Default                    | Description                            |
+|--------------------------------------------------|----------------------------|----------------------------------------|
+| `job.constants.message.job-not-found`            | `job.not.found`            | i18n key for missing job.              |
+| `job.constants.message.job-log-not-found`        | `job.log.not.found`        | i18n key for missing job log.          |
+| `job.constants.message.job-cron-invalid`         | `job.cron.invalid`         | i18n key for invalid cron expression.  |
+| `job.constants.message.job-handler-invalid`      | `job.handler.invalid`      | i18n key for invalid handler name.     |
+| `job.constants.message.job-misfire-invalid`      | `job.misfire.invalid`      | i18n key for invalid misfire policy.   |
+| `job.constants.message.job-status-invalid`       | `job.status.invalid`       | i18n key for invalid job status.       |
+| `job.constants.message.job-concurrent-invalid`   | `job.concurrent.invalid`   | i18n key for invalid concurrency flag. |
+| `job.constants.message.job-create-failed`        | `job.create.failed`        | i18n key for job creation failure.     |
+| `job.constants.message.job-update-failed`        | `job.update.failed`        | i18n key for job update failure.       |
+| `job.constants.message.job-delete-failed`        | `job.delete.failed`        | i18n key for job delete failure.       |
+| `job.constants.message.job-status-update-failed` | `job.status.update.failed` | i18n key for status update failure.    |
+| `job.constants.message.job-run-failed`           | `job.run.failed`           | i18n key for manual run failure.       |
 
 **Page Group**
 

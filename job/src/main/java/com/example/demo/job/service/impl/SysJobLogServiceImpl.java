@@ -38,10 +38,10 @@ public class SysJobLogServiceImpl extends ServiceImpl<SysJobLogMapper, SysJobLog
 
     @Override
     public IPage<SysJobLog> selectLogsPage(Page<SysJobLog> page, JobLogQuery query) {
-        if (page == null) {
-            return new Page<>(jobConstants.getPage().getDefaultPageNum(), jobConstants.getPage().getDefaultPageSize());
-        }
-        return this.page(page, buildQuery(query));
+        Page<SysJobLog> resolved = page == null
+                ? new Page<>(jobConstants.getPage().getDefaultPageNum(), jobConstants.getPage().getDefaultPageSize())
+                : page;
+        return this.page(resolved, buildQuery(query));
     }
 
     @Override

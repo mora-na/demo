@@ -13,20 +13,20 @@ import com.example.demo.job.dto.JobUpdateRequest;
 import com.example.demo.job.dto.JobVO;
 import com.example.demo.job.entity.SysJob;
 import com.example.demo.job.mapper.SysJobMapper;
-import com.example.demo.job.model.JobMisfirePolicy;
 import com.example.demo.job.service.JobSchedulerService;
 import com.example.demo.job.service.SysJobService;
-import com.example.demo.job.support.JobHandlerRegistry;
+import com.example.demo.job.support.JobParamValidator;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.quartz.CronExpression;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * 定时任务服务实现。
@@ -39,7 +39,7 @@ import java.util.Locale;
 public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> implements SysJobService {
 
     private final JobSchedulerService jobSchedulerService;
-    private final JobHandlerRegistry jobHandlerRegistry;
+    private final JobParamValidator jobParamValidator;
     private final JobConstants jobConstants;
 
     @Override
@@ -49,30 +49,46 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
 
     @Override
     public IPage<SysJob> selectJobsPage(Page<SysJob> page, JobQuery query) {
-        if (page == null) {
-            return new Page<>(jobConstants.getPage().getDefaultPageNum(), jobConstants.getPage().getDefaultPageSize());
-        }
-        return this.page(page, buildQuery(query));
+        Page<SysJob> resolved = page == null
+                ? new Page<>(jobConstants.getPage().getDefaultPageNum(), jobConstants.getPage().getDefaultPageSize())
+                : page;
+        return this.page(resolved, buildQuery(query));
     }
 
     @Override
+    @Transactional
     public SysJob createJob(JobCreateRequest request, AuthUser creator) {
         if (request == null) {
             return null;
         }
-        if (!isValidCron(request.getCronExpression())) {
+        if (!jobParamValidator.isValidCron(request.getCronExpression())) {
             return null;
         }
-        if (!isHandlerValid(request.getHandlerName())) {
+        if (!jobParamValidator.isValidHandler(request.getHandlerName())) {
+            return null;
+        }
+        if (!jobParamValidator.isValidMisfirePolicy(request.getMisfirePolicy())) {
+            return null;
+        }
+        Integer status = jobParamValidator.normalizeStatus(request.getStatus());
+        if (status == null) {
+            return null;
+        }
+        Integer allowConcurrent = jobParamValidator.normalizeConcurrent(request.getAllowConcurrent());
+        if (allowConcurrent == null) {
+            return null;
+        }
+        String misfirePolicy = jobParamValidator.normalizeMisfirePolicy(request.getMisfirePolicy());
+        if (misfirePolicy == null) {
             return null;
         }
         SysJob job = new SysJob();
         job.setName(StringUtils.trimToEmpty(request.getName()));
         job.setHandlerName(StringUtils.trimToEmpty(request.getHandlerName()));
         job.setCronExpression(StringUtils.trimToEmpty(request.getCronExpression()));
-        job.setStatus(normalizeStatus(request.getStatus()));
-        job.setAllowConcurrent(normalizeConcurrent(request.getAllowConcurrent()));
-        job.setMisfirePolicy(normalizeMisfirePolicy(request.getMisfirePolicy()));
+        job.setStatus(status);
+        job.setAllowConcurrent(allowConcurrent);
+        job.setMisfirePolicy(misfirePolicy);
         job.setParams(request.getParams());
         job.setRemark(request.getRemark());
         if (creator != null) {
@@ -81,12 +97,16 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         }
         job.setCreatedAt(LocalDateTime.now());
         job.setUpdatedAt(LocalDateTime.now());
-        save(job);
-        jobSchedulerService.syncJob(job);
+        if (!save(job)) {
+            return null;
+        }
+        Long jobId = job.getId();
+        runAfterCommit(() -> jobSchedulerService.syncJob(getById(jobId)));
         return job;
     }
 
     @Override
+    @Transactional
     public boolean updateJob(Long id, JobUpdateRequest request) {
         if (id == null || request == null) {
             return false;
@@ -95,10 +115,22 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         if (existing == null) {
             return false;
         }
-        if (StringUtils.isNotBlank(request.getCronExpression()) && !isValidCron(request.getCronExpression())) {
+        if (StringUtils.isNotBlank(request.getCronExpression())
+                && !jobParamValidator.isValidCron(request.getCronExpression())) {
             return false;
         }
-        if (StringUtils.isNotBlank(request.getHandlerName()) && !isHandlerValid(request.getHandlerName())) {
+        if (StringUtils.isNotBlank(request.getHandlerName())
+                && !jobParamValidator.isValidHandler(request.getHandlerName())) {
+            return false;
+        }
+        if (StringUtils.isNotBlank(request.getMisfirePolicy())
+                && !jobParamValidator.isValidMisfirePolicy(request.getMisfirePolicy())) {
+            return false;
+        }
+        if (request.getStatus() != null && !jobParamValidator.isValidStatus(request.getStatus())) {
+            return false;
+        }
+        if (request.getAllowConcurrent() != null && !jobParamValidator.isValidConcurrent(request.getAllowConcurrent())) {
             return false;
         }
         SysJob job = new SysJob();
@@ -113,13 +145,25 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
             job.setCronExpression(request.getCronExpression());
         }
         if (request.getStatus() != null) {
-            job.setStatus(normalizeStatus(request.getStatus()));
+            Integer status = jobParamValidator.normalizeStatus(request.getStatus());
+            if (status == null) {
+                return false;
+            }
+            job.setStatus(status);
         }
         if (request.getAllowConcurrent() != null) {
-            job.setAllowConcurrent(normalizeConcurrent(request.getAllowConcurrent()));
+            Integer allowConcurrent = jobParamValidator.normalizeConcurrent(request.getAllowConcurrent());
+            if (allowConcurrent == null) {
+                return false;
+            }
+            job.setAllowConcurrent(allowConcurrent);
         }
         if (StringUtils.isNotBlank(request.getMisfirePolicy())) {
-            job.setMisfirePolicy(normalizeMisfirePolicy(request.getMisfirePolicy()));
+            String policy = jobParamValidator.normalizeMisfirePolicy(request.getMisfirePolicy());
+            if (policy == null) {
+                return false;
+            }
+            job.setMisfirePolicy(policy);
         }
         if (request.getParams() != null) {
             job.setParams(request.getParams());
@@ -130,13 +174,13 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         job.setUpdatedAt(LocalDateTime.now());
         boolean updated = updateById(job);
         if (updated) {
-            SysJob latest = getById(id);
-            jobSchedulerService.syncJob(latest);
+            runAfterCommit(() -> jobSchedulerService.syncJob(getById(id)));
         }
         return updated;
     }
 
     @Override
+    @Transactional
     public boolean deleteJob(Long id) {
         if (id == null) {
             return false;
@@ -145,23 +189,29 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         if (job == null) {
             return false;
         }
-        jobSchedulerService.deleteJob(job);
-        return removeById(id);
+        boolean removed = removeById(id);
+        if (removed) {
+            runAfterCommit(() -> jobSchedulerService.deleteJob(job));
+        }
+        return removed;
     }
 
     @Override
+    @Transactional
     public boolean updateStatus(Long id, Integer status) {
         if (id == null || status == null) {
             return false;
         }
+        if (!jobParamValidator.isValidStatus(status)) {
+            return false;
+        }
         SysJob job = new SysJob();
         job.setId(id);
-        job.setStatus(normalizeStatus(status));
+        job.setStatus(jobParamValidator.normalizeStatus(status));
         job.setUpdatedAt(LocalDateTime.now());
         boolean updated = updateById(job);
         if (updated) {
-            SysJob latest = getById(id);
-            jobSchedulerService.syncJob(latest);
+            runAfterCommit(() -> jobSchedulerService.syncJob(getById(id)));
         }
         return updated;
     }
@@ -231,48 +281,20 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         return views;
     }
 
-    private boolean isHandlerValid(String handlerName) {
-        if (StringUtils.isBlank(handlerName)) {
-            return false;
+    private void runAfterCommit(Runnable action) {
+        if (action == null) {
+            return;
         }
-        return jobHandlerRegistry.getHandler(handlerName) != null;
-    }
-
-    private boolean isValidCron(String cronExpression) {
-        if (StringUtils.isBlank(cronExpression)) {
-            return false;
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+            return;
         }
-        return CronExpression.isValidExpression(cronExpression.trim());
-    }
-
-    private int normalizeStatus(Integer status) {
-        if (status == null) {
-            return jobConstants.getStatus().getJobEnabled();
-        }
-        if (status == jobConstants.getStatus().getJobDisabled()) {
-            return jobConstants.getStatus().getJobDisabled();
-        }
-        return jobConstants.getStatus().getJobEnabled();
-    }
-
-    private int normalizeConcurrent(Integer allowConcurrent) {
-        if (allowConcurrent == null) {
-            return jobConstants.getConcurrent().getAllow();
-        }
-        return allowConcurrent == jobConstants.getConcurrent().getDisallow()
-                ? jobConstants.getConcurrent().getDisallow()
-                : jobConstants.getConcurrent().getAllow();
-    }
-
-    private String normalizeMisfirePolicy(String policy) {
-        if (StringUtils.isBlank(policy)) {
-            return JobMisfirePolicy.DEFAULT;
-        }
-        String normalized = policy.trim().toUpperCase(Locale.ROOT);
-        if (!JobMisfirePolicy.isSupported(normalized)) {
-            return JobMisfirePolicy.DEFAULT;
-        }
-        return normalized;
+        action.run();
     }
 
 }

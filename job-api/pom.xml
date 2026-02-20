@@ -11,63 +11,14 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>job</artifactId>
-    <name>demo-job</name>
+    <artifactId>job-api</artifactId>
+    <name>demo-job-api</name>
 
     <dependencies>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>log-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>job-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-quartz</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.checkerframework</groupId>
-            <artifactId>checker-qual</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>extension-api</artifactId>
         </dependency>
     </dependencies>
 
@@ -79,7 +30,7 @@
                 <version>3.5.0</version>
                 <executions>
                     <execution>
-                        <id>ban-system-impl-dependency</id>
+                        <id>ban-impl-dependency</id>
                         <goals>
                             <goal>enforce</goal>
                         </goals>
@@ -92,11 +43,12 @@
                                         <exclude>com.example:auth</exclude>
                                         <exclude>com.example:order</exclude>
                                         <exclude>com.example:notice</exclude>
+                                        <exclude>com.example:job</exclude>
                                         <exclude>com.example:log</exclude>
                                         <exclude>com.example:core-http-extension</exclude>
                                         <exclude>com.example:app</exclude>
                                     </excludes>
-                                    <message>job 模块禁止直接依赖 system，请改用 *-api 契约模块。</message>
+                                    <message>job-api 只允许暴露契约，不允许依赖业务实现模块。</message>
                                 </bannedDependencies>
                             </rules>
                         </configuration>

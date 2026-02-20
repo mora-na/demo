@@ -176,7 +176,13 @@
             :menus="activeChildren"
             @menu-change="selectMenuById"
         />
-        <DataScopePanel v-else-if="isDataScopeGroup" :active-code="activeMenuItem?.code"/>
+        <DataScopePanel
+            v-else-if="isDataScopeGroup"
+            :active-code="activeMenuItem?.code"
+            :active-menu-id="activeMenuId"
+            :menus="activeChildren"
+            @menu-change="selectMenuById"
+        />
         <template v-else-if="!isSystemGroup">
           <div class="main-hero">
             <div>

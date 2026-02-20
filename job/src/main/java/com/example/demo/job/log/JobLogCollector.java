@@ -225,7 +225,7 @@ public class JobLogCollector {
     }
 
     public boolean isActive(String runId) {
-        return runId != null && buffers.getIfPresent(runId) != null;
+        return runId != null && buffers != null && buffers.getIfPresent(runId) != null;
     }
 
     public JobLogCollectorMetricsVO snapshotMetrics() {
