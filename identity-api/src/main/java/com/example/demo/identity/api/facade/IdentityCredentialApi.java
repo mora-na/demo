@@ -1,7 +1,5 @@
 package com.example.demo.identity.api.facade;
 
-import com.example.demo.identity.api.dto.IdentityUserCredentialDTO;
-
 /**
  * 身份凭据接口，仅用于认证相关场景。
  *
@@ -10,7 +8,7 @@ import com.example.demo.identity.api.dto.IdentityUserCredentialDTO;
  */
 public interface IdentityCredentialApi {
 
-    IdentityUserCredentialDTO getUserCredentialById(Long userId);
+    boolean matchesPasswordById(Long userId, String rawPassword);
 
-    IdentityUserCredentialDTO getUserCredentialByUserName(String userName);
+    boolean matchesPasswordByUserName(String userName, String rawPassword);
 }

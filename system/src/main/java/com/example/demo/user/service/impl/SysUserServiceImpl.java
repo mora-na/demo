@@ -183,17 +183,45 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (id == null || request == null) {
             return false;
         }
-        SysUser user = new SysUser();
-        user.setId(id);
-        user.setUserName(request.getUserName());
-        user.setNickName(request.getNickName());
-        user.setPhone(request.getPhone());
-        user.setEmail(request.getEmail());
-        user.setSex(request.getSex());
-        user.setStatus(request.getStatus());
-        user.setDeptId(request.getDeptId());
-        user.setRemark(request.getRemark());
-        return updateById(user);
+        com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<SysUser> update =
+                Wrappers.lambdaUpdate(SysUser.class).eq(SysUser::getId, id);
+        boolean changed = false;
+        if (request.getUserName() != null) {
+            update.set(SysUser::getUserName, request.getUserName());
+            changed = true;
+        }
+        if (request.getNickName() != null) {
+            update.set(SysUser::getNickName, request.getNickName());
+            changed = true;
+        }
+        if (request.getPhone() != null) {
+            update.set(SysUser::getPhone, request.getPhone());
+            changed = true;
+        }
+        if (request.getEmail() != null) {
+            update.set(SysUser::getEmail, request.getEmail());
+            changed = true;
+        }
+        if (request.getSex() != null) {
+            update.set(SysUser::getSex, request.getSex());
+            changed = true;
+        }
+        if (request.getStatus() != null) {
+            update.set(SysUser::getStatus, request.getStatus());
+            changed = true;
+        }
+        if (request.getDeptId() != null) {
+            update.set(SysUser::getDeptId, request.getDeptId());
+            changed = true;
+        }
+        if (request.getRemark() != null) {
+            update.set(SysUser::getRemark, request.getRemark());
+            changed = true;
+        }
+        if (!changed) {
+            return true;
+        }
+        return update(update);
     }
 
     @Override

@@ -1,6 +1,8 @@
 package com.example.demo.datascope.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.model.PageResult;
 import com.example.demo.common.web.BaseController;
@@ -24,9 +26,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -58,11 +58,58 @@ public class UserDataScopeAdminController extends BaseController {
         if (scopeKeys != null && scopeKeys.isEmpty()) {
             return success(emptyPage());
         }
-        return success(page(page -> userDataScopeService.page(page, Wrappers.lambdaQuery(UserDataScope.class)
+        Page<UserDataScope> page = getPageQuery().buildPage();
+        IPage<UserDataScope> result = userDataScopeService.page(page, Wrappers.lambdaQuery(UserDataScope.class)
                 .in(userIds != null && !userIds.isEmpty(), UserDataScope::getUserId, userIds)
                 .in(scopeKeys != null && !scopeKeys.isEmpty(), UserDataScope::getScopeKey, scopeKeys)
                 .eq(query.getStatus() != null, UserDataScope::getStatus, query.getStatus())
-                .orderByDesc(UserDataScope::getId)), this::toVO));
+                .orderByDesc(UserDataScope::getId));
+        if (result == null) {
+            return success(emptyPage());
+        }
+        int pageNum = (int) Math.max(result.getCurrent(), 1);
+        int pageSize = (int) Math.max(result.getSize(), 1);
+        List<UserDataScope> records = result.getRecords() == null ? Collections.emptyList() : result.getRecords();
+        if (records.isEmpty()) {
+            return success(new PageResult<>(Math.max(result.getTotal(), 0L), Collections.emptyList(), pageNum, pageSize));
+        }
+
+        Set<Long> recordUserIds = records.stream()
+                .map(UserDataScope::getUserId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, SysUser> userMap = recordUserIds.isEmpty()
+                ? Collections.emptyMap()
+                : userService.listByIds(recordUserIds).stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(SysUser::getId, user -> user, (a, b) -> a));
+        Set<Long> deptIds = userMap.values().stream()
+                .map(SysUser::getDeptId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, Dept> deptMap = deptIds.isEmpty()
+                ? Collections.emptyMap()
+                : deptService.listByIds(deptIds).stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Dept::getId, dept -> dept, (a, b) -> a));
+
+        String globalScopeKey = dataScopeConstants.getScope().getGlobalScopeKey();
+        Set<String> recordScopeKeys = records.stream()
+                .map(UserDataScope::getScopeKey)
+                .filter(StringUtils::isNotBlank)
+                .filter(scopeKey -> !globalScopeKey.equals(scopeKey))
+                .collect(Collectors.toSet());
+        Map<String, Menu> menuMap = recordScopeKeys.isEmpty()
+                ? Collections.emptyMap()
+                : menuService.list(Wrappers.lambdaQuery(Menu.class).in(Menu::getPermission, recordScopeKeys))
+                .stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Menu::getPermission, menu -> menu, (a, b) -> a));
+
+        List<UserDataScopeVO> data = records.stream()
+                .map(entity -> toVO(entity, userMap, deptMap, menuMap))
+                .collect(Collectors.toList());
+        return success(new PageResult<>(Math.max(result.getTotal(), 0L), data, pageNum, pageSize));
     }
 
     private List<Long> resolveUserIds(String userName) {
@@ -93,7 +140,10 @@ public class UserDataScopeAdminController extends BaseController {
                 .collect(Collectors.toList());
     }
 
-    private UserDataScopeVO toVO(UserDataScope entity) {
+    private UserDataScopeVO toVO(UserDataScope entity,
+                                 Map<Long, SysUser> userMap,
+                                 Map<Long, Dept> deptMap,
+                                 Map<String, Menu> menuMap) {
         if (entity == null) {
             return null;
         }
@@ -107,19 +157,18 @@ public class UserDataScopeAdminController extends BaseController {
         vo.setRemark(entity.getRemark());
         vo.setCreateTime(entity.getCreateTime());
 
-        SysUser user = entity.getUserId() == null ? null : userService.getById(entity.getUserId());
+        SysUser user = entity.getUserId() == null ? null : userMap.get(entity.getUserId());
         if (user != null) {
             vo.setUserName(user.getUserName());
             vo.setNickName(user.getNickName());
             vo.setDeptId(user.getDeptId());
-            Dept dept = user.getDeptId() == null ? null : deptService.getById(user.getDeptId());
+            Dept dept = user.getDeptId() == null ? null : deptMap.get(user.getDeptId());
             vo.setDeptName(dept == null ? null : dept.getName());
         }
 
         if (StringUtils.isNotBlank(entity.getScopeKey())
                 && !dataScopeConstants.getScope().getGlobalScopeKey().equals(entity.getScopeKey())) {
-            Menu menu = menuService.getOne(Wrappers.lambdaQuery(Menu.class)
-                    .eq(Menu::getPermission, entity.getScopeKey()));
+            Menu menu = menuMap.get(entity.getScopeKey());
             if (menu != null) {
                 vo.setMenuName(menu.getName());
                 vo.setPermission(menu.getPermission());

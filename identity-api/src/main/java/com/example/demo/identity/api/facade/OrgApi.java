@@ -1,5 +1,7 @@
 package com.example.demo.identity.api.facade;
 
+import org.springframework.lang.Nullable;
+
 /**
  * 组织接口，提供组织树相关查询能力。
  *
@@ -8,5 +10,6 @@ package com.example.demo.identity.api.facade;
  */
 public interface OrgApi {
 
+    @Nullable
     String getDeptNameById(Long deptId);
 }

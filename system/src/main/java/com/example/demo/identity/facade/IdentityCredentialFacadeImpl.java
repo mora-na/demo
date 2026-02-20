@@ -1,7 +1,7 @@
 package com.example.demo.identity.facade;
 
-import com.example.demo.identity.api.dto.IdentityUserCredentialDTO;
 import com.example.demo.identity.api.facade.IdentityCredentialApi;
+import com.example.demo.identity.api.service.UserPasswordPolicyService;
 import com.example.demo.user.entity.SysUser;
 import com.example.demo.user.service.SysUserService;
 import lombok.RequiredArgsConstructor;
@@ -22,33 +22,30 @@ import org.springframework.transaction.annotation.Transactional;
 public class IdentityCredentialFacadeImpl implements IdentityCredentialApi {
 
     private final SysUserService userService;
+    private final UserPasswordPolicyService userPasswordPolicyService;
 
     @Override
-    public IdentityUserCredentialDTO getUserCredentialById(Long userId) {
-        if (userId == null) {
-            return null;
+    public boolean matchesPasswordById(Long userId, String rawPassword) {
+        if (userId == null || StringUtils.isBlank(rawPassword)) {
+            return false;
         }
         SysUser user = userService.getById(userId);
-        return toCredential(user);
+        return matchesPassword(rawPassword, user);
     }
 
     @Override
-    public IdentityUserCredentialDTO getUserCredentialByUserName(String userName) {
-        if (StringUtils.isBlank(userName)) {
-            return null;
+    public boolean matchesPasswordByUserName(String userName, String rawPassword) {
+        if (StringUtils.isBlank(userName) || StringUtils.isBlank(rawPassword)) {
+            return false;
         }
         SysUser user = userService.getByUserName(userName.trim());
-        return toCredential(user);
+        return matchesPassword(rawPassword, user);
     }
 
-    private IdentityUserCredentialDTO toCredential(SysUser user) {
-        if (user == null) {
-            return null;
+    private boolean matchesPassword(String rawPassword, SysUser user) {
+        if (user == null || StringUtils.isBlank(user.getPassword())) {
+            return false;
         }
-        IdentityUserCredentialDTO dto = new IdentityUserCredentialDTO();
-        dto.setUserId(user.getId());
-        dto.setUserName(user.getUserName());
-        dto.setPassword(user.getPassword());
-        return dto;
+        return userPasswordPolicyService.matches(rawPassword, user.getPassword());
     }
 }

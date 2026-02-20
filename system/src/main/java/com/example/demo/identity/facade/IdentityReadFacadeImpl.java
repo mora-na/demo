@@ -9,6 +9,7 @@ import com.example.demo.dept.entity.Dept;
 import com.example.demo.dept.service.DeptService;
 import com.example.demo.identity.api.dto.*;
 import com.example.demo.identity.api.facade.IdentityReadFacade;
+import com.example.demo.identity.support.DeptNameCache;
 import com.example.demo.menu.entity.Menu;
 import com.example.demo.menu.mapper.MenuMapper;
 import com.example.demo.menu.service.MenuService;
@@ -21,15 +22,12 @@ import com.example.demo.permission.service.RoleService;
 import com.example.demo.permission.service.UserRoleService;
 import com.example.demo.user.entity.SysUser;
 import com.example.demo.user.service.SysUserService;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,10 +51,7 @@ public class IdentityReadFacadeImpl implements IdentityReadFacade {
     private final MenuMapper menuMapper;
     private final DataScopeProfileService dataScopeProfileService;
     private final DeptService deptService;
-    private final Cache<Long, String> deptNameCache = Caffeine.newBuilder()
-            .maximumSize(5000)
-            .expireAfterWrite(Duration.ofMinutes(10))
-            .build();
+    private final DeptNameCache deptNameCache;
 
     @Override
     public IdentityUserDTO getUserById(Long userId) {

@@ -1,6 +1,7 @@
 package com.example.demo.identity.api.facade;
 
 import com.example.demo.identity.api.dto.IdentityUserDTO;
+import org.springframework.lang.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -13,8 +14,10 @@ import java.util.List;
  */
 public interface IdentityQueryApi {
 
+    @Nullable
     IdentityUserDTO getUserById(Long userId);
 
+    @Nullable
     IdentityUserDTO getUserByUserName(String userName);
 
     List<IdentityUserDTO> listUsersByIds(Collection<Long> userIds);

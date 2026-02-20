@@ -2,6 +2,7 @@ package com.example.demo.identity.listener;
 
 import com.example.demo.identity.api.dto.IdentityUserProfileUpdateRequest;
 import com.example.demo.identity.api.event.IdentitySelfProfileUpdateCommand;
+import com.example.demo.identity.api.facade.IdentityProfileCommandApi;
 import com.example.demo.user.dto.SysUserProfileUpdateRequest;
 import com.example.demo.user.service.SysUserService;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class IdentityDomainCommandListener {
+public class IdentityDomainCommandListener implements IdentityProfileCommandApi {
 
     private final SysUserService userService;
 
@@ -28,11 +29,23 @@ public class IdentityDomainCommandListener {
             }
             return;
         }
-        command.markHandled(userService.updateSelfProfile(
+        command.markHandled(updateSelfProfile(
                 command.getUserId(),
-                toSysRequest(command.getRequest()),
+                command.getRequest(),
                 command.getNewPassword()
         ));
+    }
+
+    @Override
+    public boolean updateSelfProfile(Long userId, IdentityUserProfileUpdateRequest request, String newPassword) {
+        if (userId == null || request == null) {
+            return false;
+        }
+        return userService.updateSelfProfile(
+                userId,
+                toSysRequest(request),
+                newPassword
+        );
     }
 
     private SysUserProfileUpdateRequest toSysRequest(IdentityUserProfileUpdateRequest request) {

@@ -14,8 +14,8 @@ import com.example.demo.common.web.permission.RequireLogin;
 import com.example.demo.datascope.model.RoleDataScope;
 import com.example.demo.datascope.model.UserScopeOverride;
 import com.example.demo.identity.api.dto.*;
-import com.example.demo.identity.api.event.IdentitySelfProfileUpdateCommand;
 import com.example.demo.identity.api.facade.IdentityCredentialApi;
+import com.example.demo.identity.api.facade.IdentityProfileCommandApi;
 import com.example.demo.identity.api.facade.IdentityReadFacade;
 import com.example.demo.log.api.event.LoginLogEvent;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +46,7 @@ public class AuthController extends BaseController {
     private final PasswordPolicyService passwordPolicyService;
     private final IdentityReadFacade identityReadFacade;
     private final IdentityCredentialApi identityCredentialApi;
+    private final IdentityProfileCommandApi identityProfileCommandApi;
     private final LoginAttemptService loginAttemptService;
     private final LoginAnomalyAlertService loginAnomalyAlertService;
     private final OperationConfirmService operationConfirmService;
@@ -123,13 +124,6 @@ public class AuthController extends BaseController {
                     credentialError, httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
-        IdentityUserCredentialDTO credential = identityCredentialApi.getUserCredentialById(user.getId());
-        if (credential == null || StringUtils.isBlank(credential.getPassword())) {
-            loginAttemptService.recordFailure(request.getUserName(), httpRequest);
-            publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
-                    credentialError, httpRequest);
-            return error(controllerConstants.getUnauthorizedCode(), credentialError);
-        }
         if (user.getStatus() != null && user.getStatus().equals(0)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
@@ -143,7 +137,7 @@ public class AuthController extends BaseController {
                     credentialError, httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
-        if (!passwordService.matches(rawPassword, credential.getPassword())) {
+        if (!identityCredentialApi.matchesPasswordById(user.getId(), rawPassword)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
             publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
                     credentialError, httpRequest);
@@ -263,11 +257,7 @@ public class AuthController extends BaseController {
             if (StringUtils.isBlank(oldRawPassword) || StringUtils.isBlank(newRawPassword)) {
                 return error(controllerConstants.getBadRequestCode(), i18n("user.password.invalid"));
             }
-            IdentityUserCredentialDTO credential = identityCredentialApi.getUserCredentialById(authUser.getId());
-            if (credential == null || StringUtils.isBlank(credential.getPassword())) {
-                return error(controllerConstants.getBadRequestCode(), i18n("user.password.old.invalid"));
-            }
-            if (!passwordService.matches(oldRawPassword, credential.getPassword())) {
+            if (!identityCredentialApi.matchesPasswordById(authUser.getId(), oldRawPassword)) {
                 return error(controllerConstants.getBadRequestCode(), i18n("user.password.old.invalid"));
             }
             if (newRawPassword.length() < systemConstants.getProfile().getNewPasswordMinLength()) {
@@ -283,7 +273,7 @@ public class AuthController extends BaseController {
         profileUpdate.setEmail(request.getEmail());
         profileUpdate.setSex(request.getSex());
         profileUpdate.setRemark(request.getRemark());
-        if (!publishProfileUpdateCommand(authUser.getId(), profileUpdate, newRawPassword)) {
+        if (!identityProfileCommandApi.updateSelfProfile(authUser.getId(), profileUpdate, newRawPassword)) {
             return error(controllerConstants.getInternalServerErrorCode(), i18n("common.update.failed"));
         }
         if (wantsPasswordChange) {
@@ -360,21 +350,6 @@ public class AuthController extends BaseController {
                 ua,
                 LocalDateTime.now()
         ));
-    }
-
-    private boolean publishProfileUpdateCommand(Long userId,
-                                                IdentityUserProfileUpdateRequest request,
-                                                String newPassword) {
-        if (eventPublisher == null) {
-            return false;
-        }
-        IdentitySelfProfileUpdateCommand command = new IdentitySelfProfileUpdateCommand(userId, request, newPassword);
-        try {
-            eventPublisher.publishEvent(command);
-            return command.isHandled() && command.isUpdated();
-        } catch (RuntimeException ex) {
-            return false;
-        }
     }
 
     private String resolveClientIp(HttpServletRequest request) {

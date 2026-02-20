@@ -120,15 +120,34 @@ public class PostAdminController extends BaseController {
             return error(postConstants.getController().getBadRequestCode(),
                     i18n(postConstants.getMessage().getDeptNotFound()));
         }
-        SysPost post = new SysPost();
-        post.setId(id);
-        post.setName(request.getName());
-        post.setCode(request.getCode());
-        post.setDeptId(request.getDeptId());
-        post.setStatus(request.getStatus());
-        post.setSort(request.getSort());
-        post.setRemark(request.getRemark());
-        if (!postService.updateById(post)) {
+        com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<SysPost> update =
+                Wrappers.lambdaUpdate(SysPost.class).eq(SysPost::getId, id);
+        boolean changed = false;
+        if (request.getName() != null) {
+            update.set(SysPost::getName, request.getName());
+            changed = true;
+        }
+        if (request.getCode() != null) {
+            update.set(SysPost::getCode, request.getCode());
+            changed = true;
+        }
+        if (request.getDeptId() != null) {
+            update.set(SysPost::getDeptId, request.getDeptId());
+            changed = true;
+        }
+        if (request.getStatus() != null) {
+            update.set(SysPost::getStatus, request.getStatus());
+            changed = true;
+        }
+        if (request.getSort() != null) {
+            update.set(SysPost::getSort, request.getSort());
+            changed = true;
+        }
+        if (request.getRemark() != null) {
+            update.set(SysPost::getRemark, request.getRemark());
+            changed = true;
+        }
+        if (changed && !postService.update(update)) {
             return error(postConstants.getController().getInternalServerErrorCode(),
                     i18n(postConstants.getMessage().getCommonUpdateFailed()));
         }

@@ -68,7 +68,16 @@ public class RoleAdminController extends BaseController {
     @RequirePermission("role:query")
     public CommonResult<List<RoleVO>> list() {
         List<Role> roles = roleService.list();
-        Map<Long, List<Long>> permissionMap = rolePermissionService.list().stream()
+        List<Long> roleIds = roles.stream()
+                .map(Role::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        List<RolePermission> relations = roleIds.isEmpty()
+                ? Collections.emptyList()
+                : rolePermissionService.list(Wrappers.lambdaQuery(RolePermission.class)
+                .in(RolePermission::getRoleId, roleIds));
+        Map<Long, List<Long>> permissionMap = relations.stream()
                 .collect(Collectors.groupingBy(RolePermission::getRoleId,
                         Collectors.mapping(RolePermission::getPermissionId, Collectors.toList())));
         List<RoleVO> data = roles.stream()

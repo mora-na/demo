@@ -128,18 +128,46 @@ public class MenuAdminController extends BaseController {
                 return error(menuConstants.getController().getBadRequestCode(), i18n(menuConstants.getMessage().getMenuParentNotFound()));
             }
         }
-        Menu menu = new Menu();
-        menu.setId(id);
-        menu.setName(request.getName());
-        menu.setCode(request.getCode());
-        menu.setParentId(request.getParentId());
-        menu.setPath(request.getPath());
-        menu.setComponent(request.getComponent());
-        menu.setPermission(request.getPermission());
-        menu.setStatus(request.getStatus());
-        menu.setSort(request.getSort());
-        menu.setRemark(request.getRemark());
-        if (!menuService.updateById(menu)) {
+        com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<Menu> update =
+                Wrappers.lambdaUpdate(Menu.class).eq(Menu::getId, id);
+        boolean changed = false;
+        if (request.getName() != null) {
+            update.set(Menu::getName, request.getName());
+            changed = true;
+        }
+        if (request.getCode() != null) {
+            update.set(Menu::getCode, request.getCode());
+            changed = true;
+        }
+        if (request.getParentId() != null) {
+            update.set(Menu::getParentId, request.getParentId());
+            changed = true;
+        }
+        if (request.getPath() != null) {
+            update.set(Menu::getPath, request.getPath());
+            changed = true;
+        }
+        if (request.getComponent() != null) {
+            update.set(Menu::getComponent, request.getComponent());
+            changed = true;
+        }
+        if (request.getPermission() != null) {
+            update.set(Menu::getPermission, request.getPermission());
+            changed = true;
+        }
+        if (request.getStatus() != null) {
+            update.set(Menu::getStatus, request.getStatus());
+            changed = true;
+        }
+        if (request.getSort() != null) {
+            update.set(Menu::getSort, request.getSort());
+            changed = true;
+        }
+        if (request.getRemark() != null) {
+            update.set(Menu::getRemark, request.getRemark());
+            changed = true;
+        }
+        if (changed && !menuService.update(update)) {
             return error(menuConstants.getController().getInternalServerErrorCode(),
                     i18n(menuConstants.getMessage().getCommonUpdateFailed()));
         }

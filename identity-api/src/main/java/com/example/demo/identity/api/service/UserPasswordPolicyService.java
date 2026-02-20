@@ -16,5 +16,7 @@ public interface UserPasswordPolicyService {
 
     String encode(String rawPassword);
 
+    boolean matches(String rawPassword, String encodedPassword);
+
     boolean forceChangeOnFirstLogin();
 }

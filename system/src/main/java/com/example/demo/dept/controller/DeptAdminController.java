@@ -11,6 +11,7 @@ import com.example.demo.dept.dto.DeptUpdateRequest;
 import com.example.demo.dept.dto.DeptVO;
 import com.example.demo.dept.entity.Dept;
 import com.example.demo.dept.service.DeptService;
+import com.example.demo.identity.support.DeptNameCache;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +36,7 @@ public class DeptAdminController extends BaseController {
 
     private final DeptService deptService;
     private final DeptConstants deptConstants;
+    private final DeptNameCache deptNameCache;
 
     /**
      * 获取部门列表。
@@ -122,17 +124,37 @@ public class DeptAdminController extends BaseController {
                 return error(deptConstants.getController().getBadRequestCode(), i18n(deptConstants.getMessage().getDeptParentNotFound()));
             }
         }
-        Dept dept = new Dept();
-        dept.setId(id);
-        dept.setName(request.getName());
-        dept.setCode(request.getCode());
-        dept.setParentId(request.getParentId());
-        dept.setStatus(normalizeStatus(request.getStatus()));
-        dept.setSort(request.getSort());
-        dept.setRemark(request.getRemark());
-        if (!deptService.updateById(dept)) {
+        com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<Dept> update =
+                Wrappers.lambdaUpdate(Dept.class).eq(Dept::getId, id);
+        boolean changed = false;
+        if (request.getName() != null) {
+            update.set(Dept::getName, request.getName());
+            changed = true;
+        }
+        if (request.getCode() != null) {
+            update.set(Dept::getCode, request.getCode());
+            changed = true;
+        }
+        if (request.getParentId() != null) {
+            update.set(Dept::getParentId, request.getParentId());
+            changed = true;
+        }
+        if (request.getStatus() != null) {
+            update.set(Dept::getStatus, normalizeStatus(request.getStatus()));
+            changed = true;
+        }
+        if (request.getSort() != null) {
+            update.set(Dept::getSort, request.getSort());
+            changed = true;
+        }
+        if (request.getRemark() != null) {
+            update.set(Dept::getRemark, request.getRemark());
+            changed = true;
+        }
+        if (changed && !deptService.update(update)) {
             return error(deptConstants.getController().getInternalServerErrorCode(), i18n(deptConstants.getMessage().getCommonUpdateFailed()));
         }
+        deptNameCache.invalidate(id);
         return success();
     }
 
@@ -172,6 +194,7 @@ public class DeptAdminController extends BaseController {
         if (!deptService.removeById(id)) {
             return error(deptConstants.getController().getInternalServerErrorCode(), i18n(deptConstants.getMessage().getCommonDeleteFailed()));
         }
+        deptNameCache.invalidate(id);
         return success();
     }
 
@@ -192,6 +215,7 @@ public class DeptAdminController extends BaseController {
         if (!deptService.removeByIds(uniqueIds)) {
             return error(deptConstants.getController().getInternalServerErrorCode(), i18n(deptConstants.getMessage().getCommonDeleteFailed()));
         }
+        deptNameCache.invalidateAll(uniqueIds);
         return success();
     }
 

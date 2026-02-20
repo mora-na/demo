@@ -36,6 +36,11 @@ public class AuthUserPasswordPolicyService implements UserPasswordPolicyService 
     }
 
     @Override
+    public boolean matches(String rawPassword, String encodedPassword) {
+        return passwordService.matches(rawPassword, encodedPassword);
+    }
+
+    @Override
     public boolean forceChangeOnFirstLogin() {
         return authProperties.getPassword().isForceChangeOnFirstLogin();
     }
