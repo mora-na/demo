@@ -44,6 +44,7 @@ public class AuthController extends BaseController {
     private final TokenService tokenService;
     private final PasswordService passwordService;
     private final PasswordPolicyService passwordPolicyService;
+    private final AuthUserStatusCache authUserStatusCache;
     private final IdentityReadFacade identityReadFacade;
     private final IdentityCredentialApi identityCredentialApi;
     private final IdentityProfileCommandApi identityProfileCommandApi;
@@ -276,6 +277,7 @@ public class AuthController extends BaseController {
         if (!identityProfileCommandApi.updateSelfProfile(authUser.getId(), profileUpdate, newRawPassword)) {
             return error(controllerConstants.getInternalServerErrorCode(), i18n("common.update.failed"));
         }
+        authUserStatusCache.invalidate(authUser.getId());
         if (wantsPasswordChange) {
             tokenService.revokeByUserId(authUser.getId());
         }

@@ -19,6 +19,10 @@ public class DatasourceModeEnvironmentPostProcessor implements EnvironmentPostPr
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
         DatasourceMode mode = resolveDatasourceMode(environment);
+        String modeRaw = environment.getProperty("app.datasource.mode");
+        boolean explicitMultiDatasource = modeRaw != null
+                && !modeRaw.trim().isEmpty()
+                && DatasourceMode.fromProperty(modeRaw) == DatasourceMode.MULTI_DATASOURCE;
         String singleSchemaName = environment.getProperty("app.datasource.single-schema-name", "demo");
 
         Map<String, Object> derived = new HashMap<String, Object>();
@@ -28,8 +32,8 @@ public class DatasourceModeEnvironmentPostProcessor implements EnvironmentPostPr
         // 兼容保留旧开关，避免历史配置失效。
         putIfMissing(environment, derived, "app.datasource.multi-module-enabled", multiDatasource);
 
-        // dynamic-datasource 自动配置开关
-        putIfMissing(environment, derived, "spring.datasource.dynamic.enabled", multiDatasource);
+        // dynamic-datasource 自动配置开关：仅当 app.datasource.mode 显式为 multi-datasource 时启用
+        derived.put("spring.datasource.dynamic.enabled", explicitMultiDatasource);
 
         // 单 schema SQL 重写开关
         putIfMissing(environment, derived, "app.datasource.sql-rewrite.enabled", singleSchema);

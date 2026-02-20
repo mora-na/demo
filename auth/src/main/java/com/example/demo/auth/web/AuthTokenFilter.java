@@ -138,6 +138,15 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 int negativeTtl = authProperties.getCache().getUserStatusNegativeTtlSeconds();
                 authUserStatusCache.putNegative(user.getId(), negativeTtl);
             }
+        } else if (passwordPolicyService.isPasswordChangeRequired(dbUser)) {
+            IdentityUserDTO refreshed = identityReadFacade.getUserById(user.getId());
+            if (refreshed != null) {
+                dbUser = refreshed;
+                int ttlSeconds = authProperties.getCache().getUserStatusTtlSeconds();
+                if (ttlSeconds > 0) {
+                    authUserStatusCache.put(user.getId(), refreshed, ttlSeconds);
+                }
+            }
         }
         if (dbUser == null) {
             writeUnauthorized(response, i18nService.getMessage(request, filterConstants.getUserNotFoundMessageKey()));

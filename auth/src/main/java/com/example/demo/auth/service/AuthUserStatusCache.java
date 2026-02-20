@@ -84,6 +84,16 @@ public class AuthUserStatusCache {
         cache.put(userId, new CacheEntry(null, expireAt, true));
     }
 
+    public void invalidate(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        if (!isEnabled()) {
+            return;
+        }
+        cache.invalidate(userId);
+    }
+
     private static final class CacheEntry {
         private final IdentityUserDTO user;
         private final long expireAtSeconds;
