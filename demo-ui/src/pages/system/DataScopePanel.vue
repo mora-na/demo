@@ -22,12 +22,13 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, ref, watch} from "vue";
+import {computed, defineAsyncComponent, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import type {MenuTree} from "../../api/auth";
-import DataScopeOverview from "./DataScopeOverview.vue";
-import DataScopeMapping from "./DataScopeMapping.vue";
-import DataScopeUserOverrides from "./DataScopeUserOverrides.vue";
+
+const DataScopeOverview = defineAsyncComponent(() => import("./DataScopeOverview.vue"));
+const DataScopeMapping = defineAsyncComponent(() => import("./DataScopeMapping.vue"));
+const DataScopeUserOverrides = defineAsyncComponent(() => import("./DataScopeUserOverrides.vue"));
 
 const props = defineProps<{
   activeCode?: string;

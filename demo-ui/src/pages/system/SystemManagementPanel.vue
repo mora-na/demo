@@ -8,7 +8,7 @@
     </div>
 
     <el-tabs v-model="activeTab" class="system-tabs" @tab-change="handleTabChange">
-      <el-tab-pane v-for="menu in menus" :key="menu.id" :label="menuLabel(menu)" :name="String(menu.id)"/>
+      <el-tab-pane v-for="menu in menus" :key="menu.id" :label="menuLabel(menu)" :name="String(menu.id)" lazy/>
     </el-tabs>
 
     <div class="system-body">
@@ -34,19 +34,20 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, ref, watch} from "vue";
+import {computed, defineAsyncComponent, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import type {MenuTree} from "../../api/auth";
-import UserManagement from "./UserManagement.vue";
-import RoleManagement from "./RoleManagement.vue";
-import MenuManagement from "./MenuManagement.vue";
-import DeptManagement from "./DeptManagement.vue";
-import PostManagement from "./PostManagement.vue";
-import PermissionManagement from "./PermissionManagement.vue";
-import DictManagement from "./DictManagement.vue";
-import NoticeManagement from "./NoticeManagement.vue";
-import JobManagement from "./JobManagement.vue";
-import DataScopePanel from "./DataScopePanel.vue";
+
+const UserManagement = defineAsyncComponent(() => import("./UserManagement.vue"));
+const RoleManagement = defineAsyncComponent(() => import("./RoleManagement.vue"));
+const MenuManagement = defineAsyncComponent(() => import("./MenuManagement.vue"));
+const DeptManagement = defineAsyncComponent(() => import("./DeptManagement.vue"));
+const PostManagement = defineAsyncComponent(() => import("./PostManagement.vue"));
+const PermissionManagement = defineAsyncComponent(() => import("./PermissionManagement.vue"));
+const DictManagement = defineAsyncComponent(() => import("./DictManagement.vue"));
+const NoticeManagement = defineAsyncComponent(() => import("./NoticeManagement.vue"));
+const JobManagement = defineAsyncComponent(() => import("./JobManagement.vue"));
+const DataScopePanel = defineAsyncComponent(() => import("./DataScopePanel.vue"));
 
 const props = defineProps<{
   menus: MenuTree[];

@@ -167,8 +167,8 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="logVisible" align-center :title="t('job.logs.title')" width="820px">
-      <el-table v-loading="logLoading" :data="logs" row-key="id" size="small">
+    <el-dialog v-model="logVisible" :title="t('job.logs.title')" align-center width="850px">
+      <el-table v-loading="logLoading" :data="logs" row-key="id" size="small" style="width: 100%">
         <el-table-column :label="t('job.logs.task')" prop="jobName" width="120" show-overflow-tooltip/>
         <el-table-column :label="t('job.logs.handler')" prop="handlerName" width="120" show-overflow-tooltip/>
         <el-table-column :label="t('job.logs.status')" width="70">
@@ -208,14 +208,14 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="logDetailVisible" align-center :title="t('job.logs.detailTitle')" width="720px">
+    <el-dialog v-model="logDetailVisible" :title="t('job.logs.detailTitle')" align-center width="840px">
       <div class="log-detail-body" v-loading="logDetailLoading">
         <div class="log-detail-meta">
           <span>{{ logDetail?.jobName || "-" }}</span>
           <span>{{ formatDateTime(logDetail?.startTime) }}</span>
           <span>{{ logDetail?.status === 1 ? t("job.logs.statusSuccess") : t("job.logs.statusFail") }}</span>
         </div>
-        <pre class="log-detail-content">{{ logDetail?.logDetail || t("job.logs.emptyLog") }}</pre>
+        <pre class="log-detail-content">{{ logDetailText }}</pre>
       </div>
       <template #footer>
         <el-button @click="logDetailVisible = false">{{ t("job.logs.close") }}</el-button>
@@ -626,6 +626,15 @@ const logDetailVisible = ref(false);
 const logDetailLoading = ref(false);
 const logDetail = ref<JobLogDetailVO | null>(null);
 
+const logDetailText = computed(() => {
+  const raw = logDetail.value?.logDetail;
+  if (!raw) {
+    return t("job.logs.emptyLog");
+  }
+  const decoded = decodeHtmlEntities(raw);
+  return decoded.trim() ? decoded : t("job.logs.emptyLog");
+});
+
 const logCollectorMetrics = ref<JobLogCollectorMetrics | null>(null);
 const metricsLoading = ref(false);
 
@@ -832,6 +841,18 @@ function formatDateTime(value?: string) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(
       date.getHours()
   )}:${pad(date.getMinutes())}`;
+}
+
+function decodeHtmlEntities(value: string): string {
+  if (!value.includes("&")) {
+    return value;
+  }
+  if (typeof document === "undefined") {
+    return value;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = value;
+  return textarea.value;
 }
 
 function clampNumber(value: number, min: number, max: number) {
@@ -1305,7 +1326,8 @@ onMounted(async () => {
   padding: 12px;
   min-height: 220px;
   max-height: 420px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   border-radius: 12px;
   border: 1px solid rgba(18, 18, 18, 0.08);
   background: rgba(255, 255, 255, 0.7);
@@ -1313,6 +1335,7 @@ onMounted(async () => {
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
+  max-width: 100%;
 }
 
 .job-editor-form {

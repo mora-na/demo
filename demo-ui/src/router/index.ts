@@ -1,6 +1,4 @@
 import {createRouter, createWebHistory} from "vue-router";
-import LoginPage from "../pages/LoginPage.vue";
-import HomePage from "../pages/HomePage.vue";
 import {useAuthStore} from "../stores/auth";
 
 const transportMode = (import.meta.env.VITE_PASSWORD_TRANSPORT_MODE || "plain").toUpperCase();
@@ -15,13 +13,13 @@ const router = createRouter({
         {
             path: "/login",
             name: "login",
-            component: LoginPage,
+            component: () => import("../pages/LoginPage.vue"),
             props: () => ({transportMode})
         },
         {
             path: "/home/:pathMatch(.*)*",
             name: "home",
-            component: HomePage,
+            component: () => import("../pages/HomePage.vue"),
             meta: {requiresAuth: true}
         },
         {

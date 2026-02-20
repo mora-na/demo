@@ -15,6 +15,12 @@ app.use(i18n);
 app.use(ElementPlus);
 app.use(router);
 
+const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || connection?.saveData;
+if (reduceMotion) {
+    document.documentElement.dataset.reduceMotion = "true";
+}
+
 type PermissionValue = string | string[];
 
 function normalizePermissions(value: PermissionValue | undefined | null) {

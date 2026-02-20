@@ -76,22 +76,5 @@ const isHomeRoute = computed(() => route.path.startsWith("/home"));
   opacity: 0.35;
   transform: translateY(-20%) rotate(-10deg);
   z-index: 0;
-  animation: drift 18s ease-in-out infinite;
-}
-
-@keyframes drift {
-  0%,
-  100% {
-    transform: translateY(-20%) rotate(-10deg);
-  }
-  50% {
-    transform: translateY(-24%) rotate(6deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .halo {
-    animation: none;
-  }
 }
 </style>

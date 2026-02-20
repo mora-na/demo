@@ -23,9 +23,14 @@
         <div class="nav-section">
           <div class="nav-section-title">{{ t("home.nav.section") }}</div>
           <div class="nav-tree">
+            <div v-if="!layoutReady" aria-hidden="true" class="nav-skeleton">
+              <div v-for="item in 7" :key="item" class="nav-skeleton-row"/>
+            </div>
+            <template v-else>
             <el-empty v-if="!filteredMenuTree.length" :description="t('home.nav.empty')"/>
             <div v-else class="nav-groups">
-              <div v-for="group in filteredMenuTree" :key="group.id" class="nav-group">
+              <div v-for="group in filteredMenuTree" :key="group.id" v-memo="[group.id, activeMenuId, expandedGroupId]"
+                   class="nav-group">
                 <button
                     :class="{ active: activeGroup?.id === group.id }"
                     class="nav-item nav-root"
@@ -53,6 +58,7 @@
                   <button
                       v-for="child in group.children"
                       :key="child.id"
+                      v-memo="[child.id, activeMenuId]"
                       :class="{ active: activeMenuId === child.id }"
                       class="nav-item nav-child"
                       type="button"
@@ -66,6 +72,7 @@
                 </div>
               </div>
             </div>
+            </template>
           </div>
         </div>
       </nav>
@@ -86,7 +93,7 @@
         </div>
         <div class="topbar-center">
           <el-input
-              v-model.trim="menuQuery"
+              v-model.trim="menuQueryInput"
               :placeholder="t('home.topbar.searchPlaceholder')"
               class="topbar-search"
               clearable
@@ -157,83 +164,95 @@
       </header>
 
       <section class="console-main">
-        <div v-if="passwordPolicyLock" class="main-hero">
-          <div>
-            <h1>{{ t("home.profile.title") }}</h1>
-            <p>{{ t("home.profile.forceNote") }}</p>
+        <div v-if="!layoutReady" aria-hidden="true" class="main-skeleton">
+          <div class="main-skeleton-title"/>
+          <div class="main-skeleton-line"/>
+          <div class="main-skeleton-grid">
+            <div v-for="item in 6" :key="item" class="main-skeleton-card"/>
+          </div>
+          <div class="main-skeleton-metrics">
+            <div v-for="item in 4" :key="item" class="main-skeleton-metric"/>
           </div>
         </div>
-        <OrderManagementPanel v-else-if="isOrderGroup"/>
-        <ExtensionPanel
-            v-else-if="isExtensionGroup"
-            :active-menu-id="activeMenuId"
-            :menus="activeChildren"
-            @menu-change="selectMenuById"
-        />
-        <MonitorPanel
-            v-else-if="isMonitorGroup"
-            :active-menu-id="activeMenuId"
-            :menus="activeChildren"
-            @menu-change="selectMenuById"
-        />
-        <DataScopePanel
-            v-else-if="isDataScopeGroup"
-            :active-code="activeMenuItem?.code"
-            :active-menu-id="activeMenuId"
-            :menus="activeChildren"
-            @menu-change="selectMenuById"
-        />
-        <template v-else-if="!isSystemGroup">
-          <div class="main-hero">
+        <template v-else>
+          <div v-if="passwordPolicyLock" class="main-hero">
             <div>
-              <h1>{{ activeGroup?.name || t("home.main.titleFallback") }}</h1>
-              <p>{{ activeGroup ? menuDescription(activeGroup) : t("home.main.descFallback") }}</p>
+              <h1>{{ t("home.profile.title") }}</h1>
+              <p>{{ t("home.profile.forceNote") }}</p>
             </div>
           </div>
+          <OrderManagementPanel v-else-if="isOrderGroup"/>
+          <ExtensionPanel
+              v-else-if="isExtensionGroup"
+              :active-menu-id="activeMenuId"
+              :menus="activeChildren"
+              @menu-change="selectMenuById"
+          />
+          <MonitorPanel
+              v-else-if="isMonitorGroup"
+              :active-menu-id="activeMenuId"
+              :menus="activeChildren"
+              @menu-change="selectMenuById"
+          />
+          <DataScopePanel
+              v-else-if="isDataScopeGroup"
+              :active-code="activeMenuItem?.code"
+              :active-menu-id="activeMenuId"
+              :menus="activeChildren"
+              @menu-change="selectMenuById"
+          />
+          <template v-else-if="!isSystemGroup">
+            <div class="main-hero">
+              <div>
+                <h1>{{ activeGroup?.name || t("home.main.titleFallback") }}</h1>
+                <p>{{ activeGroup ? menuDescription(activeGroup) : t("home.main.descFallback") }}</p>
+              </div>
+            </div>
 
-          <div class="main-grid">
-            <el-empty v-if="!activeChildren.length" :description="t('home.main.empty')"/>
-            <template v-else>
-              <article
-                  v-for="item in activeChildren"
-                  :key="item.id"
-                  class="main-card"
-                  @click="selectMenu(item)"
-              >
-                <div class="main-card-head">
-                  <div class="main-card-title">{{ item.name }}</div>
-                  <span class="main-card-icon">↗</span>
-                </div>
-                <div class="main-card-desc">{{ menuDescription(item) }}</div>
-              </article>
-            </template>
-          </div>
+            <div class="main-grid">
+              <el-empty v-if="!activeChildren.length" :description="t('home.main.empty')"/>
+              <template v-else>
+                <article
+                    v-for="item in activeChildren"
+                    :key="item.id"
+                    class="main-card"
+                    @click="selectMenu(item)"
+                >
+                  <div class="main-card-head">
+                    <div class="main-card-title">{{ item.name }}</div>
+                    <span class="main-card-icon">↗</span>
+                  </div>
+                  <div class="main-card-desc">{{ menuDescription(item) }}</div>
+                </article>
+              </template>
+            </div>
 
-          <div class="main-metrics">
-            <div class="metric">
-              <div class="metric-value">{{ menuGroupCount }}</div>
-              <div class="metric-title">{{ t("home.main.metrics.group") }}</div>
+            <div class="main-metrics">
+              <div class="metric">
+                <div class="metric-value">{{ menuGroupCount }}</div>
+                <div class="metric-title">{{ t("home.main.metrics.group") }}</div>
+              </div>
+              <div class="metric">
+                <div class="metric-value">{{ submenuCount }}</div>
+                <div class="metric-title">{{ t("home.main.metrics.submenu") }}</div>
+              </div>
+              <div class="metric">
+                <div class="metric-value">{{ roleCount }}</div>
+                <div class="metric-title">{{ t("home.main.metrics.role") }}</div>
+              </div>
+              <div class="metric">
+                <div class="metric-value">{{ permissionCount }}</div>
+                <div class="metric-title">{{ t("home.main.metrics.permission") }}</div>
+              </div>
             </div>
-            <div class="metric">
-              <div class="metric-value">{{ submenuCount }}</div>
-              <div class="metric-title">{{ t("home.main.metrics.submenu") }}</div>
-            </div>
-            <div class="metric">
-              <div class="metric-value">{{ roleCount }}</div>
-              <div class="metric-title">{{ t("home.main.metrics.role") }}</div>
-            </div>
-            <div class="metric">
-              <div class="metric-value">{{ permissionCount }}</div>
-              <div class="metric-title">{{ t("home.main.metrics.permission") }}</div>
-            </div>
-          </div>
+          </template>
+          <SystemManagementPanel
+              v-else
+              :active-menu-id="activeMenuId"
+              :menus="activeChildren"
+              @menu-change="selectMenuById"
+          />
         </template>
-        <SystemManagementPanel
-            v-else
-            :active-menu-id="activeMenuId"
-            :menus="activeChildren"
-            @menu-change="selectMenuById"
-        />
       </section>
     </div>
 
@@ -323,7 +342,7 @@
 
 <script lang="ts" setup>
 import type {Component} from "vue";
-import {computed, onMounted, onUnmounted, reactive, ref, watch} from "vue";
+import {computed, defineAsyncComponent, onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {ElMessage} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {useRoute, useRouter} from "vue-router";
@@ -354,11 +373,12 @@ import {logout, type MenuTree, updateProfile} from "../api/auth";
 import {getUnreadNoticeCount, listMyNotices, markAllNoticesRead, markNoticeRead, type NoticeMyVO} from "../api/system";
 import {useAuthStore} from "../stores/auth";
 import {useDictStore} from "../stores/dict";
-import SystemManagementPanel from "./system/SystemManagementPanel.vue";
-import DataScopePanel from "./system/DataScopePanel.vue";
-import MonitorPanel from "./monitor/MonitorPanel.vue";
-import OrderManagementPanel from "./order/OrderManagementPanel.vue";
-import ExtensionPanel from "./extension/ExtensionPanel.vue";
+
+const SystemManagementPanel = defineAsyncComponent(() => import("./system/SystemManagementPanel.vue"));
+const DataScopePanel = defineAsyncComponent(() => import("./system/DataScopePanel.vue"));
+const MonitorPanel = defineAsyncComponent(() => import("./monitor/MonitorPanel.vue"));
+const OrderManagementPanel = defineAsyncComponent(() => import("./order/OrderManagementPanel.vue"));
+const ExtensionPanel = defineAsyncComponent(() => import("./extension/ExtensionPanel.vue"));
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -401,16 +421,21 @@ const profileForm = reactive({
 });
 
 const menuItems = computed(() => authStore.menus || []);
+const menuQueryInput = ref("");
 const menuQuery = ref("");
+let menuQueryTimer: number | null = null;
 const activeSelection = computed(() => resolveSelectionFromPath(menuItems.value, currentRoutePath()));
 const activeMenuId = computed(() => activeSelection.value?.menu.id ?? null);
-const navDrawerVisible = ref(true);
+const navDrawerVisible = ref(readStoredNavDrawerState() ?? true);
 const navDrawerReady = ref(false);
+const layoutReady = computed(() => authStore.profileLoaded);
 const MENU_STORAGE_KEY = "demo.activeMenuId";
 const NAV_DRAWER_STORAGE_KEY = "demo.navDrawerOpen";
 const HOME_ROUTE_NAME = "home";
 const HOME_PATH_PREFIX = "/home";
 const expandedGroupId = ref<number | null>(null);
+
+const menuPathIndex = computed(() => buildMenuPathIndex(menuItems.value));
 
 const menuTotal = computed(() => countMenuItems(menuItems.value));
 const filteredMenuTree = computed(() => {
@@ -498,6 +523,19 @@ watch(
     (value) => {
       storeNavDrawerState(value);
     }
+);
+
+watch(
+    () => menuQueryInput.value,
+    (value) => {
+      if (menuQueryTimer != null) {
+        window.clearTimeout(menuQueryTimer);
+      }
+      menuQueryTimer = window.setTimeout(() => {
+        menuQuery.value = value;
+      }, 150);
+    },
+    {immediate: true}
 );
 
 watch(
@@ -591,12 +629,11 @@ function findGroupByPath(items: MenuTree[], path: string): MenuTree | null {
   return null;
 }
 
-function findMenuByPath(items: MenuTree[], path: string): { group: MenuTree; menu: MenuTree } | null {
+function findMenuByPath(index: Map<string, { group: MenuTree; menu: MenuTree }>, path: string) {
   const target = normalizePath(path);
   if (!target) {
     return null;
   }
-  const index = buildMenuPathIndex(items);
   return index.get(target) || null;
 }
 
@@ -687,7 +724,7 @@ function resolveSelectionFromPath(
   if (!normalized) {
     return getDefaultSelection(items);
   }
-  const exact = findMenuByPath(items, normalized);
+  const exact = findMenuByPath(menuPathIndex.value, normalized);
   if (exact) {
     return exact;
   }
@@ -1399,10 +1436,6 @@ async function handleLogout() {
 }
 
 onMounted(async () => {
-  const storedDrawer = readStoredNavDrawerState();
-  if (storedDrawer !== null) {
-    navDrawerVisible.value = storedDrawer;
-  }
   navDrawerReady.value = true;
   await loadProfile();
   if (passwordPolicyLock.value) {
@@ -1415,6 +1448,10 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopNoticeStream();
+  if (menuQueryTimer != null) {
+    window.clearTimeout(menuQueryTimer);
+    menuQueryTimer = null;
+  }
 });
 </script>
 
@@ -1451,10 +1488,6 @@ onUnmounted(() => {
   position: relative;
 }
 
-.console-drawer.ready {
-  transition: flex-basis 0.2s ease, max-width 0.2s ease;
-}
-
 .console-drawer.open {
   flex-basis: var(--nav-drawer-width);
   max-width: var(--nav-drawer-width);
@@ -1480,7 +1513,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 44px 10px 12px;
+  padding: 12px 10px 12px;
 }
 
 .nav-toggle {
@@ -1493,6 +1526,10 @@ onUnmounted(() => {
 .console-drawer:not(.open) .nav-toggle {
   right: 50%;
   transform: translateX(50%);
+}
+
+.console-drawer:not(.open) .console-nav {
+  padding-top: 44px;
 }
 
 .nav-brand {
@@ -1537,6 +1574,19 @@ onUnmounted(() => {
   flex: 1;
 }
 
+.nav-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px;
+}
+
+.nav-skeleton-row {
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(18, 18, 18, 0.06);
+}
+
 .nav-groups {
   display: flex;
   flex-direction: column;
@@ -1563,12 +1613,10 @@ onUnmounted(() => {
   text-align: left;
   position: relative;
   cursor: pointer;
-  transition: border 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .nav-item:hover {
   border-color: rgba(18, 18, 18, 0.16);
-  transform: translateY(-1px);
 }
 
 .nav-item.active {
@@ -1596,7 +1644,6 @@ onUnmounted(() => {
   margin-left: auto;
   font-size: 12px;
   color: var(--muted);
-  transition: transform 0.2s ease, color 0.2s ease;
 }
 
 .nav-arrow.expanded {
@@ -1643,7 +1690,10 @@ onUnmounted(() => {
 }
 
 .nav-label {
-  display: block;
+  display: inline-block;
+  max-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .nav-children {
@@ -1653,12 +1703,29 @@ onUnmounted(() => {
   padding-left: 6px;
 }
 
+.nav-brand-row,
+.nav-section-title,
+.nav-label,
+.badge,
+.nav-arrow {
+}
+
+.nav-brand-row,
+.nav-section-title {
+  max-height: 200px;
+  overflow: hidden;
+}
+
 .console-drawer:not(.open) .nav-brand-row,
 .console-drawer:not(.open) .nav-section-title,
 .console-drawer:not(.open) .nav-label,
 .console-drawer:not(.open) .badge,
 .console-drawer:not(.open) .nav-arrow {
-  display: none;
+  opacity: 0;
+  transform: translateX(-6px);
+  max-width: 0;
+  max-height: 0;
+  pointer-events: none;
 }
 
 .console-drawer:not(.open) .nav-item {
@@ -1674,10 +1741,36 @@ onUnmounted(() => {
   justify-content: center;
 }
 
+.console-drawer:not(.open) .nav-item.active {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.console-drawer:not(.open) .nav-item.active::before {
+  display: none;
+}
+
+.console-drawer:not(.open) .nav-item .nav-icon {
+  position: relative;
+  z-index: 1;
+}
+
+.console-drawer:not(.open) .nav-item.active .nav-icon::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 12px;
+  background: rgba(43, 124, 255, 0.12);
+  border: 1px solid rgba(43, 124, 255, 0.35);
+  pointer-events: none;
+  z-index: -1;
+}
+
 .console-topbar {
   grid-area: topbar;
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) minmax(200px, 300px) auto;
+  grid-template-columns: minmax(200px, 1fr) minmax(200px, 300px) 260px;
   gap: 8px;
   align-items: center;
   padding: 4px 12px;
@@ -1687,12 +1780,14 @@ onUnmounted(() => {
   box-shadow: none;
   backdrop-filter: none;
   position: static;
+  min-height: 56px;
 }
 
 .topbar-left {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .topbar-left-main {
@@ -1700,16 +1795,26 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  min-width: 0;
+  flex: 1;
 }
 
 .topbar-title {
   font-size: 15px;
   font-weight: 600;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .topbar-sub {
   font-size: 12px;
   color: var(--muted);
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .topbar-tags {
@@ -1718,6 +1823,8 @@ onUnmounted(() => {
   flex-wrap: wrap;
   font-size: 11px;
   color: var(--muted);
+  min-width: 120px;
+  justify-content: flex-end;
 }
 
 .topbar-center {
@@ -1733,16 +1840,29 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
+  justify-content: flex-end;
+  min-width: 240px;
 }
 
 .icon-button {
   font-size: 16px;
   padding: 4px 6px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--muted);
 }
 
 .icon-button:hover {
   color: var(--accent);
+}
+
+.notice-badge {
+  width: 32px;
+  display: inline-flex;
+  justify-content: center;
 }
 
 .notice-panel {
@@ -1792,7 +1912,6 @@ onUnmounted(() => {
   padding: 8px 10px;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.2s ease;
 }
 
 .notice-item.unread {
@@ -1859,6 +1978,7 @@ onUnmounted(() => {
   font: inherit;
   text-align: left;
   appearance: none;
+  min-width: 0;
 }
 
 .user-avatar {
@@ -1870,16 +1990,23 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  max-width: 130px;
 }
 
 .user-name {
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-role {
   font-size: 10px;
   color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-chevron {
@@ -1915,6 +2042,51 @@ onUnmounted(() => {
   min-height: 0;
 }
 
+.main-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 520px;
+}
+
+.main-skeleton-title {
+  height: 32px;
+  width: 38%;
+  border-radius: 14px;
+  background: rgba(18, 18, 18, 0.06);
+}
+
+.main-skeleton-line {
+  height: 16px;
+  width: 52%;
+  border-radius: 12px;
+  background: rgba(18, 18, 18, 0.05);
+}
+
+.main-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.main-skeleton-card {
+  height: 120px;
+  border-radius: 18px;
+  background: rgba(18, 18, 18, 0.05);
+}
+
+.main-skeleton-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.main-skeleton-metric {
+  height: 54px;
+  border-radius: 12px;
+  background: rgba(18, 18, 18, 0.05);
+}
+
 .main-hero {
   display: flex;
   justify-content: space-between;
@@ -1948,12 +2120,10 @@ onUnmounted(() => {
   border-radius: 18px;
   border: 1px solid rgba(18, 18, 18, 0.08);
   background: linear-gradient(140deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.78));
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
 }
 
 .main-card:hover {
-  transform: translateY(-2px);
   box-shadow: 0 16px 30px rgba(18, 18, 18, 0.12);
 }
 
@@ -2020,6 +2190,7 @@ onUnmounted(() => {
   .topbar-right {
     flex-wrap: wrap;
     justify-content: flex-start;
+    min-width: 0;
   }
 }
 

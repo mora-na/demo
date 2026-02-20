@@ -8,7 +8,7 @@
     </div>
 
     <el-tabs v-model="activeTab" class="system-tabs" @tab-change="handleTabChange">
-      <el-tab-pane v-for="menu in menus" :key="menu.id" :label="menuLabel(menu)" :name="String(menu.id)"/>
+      <el-tab-pane v-for="menu in menus" :key="menu.id" :label="menuLabel(menu)" :name="String(menu.id)" lazy/>
     </el-tabs>
 
     <div class="system-body">
@@ -20,11 +20,12 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, ref, watch} from "vue";
+import {computed, defineAsyncComponent, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import type {MenuTree} from "../../api/auth";
-import OperLogTable from "./OperLogTable.vue";
-import LoginLogTable from "./LoginLogTable.vue";
+
+const OperLogTable = defineAsyncComponent(() => import("./OperLogTable.vue"));
+const LoginLogTable = defineAsyncComponent(() => import("./LoginLogTable.vue"));
 
 const props = defineProps<{
   menus: MenuTree[];

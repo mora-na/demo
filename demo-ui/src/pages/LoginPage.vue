@@ -354,7 +354,6 @@ onMounted(loadCaptcha);
   box-shadow: 0 12px 24px rgba(43, 124, 255, 0.28);
   position: relative;
   overflow: hidden;
-  transition: transform 0.18s ease, box-shadow 0.2s ease;
 }
 
 .login-submit::after {
@@ -373,21 +372,8 @@ onMounted(loadCaptcha);
 
 .login-submit.is-loading::after {
   opacity: 1;
-  animation: login-shimmer 1.1s linear infinite;
 }
 
-.login-submit:active {
-  transform: translateY(2px) scale(0.99);
-}
-
-@keyframes login-shimmer {
-  0% {
-    transform: translateX(-60%);
-  }
-  100% {
-    transform: translateX(60%);
-  }
-}
 
 .helper {
   margin: 12px 0 0;
