@@ -35,8 +35,8 @@ public class ModuleDataSourceRoutingAspect {
                     + " || execution(* com.example.demo..service..*(..))"
                     + " || execution(* com.example.demo..mapper..*(..))"
                     + " || execution(* com.example.demo..facade..*(..))"
-                    + " || execution(* com.example.demo.common.mybatis.DbDataScopeRuleProvider.*(..))"
-                    + " || execution(* com.example.demo.common.web.permission.DbPermissionService.*(..))"
+                    + " || execution(* com.example.demo.common.mybatis.DataScopeRuleProvider.*(..))"
+                    + " || execution(* com.example.demo.common.web.permission.PermissionService.*(..))"
     )
     public Object route(ProceedingJoinPoint joinPoint) throws Throwable {
         Object target = joinPoint.getTarget();

@@ -5,7 +5,7 @@
         <div class="module-title">{{ t("dict.title") }}</div>
         <div class="module-sub">{{ t("dict.subtitle") }}</div>
       </div>
-      <div class="module-actions" @keyup.enter="handleSearch">
+      <div class="module-actions">
         <el-button v-permission="'dict:cache:refresh'" size="small" @click="refreshCache">
           {{ t("dict.cacheRefresh") }}
         </el-button>

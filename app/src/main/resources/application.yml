@@ -17,16 +17,16 @@ server:
 spring:
   config:
     import:
-      - classpath:module-datasource-routing.yml
-      - classpath:module-job.yml
-      - classpath:module-cache.yml
-      - classpath:module-dict.yml
-      - classpath:module-notice.yml
-      - classpath:module-mybatis.yml
-      - classpath:module-excel.yml
-      - classpath:module-security.yml
-      - classpath:module-auth.yml
-      - classpath:module-dynamic-api.yml
+      - optional:classpath:module-datasource-routing.yml
+      - optional:classpath:module-job.yml
+      - optional:classpath:module-cache.yml
+      - optional:classpath:module-dict.yml
+      - optional:classpath:module-notice.yml
+      - optional:classpath:module-mybatis.yml
+      - optional:classpath:module-excel.yml
+      - optional:classpath:module-security.yml
+      - optional:classpath:module-auth.yml
+      - optional:classpath:module-dynamic-api.yml
 
   # 应用元信息
   application:

@@ -10,6 +10,7 @@ export default {
         cancel: "取消",
         save: "保存",
         search: "搜索",
+        refresh: "刷新",
         edit: "编辑",
         delete: "删除",
         enabled: "启用",
@@ -277,6 +278,23 @@ export default {
             detailTitle: "执行日志",
             emptyLog: "暂无执行日志",
             close: "关闭"
+        },
+        metrics: {
+            title: "任务日志监控",
+            subtitle: "JobLogCollector 缓冲状态。",
+            buffers: "缓冲占用",
+            maxLength: "单次最大长度 {value}",
+            hold: "保留时间",
+            mergeDelay: "合并延迟 {value}ms",
+            degrade: "降级状态",
+            degraded: "已降级",
+            normal: "正常",
+            enabled: "启用",
+            disabled: "关闭",
+            autoDegrade: "自动降级",
+            enabledLabel: "采集状态",
+            ratio: "阈值 {value}",
+            loadFailed: "加载监控指标失败"
         },
         msg: {
             loadFailed: "加载任务失败",
@@ -1143,6 +1161,24 @@ export default {
             statusUnread: "未读",
             readTime: "阅读时间",
             close: "关闭"
+        },
+        metrics: {
+            title: "通知流监控",
+            subtitle: "SSE 连接与缓存运行状态。",
+            connections: "连接数",
+            activeUsers: "活跃用户 {count}",
+            cache: "最新缓存",
+            latestLimit: "latestLimit {value}",
+            degrade: "降级状态",
+            degraded: "已降级",
+            normal: "正常",
+            autoDegrade: "自动降级",
+            enabled: "启用",
+            disabled: "关闭",
+            thresholds: "阈值比例",
+            ratios: "连接 {conn}% / 缓存 {cache}%",
+            cacheExpire: "缓存过期 {minutes} 分钟",
+            loadFailed: "加载监控指标失败"
         },
         msg: {
             loadFailed: "加载通知失败",

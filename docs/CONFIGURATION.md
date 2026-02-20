@@ -873,8 +873,9 @@
 
 **配置示例（`type` 与 `config`）**
 
-```json
 // BEAN
+
+```json
 {
   "beanName": "orderSummaryHandler",
   "paramMode": "AUTO",
@@ -882,15 +883,16 @@
 }
 ```
 
-```json
 // SQL
+
+```json
 {
   "sql": "SELECT * FROM order.orders WHERE id = :id"
 }
 ```
 
-```json
 // HTTP
+```json
 {
   "url": "https://internal/api",
   "method": "POST",

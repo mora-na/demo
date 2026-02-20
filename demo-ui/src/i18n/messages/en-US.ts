@@ -10,6 +10,7 @@ export default {
         cancel: "Cancel",
         save: "Save",
         search: "Search",
+        refresh: "Refresh",
         edit: "Edit",
         delete: "Delete",
         enabled: "Enabled",
@@ -277,6 +278,23 @@ export default {
             detailTitle: "Execution log",
             emptyLog: "No log content",
             close: "Close"
+        },
+        metrics: {
+            title: "Log Collector Metrics",
+            subtitle: "JobLogCollector buffer status.",
+            buffers: "Buffer usage",
+            maxLength: "Max length {value}",
+            hold: "Hold time",
+            mergeDelay: "Merge delay {value}ms",
+            degrade: "Degrade status",
+            degraded: "Degraded",
+            normal: "Normal",
+            enabled: "Enabled",
+            disabled: "Disabled",
+            autoDegrade: "Auto degrade",
+            enabledLabel: "Collector status",
+            ratio: "Threshold {value}",
+            loadFailed: "Failed to load metrics"
         },
         msg: {
             loadFailed: "Failed to load jobs",
@@ -1143,6 +1161,24 @@ export default {
             statusUnread: "Unread",
             readTime: "Read time",
             close: "Close"
+        },
+        metrics: {
+            title: "Stream Metrics",
+            subtitle: "SSE connections and cache status.",
+            connections: "Connections",
+            activeUsers: "Active users {count}",
+            cache: "Latest cache",
+            latestLimit: "latestLimit {value}",
+            degrade: "Degrade status",
+            degraded: "Degraded",
+            normal: "Normal",
+            autoDegrade: "Auto degrade",
+            enabled: "Enabled",
+            disabled: "Disabled",
+            thresholds: "Thresholds",
+            ratios: "Conn {conn}% / Cache {cache}%",
+            cacheExpire: "Cache TTL {minutes}m",
+            loadFailed: "Failed to load metrics"
         },
         msg: {
             loadFailed: "Failed to load notices",

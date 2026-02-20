@@ -81,7 +81,4 @@ watch(
   color: var(--muted);
 }
 
-.data-scope-tabs :deep(.el-tab-pane) {
-  padding-top: 8px;
-}
 </style>

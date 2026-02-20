@@ -297,10 +297,6 @@ onMounted(loadCaptcha);
   box-shadow: var(--shadow);
 }
 
-.login-card :deep(.el-card__header) {
-  border-bottom: 1px solid rgba(18, 18, 18, 0.06);
-}
-
 .panel-header {
   display: flex;
   justify-content: space-between;

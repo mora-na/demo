@@ -991,16 +991,6 @@ onMounted(() => {
   background: rgba(220, 53, 69, 0.16);
 }
 
-.tag-muted {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  color: #4b5563;
-  background: rgba(148, 163, 184, 0.2);
-}
-
 .job-editor-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

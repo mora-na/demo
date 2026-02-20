@@ -877,18 +877,20 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 
 **Config Examples (`type` and `config`)**
 
-```json
 // BEAN
+
+```json
 {"beanName":"orderSummaryHandler","paramMode":"AUTO","paramSchema":"{\"orderId\":\"string\"}"}
 ```
 
-```json
 // SQL
+
+```json
 {"sql":"SELECT * FROM order.orders WHERE id = :id"}
 ```
 
-```json
 // HTTP
+```json
 {"url":"https://internal/api","method":"POST","passHeaders":true,"passQuery":true,"headers":{"X-Token":"secret"}}
 ```
 

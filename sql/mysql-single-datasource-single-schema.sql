@@ -951,7 +951,9 @@ VALUES (1, 'user:query', '用户查询', 1),
        (79, 'dynamic-api:delete', '动态接口删除', 1),
        (80, 'dynamic-api:reload', '动态接口重载', 1),
        (81, 'dynamic-api-log:query', '动态接口日志查询', 1),
-       (82, 'dynamic-api-log:delete', '动态接口日志删除', 1)
+       (82, 'dynamic-api-log:delete', '动态接口日志删除', 1),
+       (83, 'notice:stream:metrics', '通知流监控', 1),
+       (84, 'job:log:metrics', '任务日志监控', 1)
 ;
 
 INSERT INTO sys_menu (id, name, code, parent_id, path, component, permission, status, sort, remark)
@@ -1126,6 +1128,8 @@ VALUES (1, 1),
        (1, 80),
        (1, 81),
        (1, 82),
+       (1, 83),
+       (1, 84),
        (2, 1),
        (2, 4),
        (2, 5),

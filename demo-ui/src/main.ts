@@ -24,7 +24,11 @@ function normalizePermissions(value: PermissionValue | undefined | null) {
     return Array.isArray(value) ? value : [value];
 }
 
-function applyPermission(el: HTMLElement, value: PermissionValue | undefined | null, modifiers: Record<string, boolean>) {
+function applyPermission(
+    el: HTMLElement,
+    value: PermissionValue | undefined | null,
+    modifiers: Partial<Record<string, boolean>> | undefined
+) {
     const authStore = useAuthStore(pinia);
     const required = normalizePermissions(value);
     if (!required.length) {

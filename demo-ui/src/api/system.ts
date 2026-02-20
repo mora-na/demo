@@ -769,6 +769,22 @@ export interface NoticeMyVO {
     readTime?: string;
 }
 
+export interface NoticeStreamMetrics {
+    totalConnections: number;
+    activeUsers: number;
+    latestCacheSize: number;
+    connectionCounterSize: number;
+    latestLimit: number;
+    maxTotalConnections: number;
+    maxConnectionsPerUser: number;
+    latestCacheMaxSize: number;
+    latestCacheExpireMinutes: number;
+    autoDegradeEnabled: boolean;
+    degraded: boolean;
+    degradeConnectionRatio: number;
+    degradeCacheRatio: number;
+}
+
 export interface NoticePublishPayload {
     title: string;
     content: string;
@@ -833,6 +849,11 @@ export async function markNoticeRead(id: number): Promise<ApiResponse<void>> {
 
 export async function markAllNoticesRead(): Promise<ApiResponse<number>> {
     const response = await api.put<ApiResponse<number>>('/notices/read-all');
+    return response.data;
+}
+
+export async function getNoticeStreamMetrics(): Promise<ApiResponse<NoticeStreamMetrics>> {
+    const response = await api.get<ApiResponse<NoticeStreamMetrics>>('/notices/stream/metrics');
     return response.data;
 }
 
@@ -903,6 +924,18 @@ export interface JobLogDetailVO extends JobLogVO {
     logDetail?: string;
 }
 
+export interface JobLogCollectorMetrics {
+    enabled: boolean;
+    autoDegradeEnabled: boolean;
+    degraded: boolean;
+    bufferSize: number;
+    maxBuffers: number;
+    maxLength: number;
+    maxHoldMillis: number;
+    mergeDelayMillis: number;
+    degradeBufferRatio: number;
+}
+
 export async function listJobs(params: JobQuery): Promise<ApiResponse<PageResult<JobVO>>> {
     const response = await api.get<ApiResponse<PageResult<JobVO>>>('/jobs', {params});
     return response.data;
@@ -953,6 +986,11 @@ export async function listJobLogs(id: number, params: {
 
 export async function getJobLogDetail(logId: number): Promise<ApiResponse<JobLogDetailVO>> {
     const response = await api.get<ApiResponse<JobLogDetailVO>>(`/jobs/logs/${logId}`);
+    return response.data;
+}
+
+export async function getJobLogCollectorMetrics(): Promise<ApiResponse<JobLogCollectorMetrics>> {
+    const response = await api.get<ApiResponse<JobLogCollectorMetrics>>('/jobs/logs/metrics');
     return response.data;
 }
 

@@ -979,12 +979,6 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-.action-cell :deep(.cell) {
-  white-space: nowrap;
-  overflow: hidden;
-  padding: 0 6px;
-}
-
 .action-buttons::-webkit-scrollbar {
   height: 0;
 }
