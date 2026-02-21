@@ -107,12 +107,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public CommonResult<Void> handleException(Exception ex, HttpServletRequest request) {
-        if (isSseRequest(request, null)) {
-            log.warn("Unhandled SSE exception: path={}", safePath(request), ex);
-            return null;
-        }
         if (isClientAbort(ex)) {
             recordClientAbort(ex, request);
+            return null;
+        }
+        if (isSseRequest(request, null)) {
+            if (log.isDebugEnabled()) {
+                log.debug("Unhandled SSE exception: path={}", safePath(request), ex);
+            }
             return null;
         }
         log.error("Unhandled exception", ex);

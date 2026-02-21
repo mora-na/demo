@@ -7,6 +7,8 @@ import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.entity.SysJobLog;
 import com.example.demo.job.log.JobLogCollector;
 import com.example.demo.job.log.JobLogThreadContext;
+import com.example.demo.job.model.JobLogDetailPart;
+import com.example.demo.job.service.SysJobLogDetailService;
 import com.example.demo.job.service.SysJobLogService;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
@@ -36,6 +38,7 @@ public abstract class AbstractQuartzJob implements Job {
         boolean success = false;
         String message = null;
         String runId = null;
+        SysJobLogDetailService detailService = SpringContextHolder.getBean(SysJobLogDetailService.class);
         if (logCollector != null && logCollector.isEnabled()) {
             runId = logCollector.start();
             if (runId != null) {
@@ -67,11 +70,15 @@ public abstract class AbstractQuartzJob implements Job {
             throw new JobExecutionException(ex);
         } finally {
             String manualLog = jobContext.getLogContent();
+            String autoLog = null;
             if (logCollector != null) {
                 MDC.remove(logCollector.getMdcKey());
                 MDC.remove(logCollector.getThreadKey());
             }
             JobLogThreadContext.clear();
+            if (logCollector != null && runId != null) {
+                autoLog = logCollector.finish(runId);
+            }
             if (logService != null) {
                 SysJobLog log = new SysJobLog();
                 log.setJobId(jobContext.getJobId());
@@ -83,19 +90,27 @@ public abstract class AbstractQuartzJob implements Job {
                 LocalDateTime end = LocalDateTime.now();
                 log.setEndTime(end);
                 log.setDurationMs(java.time.Duration.between(start, end).toMillis());
-                String merged = logCollector != null
-                        ? logCollector.mergeLogs(manualLog, runId == null ? null : logCollector.finish(runId))
-                        : mergeLogDetail(manualLog, null, constants.getExecution().getLogMergeSeparator());
-                log.setLogDetail(logCollector != null
-                        ? merged
-                        : trimLogDetail(merged, constants.getExecution().getLogDetailMaxLength()));
+                if (detailService == null) {
+                    String merged = logCollector != null
+                            ? logCollector.mergeLogs(manualLog, autoLog)
+                            : mergeLogDetail(manualLog, null, constants.getExecution().getLogMergeSeparator());
+                    log.setLogDetail(logCollector != null
+                            ? merged
+                            : trimLogDetail(merged, constants.getExecution().getLogDetailMaxLength()));
+                }
                 logService.save(log);
-                if (logCollector != null && runId != null) {
-                    if (logCollector.shouldDelayMerge()) {
-                        logCollector.scheduleMerge(runId, log.getId(), manualLog);
-                    } else {
-                        logCollector.close(runId);
+                if (detailService != null) {
+                    detailService.saveDetail(log.getId(), JobLogDetailPart.MANUAL, manualLog);
+                    if (logCollector != null && runId != null) {
+                        if (logCollector.shouldDelayMerge()) {
+                            logCollector.scheduleMerge(runId, log.getId());
+                        } else {
+                            detailService.saveDetail(log.getId(), JobLogDetailPart.AUTO, autoLog);
+                            logCollector.close(runId);
+                        }
                     }
+                } else if (logCollector != null && runId != null) {
+                    logCollector.close(runId);
                 }
             }
         }

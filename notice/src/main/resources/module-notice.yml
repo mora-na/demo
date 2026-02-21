@@ -10,6 +10,8 @@ notice:
       heartbeat-interval-millis: 60000
       # 断线判定超时（毫秒）
       heartbeat-timeout-millis: 180000
+      # 建议前端重连间隔（毫秒）
+      retry-after-millis: 5000
       # 推送最新通知数量
       latest-limit: 5
       # 总连接上限（<=0 不限制）

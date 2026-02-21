@@ -783,6 +783,24 @@ COMMENT ON COLUMN sys_job_log.start_time IS '开始时间';
 COMMENT ON COLUMN sys_job_log.end_time IS '结束时间';
 COMMENT ON COLUMN sys_job_log.duration_ms IS '耗时毫秒';
 
+CREATE SEQUENCE IF NOT EXISTS sys_job_log_detail_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_job_log_detail
+(
+    id         BIGINT PRIMARY KEY   DEFAULT nextval('sys_job_log_detail_id_seq'),
+    log_id     BIGINT      NOT NULL,
+    part_type  VARCHAR(16) NOT NULL,
+    log_detail TEXT,
+    created_at TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_job_log_detail_log_type ON sys_job_log_detail (log_id, part_type);
+CREATE INDEX IF NOT EXISTS idx_sys_job_log_detail_log ON sys_job_log_detail (log_id);
+COMMENT ON TABLE sys_job_log_detail IS '定时任务日志明细表';
+COMMENT ON COLUMN sys_job_log_detail.id IS '主键ID';
+COMMENT ON COLUMN sys_job_log_detail.log_id IS '日志ID';
+COMMENT ON COLUMN sys_job_log_detail.part_type IS '日志片段类型: MANUAL/AUTO';
+COMMENT ON COLUMN sys_job_log_detail.log_detail IS '日志内容';
+COMMENT ON COLUMN sys_job_log_detail.created_at IS '创建时间';
+
 SET search_path TO log, public;
 
 CREATE SEQUENCE IF NOT EXISTS sys_oper_log_id_seq START WITH 1 INCREMENT BY 1;
@@ -1623,6 +1641,7 @@ SELECT setval('notice.sys_notice_id_seq', (SELECT COALESCE(MAX(id), 1) FROM noti
 SELECT setval('notice.sys_notice_recipient_id_seq', (SELECT COALESCE(MAX(id), 1) FROM notice.sys_notice_recipient));
 SELECT setval('job.sys_job_id_seq', (SELECT COALESCE(MAX(id), 1) FROM job.sys_job));
 SELECT setval('job.sys_job_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM job.sys_job_log));
+SELECT setval('job.sys_job_log_detail_id_seq', (SELECT COALESCE(MAX(id), 1) FROM job.sys_job_log_detail));
 SELECT setval('log.sys_oper_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM log.sys_oper_log));
 SELECT setval('log.sys_login_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM log.sys_login_log));
 SELECT setval('log.sys_dynamic_api_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM log.sys_dynamic_api_log));

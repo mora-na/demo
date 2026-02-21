@@ -2,8 +2,8 @@ package com.example.demo.job.log;
 
 import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.dto.JobLogCollectorMetricsVO;
-import com.example.demo.job.entity.SysJobLog;
-import com.example.demo.job.service.SysJobLogService;
+import com.example.demo.job.model.JobLogDetailPart;
+import com.example.demo.job.service.SysJobLogDetailService;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class JobLogCollector {
 
     private final JobConstants jobConstants;
-    private final SysJobLogService jobLogService;
+    private final SysJobLogDetailService detailService;
     private final AtomicLong lastDegradeLogAt = new AtomicLong(0L);
     private ScheduledExecutorService scheduler;
     private Cache<String, JobLogBuffer> buffers;
@@ -129,7 +129,7 @@ public class JobLogCollector {
                 && jobConstants.getLogCollect().getMaxHoldMillis() > 0;
     }
 
-    public void scheduleMerge(String runId, Long logId, String manualLog) {
+    public void scheduleMerge(String runId, Long logId) {
         if (!shouldDelayMerge() || runId == null || logId == null) {
             close(runId);
             return;
@@ -139,10 +139,10 @@ public class JobLogCollector {
         }
         JobLogBuffer buffer = buffers.getIfPresent(runId);
         if (buffer != null) {
-            buffer.attachLog(logId, manualLog);
+            buffer.attachLog(logId);
         }
         long delay = jobConstants.getLogCollect().getMergeDelayMillis();
-        scheduler.schedule(() -> mergeAndUpdate(runId, logId, manualLog), delay, TimeUnit.MILLISECONDS);
+        scheduler.schedule(() -> mergeAndStore(runId, logId), delay, TimeUnit.MILLISECONDS);
     }
 
     public String mergeLogs(String manual, String autoLog) {
@@ -182,22 +182,17 @@ public class JobLogCollector {
         }
     }
 
-    private void mergeAndUpdate(String runId, Long logId, String manualLog) {
+    private void mergeAndStore(String runId, Long logId) {
         try {
             JobLogBuffer buffer = buffers.getIfPresent(runId);
             if (buffer == null) {
                 return;
             }
             String autoLog = buffer.getContent();
-            String storedManual = buffer.getManualLog();
-            String merged = mergeLogs(storedManual == null ? manualLog : storedManual, autoLog);
-            if (merged == null) {
+            if (autoLog == null) {
                 return;
             }
-            SysJobLog update = new SysJobLog();
-            update.setId(logId);
-            update.setLogDetail(merged);
-            jobLogService.updateById(update);
+            saveDetail(logId, JobLogDetailPart.AUTO, autoLog);
         } finally {
             buffers.invalidate(runId);
         }
@@ -297,18 +292,14 @@ public class JobLogCollector {
         if (autoLog == null) {
             return;
         }
-        String merged = mergeLogs(buffer.getManualLog(), autoLog);
-        if (merged == null) {
+        saveDetail(buffer.getLogId(), JobLogDetailPart.AUTO, autoLog);
+    }
+
+    private void saveDetail(Long logId, JobLogDetailPart partType, String content) {
+        if (detailService == null || logId == null || content == null) {
             return;
         }
-        try {
-            SysJobLog update = new SysJobLog();
-            update.setId(buffer.getLogId());
-            update.setLogDetail(merged);
-            jobLogService.updateById(update);
-        } catch (Exception ex) {
-            log.warn("Job log flush failed: logId={}, error={}", buffer.getLogId(), ex.getMessage());
-        }
+        detailService.saveDetail(logId, partType, content);
     }
 
     private static final class JobLogBuffer {
@@ -317,7 +308,6 @@ public class JobLogCollector {
         private boolean truncated = false;
         private volatile long closedAt = 0L;
         private volatile Long logId;
-        private volatile String manualLog;
 
         private JobLogBuffer(int maxLength) {
             this.maxLength = Math.max(0, maxLength);
@@ -356,21 +346,14 @@ public class JobLogCollector {
             return builder.toString();
         }
 
-        private void attachLog(Long logId, String manualLog) {
+        private void attachLog(Long logId) {
             if (logId != null) {
                 this.logId = logId;
-            }
-            if (manualLog != null) {
-                this.manualLog = manualLog;
             }
         }
 
         private Long getLogId() {
             return logId;
-        }
-
-        private String getManualLog() {
-            return manualLog;
         }
 
         private void markClosed() {

@@ -96,7 +96,8 @@ export default {
         notice: {
             title: "系统通知",
             streamOnline: "实时",
-            streamOffline: "断线"
+            streamOffline: "断线",
+            streamReconnect: "重连"
         },
         main: {
             titleFallback: "控制台",

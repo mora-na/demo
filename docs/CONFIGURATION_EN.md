@@ -345,22 +345,23 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 
 **Stream Group (SSE)**
 
-| Key | Default | Description |
-|---|---|---|
-| `notice.constants.stream.anonymous-emitter-timeout-millis` | `0` | SSE emitter timeout for anonymous users (milliseconds). |
-| `notice.constants.stream.emitter-timeout-millis` | `0` | SSE emitter timeout for authenticated users (milliseconds). |
-| `notice.constants.stream.heartbeat-interval-millis` | `30000` | Heartbeat interval in milliseconds; `<=0` disables heartbeat. |
-| `notice.constants.stream.heartbeat-timeout-millis` | `90000` | Client-side disconnect timeout hint in milliseconds. |
-| `notice.constants.stream.latest-limit` | `5` | Max cached latest notices included in init/push payload. |
-| `notice.constants.stream.event-notice-name` | `notice` | SSE event name for notice/unread updates. |
-| `notice.constants.stream.event-init-name` | `init` | SSE event name for initial payload. |
-| `notice.constants.stream.event-ping-name` | `ping` | SSE event name for heartbeat. |
-| `notice.constants.stream.heartbeat-thread-name` | `notice-sse-heartbeat` | Thread name used by heartbeat scheduler. |
-| `notice.constants.stream.log-heartbeat-disabled` | `Notice SSE heartbeat disabled (interval={}ms).` | Log template when heartbeat is disabled. |
-| `notice.constants.stream.log-push-failed` | `Failed to push notice to user {}, removing emitter.` | Log template for notice push failures. |
-| `notice.constants.stream.log-push-update-failed` | `Failed to push notice update to user {}, removing emitter.` | Log template for unread update push failures. |
-| `notice.constants.stream.log-init-failed` | `Failed to send init payload to user {}, removing emitter.` | Log template for init-event push failures. |
-| `notice.constants.stream.log-heartbeat-failed` | `Heartbeat failed for user {}, removing emitter: {}` | Log template for heartbeat push failures. |
+| Key                                                        | Default                                                      | Description                                                   |
+|------------------------------------------------------------|--------------------------------------------------------------|---------------------------------------------------------------|
+| `notice.constants.stream.anonymous-emitter-timeout-millis` | `0`                                                          | SSE emitter timeout for anonymous users (milliseconds).       |
+| `notice.constants.stream.emitter-timeout-millis`           | `0`                                                          | SSE emitter timeout for authenticated users (milliseconds).   |
+| `notice.constants.stream.heartbeat-interval-millis`        | `30000`                                                      | Heartbeat interval in milliseconds; `<=0` disables heartbeat. |
+| `notice.constants.stream.heartbeat-timeout-millis`         | `90000`                                                      | Client-side disconnect timeout hint in milliseconds.          |
+| `notice.constants.stream.retry-after-millis`               | `5000`                                                       | Suggested client reconnect interval in milliseconds.          |
+| `notice.constants.stream.latest-limit`                     | `5`                                                          | Max cached latest notices included in init/push payload.      |
+| `notice.constants.stream.event-notice-name`                | `notice`                                                     | SSE event name for notice/unread updates.                     |
+| `notice.constants.stream.event-init-name`                  | `init`                                                       | SSE event name for initial payload.                           |
+| `notice.constants.stream.event-ping-name`                  | `ping`                                                       | SSE event name for heartbeat.                                 |
+| `notice.constants.stream.heartbeat-thread-name`            | `notice-sse-heartbeat`                                       | Thread name used by heartbeat scheduler.                      |
+| `notice.constants.stream.log-heartbeat-disabled`           | `Notice SSE heartbeat disabled (interval={}ms).`             | Log template when heartbeat is disabled.                      |
+| `notice.constants.stream.log-push-failed`                  | `Failed to push notice to user {}, removing emitter.`        | Log template for notice push failures.                        |
+| `notice.constants.stream.log-push-update-failed`           | `Failed to push notice update to user {}, removing emitter.` | Log template for unread update push failures.                 |
+| `notice.constants.stream.log-init-failed`                  | `Failed to send init payload to user {}, removing emitter.`  | Log template for init-event push failures.                    |
+| `notice.constants.stream.log-heartbeat-failed`             | `Heartbeat failed for user {}, removing emitter: {}`         | Log template for heartbeat push failures.                     |
 
 ### Permission Constants Override (`permission.constants`)
 

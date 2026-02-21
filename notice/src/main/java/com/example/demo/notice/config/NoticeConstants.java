@@ -167,6 +167,7 @@ public class NoticeConstants {
         public static final long DEFAULT_EMITTER_TIMEOUT_MILLIS = 600000L;
         public static final long DEFAULT_HEARTBEAT_INTERVAL_MILLIS = 30000L;
         public static final long DEFAULT_HEARTBEAT_TIMEOUT_MILLIS = 90000L;
+        public static final long DEFAULT_RETRY_AFTER_MILLIS = 5000L;
         public static final int DEFAULT_LATEST_LIMIT = 5;
         public static final int DEFAULT_MAX_TOTAL_CONNECTIONS = 2000;
         public static final int DEFAULT_MAX_CONNECTIONS_PER_USER = 5;
@@ -208,6 +209,10 @@ public class NoticeConstants {
          * 前端断线判定超时（毫秒）。
          */
         private long heartbeatTimeoutMillis = DEFAULT_HEARTBEAT_TIMEOUT_MILLIS;
+        /**
+         * 建议前端重连间隔（毫秒）。
+         */
+        private long retryAfterMillis = DEFAULT_RETRY_AFTER_MILLIS;
         /**
          * SSE 最新通知列表缓存长度。
          */

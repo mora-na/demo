@@ -48,7 +48,7 @@ public class NoticeStreamService {
             return emitter;
         }
         if (!tryAcquireConnection(userId)) {
-            return rejectConnection();
+            return rejectConnection(userId);
         }
         emitters.computeIfAbsent(userId, key -> new CopyOnWriteArrayList<>()).add(emitter);
         emitter.onCompletion(() -> removeEmitter(userId, emitter));
@@ -84,6 +84,8 @@ public class NoticeStreamService {
                     notice.getCreateTime(),
                     unreadCount == null ? noticeConstants.getNumeric().getZeroLong() : unreadCount,
                     latestSnapshot,
+                    null,
+                    null,
                     null,
                     null
             );
@@ -126,6 +128,8 @@ public class NoticeStreamService {
                     null,
                     unreadCount == null ? noticeConstants.getNumeric().getZeroLong() : unreadCount,
                     latestSnapshot,
+                    null,
+                    null,
                     null,
                     null
             );
@@ -212,10 +216,19 @@ public class NoticeStreamService {
                 safeUnreadCount,
                 latestSnapshot,
                 noticeConstants.getStream().getHeartbeatIntervalMillis(),
-                noticeConstants.getStream().getHeartbeatTimeoutMillis()
+                noticeConstants.getStream().getHeartbeatTimeoutMillis(),
+                resolveRetryAfterMillis(),
+                null
         );
         try {
-            emitter.send(SseEmitter.event().name(noticeConstants.getStream().getEventInitName()).data(payload));
+            SseEmitter.SseEventBuilder builder = SseEmitter.event()
+                    .name(noticeConstants.getStream().getEventInitName())
+                    .data(payload);
+            long retryAfterMillis = resolveRetryAfterMillis();
+            if (retryAfterMillis > 0) {
+                builder.reconnectTime(retryAfterMillis);
+            }
+            emitter.send(builder);
         } catch (IOException ex) {
             log.debug(noticeConstants.getStream().getLogInitFailed(), userId, ex);
             removeEmitter(userId, emitter);
@@ -314,6 +327,14 @@ public class NoticeStreamService {
             return 0L;
         }
         return timeout;
+    }
+
+    private long resolveRetryAfterMillis() {
+        long retryAfterMillis = noticeConstants.getStream().getRetryAfterMillis();
+        if (retryAfterMillis <= 0) {
+            return 0L;
+        }
+        return retryAfterMillis;
     }
 
     private void initCaches() {
@@ -421,9 +442,36 @@ public class NoticeStreamService {
         }
     }
 
-    private SseEmitter rejectConnection() {
-        SseEmitter emitter = new SseEmitter(1L);
-        emitter.complete();
+    private SseEmitter rejectConnection(Long userId) {
+        long retryAfterMillis = resolveRetryAfterMillis();
+        SseEmitter emitter = new SseEmitter(2000L);
+        NoticePushPayload payload = new NoticePushPayload(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                noticeConstants.getStream().getHeartbeatIntervalMillis(),
+                noticeConstants.getStream().getHeartbeatTimeoutMillis(),
+                retryAfterMillis,
+                "rejected"
+        );
+        try {
+            SseEmitter.SseEventBuilder builder = SseEmitter.event()
+                    .name(noticeConstants.getStream().getEventInitName())
+                    .data(payload);
+            if (retryAfterMillis > 0) {
+                builder.reconnectTime(retryAfterMillis);
+            }
+            emitter.send(builder);
+        } catch (IOException ex) {
+            if (log.isDebugEnabled()) {
+                log.debug(noticeConstants.getStream().getLogInitFailed(), userId, ex);
+            }
+        } finally {
+            emitter.complete();
+        }
         return emitter;
     }
 

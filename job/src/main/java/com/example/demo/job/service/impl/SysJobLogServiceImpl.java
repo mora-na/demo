@@ -11,6 +11,7 @@ import com.example.demo.job.dto.JobLogQuery;
 import com.example.demo.job.dto.JobLogVO;
 import com.example.demo.job.entity.SysJobLog;
 import com.example.demo.job.mapper.SysJobLogMapper;
+import com.example.demo.job.service.SysJobLogDetailService;
 import com.example.demo.job.service.SysJobLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ import java.util.List;
 public class SysJobLogServiceImpl extends ServiceImpl<SysJobLogMapper, SysJobLog> implements SysJobLogService {
 
     private final JobConstants jobConstants;
+    private final SysJobLogDetailService detailService;
 
     @Override
     public List<SysJobLog> selectLogs(JobLogQuery query) {
@@ -81,7 +83,14 @@ public class SysJobLogServiceImpl extends ServiceImpl<SysJobLogMapper, SysJobLog
         view.setHandlerName(log.getHandlerName());
         view.setStatus(log.getStatus());
         view.setMessage(log.getMessage());
-        view.setLogDetail(log.getLogDetail());
+        String detail = detailService == null ? null
+                : detailService.buildDetail(log.getId(),
+                jobConstants.getLogCollect().getMaxLength(),
+                jobConstants.getExecution().getLogMergeSeparator());
+        if (detail == null) {
+            detail = log.getLogDetail();
+        }
+        view.setLogDetail(detail);
         view.setStartTime(log.getStartTime());
         view.setEndTime(log.getEndTime());
         view.setDurationMs(log.getDurationMs());

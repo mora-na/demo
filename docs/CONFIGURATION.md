@@ -344,22 +344,23 @@
 
 **Stream 组（SSE 推送）**
 
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `notice.constants.stream.anonymous-emitter-timeout-millis` | `0` | 匿名用户 SSE 连接超时（毫秒）。 |
-| `notice.constants.stream.emitter-timeout-millis` | `0` | 登录用户 SSE 连接超时（毫秒）。 |
-| `notice.constants.stream.heartbeat-interval-millis` | `30000` | 心跳间隔（毫秒），`<=0` 表示禁用。 |
-| `notice.constants.stream.heartbeat-timeout-millis` | `90000` | 前端断线判定超时（毫秒）。 |
-| `notice.constants.stream.latest-limit` | `5` | SSE 初始化/推送携带的最新通知缓存长度。 |
-| `notice.constants.stream.event-notice-name` | `notice` | 新通知或未读变化事件名。 |
-| `notice.constants.stream.event-init-name` | `init` | 初始化事件名。 |
-| `notice.constants.stream.event-ping-name` | `ping` | 心跳事件名。 |
-| `notice.constants.stream.heartbeat-thread-name` | `notice-sse-heartbeat` | 心跳线程名。 |
-| `notice.constants.stream.log-heartbeat-disabled` | `Notice SSE heartbeat disabled (interval={}ms).` | 心跳禁用日志模板。 |
-| `notice.constants.stream.log-push-failed` | `Failed to push notice to user {}, removing emitter.` | 新通知推送失败日志模板。 |
-| `notice.constants.stream.log-push-update-failed` | `Failed to push notice update to user {}, removing emitter.` | 未读数推送失败日志模板。 |
-| `notice.constants.stream.log-init-failed` | `Failed to send init payload to user {}, removing emitter.` | 初始化推送失败日志模板。 |
-| `notice.constants.stream.log-heartbeat-failed` | `Heartbeat failed for user {}, removing emitter: {}` | 心跳推送失败日志模板。 |
+| 配置键                                                        | 默认值                                                          | 说明                     |
+|------------------------------------------------------------|--------------------------------------------------------------|------------------------|
+| `notice.constants.stream.anonymous-emitter-timeout-millis` | `0`                                                          | 匿名用户 SSE 连接超时（毫秒）。     |
+| `notice.constants.stream.emitter-timeout-millis`           | `0`                                                          | 登录用户 SSE 连接超时（毫秒）。     |
+| `notice.constants.stream.heartbeat-interval-millis`        | `30000`                                                      | 心跳间隔（毫秒），`<=0` 表示禁用。   |
+| `notice.constants.stream.heartbeat-timeout-millis`         | `90000`                                                      | 前端断线判定超时（毫秒）。          |
+| `notice.constants.stream.retry-after-millis`               | `5000`                                                       | 建议前端重连间隔（毫秒）。          |
+| `notice.constants.stream.latest-limit`                     | `5`                                                          | SSE 初始化/推送携带的最新通知缓存长度。 |
+| `notice.constants.stream.event-notice-name`                | `notice`                                                     | 新通知或未读变化事件名。           |
+| `notice.constants.stream.event-init-name`                  | `init`                                                       | 初始化事件名。                |
+| `notice.constants.stream.event-ping-name`                  | `ping`                                                       | 心跳事件名。                 |
+| `notice.constants.stream.heartbeat-thread-name`            | `notice-sse-heartbeat`                                       | 心跳线程名。                 |
+| `notice.constants.stream.log-heartbeat-disabled`           | `Notice SSE heartbeat disabled (interval={}ms).`             | 心跳禁用日志模板。              |
+| `notice.constants.stream.log-push-failed`                  | `Failed to push notice to user {}, removing emitter.`        | 新通知推送失败日志模板。           |
+| `notice.constants.stream.log-push-update-failed`           | `Failed to push notice update to user {}, removing emitter.` | 未读数推送失败日志模板。           |
+| `notice.constants.stream.log-init-failed`                  | `Failed to send init payload to user {}, removing emitter.`  | 初始化推送失败日志模板。           |
+| `notice.constants.stream.log-heartbeat-failed`             | `Heartbeat failed for user {}, removing emitter: {}`         | 心跳推送失败日志模板。            |
 
 ### Permission 模块常量覆盖（permission.constants）
 

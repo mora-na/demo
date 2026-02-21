@@ -35,4 +35,14 @@ public class NoticePushPayload implements Serializable {
     private Long heartbeatIntervalMillis;
 
     private Long heartbeatTimeoutMillis;
+
+    /**
+     * 断线后建议重连间隔（毫秒）。
+     */
+    private Long retryAfterMillis;
+
+    /**
+     * 流状态标记，例如 rejected。
+     */
+    private String streamStatus;
 }

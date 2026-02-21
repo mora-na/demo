@@ -547,6 +547,21 @@ CREATE TABLE IF NOT EXISTS sys_job_log
     COMMENT
         ='定时任务日志表';
 
+CREATE TABLE IF NOT EXISTS sys_job_log_detail
+(
+    id         BIGINT      NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    log_id     BIGINT      NOT NULL COMMENT '日志ID',
+    part_type  VARCHAR(16) NOT NULL COMMENT '日志片段类型: MANUAL/AUTO',
+    log_detail TEXT COMMENT '日志内容',
+    created_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_job_log_detail_log_type (log_id, part_type),
+    KEY idx_sys_job_log_detail_log (log_id)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='定时任务日志明细表';
+
 USE log;
 
 CREATE TABLE IF NOT EXISTS sys_oper_log

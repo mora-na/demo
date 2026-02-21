@@ -96,7 +96,8 @@ export default {
         notice: {
             title: "System Notices",
             streamOnline: "Live",
-            streamOffline: "Offline"
+            streamOffline: "Offline",
+            streamReconnect: "Reconnect"
         },
         main: {
             titleFallback: "Console",

@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -220,10 +221,11 @@ public class DynamicApiServiceImpl implements DynamicApiService {
         }
         String config = StringUtils.trimToNull(request.getConfig());
         String type = DynamicApiTypeCodes.normalize(request.getType());
+        String paramSchema = normalizeParamSchema(request.getParamSchema());
         String built = buildConfig(type,
                 request.getBeanName(),
                 request.getParamMode(),
-                request.getParamSchema(),
+                paramSchema,
                 request.getSql(),
                 request.getHttpUrl(),
                 request.getHttpMethod(),
@@ -245,10 +247,11 @@ public class DynamicApiServiceImpl implements DynamicApiService {
         }
         String config = StringUtils.trimToNull(request.getConfig());
         String type = DynamicApiTypeCodes.normalize(request.getType());
+        String paramSchema = normalizeParamSchema(request.getParamSchema());
         String built = buildConfig(type,
                 request.getBeanName(),
                 request.getParamMode(),
-                request.getParamSchema(),
+                paramSchema,
                 request.getSql(),
                 request.getHttpUrl(),
                 request.getHttpMethod(),
@@ -346,6 +349,13 @@ public class DynamicApiServiceImpl implements DynamicApiService {
             return;
         }
         eventPublisher.publishEvent(new DynamicApiChangedEvent(api.getId(), action));
+    }
+
+    private String normalizeParamSchema(String paramSchema) {
+        if (paramSchema == null) {
+            return null;
+        }
+        return HtmlUtils.htmlUnescape(paramSchema);
     }
 
     /**

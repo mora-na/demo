@@ -116,9 +116,19 @@
                     {{ noticeStreamConnected ? t("home.notice.streamOnline") : t("home.notice.streamOffline") }}
                   </span>
                 </div>
-                <el-button :disabled="!noticeItems.length" size="small" text @click="handleMarkAllRead">
-                  全部已读
-                </el-button>
+                <div class="notice-panel-actions">
+                  <el-button
+                      v-if="noticeStreamRetryExhausted"
+                      size="small"
+                      text
+                      @click="manualReconnectNoticeStream"
+                  >
+                    {{ t("home.notice.streamReconnect") }}
+                  </el-button>
+                  <el-button :disabled="!noticeItems.length" size="small" text @click="handleMarkAllRead">
+                    全部已读
+                  </el-button>
+                </div>
               </div>
               <div class="notice-panel-body">
                 <div v-if="noticeLoading" class="notice-empty">加载中...</div>
@@ -404,10 +414,19 @@ const noticeDetailVisible = ref(false);
 const noticeDetail = ref<NoticeMyVO | null>(null);
 const unreadCount = ref(0);
 const noticeStreamConnected = ref(false);
+const noticeStreamRetryExhausted = ref(false);
 const lastNoticePingAt = ref<number | null>(null);
 let noticeStream: EventSource | null = null;
 let noticeStreamRetryTimer: number | null = null;
 let noticeStreamHealthTimer: number | null = null;
+const NOTICE_STREAM_RETRY_BASE_MS = 2000;
+const NOTICE_STREAM_RETRY_MAX_MS = 30000;
+const NOTICE_STREAM_RETRY_MAX_ATTEMPTS = 5;
+const NOTICE_STREAM_RETRY_RESET_MS = 60000;
+const NOTICE_STREAM_RETRY_JITTER_RATIO = 0.3;
+let noticeStreamRetryAttempts = 0;
+let noticeStreamLastErrorAt: number | null = null;
+let noticeStreamRetryHintMs: number | null = null;
 
 const profileForm = reactive({
   userName: "",
@@ -576,6 +595,7 @@ watch(
         return;
       }
       if (token !== prevToken || locked !== prevLocked) {
+        resetNoticeStreamRetryState();
         startNoticeStream();
         refreshUnreadCount();
       }
@@ -978,6 +998,7 @@ let noticePingTimeoutMs = 45000;
 function markNoticeStreamAlive() {
   noticeStreamConnected.value = true;
   lastNoticePingAt.value = Date.now();
+  resetNoticeStreamRetryCounter();
 }
 
 function startNoticeStreamHealthCheck() {
@@ -1019,7 +1040,8 @@ function mapLatestToNotice(item: Record<string, any>): NoticeMyVO {
 
 function applyNoticePayload(payload: any) {
   let updated = false;
-  const hasUnreadCount = payload && typeof payload.unreadCount === "number";
+  let hasUnreadCount = payload && typeof payload.unreadCount === "number";
+  let skipRefresh = false;
   if (payload && typeof payload.unreadCount === "number") {
     unreadCount.value = payload.unreadCount;
     updated = true;
@@ -1030,18 +1052,56 @@ function applyNoticePayload(payload: any) {
       noticeStreamConnected.value = true;
     }
   }
+  if (payload && typeof payload.retryAfterMillis === "number" && payload.retryAfterMillis > 0) {
+    noticeStreamRetryHintMs = payload.retryAfterMillis;
+  }
+  if (payload && payload.streamStatus === "rejected") {
+    noticeStreamRetryExhausted.value = true;
+    skipRefresh = true;
+    hasUnreadCount = true;
+    if (noticeStreamRetryTimer != null) {
+      window.clearTimeout(noticeStreamRetryTimer);
+      noticeStreamRetryTimer = null;
+    }
+  }
   if (payload && Array.isArray(payload.latestNotices) && !noticeVisible.value) {
     noticeItems.value = payload.latestNotices.map(mapLatestToNotice);
     updated = true;
   }
-  return {updated, hasUnreadCount};
+  return {updated, hasUnreadCount: hasUnreadCount || skipRefresh};
+}
+
+function resetNoticeStreamRetryCounter() {
+  noticeStreamRetryAttempts = 0;
+  noticeStreamLastErrorAt = null;
+  noticeStreamRetryExhausted.value = false;
+}
+
+function resetNoticeStreamRetryState() {
+  resetNoticeStreamRetryCounter();
+  noticeStreamRetryHintMs = null;
+}
+
+function resolveNoticeStreamRetryBaseMs() {
+  if (noticeStreamRetryHintMs != null && noticeStreamRetryHintMs > 0) {
+    return Math.max(1000, noticeStreamRetryHintMs);
+  }
+  return NOTICE_STREAM_RETRY_BASE_MS;
+}
+
+function computeNoticeStreamRetryDelay(attempt: number) {
+  const base = resolveNoticeStreamRetryBaseMs();
+  const exponent = Math.max(0, attempt - 1);
+  const delay = Math.min(NOTICE_STREAM_RETRY_MAX_MS, base * Math.pow(2, exponent));
+  const jitter = Math.round(delay * NOTICE_STREAM_RETRY_JITTER_RATIO * Math.random());
+  return delay + jitter;
 }
 
 function startNoticeStream() {
   if (passwordPolicyLock.value) {
     return;
   }
-  stopNoticeStream();
+  closeNoticeStream();
   const token = authStore.token;
   if (!token) {
     return;
@@ -1085,33 +1145,58 @@ function startNoticeStream() {
   });
   source.onerror = () => {
     noticeStreamConnected.value = false;
-    stopNoticeStream();
+    closeNoticeStream();
     scheduleNoticeStreamReconnect();
   };
 }
 
 function scheduleNoticeStreamReconnect() {
-  if (!authStore.token || noticeStreamRetryTimer != null) {
+  if (!authStore.token || noticeStreamRetryTimer != null || noticeStreamRetryExhausted.value) {
     return;
   }
+  const now = Date.now();
+  if (noticeStreamLastErrorAt != null && now - noticeStreamLastErrorAt > NOTICE_STREAM_RETRY_RESET_MS) {
+    noticeStreamRetryAttempts = 0;
+  }
+  noticeStreamLastErrorAt = now;
+  noticeStreamRetryAttempts += 1;
+  if (noticeStreamRetryAttempts > NOTICE_STREAM_RETRY_MAX_ATTEMPTS) {
+    noticeStreamRetryExhausted.value = true;
+    return;
+  }
+  const delay = computeNoticeStreamRetryDelay(noticeStreamRetryAttempts);
   noticeStreamRetryTimer = window.setTimeout(() => {
     noticeStreamRetryTimer = null;
     startNoticeStream();
-  }, 5000);
+  }, delay);
 }
 
-function stopNoticeStream() {
+function closeNoticeStream() {
   if (noticeStream) {
     noticeStream.close();
     noticeStream = null;
   }
+  stopNoticeStreamHealthCheck();
+  noticeStreamConnected.value = false;
+  lastNoticePingAt.value = null;
+}
+
+function stopNoticeStream() {
+  closeNoticeStream();
   if (noticeStreamRetryTimer != null) {
     window.clearTimeout(noticeStreamRetryTimer);
     noticeStreamRetryTimer = null;
   }
-  stopNoticeStreamHealthCheck();
-  noticeStreamConnected.value = false;
-  lastNoticePingAt.value = null;
+  resetNoticeStreamRetryState();
+}
+
+function manualReconnectNoticeStream() {
+  if (noticeStreamRetryTimer != null) {
+    window.clearTimeout(noticeStreamRetryTimer);
+    noticeStreamRetryTimer = null;
+  }
+  resetNoticeStreamRetryState();
+  startNoticeStream();
 }
 
 async function loadMyNotices() {
@@ -1877,6 +1962,12 @@ onUnmounted(() => {
   justify-content: space-between;
   font-size: 13px;
   font-weight: 600;
+}
+
+.notice-panel-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .notice-panel-title {
