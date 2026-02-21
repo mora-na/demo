@@ -1,9 +1,9 @@
 spring:
   quartz:
-    # Quartz 是否自动启动
-    auto-startup: true
+    # Quartz 是否自动启动（关闭以便先清理孤儿触发器）
+    auto-startup: false
     # 启动延迟（秒，0 表示立即启动）
-    startup-delay: 5
+    startup-delay: 0
     # 是否覆盖已存在的 Job/Trigger（JDBC 模式建议谨慎开启）
     overwrite-existing-jobs: false
     # 关闭应用时是否等待任务执行完成

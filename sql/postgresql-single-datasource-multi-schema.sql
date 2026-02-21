@@ -877,6 +877,7 @@ CREATE INDEX IF NOT EXISTS idx_sys_login_log_time ON sys_login_log (login_time);
 CREATE INDEX IF NOT EXISTS idx_sys_login_log_ip ON sys_login_log (login_ip);
 CREATE INDEX IF NOT EXISTS idx_sys_login_log_status ON sys_login_log (status);
 CREATE INDEX IF NOT EXISTS idx_sys_login_log_status_type_time ON sys_login_log (status, login_type, login_time, id);
+CREATE INDEX IF NOT EXISTS idx_sys_login_log_user_type_status_time ON sys_login_log (user_id, login_type, status, login_time, id);
 COMMENT ON TABLE sys_login_log IS '登录日志表';
 COMMENT ON COLUMN sys_login_log.id IS '主键ID';
 COMMENT ON COLUMN sys_login_log.user_id IS '用户ID';
@@ -916,6 +917,7 @@ CREATE TABLE IF NOT EXISTS sys_dynamic_api_log
 CREATE INDEX IF NOT EXISTS idx_sys_dynamic_api_log_api ON sys_dynamic_api_log (api_id);
 CREATE INDEX IF NOT EXISTS idx_sys_dynamic_api_log_status ON sys_dynamic_api_log (status);
 CREATE INDEX IF NOT EXISTS idx_sys_dynamic_api_log_time ON sys_dynamic_api_log (request_time);
+CREATE INDEX IF NOT EXISTS idx_sys_dynamic_api_log_method_status_time ON sys_dynamic_api_log (api_method, status, request_time, id);
 COMMENT ON TABLE sys_dynamic_api_log IS '动态接口日志表';
 COMMENT ON COLUMN sys_dynamic_api_log.id IS '主键ID';
 COMMENT ON COLUMN sys_dynamic_api_log.api_id IS '接口ID';

@@ -617,7 +617,8 @@ CREATE TABLE IF NOT EXISTS sys_login_log
     KEY idx_sys_login_log_time (login_time),
     KEY idx_sys_login_log_ip (login_ip),
     KEY idx_sys_login_log_status (status),
-    KEY idx_sys_login_log_status_type_time (status, login_type, login_time, id)
+    KEY idx_sys_login_log_status_type_time (status, login_type, login_time, id),
+    KEY idx_sys_login_log_user_type_status_time (user_id, login_type, status, login_time, id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
     COMMENT
@@ -646,7 +647,8 @@ CREATE TABLE IF NOT EXISTS sys_dynamic_api_log
     PRIMARY KEY (id),
     KEY idx_dynamic_api_log_api (api_id),
     KEY idx_dynamic_api_log_status (status),
-    KEY idx_dynamic_api_log_time (request_time)
+    KEY idx_dynamic_api_log_time (request_time),
+    KEY idx_dynamic_api_log_method_status_time (api_method, status, request_time, id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
     COMMENT

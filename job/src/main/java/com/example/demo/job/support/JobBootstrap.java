@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -30,6 +32,7 @@ public class JobBootstrap {
     private final JobConstants jobConstants;
 
     @EventListener(ApplicationReadyEvent.class)
+    @Order(Ordered.HIGHEST_PRECEDENCE + 10)
     public void loadJobs() {
         JobQuery query = new JobQuery(null, null, jobConstants.getStatus().getJobEnabled());
         List<SysJob> jobs = jobService.selectJobs(query);
