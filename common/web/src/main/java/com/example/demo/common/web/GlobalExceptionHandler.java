@@ -15,10 +15,12 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import java.util.Locale;
@@ -85,8 +87,30 @@ public class GlobalExceptionHandler {
                 i18nService.getMessage("excel.process.error"));
     }
 
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    public Object handleAsyncTimeout(AsyncRequestTimeoutException ex,
+                                     HttpServletRequest request,
+                                     HttpServletResponse response) {
+        if (isSseRequest(request, response)) {
+            if (log.isDebugEnabled()) {
+                log.debug("SSE request timed out: path={}", safePath(request));
+            }
+            return null;
+        }
+        log.warn("Async request timed out: path={}", safePath(request));
+        if (response != null && !response.isCommitted()) {
+            response.setStatus(HttpStatus.SERVICE_UNAVAILABLE.value());
+        }
+        return CommonResult.error(HttpStatus.SERVICE_UNAVAILABLE.value(),
+                i18nService.getMessage("common.request.timeout"));
+    }
+
     @ExceptionHandler(Exception.class)
     public CommonResult<Void> handleException(Exception ex, HttpServletRequest request) {
+        if (isSseRequest(request, null)) {
+            log.warn("Unhandled SSE exception: path={}", safePath(request), ex);
+            return null;
+        }
         if (isClientAbort(ex)) {
             recordClientAbort(ex, request);
             return null;
@@ -180,5 +204,23 @@ public class GlobalExceptionHandler {
             return message;
         }
         return message.length() > maxLength ? message.substring(0, maxLength) + "...(truncated)" : message;
+    }
+
+    private boolean isSseRequest(HttpServletRequest request, HttpServletResponse response) {
+        if (response != null) {
+            String responseType = response.getContentType();
+            if (responseType != null && responseType.contains("text/event-stream")) {
+                return true;
+            }
+        }
+        if (request == null) {
+            return false;
+        }
+        String accept = request.getHeader("Accept");
+        if (accept != null && accept.contains("text/event-stream")) {
+            return true;
+        }
+        String contentType = request.getContentType();
+        return contentType != null && contentType.contains("text/event-stream");
     }
 }

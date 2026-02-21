@@ -59,22 +59,6 @@
       <el-table-column type="expand">
         <template #default="{row}">
           <div class="detail-grid">
-            <div class="detail-item">
-              <div class="detail-label">{{ t("dynamicApiLog.table.code") }}</div>
-              <div class="detail-value">{{ row.responseCode ?? "-" }}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-label">{{ t("dynamicApiLog.table.duration") }}</div>
-              <div class="detail-value">{{ row.durationMs != null ? `${row.durationMs}ms` : "-" }}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-label">{{ t("dynamicApiLog.table.user") }}</div>
-              <div class="detail-value">{{ row.userName || "-" }}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-label">{{ t("dynamicApiLog.table.ip") }}</div>
-              <div class="detail-value">{{ row.requestIp || "-" }}</div>
-            </div>
             <div class="detail-item detail-item--full">
               <div class="detail-label">{{ t("dynamicApiLog.table.error") }}</div>
               <div class="detail-value detail-pre">{{ row.errorMsg || "-" }}</div>
@@ -110,6 +94,26 @@
           <span :class="row.status === 1 ? 'tag-success' : 'tag-danger'">
             {{ row.status === 1 ? t('dynamicApiLog.status.success') : t('dynamicApiLog.status.fail') }}
           </span>
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('dynamicApiLog.table.code')" width="90">
+        <template #default="{row}">
+          {{ row.responseCode ?? "-" }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('dynamicApiLog.table.duration')" width="90">
+        <template #default="{row}">
+          {{ row.durationMs != null ? `${row.durationMs}ms` : "-" }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('dynamicApiLog.table.user')" min-width="120" show-overflow-tooltip>
+        <template #default="{row}">
+          {{ row.userName || "-" }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('dynamicApiLog.table.ip')" min-width="120" show-overflow-tooltip>
+        <template #default="{row}">
+          {{ row.requestIp || "-" }}
         </template>
       </el-table-column>
       <el-table-column :label="t('dynamicApiLog.table.action')" width="110">

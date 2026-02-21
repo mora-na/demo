@@ -5,8 +5,6 @@ import com.example.demo.extension.api.handler.DynamicApiHandler;
 import com.example.demo.extension.api.request.DynamicApiRequest;
 import com.example.demo.job.api.JobContext;
 import com.example.demo.job.api.JobHandler;
-import com.example.demo.job.config.JobConstants;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -19,24 +17,32 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 默认日志任务处理器。
+ * 默认日志任务处理器（示例）。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/12
  */
 @Slf4j
 @Component("logJobHandler")
-@RequiredArgsConstructor
 public class LogJobHandler implements JobHandler, DynamicApiHandler {
 
-    private final JobConstants jobConstants;
+    private static final String MANUAL_LOG_START = "手动记录定时任务日志";
+    private static final String MANUAL_LOG_END = "手动记录日志任务结束";
+    private static final String PARAMS_PREFIX = "参数: ";
+    private static final String NEW_THREAD_LOG = "new Thread 未显式透传也可收集日志";
+    private static final String ASYNC_THREAD_LOG = "异步线程日志手动记录";
+    private static final String PLAIN_THREAD_NAME = "job-log-plain";
+    private static final String ASYNC_THREAD_NAME = "job-log-demo";
+    private static final int RAW_EXECUTOR_POOL_SIZE = 1;
+    private static final int WRAPPED_EXECUTOR_POOL_SIZE = 1;
+    private static final long SCHEDULE_DELAY_MILLIS = 100L;
 
     @Override
     public void execute(JobContext context) {
         String params = context.getParams();
-        context.appendLog(jobConstants.getHandlerDemo().getManualLogStart());
+        context.appendLog(MANUAL_LOG_START);
         if (params != null && !params.trim().isEmpty()) {
-            context.appendLog(jobConstants.getExecution().getParamsPrefix() + params);
+            context.appendLog(PARAMS_PREFIX + params);
         }
 
         // 情形 1：当前任务线程内日志（Quartz 任务线程） -> 一定会被收集。
@@ -47,29 +53,29 @@ public class LogJobHandler implements JobHandler, DynamicApiHandler {
         // 新建线程会继承父线程上下文，因此此处日志也会被收集。
         Thread plainThread = new Thread(() -> {
             log.info("[Job-NewThread] name={}, params={}", context.getJobName(), params);
-            context.appendLog(jobConstants.getHandlerDemo().getNewThreadLog());
-        }, jobConstants.getHandlerDemo().getPlainThreadName());
+            context.appendLog(NEW_THREAD_LOG);
+        }, PLAIN_THREAD_NAME);
         plainThread.setDaemon(true);
         plainThread.start();
 
         // 情形 3：new Thread 显式透传 MDC（最稳妥，可避免线程池复用导致的上下文丢失）。
         Runnable asyncTask = MdcUtils.wrap(() -> {
             log.info("[Job-Async] name={}, async params={}", context.getJobName(), params);
-            context.appendLog(jobConstants.getHandlerDemo().getAsyncThreadLog());
+            context.appendLog(ASYNC_THREAD_LOG);
         });
-        Thread asyncThread = MdcUtils.newThread(jobConstants.getHandlerDemo().getAsyncThreadName(), asyncTask, true);
+        Thread asyncThread = MdcUtils.newThread(ASYNC_THREAD_NAME, asyncTask, true);
         asyncThread.start();
 
         // 情形 4：自建 Executor 未包装。
         // 线程池第一次创建线程时会继承父线程上下文，所以“新建线程”阶段仍会被收集；
         // 但线程池复用后，若上下文未显式透传，后续任务可能丢失 MDC。
-        ExecutorService rawExecutor = Executors.newFixedThreadPool(jobConstants.getHandlerDemo().getRawExecutorPoolSize());
+        ExecutorService rawExecutor = Executors.newFixedThreadPool(RAW_EXECUTOR_POOL_SIZE);
         rawExecutor.submit(() -> log.info("[Job-Executor-Plain] name={}", context.getJobName()));
         rawExecutor.shutdown();
 
         // 情形 5：自建 Executor 显式包装（推荐，稳定收集）。
         ExecutorService wrappedExecutor = MdcUtils.wrapExecutorService(
-                Executors.newFixedThreadPool(jobConstants.getHandlerDemo().getWrappedExecutorPoolSize()));
+                Executors.newFixedThreadPool(WRAPPED_EXECUTOR_POOL_SIZE));
         wrappedExecutor.submit(() -> log.info("[Job-Executor-Wrapped] name={}", context.getJobName()));
         wrappedExecutor.shutdown();
 
@@ -77,11 +83,11 @@ public class LogJobHandler implements JobHandler, DynamicApiHandler {
         ScheduledExecutorService scheduled = MdcUtils.wrapScheduledExecutorService(Executors.newSingleThreadScheduledExecutor());
         scheduled.schedule(
                 () -> log.info("[Job-Scheduled] name={}", context.getJobName()),
-                jobConstants.getHandlerDemo().getScheduleDelayMillis(),
+                SCHEDULE_DELAY_MILLIS,
                 TimeUnit.MILLISECONDS);
         scheduled.shutdown();
 
-        context.appendLog(jobConstants.getHandlerDemo().getManualLogEnd());
+        context.appendLog(MANUAL_LOG_END);
     }
 
     @Override

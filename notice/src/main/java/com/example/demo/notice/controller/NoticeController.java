@@ -152,7 +152,7 @@ public class NoticeController extends BaseController {
         AuthUser user = AuthContext.get();
         if (user == null || user.getId() == null) {
             long timeout = noticeConstants.getStream().getAnonymousEmitterTimeoutMillis();
-            return new SseEmitter(timeout > 0 ? timeout : 60000L);
+            return new SseEmitter(timeout > 0 ? timeout : 0L);
         }
         Long userId = user.getId();
         int latestLimit = noticeConstants.getStream().getLatestLimit();

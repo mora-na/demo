@@ -52,7 +52,7 @@ public class NoticeStreamService {
         }
         emitters.computeIfAbsent(userId, key -> new CopyOnWriteArrayList<>()).add(emitter);
         emitter.onCompletion(() -> removeEmitter(userId, emitter));
-        emitter.onTimeout(() -> removeEmitter(userId, emitter));
+        emitter.onTimeout(emitter::complete);
         emitter.onError((ex) -> removeEmitter(userId, emitter));
         if (latestNotices != null && isLatestCacheEnabled()) {
             latestCache.put(userId, buildLatestDeque(latestNotices));
@@ -310,7 +310,10 @@ public class NoticeStreamService {
 
     private long resolveEmitterTimeoutMillis() {
         long timeout = noticeConstants.getStream().getEmitterTimeoutMillis();
-        return timeout > 0 ? timeout : 600000L;
+        if (timeout <= 0) {
+            return 0L;
+        }
+        return timeout;
     }
 
     private void initCaches() {

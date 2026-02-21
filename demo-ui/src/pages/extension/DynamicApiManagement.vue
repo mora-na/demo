@@ -66,18 +66,6 @@
       <el-table-column type="expand">
         <template #default="{row}">
           <div class="detail-grid">
-            <div class="detail-item">
-              <div class="detail-label">{{ t("dynamicApi.table.authMode") }}</div>
-              <div class="detail-value">{{ row.authMode || "-" }}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-label">{{ t("dynamicApi.table.rateLimit") }}</div>
-              <div class="detail-value">{{ row.rateLimitPolicy || "-" }}</div>
-            </div>
-            <div class="detail-item">
-              <div class="detail-label">{{ t("dynamicApi.table.timeout") }}</div>
-              <div class="detail-value">{{ row.timeoutMs != null ? `${row.timeoutMs}ms` : "-" }}</div>
-            </div>
             <div class="detail-item detail-item--full">
               <div class="detail-label">{{ t("dynamicApi.table.config") }}</div>
               <div class="detail-value detail-pre">{{ row.config || "-" }}</div>
@@ -96,6 +84,21 @@
       <el-table-column :label="t('dynamicApi.table.path')" min-width="200" prop="path" show-overflow-tooltip/>
       <el-table-column :label="t('dynamicApi.table.method')" prop="method" width="80"/>
       <el-table-column :label="t('dynamicApi.table.type')" prop="type" width="80"/>
+      <el-table-column :label="t('dynamicApi.table.authMode')" width="90">
+        <template #default="{row}">
+          {{ authModeLabel(row.authMode) }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('dynamicApi.table.rateLimit')" min-width="160" show-overflow-tooltip>
+        <template #default="{row}">
+          {{ rateLimitLabel(row.rateLimitPolicy) }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('dynamicApi.table.timeout')" width="90">
+        <template #default="{row}">
+          {{ timeoutLabel(row.timeoutMs) }}
+        </template>
+      </el-table-column>
       <el-table-column :label="t('dynamicApi.table.status')" width="100">
         <template #default="{row}">
           <span :class="statusClass(row.status)">{{ statusLabel(row.status) }}</span>
@@ -367,6 +370,15 @@ const beanOptions = computed(() => beanCatalog.value || []);
 const rateLimitOptions = computed(() => rateLimitPolicies.value || []);
 const currentType = computed(() => normalizeType(form.type));
 const isCustomType = computed(() => !isBuiltInType(form.type));
+const rateLimitLookup = computed(() => {
+  const map = new Map<string, string>();
+  rateLimitOptions.value.forEach((policy) => {
+    if (policy?.id) {
+      map.set(policy.id, policyLabel(policy));
+    }
+  });
+  return map;
+});
 
 function normalizeType(value?: string) {
   return (value || "").trim().toUpperCase();
@@ -789,6 +801,31 @@ function statusClass(status?: string) {
     default:
       return "tag-muted";
   }
+}
+
+function authModeLabel(value?: string) {
+  switch (value) {
+    case "PUBLIC":
+      return t("dynamicApi.auth.public");
+    case "INHERIT":
+      return t("dynamicApi.auth.inherit");
+    default:
+      return value || "-";
+  }
+}
+
+function rateLimitLabel(value?: string) {
+  if (!value) {
+    return "-";
+  }
+  return rateLimitLookup.value.get(value) || value;
+}
+
+function timeoutLabel(value?: number) {
+  if (value == null) {
+    return "-";
+  }
+  return `${value}ms`;
 }
 
 function formatDateTime(value?: string) {
