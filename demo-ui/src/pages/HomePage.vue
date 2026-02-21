@@ -1688,7 +1688,7 @@ onUnmounted(() => {
   width: 100%;
   border: 1px solid transparent;
   border-radius: 14px;
-  padding: 10px 12px 10px 14px;
+  padding: 10px 12px 10px var(--nav-item-indent, 14px);
   background: rgba(255, 255, 255, 0.7);
   display: flex;
   flex-direction: row;
@@ -1723,6 +1723,7 @@ onUnmounted(() => {
 
 .nav-root {
   font-weight: 600;
+  --nav-item-indent: 14px;
 }
 
 .nav-arrow {
@@ -1769,6 +1770,10 @@ onUnmounted(() => {
   color: #2b3a55;
 }
 
+.nav-item.nav-child {
+  --nav-item-indent: 22px;
+}
+
 .nav-item.nav-child .nav-icon-svg {
   width: 14px;
   height: 14px;
@@ -1785,7 +1790,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-left: 6px;
+  padding-left: 0;
 }
 
 .nav-brand-row,
@@ -1816,6 +1821,12 @@ onUnmounted(() => {
 .console-drawer:not(.open) .nav-item {
   padding: 10px;
   justify-content: center;
+  gap: 0;
+}
+
+.console-drawer:not(.open) .nav-label,
+.console-drawer:not(.open) .nav-arrow {
+  display: none;
 }
 
 .console-drawer:not(.open) .nav-children {
@@ -1824,6 +1835,17 @@ onUnmounted(() => {
 
 .console-drawer:not(.open) .nav-brand {
   justify-content: center;
+}
+
+.console-drawer:not(.open) .nav-item .nav-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+}
+
+.console-drawer:not(.open) .nav-item .nav-icon-svg {
+  width: 16px;
+  height: 16px;
 }
 
 .console-drawer:not(.open) .nav-item.active {
