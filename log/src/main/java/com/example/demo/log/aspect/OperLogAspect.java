@@ -11,7 +11,10 @@ import com.example.demo.log.entity.SysOperLog;
 import com.example.demo.log.enums.BusinessType;
 import com.example.demo.log.event.OperLogEvent;
 import com.example.demo.log.support.IpUtils;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
@@ -20,7 +23,9 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.BridgeMethodResolver;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.ExpressionParser;
@@ -34,10 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,9 +83,10 @@ public class OperLogAspect {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
         Class<?> targetClass = joinPoint.getTarget() == null ? signature.getDeclaringType() : joinPoint.getTarget().getClass();
-        OperLog operLog = AnnotatedElementUtils.findMergedAnnotation(method, OperLog.class);
-        RequirePermission permission = resolvePermission(method, targetClass);
-        RequireLogin login = resolveLogin(method, targetClass);
+        Method specificMethod = resolveSpecificMethod(method, targetClass);
+        OperLog operLog = AnnotatedElementUtils.findMergedAnnotation(specificMethod, OperLog.class);
+        RequirePermission permission = resolvePermission(specificMethod, targetClass);
+        RequireLogin login = resolveLogin(specificMethod, targetClass);
         HttpServletRequest request = currentRequest();
         String httpMethod = request == null ? null : request.getMethod();
 
@@ -320,11 +323,63 @@ public class OperLogAspect {
         if (StringUtils.isBlank(json) || excludeParams == null || excludeParams.length == 0) {
             return json;
         }
-        String masked = json;
+        Set<String> fields = new HashSet<>();
         for (String field : excludeParams) {
-            if (StringUtils.isBlank(field)) {
-                continue;
+            if (StringUtils.isNotBlank(field)) {
+                fields.add(field);
             }
+        }
+        if (fields.isEmpty()) {
+            return json;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(json);
+            if (root == null) {
+                return json;
+            }
+            boolean changed = maskNode(root, fields);
+            if (!changed) {
+                return json;
+            }
+            return objectMapper.writeValueAsString(root);
+        } catch (Exception ignored) {
+            return maskSensitiveFlat(json, fields);
+        }
+    }
+
+    private boolean maskNode(JsonNode node, Set<String> fields) {
+        if (node == null) {
+            return false;
+        }
+        boolean changed = false;
+        if (node.isObject()) {
+            ObjectNode objectNode = (ObjectNode) node;
+            java.util.Iterator<Map.Entry<String, JsonNode>> iterator = objectNode.fields();
+            while (iterator.hasNext()) {
+                Map.Entry<String, JsonNode> entry = iterator.next();
+                String name = entry.getKey();
+                JsonNode child = entry.getValue();
+                if (fields.contains(name)) {
+                    objectNode.put(name, logConstants.getAspect().getMaskValue());
+                    changed = true;
+                } else {
+                    changed |= maskNode(child, fields);
+                }
+            }
+            return changed;
+        }
+        if (node.isArray()) {
+            ArrayNode arrayNode = (ArrayNode) node;
+            for (int i = 0; i < arrayNode.size(); i++) {
+                changed |= maskNode(arrayNode.get(i), fields);
+            }
+        }
+        return changed;
+    }
+
+    private String maskSensitiveFlat(String json, Set<String> fields) {
+        String masked = json;
+        for (String field : fields) {
             String pattern = "\"" + Pattern.quote(field) + "\"\\s*:\\s*\"[^\"]*\"";
             masked = masked.replaceAll(pattern, "\"" + field + "\":\"" + logConstants.getAspect().getMaskValue() + "\"");
         }
@@ -407,5 +462,13 @@ public class OperLogAspect {
     private HttpServletRequest currentRequest() {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         return attributes == null ? null : attributes.getRequest();
+    }
+
+    private Method resolveSpecificMethod(Method method, Class<?> targetClass) {
+        if (method == null || targetClass == null) {
+            return method;
+        }
+        Method specific = AopUtils.getMostSpecificMethod(method, targetClass);
+        return BridgeMethodResolver.findBridgedMethod(specific);
     }
 }

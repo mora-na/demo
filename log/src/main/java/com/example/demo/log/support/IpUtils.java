@@ -35,13 +35,34 @@ public final class IpUtils {
             if (StringUtils.isBlank(header)) {
                 continue;
             }
-            String ip = request.getHeader(header);
-            if (StringUtils.isNotBlank(ip) && !Strings.CI.equals(ip, ipConstants.getUnknownToken())) {
-                if (StringUtils.isNotBlank(ipConstants.getMultiIpSeparator())
-                        && ip.contains(ipConstants.getMultiIpSeparator())) {
-                    return ip.split(Pattern.quote(ipConstants.getMultiIpSeparator()))[0].trim();
+            String ipHeader = request.getHeader(header);
+            if (StringUtils.isBlank(ipHeader)) {
+                continue;
+            }
+            String separator = ipConstants.getMultiIpSeparator();
+            if (StringUtils.isBlank(separator)) {
+                String candidate = ipHeader.trim();
+                if (!isUnknownToken(candidate, ipConstants)) {
+                    return candidate;
                 }
-                return ip;
+                continue;
+            }
+            if (ipHeader.contains(separator)) {
+                String[] parts = ipHeader.split(Pattern.quote(separator));
+                for (String part : parts) {
+                    String candidate = part == null ? null : part.trim();
+                    if (StringUtils.isBlank(candidate)) {
+                        continue;
+                    }
+                    if (!isUnknownToken(candidate, ipConstants)) {
+                        return candidate;
+                    }
+                }
+                continue;
+            }
+            String candidate = ipHeader.trim();
+            if (!isUnknownToken(candidate, ipConstants)) {
+                return candidate;
             }
         }
         return request.getRemoteAddr();
@@ -93,5 +114,12 @@ public final class IpUtils {
     private static LogConstants constants() {
         LogConstants bean = SpringContextHolder.getBean(LogConstants.class);
         return bean == null ? DEFAULTS : bean;
+    }
+
+    private static boolean isUnknownToken(String value, LogConstants.Ip ipConstants) {
+        if (StringUtils.isBlank(value)) {
+            return true;
+        }
+        return Strings.CI.equals(value, ipConstants.getUnknownToken());
     }
 }

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.util.HtmlUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -89,7 +90,7 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         job.setStatus(status);
         job.setAllowConcurrent(allowConcurrent);
         job.setMisfirePolicy(misfirePolicy);
-        job.setParams(request.getParams());
+        job.setParams(normalizeParams(request.getParams()));
         job.setRemark(request.getRemark());
         if (creator != null) {
             job.setCreatedBy(creator.getId());
@@ -166,7 +167,7 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
             job.setMisfirePolicy(policy);
         }
         if (request.getParams() != null) {
-            job.setParams(request.getParams());
+            job.setParams(normalizeParams(request.getParams()));
         }
         if (request.getRemark() != null) {
             job.setRemark(request.getRemark());
@@ -297,4 +298,10 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         action.run();
     }
 
+    private String normalizeParams(String params) {
+        if (params == null) {
+            return null;
+        }
+        return HtmlUtils.htmlUnescape(params);
+    }
 }

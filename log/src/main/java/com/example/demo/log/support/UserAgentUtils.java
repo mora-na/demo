@@ -59,9 +59,6 @@ public final class UserAgentUtils {
         if (containsToken(ua, constants.getOsWindowsToken())) {
             return StringUtils.defaultIfBlank(constants.getOsWindowsName(), constants.getUnknown());
         }
-        if (containsToken(ua, constants.getOsMacToken())) {
-            return StringUtils.defaultIfBlank(constants.getOsMacName(), constants.getUnknown());
-        }
         if (containsToken(ua, constants.getOsAndroidToken())) {
             return StringUtils.defaultIfBlank(constants.getOsAndroidName(), constants.getUnknown());
         }
@@ -69,6 +66,9 @@ public final class UserAgentUtils {
                 || containsToken(ua, constants.getOsIpadToken())
                 || containsToken(ua, constants.getOsIosToken())) {
             return StringUtils.defaultIfBlank(constants.getOsIosName(), constants.getUnknown());
+        }
+        if (containsToken(ua, constants.getOsMacToken())) {
+            return StringUtils.defaultIfBlank(constants.getOsMacName(), constants.getUnknown());
         }
         if (containsToken(ua, constants.getOsLinuxToken())) {
             return StringUtils.defaultIfBlank(constants.getOsLinuxName(), constants.getUnknown());

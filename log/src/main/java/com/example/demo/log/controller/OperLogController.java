@@ -52,7 +52,10 @@ public class OperLogController extends BaseController {
         if (ids == null || ids.isEmpty()) {
             return success();
         }
-        operLogService.removeByIds(ids);
+        if (!operLogService.removeByIds(ids)) {
+            return error(logConstants.getController().getInternalServerErrorCode(),
+                    i18n(logConstants.getMessage().getCommonDeleteFailed()));
+        }
         return success();
     }
 }

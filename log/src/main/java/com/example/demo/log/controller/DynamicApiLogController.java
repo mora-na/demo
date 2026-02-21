@@ -49,7 +49,10 @@ public class DynamicApiLogController extends BaseController {
         if (ids == null || ids.isEmpty()) {
             return success();
         }
-        logService.removeByIds(ids);
+        if (!logService.removeByIds(ids)) {
+            return error(logConstants.getController().getInternalServerErrorCode(),
+                    i18n(logConstants.getMessage().getCommonDeleteFailed()));
+        }
         return success();
     }
 }

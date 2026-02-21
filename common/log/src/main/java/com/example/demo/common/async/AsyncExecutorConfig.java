@@ -2,6 +2,7 @@ package com.example.demo.common.async;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.task.TaskExecutionProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +13,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.time.Duration;
-import java.util.concurrent.Executor;
 
 /**
  * 异步执行器配置，启用 MDC 透传。
@@ -22,6 +22,7 @@ import java.util.concurrent.Executor;
  */
 @Configuration
 @EnableAsync
+@ConditionalOnProperty(prefix = "common.async", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class AsyncExecutorConfig {
 
     @Bean
@@ -31,7 +32,8 @@ public class AsyncExecutorConfig {
 
     @Bean(name = {AsyncAnnotationBeanPostProcessor.DEFAULT_TASK_EXECUTOR_BEAN_NAME, "applicationTaskExecutor"})
     @Primary
-    @ConditionalOnMissingBean(Executor.class)
+    @ConditionalOnMissingBean(name = {AsyncAnnotationBeanPostProcessor.DEFAULT_TASK_EXECUTOR_BEAN_NAME,
+            "applicationTaskExecutor"})
     public ThreadPoolTaskExecutor applicationTaskExecutor(TaskExecutionProperties properties,
                                                           ObjectProvider<TaskDecorator> decoratorProvider) {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
