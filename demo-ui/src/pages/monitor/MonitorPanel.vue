@@ -14,6 +14,8 @@
     <div class="system-body">
       <OperLogTable v-if="activeMenuCode === 'oper-log'"/>
       <LoginLogTable v-else-if="activeMenuCode === 'login-log'"/>
+      <NoticeStreamMetrics v-else-if="activeMenuCode === 'notice-stream-metrics'"/>
+      <JobLogMetrics v-else-if="activeMenuCode === 'job-log-metrics'"/>
       <div v-else class="system-placeholder">{{ t("monitorPanel.placeholder") }}</div>
     </div>
   </section>
@@ -26,6 +28,8 @@ import type {MenuTree} from "../../api/auth";
 
 const OperLogTable = defineAsyncComponent(() => import("./OperLogTable.vue"));
 const LoginLogTable = defineAsyncComponent(() => import("./LoginLogTable.vue"));
+const NoticeStreamMetrics = defineAsyncComponent(() => import("./NoticeStreamMetrics.vue"));
+const JobLogMetrics = defineAsyncComponent(() => import("./JobLogMetrics.vue"));
 
 const props = defineProps<{
   menus: MenuTree[];
@@ -56,6 +60,10 @@ function menuLabel(menu: MenuTree) {
       return t("monitorPanel.tabs.operLog");
     case "login-log":
       return t("monitorPanel.tabs.loginLog");
+    case "notice-stream-metrics":
+      return t("monitorPanel.tabs.noticeStream");
+    case "job-log-metrics":
+      return t("monitorPanel.tabs.jobLog");
     default:
       return menu.name;
   }

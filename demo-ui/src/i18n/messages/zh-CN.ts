@@ -386,7 +386,9 @@ export default {
         placeholder: "请选择系统监控子菜单。",
         tabs: {
             operLog: "操作日志",
-            loginLog: "登录日志"
+            loginLog: "登录日志",
+            noticeStream: "通知流监控",
+            jobLog: "任务日志监控"
         }
     },
     extensionPanel: {

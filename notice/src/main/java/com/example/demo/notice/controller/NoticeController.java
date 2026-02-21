@@ -5,6 +5,7 @@ import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.model.PageResult;
 import com.example.demo.common.web.BaseController;
+import com.example.demo.common.web.permission.PermissionProperties;
 import com.example.demo.common.web.permission.RequireLogin;
 import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.notice.config.NoticeConstants;
@@ -21,9 +22,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 系统通知接口。
@@ -41,6 +44,7 @@ public class NoticeController extends BaseController {
     private final NoticeRecipientService noticeRecipientService;
     private final NoticeStreamService noticeStreamService;
     private final NoticeConstants noticeConstants;
+    private final PermissionProperties permissionProperties;
 
     /**
      * 管理端获取通知列表。
@@ -167,7 +171,32 @@ public class NoticeController extends BaseController {
     @GetMapping("/stream/metrics")
     @RequirePermission("notice:stream:metrics")
     public CommonResult<NoticeStreamMetricsVO> streamMetrics() {
+        AuthUser user = AuthContext.get();
+        if (!isSuperUser(user)) {
+            return error(HttpServletResponse.SC_FORBIDDEN, i18n("auth.permission.denied"));
+        }
         return success(noticeStreamService.snapshotMetrics());
+    }
+
+    private boolean isSuperUser(AuthUser user) {
+        if (user == null) {
+            return false;
+        }
+        List<String> superUsers = permissionProperties.getSuperUsers();
+        if (superUsers == null || superUsers.isEmpty()) {
+            return false;
+        }
+        String userName = user.getUserName();
+        if (userName == null) {
+            return false;
+        }
+        String normalized = userName.toLowerCase(Locale.ROOT);
+        for (String superUser : superUsers) {
+            if (superUser != null && normalized.equals(superUser.toLowerCase(Locale.ROOT))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

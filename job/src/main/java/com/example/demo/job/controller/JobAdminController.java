@@ -5,6 +5,7 @@ import com.example.demo.auth.model.AuthUser;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.model.PageResult;
 import com.example.demo.common.web.BaseController;
+import com.example.demo.common.web.permission.PermissionProperties;
 import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.dto.*;
@@ -19,8 +20,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 定时任务管理接口。
@@ -38,6 +41,7 @@ public class JobAdminController extends BaseController {
     private final SysJobLogService jobLogService;
     private final JobHandlerRegistry jobHandlerRegistry;
     private final JobConstants jobConstants;
+    private final PermissionProperties permissionProperties;
     private final JobLogCollector jobLogCollector;
     private final JobParamValidator jobParamValidator;
 
@@ -193,6 +197,31 @@ public class JobAdminController extends BaseController {
     @GetMapping("/logs/metrics")
     @RequirePermission("job:log:metrics")
     public CommonResult<JobLogCollectorMetricsVO> logCollectorMetrics() {
+        AuthUser user = AuthContext.get();
+        if (!isSuperUser(user)) {
+            return error(HttpServletResponse.SC_FORBIDDEN, i18n("auth.permission.denied"));
+        }
         return success(jobLogCollector.snapshotMetrics());
+    }
+
+    private boolean isSuperUser(AuthUser user) {
+        if (user == null) {
+            return false;
+        }
+        List<String> superUsers = permissionProperties.getSuperUsers();
+        if (superUsers == null || superUsers.isEmpty()) {
+            return false;
+        }
+        String userName = user.getUserName();
+        if (userName == null) {
+            return false;
+        }
+        String normalized = userName.toLowerCase(Locale.ROOT);
+        for (String superUser : superUsers) {
+            if (superUser != null && normalized.equals(superUser.toLowerCase(Locale.ROOT))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

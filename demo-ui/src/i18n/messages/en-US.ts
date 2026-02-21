@@ -386,7 +386,9 @@ export default {
         placeholder: "Select a monitor tab.",
         tabs: {
             operLog: "Operation Logs",
-            loginLog: "Login Logs"
+            loginLog: "Login Logs",
+            noticeStream: "Notice Stream",
+            jobLog: "Job Log Metrics"
         }
     },
     extensionPanel: {

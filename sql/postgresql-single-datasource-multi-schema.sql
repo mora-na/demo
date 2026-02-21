@@ -608,6 +608,7 @@ CREATE TABLE IF NOT EXISTS sys_order
 );
 CREATE INDEX IF NOT EXISTS idx_sys_order_user ON sys_order (user_id);
 CREATE INDEX IF NOT EXISTS idx_sys_order_user_deleted_create_time ON sys_order (user_id, is_deleted, create_time, id);
+CREATE INDEX IF NOT EXISTS idx_sys_order_dept_deleted_create_time ON sys_order (create_dept, is_deleted, create_time, id);
 CREATE INDEX IF NOT EXISTS idx_sys_order_user_deleted_amount ON sys_order (user_id, is_deleted, amount);
 COMMENT ON TABLE sys_order IS '订单表';
 COMMENT ON COLUMN sys_order.id IS '主键ID';
@@ -1397,6 +1398,10 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (190, '系统监控', 'monitor', NULL, '/monitor', 'Layout', NULL, 1, 40, '系统监控'),
        (191, '操作日志', 'oper-log', 190, '/monitor/oper-log', 'OperLogPage', 'log:query', 1, 10, '操作日志'),
        (192, '登录日志', 'login-log', 190, '/monitor/login-log', 'LoginLogPage', 'login-log:query', 1, 20, '登录日志'),
+       (193, '通知流监控', 'notice-stream-metrics', 190, '/monitor/notice-stream', 'NoticeStreamMetricsPage',
+        'notice:stream:metrics', 1, 30, '通知流监控'),
+       (194, '任务日志监控', 'job-log-metrics', 190, '/monitor/job-log', 'JobLogMetricsPage', 'job:log:metrics', 1, 40,
+        '任务日志监控'),
        (200, '订单管理', 'order', NULL, '/orders', 'OrderPage', 'order:query', 1, 20, '订单管理'),
        (210, '接口扩展', 'extension', NULL, '/extension', 'Layout', NULL, 1, 50, '接口扩展'),
        (211, '动态接口', 'dynamic-api', 210, '/extension/dynamic-api', 'DynamicApiPage', 'dynamic-api:query', 1, 10,
@@ -1589,6 +1594,8 @@ VALUES (1, 10, NULL),
        (1, 190, NULL),
        (1, 191, NULL),
        (1, 192, NULL),
+       (1, 193, NULL),
+       (1, 194, NULL),
        (1, 200, NULL),
        (1, 210, NULL),
        (1, 211, NULL),
