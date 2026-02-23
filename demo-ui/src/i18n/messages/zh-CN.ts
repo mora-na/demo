@@ -399,7 +399,328 @@ export default {
             operLog: "操作日志",
             loginLog: "登录日志",
             noticeStream: "通知流监控",
-            jobLog: "任务日志监控"
+            jobLog: "任务日志监控",
+            druid: "数据源监控"
+        }
+    },
+    druid: {
+        title: "数据源监控",
+        subtitle: "Druid 运行与数据源监控。",
+        loadFailed: "加载数据源监控失败",
+        unavailable: "未检测到 Druid 监控数据。",
+        generatedAt: "更新时间 {time}",
+        menu: {
+            title: "监控菜单",
+            home: "首页",
+            datasource: "数据源",
+            sql: "SQL监控",
+            wall: "SQL防火墙",
+            webapp: "Web应用",
+            weburi: "URI监控",
+            session: "Session监控",
+            spring: "Spring监控",
+            json: "JSON API"
+        },
+        home: {
+            table: {
+                label: "指标",
+                value: "数值",
+                desc: "解释"
+            },
+            rows: {
+                startTime: {
+                    label: "启动时间",
+                    desc: "服务启动时间"
+                },
+                version: {
+                    label: "版本",
+                    desc: "Druid 版本信息"
+                },
+                driver: {
+                    label: "驱动",
+                    desc: "已加载驱动"
+                },
+                resetEnable: {
+                    label: "是否允许重置",
+                    desc: "是否允许重置监控数据"
+                },
+                resetCount: {
+                    label: "重置次数",
+                    desc: "累计重置次数"
+                },
+                javaVersion: {
+                    label: "Java版本",
+                    desc: "运行 Java 版本"
+                },
+                jvmName: {
+                    label: "JVM名称",
+                    desc: "当前 JVM 名称"
+                },
+                classPath: {
+                    label: "classpath路径",
+                    desc: "Java classpath 路径"
+                }
+            }
+        },
+        datasource: {
+            selector: "选择数据源",
+            noData: "暂无数据源",
+            table: {
+                label: "指标",
+                value: "数值"
+            },
+            extraTitle: "其他字段",
+            stackTitle: "活跃连接堆栈查看",
+            poolTitle: "连接池中连接信息",
+            sqlListTitle: "sql列表",
+            fields: {
+                userName: "用户名",
+                url: "连接地址",
+                dbType: "数据库类型",
+                driverClassName: "驱动类名",
+                filterClassNames: "Filter 类名",
+                testOnBorrow: "获取连接时检测",
+                testWhileIdle: "空闲时检测",
+                testOnReturn: "连接放回连接池时检测",
+                initialSize: "初始化连接大小",
+                minIdle: "最小空闲连接数",
+                maxActive: "最大连接数",
+                queryTimeout: "查询超时时间",
+                transactionQueryTimeout: "事务查询超时时间",
+                loginTimeout: "登录超时时间",
+                validConnectionChecker: "连接有效性检查类名",
+                exceptionSorter: "ExceptionSorter类名",
+                defaultAutoCommit: "默认autocommit设置",
+                defaultReadOnly: "默认只读设置",
+                defaultTransactionIsolation: "默认事务隔离",
+                minEvictableIdleTimeMillis: "MinEvictableldleTimeMillis",
+                maxEvictableIdleTimeMillis: "MaxEvictableldleTimeMillis",
+                keepAlive: "KeepAlive",
+                failFast: "FailFast",
+                poolPreparedStatements: "PoolPreparedStatements",
+                maxPoolPreparedStatementPerConnectionSize: "MaxPoolPreparedStatementPerConnectionSize",
+                maxWait: "MaxWait",
+                maxWaitThreadCount: "MaxWaitThreadCount",
+                logDifferentThread: "LogDifferentThread",
+                useUnfairLock: "UseUnfairLock",
+                initGlobalVariants: "InitGlobalVariants",
+                initVariants: "InitVariants",
+                connectCount: "累计总次数",
+                waitTime: "等待总时长",
+                waitThreadCount: "等待线程数量",
+                transactionCount: "事务启动数",
+                transactionHistogram: "事务时间分布",
+                poolingCount: "池中连接数",
+                poolingPeak: "池中连接数峰值",
+                poolingPeakTime: "池中连接数峰值时间",
+                activeCount: "活跃连接数",
+                activePeak: "活跃连接数峰值",
+                activePeakTime: "活跃连接数峰值时间",
+                logicConnectCount: "逻辑连接打开次数",
+                logicCloseCount: "逻辑连接关闭次数",
+                logicConnectErrorCount: "逻辑连接错误次数",
+                discardCount: "校验失败废弃连接数",
+                logicConnectReuseCount: "逻辑连接回收重用次数",
+                physicalConnectCount: "物理连接打开次数",
+                physicalCloseCount: "物理关闭数量",
+                physicalConnectErrorCount: "物理连接错误次数",
+                executeCount: "执行数",
+                executeQueryCount: "ExecuteQueryCount",
+                executeUpdateCount: "ExecuteUpdateCount",
+                executeBatchCount: "ExecuteBatchCount",
+                errorCount: "错误数",
+                commitCount: "提交数",
+                rollbackCount: "回滚数",
+                preparedStatementOpenCount: "真实PreparedStatement打开次数",
+                preparedStatementCloseCount: "真实PreparedStatement关闭次数",
+                psCacheAccessCount: "PSCache访问次数",
+                psCacheHitCount: "PSCache命中次数",
+                psCacheMissCount: "PSCache不命中次数",
+                connectionHoldTimeHistogram: "连接持有时间分布",
+                clobOpenCount: "Clob打开次数",
+                blobOpenCount: "Blob打开次数",
+                keepAliveCheckCount: "KeepAlive检测次数"
+            }
+        },
+        extra: {
+            key: "字段",
+            value: "值"
+        },
+        sql: {
+            refreshLabel: "SQL刷新时间",
+            refresh: {
+                none: "不自动刷新",
+                five: "5 秒",
+                ten: "10 秒",
+                thirty: "30 秒"
+            },
+            detailTitle: "SQL 明细",
+            columns: {
+                index: "N",
+                sql: "SQL",
+                datasource: "数据源",
+                executeCount: "执行数",
+                totalTime: "执行时间",
+                maxTime: "最慢",
+                transactionCount: "事务执行",
+                errorCount: "错误数",
+                updateCount: "更新行数",
+                fetchCount: "读取行数",
+                runningCount: "执行中",
+                concurrentMax: "最大并发",
+                executeHistogram: "执行时间分布",
+                executeRsHistogram: "执行+RS时分布",
+                fetchHistogram: "读取行分布",
+                updateHistogram: "更新行分布"
+            }
+        },
+        wall: {
+            sections: {
+                summary: "防火墙概览",
+                list: "黑白名单",
+                table: "表级规则",
+                sql: "SQL 规则",
+                other: "其他"
+            }
+        },
+        webapp: {
+            sections: {
+                summary: "Web应用统计"
+            },
+            columns: {
+                contextPath: "应用路径",
+                runningCount: "执行中",
+                concurrentMax: "最大并发",
+                requestCount: "请求次数",
+                requestTime: "请求时间（和）",
+                jdbcExecuteCount: "Jdbc执行数",
+                jdbcExecuteTime: "Jdbc时间",
+                jdbcCommitCount: "事务提交数",
+                jdbcRollbackCount: "事务回滚数",
+                errorCount: "错误数"
+            }
+        },
+        weburi: {
+            columns: {
+                index: "N",
+                uri: "URI",
+                requestCount: "请求次数",
+                requestTime: "请求时间（和）",
+                requestTimeMax: "请求最慢（单次）",
+                runningCount: "执行中",
+                concurrentMax: "最大并发",
+                jdbcExecuteCount: "Jdbc执行数",
+                jdbcExecuteErrorCount: "Jdbc出错数",
+                jdbcExecuteTime: "Jdbc时间",
+                jdbcCommitCount: "事务提交数",
+                jdbcRollbackCount: "事务回滚数",
+                fetchRowCount: "读取行数",
+                updateRowCount: "更新行数",
+                histogram: "区间分布"
+            }
+        },
+        session: {
+            columns: {
+                index: "N",
+                sessionId: "会话",
+                principal: "用户",
+                createTime: "创建时间",
+                lastAccessTime: "最后访问时间",
+                remoteAddress: "远端IP",
+                requestCount: "请求次数",
+                requestTimeTotal: "总请求时长",
+                runningCount: "执行中",
+                concurrentMax: "最大并发",
+                jdbcExecuteCount: "Jdbc执行数",
+                jdbcExecuteTime: "Jdbc时间",
+                jdbcCommitCount: "事务提交数",
+                jdbcRollbackCount: "事务回滚数",
+                fetchRowCount: "读取行数",
+                updateRowCount: "更新行数"
+            }
+        },
+        spring: {
+            columns: {
+                index: "N",
+                className: "类名",
+                method: "方法",
+                executeCount: "执行数",
+                totalTime: "总耗时",
+                runningCount: "执行中",
+                concurrentMax: "最大并发",
+                errorCount: "错误数",
+                jdbcCommitCount: "事务提交数",
+                jdbcRollbackCount: "事务回滚数",
+                fetchRowCount: "读取行数",
+                updateRowCount: "更新行数"
+            }
+        },
+        jsonApi: {
+            table: {
+                name: "名称",
+                path: "路径"
+            },
+            items: {
+                basic: "basic.json",
+                datasource: "datasource.json",
+                datasourceDetail: "datasource-{id}.json",
+                activeConnectionStack: "activeConnectionStackTrace-{datasourceId}.json",
+                sql: "sql.json",
+                wallStat: "wallStat.json",
+                wall: "wall-{id}.json",
+                weburi: "weburi.json",
+                websession: "websession.json",
+                resetAll: "reset-all.json"
+            }
+        },
+        columns: {
+            sql: "SQL",
+            sqlhash: "SQL Hash",
+            datasource: "数据源",
+            datasourceid: "数据源ID",
+            datasourcename: "数据源名称",
+            dbtype: "数据库类型",
+            url: "连接地址",
+            username: "用户名",
+            driverclassname: "驱动类名",
+            filterclassnames: "Filter 类名",
+            executecount: "执行数",
+            totaltime: "总耗时",
+            maxtime: "最慢",
+            avgtime: "平均耗时",
+            errorcount: "错误数",
+            effectedrowcount: "更新行数",
+            updaterowcount: "更新行数",
+            fetchrowcount: "读取行数",
+            runningcount: "执行中",
+            concurrentmax: "最大并发",
+            executetime: "执行时间",
+            executetimehistogram: "执行时间分布",
+            executeandresultsetholdtimehistogram: "执行+RS时分布",
+            fetchrowcounthistogram: "读取行分布",
+            updaterowcounthistogram: "更新行分布",
+            intransactioncount: "事务执行",
+            transactioncount: "事务执行",
+            requestcount: "请求次数",
+            requesttime: "请求时间（和）",
+            requesttimemax: "请求最慢（单次）",
+            contextpath: "应用路径",
+            uri: "URI",
+            sessionid: "会话",
+            principal: "用户",
+            createtime: "创建时间",
+            lastaccesstime: "最后访问时间",
+            remoteaddress: "远端IP",
+            class: "类名",
+            method: "方法",
+            jdbcexecutecount: "Jdbc执行数",
+            jdbcexecutetime: "Jdbc时间",
+            jdbcexecuteerrorcount: "Jdbc出错数",
+            jdbcfetchrowcount: "Jdbc读取行数",
+            jdbcupdaterowcount: "Jdbc更新行数",
+            jdbccommitcount: "事务提交数",
+            jdbcrollbackcount: "事务回滚数",
+            histogram: "区间分布"
         }
     },
     extensionPanel: {

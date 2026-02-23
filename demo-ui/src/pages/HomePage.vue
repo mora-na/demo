@@ -55,20 +55,48 @@
                     v-show="isGroupExpanded(group)"
                     class="nav-children"
                 >
-                  <button
-                      v-for="child in group.children"
-                      :key="child.id"
-                      v-memo="[child.id, activeMenuId]"
-                      :class="{ active: activeMenuId === child.id }"
-                      class="nav-item nav-child"
-                      type="button"
-                      @click="selectMenu(child)"
-                  >
-                    <span class="nav-icon">
-                      <component :is="menuIconComponent(child)" class="nav-icon-svg"/>
-                    </span>
-                    <span class="nav-label">{{ child.name }}</span>
-                  </button>
+                  <div v-for="child in group.children" :key="child.id" class="nav-subgroup">
+                    <button
+                        v-memo="[child.id, activeMenuId]"
+                        :class="{ active: isMenuActive(child) }"
+                        class="nav-item nav-child"
+                        type="button"
+                        @click="handleChildClick(child, $event)"
+                    >
+                      <span class="nav-icon">
+                        <component :is="menuIconComponent(child)" class="nav-icon-svg"/>
+                      </span>
+                      <span class="nav-label">{{ child.name }}</span>
+                      <span
+                          v-if="child.children?.length"
+                          :class="{ expanded: isChildExpanded(child) }"
+                          class="nav-arrow"
+                          @click.stop.prevent="toggleChild(child.id)"
+                      >
+                        ▾
+                      </span>
+                    </button>
+                    <div
+                        v-if="child.children?.length"
+                        v-show="isChildExpanded(child)"
+                        class="nav-children nav-grandchildren"
+                    >
+                      <button
+                          v-for="grand in child.children"
+                          :key="grand.id"
+                          v-memo="[grand.id, activeMenuId]"
+                          :class="{ active: activeMenuId === grand.id }"
+                          class="nav-item nav-grandchild"
+                          type="button"
+                          @click="selectMenu(grand)"
+                      >
+                        <span class="nav-icon">
+                          <component :is="menuIconComponent(grand)" class="nav-icon-svg"/>
+                        </span>
+                        <span class="nav-label">{{ grand.name }}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -453,6 +481,7 @@ const NAV_DRAWER_STORAGE_KEY = "demo.navDrawerOpen";
 const HOME_ROUTE_NAME = "home";
 const HOME_PATH_PREFIX = "/home";
 const expandedGroupId = ref<number | null>(null);
+const expandedChildState = ref<Record<number, boolean>>({});
 
 const menuPathIndex = computed(() => buildMenuPathIndex(menuItems.value));
 
@@ -703,7 +732,7 @@ function resolveStoredMenuForGroup(group: MenuTree): MenuTree | null {
   if (!group.children?.length) {
     return group.id === storedId ? group : null;
   }
-  return group.children.find((item) => item.id === storedId) || null;
+  return findMenuById(group.children, storedId) || null;
 }
 
 function getDefaultSelection(items: MenuTree[]): { group: MenuTree; menu: MenuTree } | null {
@@ -716,13 +745,7 @@ function getDefaultSelection(items: MenuTree[]): { group: MenuTree; menu: MenuTr
     if (storedMenu) {
       const storedGroup = findGroupById(items, storedMenu.id);
       if (storedGroup) {
-        if (storedGroup.children?.length) {
-          const child = storedGroup.children.find((item) => item.id === storedMenu.id) || storedGroup.children[0];
-          if (child) {
-            return {group: storedGroup, menu: child};
-          }
-        }
-        return {group: storedGroup, menu: storedGroup};
+        return {group: storedGroup, menu: storedMenu};
       }
     }
   }
@@ -786,7 +809,7 @@ function resolvePreferredMenu(menu: MenuTree): MenuTree | null {
   }
   const storedId = readStoredMenuId();
   if (storedId != null) {
-    const storedChild = menu.children.find((item) => item.id === storedId);
+    const storedChild = findMenuById(menu.children, storedId);
     if (storedChild) {
       return storedChild;
     }
@@ -891,6 +914,22 @@ function handleGroupClick(menu: MenuTree, event?: MouseEvent) {
   void selectMenu(menu);
 }
 
+function handleChildClick(menu: MenuTree, event?: MouseEvent) {
+  if (menu?.id == null) {
+    return;
+  }
+  if (event?.defaultPrevented) {
+    return;
+  }
+  if (menu.children?.length) {
+    expandedChildState.value = {
+      ...expandedChildState.value,
+      [menu.id]: true
+    };
+  }
+  void selectMenu(menu);
+}
+
 function toggleGroup(id: number) {
   if (expandedGroupId.value === id) {
     expandedGroupId.value = null;
@@ -901,6 +940,35 @@ function toggleGroup(id: number) {
 
 function isGroupExpanded(group: MenuTree) {
   return expandedGroupId.value === group.id;
+}
+
+function toggleChild(id: number) {
+  const current = expandedChildState.value[id];
+  expandedChildState.value = {
+    ...expandedChildState.value,
+    [id]: !current
+  };
+}
+
+function isChildExpanded(menu: MenuTree) {
+  if (!menu.children?.length) {
+    return false;
+  }
+  const stored = expandedChildState.value[menu.id];
+  if (stored != null) {
+    return stored;
+  }
+  return true;
+}
+
+function isMenuActive(menu: MenuTree): boolean {
+  if (activeMenuId.value === menu.id) {
+    return true;
+  }
+  if (!menu.children?.length) {
+    return false;
+  }
+  return menu.children.some((child) => isMenuActive(child));
 }
 
 function selectMenuById(id: number) {
@@ -1781,6 +1849,25 @@ onUnmounted(() => {
   height: 14px;
 }
 
+.nav-item.nav-grandchild {
+  --nav-item-indent: 30px;
+  font-size: 12px;
+}
+
+.nav-item.nav-grandchild .nav-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 10px;
+  background: rgba(15, 23, 42, 0.05);
+  color: #2b3a55;
+}
+
+.nav-item.nav-grandchild .nav-icon-svg {
+  width: 12px;
+  height: 12px;
+}
+
 .nav-label {
   display: inline-block;
   max-width: 220px;
@@ -1793,6 +1880,11 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 6px;
   padding-left: 0;
+}
+
+.nav-grandchildren {
+  padding-left: 8px;
+  gap: 5px;
 }
 
 .nav-brand-row,

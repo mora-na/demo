@@ -857,6 +857,28 @@ export async function getNoticeStreamMetrics(): Promise<ApiResponse<NoticeStream
     return response.data;
 }
 
+export interface DruidMonitorSummary {
+    available?: boolean;
+    generatedAt?: string;
+    basic?: Record<string, unknown>;
+    datasources?: Record<string, unknown>[];
+    datasourceDetails?: Record<string, unknown>[];
+    activeConnectionStacks?: Record<string, unknown>;
+    poolingConnectionInfo?: Record<string, unknown>;
+    sqls?: Record<string, unknown>[];
+    sqlDetails?: Record<string, unknown>[];
+    wall?: Record<string, unknown>;
+    webapp?: Record<string, unknown>[] | Record<string, unknown>;
+    weburi?: Record<string, unknown>[];
+    spring?: Record<string, unknown>[];
+    session?: Record<string, unknown>[] | Record<string, unknown>;
+}
+
+export async function getDruidMonitorSummary(): Promise<ApiResponse<DruidMonitorSummary>> {
+    const response = await api.get<ApiResponse<DruidMonitorSummary>>('/monitor/druid/summary');
+    return response.data;
+}
+
 export interface JobVO {
     id: number;
     name: string;

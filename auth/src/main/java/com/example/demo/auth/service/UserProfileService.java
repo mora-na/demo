@@ -25,6 +25,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserProfileService {
 
+    private static final String SUPER_ONLY_MENU_CODE = "druid-monitor";
+    private static final String SUPER_ONLY_MENU_PERMISSION = "druid:monitor";
+
     private final IdentityReadFacade identityReadFacade;
     private final PermissionProperties permissionProperties;
     private final PasswordPolicyService passwordPolicyService;
@@ -125,7 +128,8 @@ public class UserProfileService {
         if (authUser == null || authUser.getId() == null) {
             return Collections.emptyList();
         }
-        List<IdentityMenuTreeDTO> menus = isSuperUser(authUser)
+        boolean superUser = isSuperUser(authUser);
+        List<IdentityMenuTreeDTO> menus = superUser
                 ? identityReadFacade.listActiveMenus()
                 : identityReadFacade.listMenusByUserId(authUser.getId());
         if (menus == null || menus.isEmpty()) {
@@ -134,6 +138,7 @@ public class UserProfileService {
         return menus.stream()
                 .filter(Objects::nonNull)
                 .filter(menu -> menu.getStatus() == null || menu.getStatus() == 1)
+                .filter(menu -> superUser || !isSuperOnlyMenu(menu))
                 .sorted(Comparator
                         .comparing((IdentityMenuTreeDTO menu) -> menu.getSort() == null ? 0 : menu.getSort())
                         .thenComparing(menu -> menu.getId() == null ? 0L : menu.getId()))
@@ -176,6 +181,18 @@ public class UserProfileService {
         node.setSort(menu.getSort());
         node.setRemark(menu.getRemark());
         return node;
+    }
+
+    private boolean isSuperOnlyMenu(IdentityMenuTreeDTO menu) {
+        if (menu == null) {
+            return false;
+        }
+        String code = StringUtils.trimToEmpty(menu.getCode()).toLowerCase(Locale.ROOT);
+        if (SUPER_ONLY_MENU_CODE.equals(code)) {
+            return true;
+        }
+        String permission = StringUtils.trimToEmpty(menu.getPermission()).toLowerCase(Locale.ROOT);
+        return SUPER_ONLY_MENU_PERMISSION.equals(permission);
     }
 
     private boolean isSuperUser(AuthUser user) {

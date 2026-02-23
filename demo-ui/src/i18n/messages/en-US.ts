@@ -399,7 +399,328 @@ export default {
             operLog: "Operation Logs",
             loginLog: "Login Logs",
             noticeStream: "Notice Stream",
-            jobLog: "Job Log Metrics"
+            jobLog: "Job Log Metrics",
+            druid: "Druid Monitor"
+        }
+    },
+    druid: {
+        title: "Datasource Monitor",
+        subtitle: "Druid runtime and datasource monitoring.",
+        loadFailed: "Failed to load datasource metrics.",
+        unavailable: "Druid statistics are not available.",
+        generatedAt: "Updated {time}",
+        menu: {
+            title: "Monitor Menu",
+            home: "Home",
+            datasource: "Datasource",
+            sql: "SQL Monitor",
+            wall: "SQL Firewall",
+            webapp: "Web App",
+            weburi: "URI Monitor",
+            session: "Session Monitor",
+            spring: "Spring Monitor",
+            json: "JSON API"
+        },
+        home: {
+            table: {
+                label: "Metric",
+                value: "Value",
+                desc: "Explanation"
+            },
+            rows: {
+                startTime: {
+                    label: "Start Time",
+                    desc: "Service start time"
+                },
+                version: {
+                    label: "Version",
+                    desc: "Druid version"
+                },
+                driver: {
+                    label: "Driver",
+                    desc: "Loaded drivers"
+                },
+                resetEnable: {
+                    label: "Reset Enabled",
+                    desc: "Allow metrics reset"
+                },
+                resetCount: {
+                    label: "Reset Count",
+                    desc: "Total reset times"
+                },
+                javaVersion: {
+                    label: "Java Version",
+                    desc: "Runtime Java version"
+                },
+                jvmName: {
+                    label: "JVM Name",
+                    desc: "Current JVM name"
+                },
+                classPath: {
+                    label: "Classpath",
+                    desc: "Java classpath"
+                }
+            }
+        },
+        datasource: {
+            selector: "Select datasource",
+            noData: "No datasource available",
+            table: {
+                label: "Metric",
+                value: "Value"
+            },
+            extraTitle: "Other Fields",
+            stackTitle: "Active Connection Stack Trace",
+            poolTitle: "Pooling Connection Info",
+            sqlListTitle: "SQL List",
+            fields: {
+                userName: "Username",
+                url: "JDBC URL",
+                dbType: "Database Type",
+                driverClassName: "Driver Class",
+                filterClassNames: "Filter Classes",
+                testOnBorrow: "Test On Borrow",
+                testWhileIdle: "Test While Idle",
+                testOnReturn: "Test On Return",
+                initialSize: "Initial Size",
+                minIdle: "Min Idle",
+                maxActive: "Max Active",
+                queryTimeout: "Query Timeout",
+                transactionQueryTimeout: "Transaction Query Timeout",
+                loginTimeout: "Login Timeout",
+                validConnectionChecker: "Valid Connection Checker",
+                exceptionSorter: "ExceptionSorter Class",
+                defaultAutoCommit: "Default Autocommit",
+                defaultReadOnly: "Default Read Only",
+                defaultTransactionIsolation: "Default Transaction Isolation",
+                minEvictableIdleTimeMillis: "MinEvictableIdleTimeMillis",
+                maxEvictableIdleTimeMillis: "MaxEvictableIdleTimeMillis",
+                keepAlive: "KeepAlive",
+                failFast: "FailFast",
+                poolPreparedStatements: "PoolPreparedStatements",
+                maxPoolPreparedStatementPerConnectionSize: "MaxPoolPreparedStatementPerConnectionSize",
+                maxWait: "MaxWait",
+                maxWaitThreadCount: "MaxWaitThreadCount",
+                logDifferentThread: "LogDifferentThread",
+                useUnfairLock: "UseUnfairLock",
+                initGlobalVariants: "InitGlobalVariants",
+                initVariants: "InitVariants",
+                connectCount: "Connect Count",
+                waitTime: "Wait Time",
+                waitThreadCount: "Wait Threads",
+                transactionCount: "Transaction Count",
+                transactionHistogram: "Transaction Histogram",
+                poolingCount: "Pooling Count",
+                poolingPeak: "Pooling Peak",
+                poolingPeakTime: "Pooling Peak Time",
+                activeCount: "Active Count",
+                activePeak: "Active Peak",
+                activePeakTime: "Active Peak Time",
+                logicConnectCount: "Logical Connect Count",
+                logicCloseCount: "Logical Close Count",
+                logicConnectErrorCount: "Logical Connect Errors",
+                discardCount: "Discarded Connections",
+                logicConnectReuseCount: "Logical Reuse Count",
+                physicalConnectCount: "Physical Connect Count",
+                physicalCloseCount: "Physical Close Count",
+                physicalConnectErrorCount: "Physical Connect Errors",
+                executeCount: "Execute Count",
+                executeQueryCount: "ExecuteQueryCount",
+                executeUpdateCount: "ExecuteUpdateCount",
+                executeBatchCount: "ExecuteBatchCount",
+                errorCount: "Error Count",
+                commitCount: "Commit Count",
+                rollbackCount: "Rollback Count",
+                preparedStatementOpenCount: "PreparedStatement Open Count",
+                preparedStatementCloseCount: "PreparedStatement Close Count",
+                psCacheAccessCount: "PSCache Access Count",
+                psCacheHitCount: "PSCache Hit Count",
+                psCacheMissCount: "PSCache Miss Count",
+                connectionHoldTimeHistogram: "Connection Hold Time Histogram",
+                clobOpenCount: "Clob Open Count",
+                blobOpenCount: "Blob Open Count",
+                keepAliveCheckCount: "KeepAlive Check Count"
+            }
+        },
+        extra: {
+            key: "Field",
+            value: "Value"
+        },
+        sql: {
+            refreshLabel: "SQL Refresh Interval",
+            refresh: {
+                none: "No auto refresh",
+                five: "5 seconds",
+                ten: "10 seconds",
+                thirty: "30 seconds"
+            },
+            detailTitle: "SQL Details",
+            columns: {
+                index: "N",
+                sql: "SQL",
+                datasource: "Datasource",
+                executeCount: "Execute Count",
+                totalTime: "Total Time",
+                maxTime: "Max Time",
+                transactionCount: "Transaction Count",
+                errorCount: "Error Count",
+                updateCount: "Update Rows",
+                fetchCount: "Fetch Rows",
+                runningCount: "Running",
+                concurrentMax: "Max Concurrency",
+                executeHistogram: "Execute Time Histogram",
+                executeRsHistogram: "Execute + RS Histogram",
+                fetchHistogram: "Fetch Row Histogram",
+                updateHistogram: "Update Row Histogram"
+            }
+        },
+        wall: {
+            sections: {
+                summary: "Firewall Summary",
+                list: "White/Black Lists",
+                table: "Table Rules",
+                sql: "SQL Rules",
+                other: "Other"
+            }
+        },
+        webapp: {
+            sections: {
+                summary: "Web App Summary"
+            },
+            columns: {
+                contextPath: "Context Path",
+                runningCount: "Running",
+                concurrentMax: "Max Concurrency",
+                requestCount: "Request Count",
+                requestTime: "Request Time (Total)",
+                jdbcExecuteCount: "Jdbc Execute Count",
+                jdbcExecuteTime: "Jdbc Time",
+                jdbcCommitCount: "Commit Count",
+                jdbcRollbackCount: "Rollback Count",
+                errorCount: "Error Count"
+            }
+        },
+        weburi: {
+            columns: {
+                index: "N",
+                uri: "URI",
+                requestCount: "Request Count",
+                requestTime: "Request Time (Total)",
+                requestTimeMax: "Max Request Time",
+                runningCount: "Running",
+                concurrentMax: "Max Concurrency",
+                jdbcExecuteCount: "Jdbc Execute Count",
+                jdbcExecuteErrorCount: "Jdbc Error Count",
+                jdbcExecuteTime: "Jdbc Time",
+                jdbcCommitCount: "Commit Count",
+                jdbcRollbackCount: "Rollback Count",
+                fetchRowCount: "Fetch Row Count",
+                updateRowCount: "Update Row Count",
+                histogram: "Histogram"
+            }
+        },
+        session: {
+            columns: {
+                index: "N",
+                sessionId: "Session",
+                principal: "Principal",
+                createTime: "Create Time",
+                lastAccessTime: "Last Access Time",
+                remoteAddress: "Remote Address",
+                requestCount: "Request Count",
+                requestTimeTotal: "Request Time Total",
+                runningCount: "Running",
+                concurrentMax: "Max Concurrency",
+                jdbcExecuteCount: "Jdbc Execute Count",
+                jdbcExecuteTime: "Jdbc Time",
+                jdbcCommitCount: "Commit Count",
+                jdbcRollbackCount: "Rollback Count",
+                fetchRowCount: "Fetch Row Count",
+                updateRowCount: "Update Row Count"
+            }
+        },
+        spring: {
+            columns: {
+                index: "N",
+                className: "Class",
+                method: "Method",
+                executeCount: "Execute Count",
+                totalTime: "Total Time",
+                runningCount: "Running",
+                concurrentMax: "Max Concurrency",
+                errorCount: "Error Count",
+                jdbcCommitCount: "Commit Count",
+                jdbcRollbackCount: "Rollback Count",
+                fetchRowCount: "Fetch Row Count",
+                updateRowCount: "Update Row Count"
+            }
+        },
+        jsonApi: {
+            table: {
+                name: "Name",
+                path: "Path"
+            },
+            items: {
+                basic: "basic.json",
+                datasource: "datasource.json",
+                datasourceDetail: "datasource-{id}.json",
+                activeConnectionStack: "activeConnectionStackTrace-{datasourceId}.json",
+                sql: "sql.json",
+                wallStat: "wallStat.json",
+                wall: "wall-{id}.json",
+                weburi: "weburi.json",
+                websession: "websession.json",
+                resetAll: "reset-all.json"
+            }
+        },
+        columns: {
+            sql: "SQL",
+            sqlhash: "SQL Hash",
+            datasource: "Datasource",
+            datasourceid: "Datasource ID",
+            datasourcename: "Datasource Name",
+            dbtype: "Database Type",
+            url: "JDBC URL",
+            username: "Username",
+            driverclassname: "Driver Class",
+            filterclassnames: "Filter Classes",
+            executecount: "Execute Count",
+            totaltime: "Total Time",
+            maxtime: "Max Time",
+            avgtime: "Avg Time",
+            errorcount: "Error Count",
+            effectedrowcount: "Updated Rows",
+            updaterowcount: "Updated Rows",
+            fetchrowcount: "Fetch Rows",
+            runningcount: "Running",
+            concurrentmax: "Max Concurrency",
+            executetime: "Execute Time",
+            executetimehistogram: "Execute Time Histogram",
+            executeandresultsetholdtimehistogram: "Execute + RS Histogram",
+            fetchrowcounthistogram: "Fetch Row Histogram",
+            updaterowcounthistogram: "Update Row Histogram",
+            intransactioncount: "Transaction Count",
+            transactioncount: "Transaction Count",
+            requestcount: "Request Count",
+            requesttime: "Request Time (Total)",
+            requesttimemax: "Max Request Time",
+            contextpath: "Context Path",
+            uri: "URI",
+            sessionid: "Session",
+            principal: "Principal",
+            createtime: "Create Time",
+            lastaccesstime: "Last Access Time",
+            remoteaddress: "Remote Address",
+            class: "Class",
+            method: "Method",
+            jdbcexecutecount: "Jdbc Execute Count",
+            jdbcexecutetime: "Jdbc Time",
+            jdbcexecuteerrorcount: "Jdbc Error Count",
+            jdbcfetchrowcount: "Jdbc Fetch Rows",
+            jdbcupdaterowcount: "Jdbc Update Rows",
+            jdbccommitcount: "Commit Count",
+            jdbcrollbackcount: "Rollback Count",
+            histogram: "Histogram"
         }
     },
     extensionPanel: {
