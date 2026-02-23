@@ -25,7 +25,7 @@ public class DatasourceModeEnvironmentPostProcessor implements EnvironmentPostPr
                 && DatasourceMode.fromProperty(modeRaw) == DatasourceMode.MULTI_DATASOURCE;
         String singleSchemaName = environment.getProperty("app.datasource.single-schema-name", "demo");
 
-        Map<String, Object> derived = new HashMap<String, Object>();
+        Map<String, Object> derived = new HashMap<>();
         boolean multiDatasource = mode == DatasourceMode.MULTI_DATASOURCE;
         boolean singleSchema = mode == DatasourceMode.SINGLE_DATASOURCE_SINGLE_SCHEMA;
 
@@ -56,7 +56,7 @@ public class DatasourceModeEnvironmentPostProcessor implements EnvironmentPostPr
             return DatasourceMode.fromProperty(modeRaw);
         }
         Boolean legacyMultiModuleEnabled = environment.getProperty("app.datasource.multi-module-enabled", Boolean.class);
-        if (legacyMultiModuleEnabled != null && !legacyMultiModuleEnabled.booleanValue()) {
+        if (legacyMultiModuleEnabled != null && !legacyMultiModuleEnabled) {
             return DatasourceMode.SINGLE_DATASOURCE_MULTI_SCHEMA;
         }
         return DatasourceMode.MULTI_DATASOURCE;

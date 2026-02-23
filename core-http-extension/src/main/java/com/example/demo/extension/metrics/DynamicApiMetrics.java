@@ -10,10 +10,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -38,7 +35,7 @@ public class DynamicApiMetrics {
         }
         if (shouldRecordDetail()) {
             MetricBucket bucket = perApi.get(meta.getApi().getId(), id -> new MetricBucket());
-            bucket.updateMeta(meta);
+            Objects.requireNonNull(bucket).updateMeta(meta);
             bucket.total.increment();
             bucket.inflight.increment();
             bucket.lastUpdate.set(System.currentTimeMillis());
@@ -54,7 +51,7 @@ public class DynamicApiMetrics {
         }
         if (shouldRecordDetail()) {
             MetricBucket bucket = perApi.get(meta.getApi().getId(), id -> new MetricBucket());
-            bucket.queueTimeMs.add(queueMs);
+            Objects.requireNonNull(bucket).queueTimeMs.add(queueMs);
             bucket.lastUpdate.set(System.currentTimeMillis());
         }
         global.queueTimeMs.add(queueMs);
@@ -77,7 +74,7 @@ public class DynamicApiMetrics {
         MetricBucket bucket = null;
         if (shouldRecordDetail()) {
             bucket = perApi.get(meta.getApi().getId(), id -> new MetricBucket());
-            bucket.updateMeta(meta);
+            Objects.requireNonNull(bucket).updateMeta(meta);
             bucket.inflight.decrement();
             bucket.completed.increment();
             bucket.execTimeMs.add(execMs);
@@ -124,7 +121,7 @@ public class DynamicApiMetrics {
         MetricBucket bucket = null;
         if (shouldRecordDetail()) {
             bucket = perApi.get(meta.getApi().getId(), id -> new MetricBucket());
-            bucket.updateMeta(meta);
+            Objects.requireNonNull(bucket).updateMeta(meta);
             if (rollbackInflight) {
                 bucket.inflight.decrement();
             } else {

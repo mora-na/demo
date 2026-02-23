@@ -65,11 +65,6 @@ public final class ExcelTool {
      * -- GETTER --
      * 获取默认是否启用 COUNT 查询。
      *
-     * @return true 表示启用 COUNT
-     * <p>
-     * -- SETTER --
-     * 设置默认是否启用 COUNT 查询。
-     * @param countEnabled 是否启用 COUNT
      *
      */
     @Setter

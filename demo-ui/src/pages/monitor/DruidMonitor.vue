@@ -120,6 +120,7 @@ interface FieldDef {
   labelKey: string;
   valueKeys: string[];
   extraKeys?: string[];
+  fieldName?: string;
 }
 
 const {t, te} = useI18n();
@@ -378,18 +379,28 @@ const datasourceDetailRows = computed(() => normalizeRows(summary.value?.datasou
 const datasourceMap = computed(() => mapById(datasourceRows.value));
 const datasourceDetailMap = computed(() => mapById(datasourceDetailRows.value));
 
-const datasourceOptions = computed(() => {
-  const options = datasourceRows.value
-      .map((row) => {
-        const id = extractIdentity(row);
-        if (!id) {
-          return null;
-        }
-        const name = readValue(row, ["Name", "name", "DataSource", "dataSource", "DataSourceName", "datasourceName"]);
-        const label = name ? `${name} (${id})` : id;
-        return {id, name: name ? String(name) : undefined, label};
-      })
-      .filter((item): item is { id: string; name?: string; label: string } => item !== null);
+interface DatasourceOption {
+  id: string;
+  label: string;
+  name?: string;
+}
+
+const datasourceOptions = computed((): DatasourceOption[] => {
+  const options: DatasourceOption[] = [];
+  datasourceRows.value.forEach((row) => {
+    const id = extractIdentity(row);
+    if (!id) {
+      return;
+    }
+    const name = readValue(row, ["Name", "name", "DataSource", "dataSource", "DataSourceName", "datasourceName"]);
+    const nameText = name == null ? "" : String(name);
+    const label = nameText ? `${nameText} (${id})` : id;
+    if (nameText) {
+      options.push({id, label, name: nameText});
+      return;
+    }
+    options.push({id, label});
+  });
   return options.length ? options : [{id: "0", label: t("druid.datasource.noData")}];
 });
 
@@ -632,10 +643,15 @@ const datasourceFieldDefs: FieldDef[] = [
 ];
 
 const datasourceFieldRows = computed(() => {
-  return datasourceFieldDefs.map((def) => ({
-    labelKey: def.labelKey,
-    value: readValue(currentDatasource.value || undefined, def.valueKeys)
-  }));
+  return datasourceFieldDefs.map((def) => {
+    const name = def.fieldName || def.valueKeys[0] || def.labelKey;
+    const desc = te(def.labelKey) ? t(def.labelKey) : "-";
+    return {
+      name,
+      value: readValue(currentDatasource.value || undefined, def.valueKeys),
+      desc
+    };
+  });
 });
 
 const datasourceExtraRows = computed(() => {
@@ -646,7 +662,7 @@ const datasourceExtraRows = computed(() => {
   datasourceFieldDefs.forEach((def) => {
     def.valueKeys.forEach((key) => usedKeys.add(key.toLowerCase()));
   });
-  const rows: { key: string; value: unknown }[] = [];
+  const rows: { key: string; value: unknown; desc: string }[] = [];
   Object.keys(currentDatasource.value).forEach((key) => {
     if (key === "_idx") {
       return;
@@ -654,7 +670,10 @@ const datasourceExtraRows = computed(() => {
     if (usedKeys.has(key.toLowerCase())) {
       return;
     }
-    rows.push({key, value: (currentDatasource.value as Record<string, unknown>)[key]});
+    const normalized = normalizeColumnLabel(key);
+    const labelKey = `druid.columns.${normalized}`;
+    const desc = te(labelKey) ? t(labelKey) : "-";
+    rows.push({key, value: (currentDatasource.value as Record<string, unknown>)[key], desc});
   });
   return rows.sort((a, b) => a.key.localeCompare(b.key));
 });

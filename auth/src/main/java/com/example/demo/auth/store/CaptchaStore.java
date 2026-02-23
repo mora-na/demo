@@ -80,7 +80,7 @@ public class CaptchaStore {
         }
         String key = buildCounterKey(scopeKey);
         Long count = cacheTool.increment(key);
-        long value = count == null ? 1L : count.longValue();
+        long value = count == null ? 1L : count;
         if (value == 1L) {
             cacheTool.expire(key, Duration.ofSeconds(cleanupIntervalSeconds));
         }

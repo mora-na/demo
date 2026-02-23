@@ -28,7 +28,6 @@ public class UserRole extends BaseEntity implements Serializable {
     /**
      * 用户 ID。
      *
-     * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     @TableField("user_id")
@@ -37,7 +36,6 @@ public class UserRole extends BaseEntity implements Serializable {
     /**
      * 角色 ID。
      *
-     * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     @TableField("role_id")

@@ -43,7 +43,7 @@ public final class DictLabelContextHolder {
                 if (item == null || item.getDictValue() == null) {
                     continue;
                 }
-                labels.put(String.valueOf(item.getDictValue()), item.getDictLabel());
+                labels.put(item.getDictValue(), item.getDictLabel());
             }
         }
     }

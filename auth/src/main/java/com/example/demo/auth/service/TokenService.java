@@ -49,7 +49,7 @@ public class TokenService {
         long expireAt = nowSeconds + authProperties.getJwt().getTtlSeconds();
         Long userId = user == null ? null : user.getId();
         Map<String, Object> payload = new HashMap<>();
-        payload.put(tokenConstants.getJwtClaimSubject(), user.getUserName());
+        payload.put(tokenConstants.getJwtClaimSubject(), Objects.requireNonNull(user).getUserName());
         payload.put(tokenConstants.getJwtClaimUserId(), userId);
         payload.put(tokenConstants.getJwtClaimIssuedAt(), nowSeconds);
         payload.put(tokenConstants.getJwtClaimExpiresAt(), expireAt);
@@ -96,12 +96,12 @@ public class TokenService {
         Long version = getLongClaim(payload, systemConstants.getToken().getJwtClaimTokenVersion());
         long currentVersion = tokenStore.getUserTokenVersion(userId);
         if (currentVersion > 0) {
-            if (version == null || version.longValue() != currentVersion) {
+            if (version == null || version != currentVersion) {
                 tokenStore.revoke(token);
                 return null;
             }
         } else if (version != null) {
-            tokenStore.setUserTokenVersion(userId, version.longValue(), authProperties.getJwt().getTtlSeconds());
+            tokenStore.setUserTokenVersion(userId, version, authProperties.getJwt().getTtlSeconds());
         }
         TokenStore.TokenRecord record = tokenStore.get(token);
         return record == null ? null : record.getUser();

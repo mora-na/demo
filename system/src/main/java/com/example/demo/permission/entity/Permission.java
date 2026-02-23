@@ -28,7 +28,6 @@ public class Permission extends BaseEntity implements Serializable {
     /**
      * 权限编码（全局唯一）。
      *
-     * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     @TableField("code")
@@ -37,7 +36,6 @@ public class Permission extends BaseEntity implements Serializable {
     /**
      * 权限名称（展示用）。
      *
-     * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     @TableField("name")
@@ -46,7 +44,6 @@ public class Permission extends BaseEntity implements Serializable {
     /**
      * 状态标识：1-启用；0-禁用。
      *
-     * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     @TableField("status")

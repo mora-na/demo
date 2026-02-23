@@ -109,12 +109,6 @@ export async function listDynamicApis(params: DynamicApiQuery): Promise<ApiRespo
     const response = await api.get<ApiResponse<PageResult<DynamicApi>>>("/dynamic-api", {params});
     return response.data;
 }
-
-export async function getDynamicApi(id: number): Promise<ApiResponse<DynamicApi>> {
-    const response = await api.get<ApiResponse<DynamicApi>>(`/dynamic-api/${id}`);
-    return response.data;
-}
-
 export async function createDynamicApi(payload: DynamicApiPayload): Promise<ApiResponse<DynamicApi>> {
     const response = await api.post<ApiResponse<DynamicApi>>("/dynamic-api", payload);
     return response.data;
@@ -154,12 +148,6 @@ export async function deleteDynamicApiLog(id: number): Promise<ApiResponse<void>
     const response = await api.delete<ApiResponse<void>>(`/logs/dynamic-api/${id}`);
     return response.data;
 }
-
-export async function batchDeleteDynamicApiLogs(ids: number[]): Promise<ApiResponse<void>> {
-    const response = await api.post<ApiResponse<void>>("/logs/dynamic-api/batch-delete", ids);
-    return response.data;
-}
-
 export async function listDynamicApiBeans(): Promise<ApiResponse<DynamicApiBeanMeta[]>> {
     const response = await api.get<ApiResponse<DynamicApiBeanMeta[]>>("/dynamic-api/metadata/beans");
     return response.data;

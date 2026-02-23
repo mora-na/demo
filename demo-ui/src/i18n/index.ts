@@ -40,11 +40,3 @@ export const i18n = createI18n({
         "en-US": enUS
     }
 });
-
-export function setLocale(locale: Locale) {
-    i18n.global.locale.value = locale;
-    if (typeof localStorage !== "undefined") {
-        localStorage.setItem(STORAGE_KEY, locale);
-    }
-    setHtmlLang(locale);
-}

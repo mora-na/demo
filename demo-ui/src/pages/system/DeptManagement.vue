@@ -218,7 +218,7 @@ async function removeDept(dept: DeptVO) {
   const result = await deleteDept(dept.id);
   if (result?.code === 200) {
     ElMessage.success(t("dept.msg.deleteSuccess"));
-    fetchDepts();
+    await fetchDepts();
   } else {
     ElMessage.error(result?.message || t("dept.msg.deleteFailed"));
   }
@@ -241,7 +241,7 @@ async function removeDepts() {
   const result = await deleteDepts(selectedDeptIds.value);
   if (result?.code === 200) {
     ElMessage.success(t("dept.msg.deleteSuccess"));
-    fetchDepts();
+    await fetchDepts();
   } else {
     ElMessage.error(result?.message || t("dept.msg.deleteFailed"));
   }
@@ -259,7 +259,7 @@ async function saveDept() {
       if (result?.code === 200) {
         ElMessage.success(result?.message || t("dept.msg.createSuccess"));
         editorVisible.value = false;
-        fetchDepts();
+        await fetchDepts();
       } else {
         ElMessage.error(result?.message || t("dept.msg.createFailed"));
       }
@@ -268,7 +268,7 @@ async function saveDept() {
       if (result?.code === 200) {
         ElMessage.success(result?.message || t("dept.msg.updateSuccess"));
         editorVisible.value = false;
-        fetchDepts();
+        await fetchDepts();
       } else {
         ElMessage.error(result?.message || t("dept.msg.updateFailed"));
       }
@@ -328,7 +328,4 @@ onMounted(fetchDepts);
   align-items: center;
 }
 
-.form-grid :deep(.el-form-item) {
-  margin-bottom: 12px;
-}
 </style>

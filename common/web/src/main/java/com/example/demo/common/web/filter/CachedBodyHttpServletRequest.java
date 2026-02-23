@@ -24,7 +24,6 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
      * -- GETTER --
      * 获取缓存的请求体字节数组。
      *
-     * @return 请求体字节数组
      *
      */
     private final byte[] cachedBody;

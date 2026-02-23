@@ -57,7 +57,7 @@ public class SingleSchemaSqlRewriteInterceptor implements Interceptor {
         if (schemas == null) {
             return Collections.emptySet();
         }
-        Set<String> normalized = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+        Set<String> normalized = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (String schema : schemas) {
             if (schema == null) {
                 continue;

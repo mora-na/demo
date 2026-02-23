@@ -10,14 +10,12 @@ public enum Logical {
     /**
      * 逻辑与，所有权限都满足。
      *
-     * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     AND,
     /**
      * 逻辑或，任一权限满足即可。
      *
-     * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     OR

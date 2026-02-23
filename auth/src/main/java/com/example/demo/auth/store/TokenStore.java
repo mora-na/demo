@@ -172,7 +172,7 @@ public class TokenStore {
         }
         String key = buildUserTokenVersionKey(userId);
         Long next = cacheTool.increment(key);
-        long value = next == null ? 1L : next.longValue();
+        long value = next == null ? 1L : next;
         cacheTool.expire(key, Duration.ofSeconds(versionTtlSeconds(ttlSeconds)));
         return value;
     }

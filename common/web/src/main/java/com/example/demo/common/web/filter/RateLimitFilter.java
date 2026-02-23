@@ -194,15 +194,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 获取客户端 IP，优先使用代理头。
-     *
-     * @param request HTTP 请求
-     * @return 客户端 IP
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-
-    /**
      * 写出限流响应。
      *
      * @param response HTTP 响应

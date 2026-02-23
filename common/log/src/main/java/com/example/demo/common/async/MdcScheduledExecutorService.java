@@ -1,5 +1,7 @@
 package com.example.demo.common.async;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -21,22 +23,22 @@ public class MdcScheduledExecutorService extends MdcExecutorService implements S
     }
 
     @Override
-    public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+    public ScheduledFuture<?> schedule(@NonNull Runnable command, long delay, @NonNull TimeUnit unit) {
         return delegate.schedule(MdcUtils.wrap(command), delay, unit);
     }
 
     @Override
-    public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
+    public <V> ScheduledFuture<V> schedule(@NonNull Callable<V> callable, long delay, @NonNull TimeUnit unit) {
         return delegate.schedule(MdcUtils.wrap(callable), delay, unit);
     }
 
     @Override
-    public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
+    public ScheduledFuture<?> scheduleAtFixedRate(@NonNull Runnable command, long initialDelay, long period, @NonNull TimeUnit unit) {
         return delegate.scheduleAtFixedRate(MdcUtils.wrap(command), initialDelay, period, unit);
     }
 
     @Override
-    public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
+    public ScheduledFuture<?> scheduleWithFixedDelay(@NonNull Runnable command, long initialDelay, long delay, @NonNull TimeUnit unit) {
         return delegate.scheduleWithFixedDelay(MdcUtils.wrap(command), initialDelay, delay, unit);
     }
 }

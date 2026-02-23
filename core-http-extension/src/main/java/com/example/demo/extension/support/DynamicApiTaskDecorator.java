@@ -2,6 +2,7 @@ package com.example.demo.extension.support;
 
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.MDC;
 import org.springframework.core.task.TaskDecorator;
 
@@ -13,7 +14,7 @@ import java.util.Map;
 public class DynamicApiTaskDecorator implements TaskDecorator {
 
     @Override
-    public Runnable decorate(Runnable runnable) {
+    public Runnable decorate(@NonNull Runnable runnable) {
         Map<String, String> mdc = MDC.getCopyOfContextMap();
         AuthUser user = AuthContext.get();
         return () -> {

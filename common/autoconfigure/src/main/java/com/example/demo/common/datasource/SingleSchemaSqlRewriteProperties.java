@@ -18,7 +18,7 @@ public class SingleSchemaSqlRewriteProperties {
 
     private String targetSchema = "demo";
 
-    private List<String> sourceSchemas = new ArrayList<String>(Arrays.asList(
+    private List<String> sourceSchemas = new ArrayList<>(Arrays.asList(
             "system", "notice", "job", "log", "dict", "cache", "extension", "order"
     ));
 

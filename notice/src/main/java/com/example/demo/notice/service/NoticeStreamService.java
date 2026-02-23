@@ -287,7 +287,7 @@ public class NoticeStreamService {
         }
         int limit = latestLimit();
         Deque<NoticeLatestVO> deque = latestCache.get(userId, key -> new ArrayDeque<>());
-        synchronized (deque) {
+        synchronized (Objects.requireNonNull(deque)) {
             if (notice.getId() != null) {
                 deque.removeIf(item -> Objects.equals(item.getId(), notice.getId()));
             }

@@ -258,15 +258,6 @@ public class DuplicateSubmitFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 获取客户端 IP，优先使用代理头。
-     *
-     * @param request HTTP 请求
-     * @return 客户端 IP
-     * @author GPT-5.2-codex(high)
-     * @date 2026/2/9
-     */
-
-    /**
      * 判断请求是否为 multipart。
      *
      * @param request HTTP 请求

@@ -1,5 +1,7 @@
 package com.example.demo.common.async;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,49 +42,49 @@ public class MdcExecutorService extends AbstractExecutorService {
     }
 
     @Override
-    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+    public boolean awaitTermination(long timeout, @NonNull TimeUnit unit) throws InterruptedException {
         return delegate.awaitTermination(timeout, unit);
     }
 
     @Override
-    public void execute(Runnable command) {
+    public void execute(@NonNull Runnable command) {
         delegate.execute(MdcUtils.wrap(command));
     }
 
     @Override
-    public <T> Future<T> submit(Callable<T> task) {
+    public <T> Future<T> submit(@NonNull Callable<T> task) {
         return delegate.submit(MdcUtils.wrap(task));
     }
 
     @Override
-    public Future<?> submit(Runnable task) {
+    public Future<?> submit(@NonNull Runnable task) {
         return delegate.submit(MdcUtils.wrap(task));
     }
 
     @Override
-    public <T> Future<T> submit(Runnable task, T result) {
+    public <T> Future<T> submit(@NonNull Runnable task, T result) {
         return delegate.submit(MdcUtils.wrap(task), result);
     }
 
     @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> tasks) throws InterruptedException {
         return delegate.invokeAll(wrapTasks(tasks));
     }
 
     @Override
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+    public <T> List<Future<T>> invokeAll(@NonNull Collection<? extends Callable<T>> tasks, long timeout, @NonNull TimeUnit unit)
             throws InterruptedException {
         return delegate.invokeAll(wrapTasks(tasks), timeout, unit);
     }
 
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
+    public <T> T invokeAny(@NonNull Collection<? extends Callable<T>> tasks)
             throws InterruptedException, java.util.concurrent.ExecutionException {
         return delegate.invokeAny(wrapTasks(tasks));
     }
 
     @Override
-    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+    public <T> T invokeAny(@NonNull Collection<? extends Callable<T>> tasks, long timeout, @NonNull TimeUnit unit)
             throws InterruptedException, java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
         return delegate.invokeAny(wrapTasks(tasks), timeout, unit);
     }

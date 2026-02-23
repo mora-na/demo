@@ -191,7 +191,7 @@ async function removeOrder(row: OrderVO) {
   const result = await deleteOrder(row.id);
   if (result?.code === 200) {
     ElMessage.success(t("order.msg.deleteSuccess"));
-    loadOrders();
+    await loadOrders();
   } else {
     ElMessage.error(result?.message || t("order.msg.deleteFailed"));
   }
@@ -230,10 +230,6 @@ onMounted(loadOrders);
   overflow-x: auto;
   gap: 8px;
   align-items: center;
-}
-
-.module-actions :deep(.el-input-number) {
-  width: 140px;
 }
 
 .module-footer {

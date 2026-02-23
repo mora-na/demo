@@ -16,12 +16,12 @@ public class ModuleDataSourceRoutingProperties {
 
     private ReadOnlyDetection readOnlyDetection = ReadOnlyDetection.EXPLICIT;
 
-    private List<String> readOnlyMethodPrefixes = new ArrayList<String>(Arrays.asList(
+    private List<String> readOnlyMethodPrefixes = new ArrayList<>(Arrays.asList(
             "get", "find", "list", "page", "query", "select", "count",
             "search", "load", "read", "fetch", "resolve", "exists"
     ));
 
-    private List<ModuleConfig> modules = new ArrayList<ModuleConfig>();
+    private List<ModuleConfig> modules = new ArrayList<>();
 
     public enum ReadOnlyDetection {
         EXPLICIT,
@@ -34,7 +34,7 @@ public class ModuleDataSourceRoutingProperties {
         private String rwDataSource;
         private String roDataSource;
         private boolean forceReadWrite;
-        private List<String> packages = new ArrayList<String>();
-        private List<String> classes = new ArrayList<String>();
+        private List<String> packages = new ArrayList<>();
+        private List<String> classes = new ArrayList<>();
     }
 }

@@ -338,7 +338,7 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
         }
 
         @Override
-        public Thread newThread(Runnable runnable) {
+        public Thread newThread(@NonNull Runnable runnable) {
             Thread thread = new Thread(runnable, namePrefix + "-" + index++);
             thread.setDaemon(true);
             return thread;

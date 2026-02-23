@@ -594,7 +594,7 @@ async function saveUser() {
       if (result?.code === 200) {
         ElMessage.success(result?.message || t("user.msg.createSuccess"));
         editorVisible.value = false;
-        fetchUsers();
+        await fetchUsers();
       } else {
         ElMessage.error(result?.message || t("user.msg.createFailed"));
       }
@@ -605,7 +605,7 @@ async function saveUser() {
       if (result?.code === 200) {
         ElMessage.success(result?.message || t("user.msg.updateSuccess"));
         editorVisible.value = false;
-        fetchUsers();
+        await fetchUsers();
       } else {
         ElMessage.error(result?.message || t("user.msg.updateFailed"));
       }
@@ -769,7 +769,7 @@ async function removeUser(row: UserVO) {
   const result = await deleteUser(row.id);
   if (result?.code === 200) {
     ElMessage.success(t("user.msg.deleteSuccess"));
-    fetchUsers();
+    await fetchUsers();
   } else {
     ElMessage.error(result?.message || t("user.msg.deleteFailed"));
   }
@@ -792,7 +792,7 @@ async function removeUsers() {
   const result = await deleteUsers(selectedUserIds.value);
   if (result?.code === 200) {
     ElMessage.success(t("user.msg.deleteSuccess"));
-    fetchUsers();
+    await fetchUsers();
   } else {
     ElMessage.error(result?.message || t("user.msg.deleteFailed"));
   }
@@ -916,42 +916,15 @@ onMounted(() => {
   max-width: 100%;
 }
 
-.module-actions :deep(.el-input),
-.module-actions :deep(.el-select) {
-  width: 130px;
-  flex: 1 1 130px;
-}
-
-.module-actions :deep(.el-button) {
-  flex: 0 0 auto;
-  padding: 0 10px;
-  height: 28px;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 @media (max-width: 900px) {
   .module-actions {
     justify-content: flex-start;
   }
 
-  .module-actions :deep(.el-input),
-  .module-actions :deep(.el-select) {
-    width: 120px;
-    flex-basis: 120px;
-  }
 }
 
 @media (max-width: 640px) {
-  .module-actions :deep(.el-input),
-  .module-actions :deep(.el-select) {
-    width: 100%;
-    flex-basis: 100%;
-  }
 
-  .module-actions :deep(.el-button) {
-    flex: 1 1 auto;
-  }
 }
 
 .module-footer {
@@ -971,20 +944,8 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-.action-buttons :deep(.el-button) {
-  padding: 0 4px;
-  min-height: 20px;
-  height: 20px;
-  font-size: 11px;
-  white-space: nowrap;
-}
-
 .action-buttons::-webkit-scrollbar {
   height: 0;
-}
-
-.form-grid :deep(.el-form-item) {
-  margin-bottom: 12px;
 }
 
 .data-scope-summary {

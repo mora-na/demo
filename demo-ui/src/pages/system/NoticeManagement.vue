@@ -429,7 +429,7 @@ async function submitPublish() {
     if (result?.code === 200) {
       ElMessage.success(t("notice.msg.publishSuccess"));
       publishVisible.value = false;
-      loadNotices();
+      await loadNotices();
     } else {
       ElMessage.error(result?.message || t("notice.msg.publishFailed"));
     }
@@ -453,7 +453,7 @@ async function removeNotice(row: NoticeVO) {
   const result = await deleteNotice(row.id);
   if (result?.code === 200) {
     ElMessage.success(t("notice.msg.deleteSuccess"));
-    loadNotices();
+    await loadNotices();
   } else {
     ElMessage.error(result?.message || t("notice.msg.deleteFailed"));
   }
@@ -476,7 +476,7 @@ async function removeNotices() {
   const result = await deleteNotices(selectedNoticeIds.value);
   if (result?.code === 200) {
     ElMessage.success(t("notice.msg.deleteSuccess"));
-    loadNotices();
+    await loadNotices();
   } else {
     ElMessage.error(result?.message || t("notice.msg.deleteFailed"));
   }
@@ -520,7 +520,7 @@ onMounted(async () => {
   if (!authStore.profileLoaded) {
     await authStore.loadProfile();
   }
-  loadNotices();
+  await loadNotices();
 });
 </script>
 
@@ -554,16 +554,6 @@ onMounted(async () => {
   overflow-x: auto;
   gap: 8px;
   align-items: center;
-}
-
-.module-actions :deep(.el-input),
-.module-actions :deep(.el-select) {
-  width: 160px;
-  flex: 0 0 auto;
-}
-
-.module-actions :deep(.el-button) {
-  flex: 0 0 auto;
 }
 
 .module-footer {

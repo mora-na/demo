@@ -76,11 +76,6 @@ export interface UserProfileResponse {
     passwordExpired?: boolean;
     firstLoginForceChange?: boolean;
 }
-
-export interface LogoutPayload {
-    token?: string;
-}
-
 export interface ApiResponse<T> {
     code: number;
     message?: string;

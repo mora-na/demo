@@ -21,14 +21,16 @@
     <table class="druid-table">
       <thead>
       <tr>
-        <th class="col-label">{{ t("druid.datasource.table.label") }}</th>
+        <th class="col-label">{{ t("druid.datasource.table.field") }}</th>
         <th class="col-value">{{ t("druid.datasource.table.value") }}</th>
+        <th class="col-desc">{{ t("druid.datasource.table.desc") }}</th>
       </tr>
       </thead>
       <tbody>
-      <tr v-for="row in datasourceFieldRows" :key="row.labelKey">
-        <td class="col-label">{{ t(row.labelKey) }}</td>
+      <tr v-for="row in datasourceFieldRows" :key="row.name">
+        <td class="col-label">{{ row.name }}</td>
         <td class="col-value">{{ formatCell(row.value) }}</td>
+        <td class="col-desc">{{ row.desc || "-" }}</td>
       </tr>
       </tbody>
     </table>
@@ -38,13 +40,13 @@
       <table class="druid-table">
         <thead>
         <tr>
-          <th class="col-label">{{ t("druid.extra.key") }}</th>
+          <th class="col-label">{{ t("druid.extra.field") }}</th>
           <th class="col-value">{{ t("druid.extra.value") }}</th>
         </tr>
         </thead>
         <tbody>
         <tr v-for="row in datasourceExtraRows" :key="row.key">
-          <td class="col-label">{{ resolveExtraKey(row.key) }}</td>
+          <td class="col-label">{{ row.key }}</td>
           <td class="col-value">{{ formatCell(row.value) }}</td>
         </tr>
         </tbody>
@@ -109,8 +111,8 @@ interface TableColumn {
 const props = defineProps<{
   selectedDatasourceId: string | null;
   datasourceOptions: DatasourceOption[];
-  datasourceFieldRows: Array<{ labelKey: string; value: unknown }>;
-  datasourceExtraRows: Array<{ key: string; value: unknown }>;
+  datasourceFieldRows: Array<{ name: string; value: unknown; desc?: string }>;
+  datasourceExtraRows: Array<{ key: string; value: unknown; desc?: string }>;
   activeConnectionStack: unknown;
   poolingConnectionInfo: unknown;
   datasourceSqlColumns: TableColumn[];
@@ -121,19 +123,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{ (e: "update:selectedDatasourceId", id: string | null): void }>();
 
-const {t, te} = useI18n();
+const {t} = useI18n();
 const formatCell = props.formatCell;
 const formatPre = props.formatPre;
-
-function normalizeColumnLabel(key: string) {
-  return key.replace(/[^a-zA-Z0-9]+/g, "_").toLowerCase();
-}
-
-function resolveExtraKey(key: string) {
-  const normalized = normalizeColumnLabel(key);
-  const labelKey = `druid.columns.${normalized}`;
-  return te(labelKey) ? t(labelKey) : key;
-}
 
 const localSelectedId = computed({
   get: () => props.selectedDatasourceId,
@@ -219,6 +211,10 @@ function handleSelectChange(value: string | null) {
   vertical-align: top;
 }
 
+.col-desc {
+  color: var(--muted);
+}
+
 .druid-table th {
   background: rgba(148, 163, 184, 0.12);
   font-weight: 600;
@@ -232,10 +228,4 @@ function handleSelectChange(value: string | null) {
   width: 38%;
 }
 
-.druid-sql-table td.col-sql,
-.druid-sql-table th.col-sql {
-  min-width: 220px;
-  white-space: normal;
-  word-break: break-all;
-}
 </style>

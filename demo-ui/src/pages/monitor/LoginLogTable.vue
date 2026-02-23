@@ -209,11 +209,6 @@ onMounted(loadLogs);
   max-width: 100%;
 }
 
-.module-actions :deep(.el-input),
-.module-actions :deep(.el-select) {
-  width: 140px;
-}
-
 .module-footer {
   display: flex;
   justify-content: flex-end;

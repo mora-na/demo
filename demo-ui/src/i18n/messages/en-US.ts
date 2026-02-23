@@ -467,7 +467,9 @@ export default {
             noData: "No datasource available",
             table: {
                 label: "Metric",
-                value: "Value"
+                field: "Field",
+                value: "Value",
+                desc: "Description"
             },
             extraTitle: "Other Fields",
             stackTitle: "Active Connection Stack Trace",
@@ -544,7 +546,9 @@ export default {
         },
         extra: {
             key: "Field",
-            value: "Value"
+            field: "Field",
+            value: "Value",
+            desc: "Description"
         },
         sql: {
             refreshLabel: "SQL Refresh Interval",

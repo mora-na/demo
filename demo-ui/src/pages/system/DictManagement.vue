@@ -293,7 +293,7 @@ async function fetchTypes() {
       } else if (typeRows.value.length) {
         activeType.value = typeRows.value[0];
         dataPageNum.value = 1;
-        fetchData();
+        await fetchData();
       }
     } else {
       ElMessage.error(result?.message || t("dict.msg.loadFailed"));
@@ -420,7 +420,7 @@ async function saveType() {
         ElMessage.success(t("common.saveSuccess"));
         typeEditorVisible.value = false;
         dictStore.clearCache();
-        fetchTypes();
+        await fetchTypes();
       } else {
         ElMessage.error(result?.message || t("common.saveFailed"));
       }
@@ -430,11 +430,11 @@ async function saveType() {
         ElMessage.success(t("common.saveSuccess"));
         typeEditorVisible.value = false;
         dictStore.clearCache();
-        fetchTypes();
+        await fetchTypes();
         if (activeType.value) {
           activeType.value = {...activeType.value, dictType: typeForm.dictType, dictName: typeForm.dictName};
         }
-        fetchData();
+        await fetchData();
       } else {
         ElMessage.error(result?.message || t("common.saveFailed"));
       }
@@ -464,8 +464,8 @@ async function removeType(row: DictTypeVO) {
         activeType.value = null;
         dataRows.value = [];
       }
-      fetchTypes();
-      fetchData();
+      await fetchTypes();
+      await fetchData();
       dictStore.clearCache();
     } else {
       ElMessage.error(result?.message || t("common.deleteFailed"));
@@ -512,7 +512,7 @@ async function saveData() {
         ElMessage.success(t("common.saveSuccess"));
         dataEditorVisible.value = false;
         dictStore.clearCache();
-        fetchData();
+        await fetchData();
       } else {
         ElMessage.error(result?.message || t("common.saveFailed"));
       }
@@ -528,7 +528,7 @@ async function saveData() {
         ElMessage.success(t("common.saveSuccess"));
         dataEditorVisible.value = false;
         dictStore.clearCache();
-        fetchData();
+        await fetchData();
       } else {
         ElMessage.error(result?.message || t("common.saveFailed"));
       }
@@ -556,7 +556,7 @@ async function removeData(row: DictDataVO) {
     const result = await deleteDictData(row.id);
     if (result?.code === 200) {
       ElMessage.success(t("common.deleteSuccess"));
-      fetchData();
+      await fetchData();
       dictStore.clearCache();
     } else {
       ElMessage.error(result?.message || t("common.deleteFailed"));

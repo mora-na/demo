@@ -675,7 +675,7 @@ async function saveApi() {
     if (result?.code === 200) {
       ElMessage.success(t("common.saveSuccess"));
       editorVisible.value = false;
-      loadApis();
+      await loadApis();
     } else {
       const details = extractErrorDetails(result);
       applyFieldErrors(details);
@@ -698,7 +698,7 @@ async function toggleStatus(row: DynamicApi) {
       ElMessage.success(
           row.status === "ENABLED" ? t("dynamicApi.msg.disableSuccess") : t("dynamicApi.msg.enableSuccess")
       );
-      loadApis();
+      await loadApis();
     } else {
       ElMessage.error(result?.message || t("dynamicApi.msg.statusFailed"));
     }
@@ -721,7 +721,7 @@ async function removeApi(row: DynamicApi) {
     const result = await deleteDynamicApi(row.id);
     if (result?.code === 200) {
       ElMessage.success(t("common.deleteSuccess"));
-      loadApis();
+      await loadApis();
     } else {
       ElMessage.error(result?.message || t("common.deleteFailed"));
     }
@@ -735,7 +735,7 @@ async function handleReload() {
     const result = await reloadDynamicApis();
     if (result?.code === 200) {
       ElMessage.success(t("dynamicApi.msg.reloadSuccess"));
-      loadApis();
+      await loadApis();
     } else {
       ElMessage.error(result?.message || t("dynamicApi.msg.reloadFailed"));
     }
@@ -1008,25 +1008,6 @@ onMounted(() => {
 </style>
 
 <style scoped>
-.tag-success {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  color: #0f5132;
-  background: rgba(25, 135, 84, 0.16);
-}
-
-.tag-danger {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  color: #842029;
-  background: rgba(220, 53, 69, 0.16);
-}
 
 .job-editor-form {
   display: grid;
@@ -1034,17 +1015,8 @@ onMounted(() => {
   gap: 12px 16px;
 }
 
-.job-editor-form :deep(.el-form-item) {
-  margin-bottom: 0;
-}
-
 .job-editor-form :deep(.full-row) {
   grid-column: 1 / -1;
-}
-
-.job-editor-form :deep(.el-select),
-.job-editor-form :deep(.el-input) {
-  width: 100%;
 }
 
 .form-hint {
@@ -1060,10 +1032,4 @@ onMounted(() => {
   align-items: center;
 }
 
-.action-buttons :deep(.el-button) {
-  padding: 0 6px;
-  min-height: 22px;
-  font-size: 12px;
-  white-space: nowrap;
-}
 </style>

@@ -415,7 +415,7 @@ async function saveRole() {
       if (result?.code === 200) {
         ElMessage.success(result?.message || t("role.msg.createSuccess"));
         editorVisible.value = false;
-        fetchRoles();
+        await fetchRoles();
       } else {
         ElMessage.error(result?.message || t("role.msg.createFailed"));
       }
@@ -430,7 +430,7 @@ async function saveRole() {
       if (result?.code === 200) {
         ElMessage.success(result?.message || t("role.msg.updateSuccess"));
         editorVisible.value = false;
-        fetchRoles();
+        await fetchRoles();
       } else {
         ElMessage.error(result?.message || t("role.msg.updateFailed"));
       }
@@ -474,7 +474,7 @@ async function savePermissions() {
     if (result?.code === 200) {
       ElMessage.success(result?.message || t("role.msg.permissionsUpdated"));
       permissionVisible.value = false;
-      fetchRoles();
+      await fetchRoles();
     } else {
       ElMessage.error(result?.message || t("role.msg.permissionsUpdateFailed"));
     }
@@ -664,7 +664,7 @@ async function removeRole(role: RoleVO) {
   const result = await deleteRole(role.id);
   if (result?.code === 200) {
     ElMessage.success(t("role.msg.deleteSuccess"));
-    fetchRoles();
+    await fetchRoles();
   } else {
     ElMessage.error(result?.message || t("role.msg.deleteFailed"));
   }
@@ -687,7 +687,7 @@ async function removeRoles() {
   const result = await deleteRoles(selectedRoleIds.value);
   if (result?.code === 200) {
     ElMessage.success(t("role.msg.deleteSuccess"));
-    fetchRoles();
+    await fetchRoles();
   } else {
     ElMessage.error(result?.message || t("role.msg.deleteFailed"));
   }
@@ -734,14 +734,6 @@ onMounted(() => {
   gap: 6px;
   flex-wrap: nowrap;
   align-items: center;
-}
-
-.action-buttons :deep(.el-button) {
-  white-space: nowrap;
-}
-
-.form-grid :deep(.el-form-item) {
-  margin-bottom: 12px;
 }
 
 .scope-group {

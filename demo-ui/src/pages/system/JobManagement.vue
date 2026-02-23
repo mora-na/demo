@@ -1184,7 +1184,7 @@ async function saveJob() {
       if (result?.code === 200) {
         ElMessage.success(t("job.msg.createSuccess"));
         editorVisible.value = false;
-        loadJobs();
+        await loadJobs();
       } else {
         ElMessage.error(result?.message || t("job.msg.createFailed"));
       }
@@ -1194,7 +1194,7 @@ async function saveJob() {
       if (result?.code === 200) {
         ElMessage.success(t("job.msg.updateSuccess"));
         editorVisible.value = false;
-        loadJobs();
+        await loadJobs();
       } else {
         ElMessage.error(result?.message || t("job.msg.updateFailed"));
       }
@@ -1211,7 +1211,7 @@ async function handleStatusChange(row: JobVO, value: number) {
   if (result?.code === 200) {
     row.status = value;
     ElMessage.success(t("job.msg.statusUpdated"));
-    loadJobs();
+    await loadJobs();
   } else {
     ElMessage.error(result?.message || t("job.msg.statusUpdateFailed"));
   }
@@ -1230,7 +1230,7 @@ async function removeJob(row: JobVO) {
   const result = await deleteJob(row.id);
   if (result?.code === 200) {
     ElMessage.success(t("job.msg.deleteSuccess"));
-    loadJobs();
+    await loadJobs();
   } else {
     ElMessage.error(result?.message || t("job.msg.deleteFailed"));
   }
@@ -1345,16 +1345,6 @@ onUnmounted(() => {
   align-items: center;
 }
 
-.module-actions :deep(.el-input),
-.module-actions :deep(.el-select) {
-  width: 150px;
-  flex: 0 0 auto;
-}
-
-.module-actions :deep(.el-button) {
-  flex: 0 0 auto;
-}
-
 .module-footer {
   display: flex;
   justify-content: flex-end;
@@ -1397,17 +1387,8 @@ onUnmounted(() => {
   gap: 12px 16px;
 }
 
-.job-editor-form :deep(.el-form-item) {
-  margin-bottom: 0;
-}
-
 .job-editor-form :deep(.full-row) {
   grid-column: 1 / -1;
-}
-
-.job-editor-form :deep(.el-select),
-.job-editor-form :deep(.el-input) {
-  width: 100%;
 }
 
 .action-buttons {
@@ -1415,13 +1396,6 @@ onUnmounted(() => {
   gap: 4px;
   flex-wrap: nowrap;
   align-items: center;
-}
-
-.action-buttons :deep(.el-button) {
-  padding: 0 6px;
-  min-height: 22px;
-  font-size: 12px;
-  white-space: nowrap;
 }
 
 .cron-helper {
@@ -1448,25 +1422,8 @@ onUnmounted(() => {
   top: 0;
 }
 
-.cron-helper-side :deep(.el-form-item) {
-  margin-bottom: 0;
-}
-
-.cron-helper-side :deep(.el-input) {
-  width: 100%;
-}
-
 .cron-preview-input {
   width: 100%;
-}
-
-.cron-helper-side :deep(.el-form-item__content) {
-  width: 100%;
-}
-
-.cron-preview-input :deep(.el-input__wrapper) {
-  width: 100%;
-  box-sizing: border-box;
 }
 
 .cron-row {
@@ -1488,27 +1445,6 @@ onUnmounted(() => {
 
 .cron-sep {
   color: var(--muted);
-}
-
-.cron-helper :deep(.el-input__wrapper),
-.cron-helper :deep(.el-select__wrapper) {
-  border-radius: 10px;
-}
-
-.cron-item :deep(.el-input-number),
-.cron-item :deep(.el-select) {
-  width: 100%;
-}
-
-.cron-inline :deep(.el-input-number) {
-  flex: 1 1 0;
-  min-width: 100px;
-  width: auto;
-}
-
-.cron-preview-input :deep(.el-input__wrapper) {
-  font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-variant-numeric: tabular-nums;
 }
 
 .cron-preview-list {

@@ -8,6 +8,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.Objects;
 
 /**
  * 简易动态接口熔断器。
@@ -30,7 +31,7 @@ public class DynamicApiCircuitBreaker {
         long apiId = meta.getApi().getId();
         long now = System.currentTimeMillis();
         CircuitState state = states.get(apiId, id -> new CircuitState());
-        synchronized (state) {
+        synchronized (Objects.requireNonNull(state)) {
             if (state.openUntil > 0 && now < state.openUntil) {
                 return false;
             }
@@ -54,7 +55,7 @@ public class DynamicApiCircuitBreaker {
         long apiId = meta.getApi().getId();
         long now = System.currentTimeMillis();
         CircuitState state = states.get(apiId, id -> new CircuitState());
-        synchronized (state) {
+        synchronized (Objects.requireNonNull(state)) {
             if (state.openUntil > 0 && now < state.openUntil) {
                 return;
             }

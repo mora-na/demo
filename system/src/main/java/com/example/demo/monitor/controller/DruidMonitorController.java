@@ -261,7 +261,7 @@ public class DruidMonitorController extends BaseController {
         } catch (Exception ex) {
             try {
                 Method method = target.getClass().getMethod(name, Integer.class);
-                return method.invoke(target, Integer.valueOf(value));
+                return method.invoke(target, value);
             } catch (Exception inner) {
                 return null;
             }

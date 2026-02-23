@@ -1,6 +1,6 @@
 import {defineStore} from "pinia";
 import {computed, ref} from "vue";
-import {type DictDataVO, fetchAllDictData, fetchDictDataBatch, fetchDictDataByType} from "../api/system";
+import {type DictDataVO, fetchAllDictData} from "../api/system";
 
 const CACHE_KEY = "demo-dict-cache";
 const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -17,7 +17,7 @@ function readLocalCache(): DictCachePayload | null {
     }
     try {
         const parsed = JSON.parse(raw) as DictCachePayload;
-        if (!parsed || typeof parsed.loadedAt !== "number" || typeof parsed.data !== "object") {
+        if (!parsed || typeof parsed.data !== "object") {
             return null;
         }
         return parsed;
@@ -68,66 +68,6 @@ export const useDictStore = defineStore("dict", () => {
         }
         return dictMap.value;
     }
-
-    async function loadType(dictType: string, force = false) {
-        if (!dictType) {
-            return [];
-        }
-        if (!force && !isStale.value && dictMap.value[dictType]) {
-            return dictMap.value[dictType];
-        }
-        if (!force) {
-            hydrateFromLocal();
-            if (dictMap.value[dictType]) {
-                return dictMap.value[dictType];
-            }
-        }
-        const result = await fetchDictDataByType(dictType);
-        if (result?.code === 200 && result.data) {
-            dictMap.value = {...dictMap.value, [dictType]: result.data};
-            loadedAt.value = Date.now();
-            writeLocalCache({loadedAt: loadedAt.value, data: dictMap.value});
-        }
-        return dictMap.value[dictType] || [];
-    }
-
-    async function loadBatch(dictTypes: string[], force = false) {
-        const types = (dictTypes || []).filter(Boolean);
-        if (!types.length) {
-            return {};
-        }
-        if (!force && !isStale.value) {
-            const existing = types.filter((type) => dictMap.value[type]);
-            if (existing.length === types.length) {
-                return types.reduce((acc, type) => {
-                    acc[type] = dictMap.value[type];
-                    return acc;
-                }, {} as Record<string, DictDataVO[]>);
-            }
-        }
-        const result = await fetchDictDataBatch(types);
-        if (result?.code === 200 && result.data) {
-            dictMap.value = {...dictMap.value, ...result.data};
-            loadedAt.value = Date.now();
-            writeLocalCache({loadedAt: loadedAt.value, data: dictMap.value});
-        }
-        return types.reduce((acc, type) => {
-            acc[type] = dictMap.value[type] || [];
-            return acc;
-        }, {} as Record<string, DictDataVO[]>);
-    }
-
-    function getOptions(dictType: string) {
-        return dictMap.value[dictType] || [];
-    }
-
-    function getLabel(dictType: string, value?: string | number | null) {
-        const items = dictMap.value[dictType] || [];
-        const text = value == null ? "" : String(value);
-        const match = items.find((item) => String(item.dictValue) === text);
-        return match?.dictLabel || text;
-    }
-
     function clearCache() {
         dictMap.value = {};
         loadedAt.value = 0;
@@ -139,10 +79,6 @@ export const useDictStore = defineStore("dict", () => {
         loadedAt,
         isStale,
         loadAll,
-        loadType,
-        loadBatch,
-        getOptions,
-        getLabel,
         clearCache
     };
 });

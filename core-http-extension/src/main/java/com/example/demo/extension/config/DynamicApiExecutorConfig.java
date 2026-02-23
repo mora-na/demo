@@ -2,6 +2,7 @@ package com.example.demo.extension.config;
 
 import com.example.demo.extension.support.DynamicApiTaskDecorator;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -112,7 +113,7 @@ public class DynamicApiExecutorConfig {
         }
 
         @Override
-        public Thread newThread(Runnable runnable) {
+        public Thread newThread(@NonNull Runnable runnable) {
             Thread thread = new Thread(runnable);
             thread.setDaemon(true);
             thread.setName(prefix + index.getAndIncrement());

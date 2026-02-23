@@ -75,10 +75,4 @@ const formatCell = props.formatCell;
   font-weight: 600;
 }
 
-.druid-sql-table td.col-sql,
-.druid-sql-table th.col-sql {
-  min-width: 220px;
-  white-space: normal;
-  word-break: break-all;
-}
 </style>

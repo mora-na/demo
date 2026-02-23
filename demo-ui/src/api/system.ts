@@ -450,12 +450,6 @@ export async function searchUsers(params: UserSearchQuery): Promise<ApiResponse<
     const response = await api.get<ApiResponse<PageResult<UserVO>>>("/users/search", {params});
     return response.data;
 }
-
-export async function getUserDetail(id: number): Promise<ApiResponse<UserVO>> {
-    const response = await api.get<ApiResponse<UserVO>>(`/users/${id}`);
-    return response.data;
-}
-
 export async function getUserRoleIds(id: number): Promise<ApiResponse<number[]>> {
     const response = await api.get<ApiResponse<number[]>>(`/users/${id}/roles`);
     return response.data;
@@ -590,17 +584,6 @@ export async function listLoginLogs(params: LoginLogQuery): Promise<ApiResponse<
     const response = await api.get<ApiResponse<PageResult<LoginLog>>>("/logs/login", {params});
     return response.data;
 }
-
-export async function deleteOperLog(id: number): Promise<ApiResponse<void>> {
-    const response = await api.delete<ApiResponse<void>>(`/logs/oper/${id}`);
-    return response.data;
-}
-
-export async function deleteLoginLog(id: number): Promise<ApiResponse<void>> {
-    const response = await api.delete<ApiResponse<void>>(`/logs/login/${id}`);
-    return response.data;
-}
-
 export async function getRoleMenuDataScope(id: number): Promise<ApiResponse<RoleMenuDataScopeResponse>> {
     const response = await api.get<ApiResponse<RoleMenuDataScopeResponse>>(`/roles/${id}/menu-data-scope`);
     return response.data;
@@ -610,12 +593,6 @@ export async function saveRoleMenuDataScope(id: number, items: RoleMenuDataScope
     const response = await api.put<ApiResponse<void>>(`/roles/${id}/menu-data-scope`, {items});
     return response.data;
 }
-
-export async function clearRoleMenuDataScope(roleId: number, menuId: number): Promise<ApiResponse<void>> {
-    const response = await api.delete<ApiResponse<void>>(`/roles/${roleId}/menu-data-scope/${menuId}`);
-    return response.data;
-}
-
 export async function listPermissions(): Promise<ApiResponse<PermissionVO[]>> {
     const response = await api.get<ApiResponse<PermissionVO[]>>("/permissions");
     return response.data;
@@ -818,12 +795,6 @@ export async function publishNotice(payload: NoticePublishPayload): Promise<ApiR
     const response = await api.post<ApiResponse<NoticeVO>>('/notices', payload);
     return response.data;
 }
-
-export async function getNoticeDetail(id: number): Promise<ApiResponse<NoticeVO>> {
-    const response = await api.get<ApiResponse<NoticeVO>>(`/notices/${id}`);
-    return response.data;
-}
-
 export async function listNoticeRecipients(id: number): Promise<ApiResponse<NoticeRecipientVO[]>> {
     const response = await api.get<ApiResponse<NoticeRecipientVO[]>>(`/notices/${id}/recipients`);
     return response.data;
@@ -971,12 +942,6 @@ export async function listJobs(params: JobQuery): Promise<ApiResponse<PageResult
     const response = await api.get<ApiResponse<PageResult<JobVO>>>('/jobs', {params});
     return response.data;
 }
-
-export async function getJobDetail(id: number): Promise<ApiResponse<JobVO>> {
-    const response = await api.get<ApiResponse<JobVO>>(`/jobs/${id}`);
-    return response.data;
-}
-
 export async function createJob(payload: JobCreatePayload): Promise<ApiResponse<JobVO>> {
     const response = await api.post<ApiResponse<JobVO>>('/jobs', payload);
     return response.data;

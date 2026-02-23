@@ -193,7 +193,7 @@ async function saveRule() {
       if (result?.code === 200) {
         ElMessage.success(t("common.saveSuccess"));
         editorVisible.value = false;
-        fetchRows();
+        await fetchRows();
       } else {
         ElMessage.error(result?.message || t("common.saveFailed"));
       }
@@ -210,7 +210,7 @@ async function saveRule() {
       if (result?.code === 200) {
         ElMessage.success(t("common.saveSuccess"));
         editorVisible.value = false;
-        fetchRows();
+        await fetchRows();
       } else {
         ElMessage.error(result?.message || t("common.saveFailed"));
       }
@@ -233,7 +233,7 @@ async function removeRow(row: DataScopeRuleVO) {
   const result = await deleteDataScopeRule(row.id);
   if (result?.code === 200) {
     ElMessage.success(t("common.deleteSuccess"));
-    fetchRows();
+    await fetchRows();
   } else {
     ElMessage.error(result?.message || t("common.deleteFailed"));
   }

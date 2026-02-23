@@ -3,6 +3,7 @@ package com.example.demo.dict.web;
 import com.example.demo.dict.annotation.DictLabel;
 import com.example.demo.dict.support.DictTool;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -34,17 +35,17 @@ public class DictLabelPreloadAdvice implements ResponseBodyAdvice<Object> {
     private final Map<Class<?>, List<Field>> classFieldCache = new ConcurrentHashMap<>();
 
     @Override
-    public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
+    public boolean supports(@NonNull MethodParameter returnType, @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
         return converterType != null && MappingJackson2HttpMessageConverter.class.isAssignableFrom(converterType);
     }
 
     @Override
     public Object beforeBodyWrite(Object body,
-                                  MethodParameter returnType,
-                                  MediaType selectedContentType,
-                                  Class<? extends HttpMessageConverter<?>> selectedConverterType,
-                                  ServerHttpRequest request,
-                                  ServerHttpResponse response) {
+                                  @NonNull MethodParameter returnType,
+                                  @NonNull MediaType selectedContentType,
+                                  @NonNull Class<? extends HttpMessageConverter<?>> selectedConverterType,
+                                  @NonNull ServerHttpRequest request,
+                                  @NonNull ServerHttpResponse response) {
         if (body == null) {
             return null;
         }

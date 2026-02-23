@@ -238,7 +238,7 @@ async function removeLog(row: DynamicApiLog) {
     const result = await deleteDynamicApiLog(row.id);
     if (result?.code === 200) {
       ElMessage.success(t("common.deleteSuccess"));
-      loadLogs();
+      await loadLogs();
     } else {
       ElMessage.error(result?.message || t("common.deleteFailed"));
     }

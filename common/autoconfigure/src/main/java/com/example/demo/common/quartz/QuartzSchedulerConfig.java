@@ -48,7 +48,7 @@ public class QuartzSchedulerConfig {
     }
 
     private DynamicRoutingDataSource unwrapDynamicRoutingDataSource(DataSource dataSource) {
-        Set<DataSource> visited = new HashSet<DataSource>();
+        Set<DataSource> visited = new HashSet<>();
         DataSource candidate = dataSource;
         while (candidate != null && visited.add(candidate)) {
             if (candidate instanceof DynamicRoutingDataSource) {

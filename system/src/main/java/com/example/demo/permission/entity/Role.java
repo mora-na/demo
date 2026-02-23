@@ -28,7 +28,6 @@ public class Role extends BaseEntity implements Serializable {
     /**
      * 角色编码（全局唯一）。
      *
-     * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     @TableField("code")
@@ -37,7 +36,6 @@ public class Role extends BaseEntity implements Serializable {
     /**
      * 角色名称（展示用）。
      *
-     * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     @TableField("name")
@@ -46,7 +44,6 @@ public class Role extends BaseEntity implements Serializable {
     /**
      * 状态标识：1-启用；0-禁用。
      *
-     * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     @TableField("status")
@@ -55,7 +52,6 @@ public class Role extends BaseEntity implements Serializable {
     /**
      * 数据范围类型：ALL/DEPT_AND_CHILD/DEPT/CUSTOM_DEPT/SELF/NONE。
      *
-     * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     @TableField("data_scope_type")
@@ -64,7 +60,6 @@ public class Role extends BaseEntity implements Serializable {
     /**
      * 数据范围值，CUSTOM_DEPT 时存储部门 ID 列表。
      *
-     * @author GPT-5.2-codex(high)
      * @date 2026/2/9
      */
     @TableField("data_scope_value")

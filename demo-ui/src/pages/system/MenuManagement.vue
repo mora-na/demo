@@ -1,4 +1,4 @@
-<template>
+<template xmlns="">
   <div class="system-module">
     <div class="module-head">
       <div>
@@ -241,7 +241,7 @@ async function saveMenu() {
       if (result?.code === 200) {
         ElMessage.success(result?.message || t("menu.msg.createSuccess"));
         editorVisible.value = false;
-        fetchMenus();
+        await fetchMenus();
       } else {
         ElMessage.error(result?.message || t("menu.msg.createFailed"));
       }
@@ -250,7 +250,7 @@ async function saveMenu() {
       if (result?.code === 200) {
         ElMessage.success(result?.message || t("menu.msg.updateSuccess"));
         editorVisible.value = false;
-        fetchMenus();
+        await fetchMenus();
       } else {
         ElMessage.error(result?.message || t("menu.msg.updateFailed"));
       }
@@ -290,7 +290,7 @@ async function removeMenu(menu: MenuVO) {
   const result = await deleteMenu(menu.id);
   if (result?.code === 200) {
     ElMessage.success(t("menu.msg.deleteSuccess"));
-    fetchMenus();
+    await fetchMenus();
   } else {
     ElMessage.error(result?.message || t("menu.msg.deleteFailed"));
   }
@@ -313,7 +313,7 @@ async function removeMenus() {
   const result = await deleteMenus(selectedMenuIds.value);
   if (result?.code === 200) {
     ElMessage.success(t("menu.msg.deleteSuccess"));
-    fetchMenus();
+    await fetchMenus();
   } else {
     ElMessage.error(result?.message || t("menu.msg.deleteFailed"));
   }
@@ -352,7 +352,4 @@ onMounted(fetchMenus);
   align-items: center;
 }
 
-.form-grid :deep(.el-form-item) {
-  margin-bottom: 12px;
-}
 </style>

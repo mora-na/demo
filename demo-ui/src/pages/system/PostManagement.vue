@@ -230,7 +230,7 @@ async function removePost(post: PostVO) {
   const result = await deletePost(post.id);
   if (result?.code === 200) {
     ElMessage.success(t("post.msg.deleteSuccess"));
-    fetchPosts();
+    await fetchPosts();
   } else {
     ElMessage.error(result?.message || t("post.msg.deleteFailed"));
   }
@@ -253,7 +253,7 @@ async function removePosts() {
   const result = await deletePosts(selectedPostIds.value);
   if (result?.code === 200) {
     ElMessage.success(t("post.msg.deleteSuccess"));
-    fetchPosts();
+    await fetchPosts();
   } else {
     ElMessage.error(result?.message || t("post.msg.deleteFailed"));
   }
@@ -282,7 +282,7 @@ async function savePost() {
       if (result?.code === 200) {
         ElMessage.success(result?.message || t("post.msg.createSuccess"));
         editorVisible.value = false;
-        fetchPosts();
+        await fetchPosts();
       } else {
         ElMessage.error(result?.message || t("post.msg.createFailed"));
       }
@@ -298,7 +298,7 @@ async function savePost() {
       if (result?.code === 200) {
         ElMessage.success(result?.message || t("post.msg.updateSuccess"));
         editorVisible.value = false;
-        fetchPosts();
+        await fetchPosts();
       } else {
         ElMessage.error(result?.message || t("post.msg.updateFailed"));
       }
@@ -362,12 +362,4 @@ onMounted(() => {
   align-items: center;
 }
 
-.module-footer {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.form-grid :deep(.el-form-item) {
-  margin-bottom: 12px;
-}
 </style>

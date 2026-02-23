@@ -158,7 +158,7 @@ async function savePermission() {
       if (result?.code === 200) {
         ElMessage.success(result?.message || t("permission.msg.createSuccess"));
         editorVisible.value = false;
-        fetchPermissions();
+        await fetchPermissions();
       } else {
         ElMessage.error(result?.message || t("permission.msg.createFailed"));
       }
@@ -167,7 +167,7 @@ async function savePermission() {
       if (result?.code === 200) {
         ElMessage.success(result?.message || t("permission.msg.updateSuccess"));
         editorVisible.value = false;
-        fetchPermissions();
+        await fetchPermissions();
       } else {
         ElMessage.error(result?.message || t("permission.msg.updateFailed"));
       }
@@ -207,7 +207,7 @@ async function removePermission(permission: PermissionVO) {
   const result = await deletePermission(permission.id);
   if (result?.code === 200) {
     ElMessage.success(t("permission.msg.deleteSuccess"));
-    fetchPermissions();
+    await fetchPermissions();
   } else {
     ElMessage.error(result?.message || t("permission.msg.deleteFailed"));
   }
@@ -230,7 +230,7 @@ async function removePermissions() {
   const result = await deletePermissions(selectedPermissionIds.value);
   if (result?.code === 200) {
     ElMessage.success(t("permission.msg.deleteSuccess"));
-    fetchPermissions();
+    await fetchPermissions();
   } else {
     ElMessage.error(result?.message || t("permission.msg.deleteFailed"));
   }
