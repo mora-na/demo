@@ -202,17 +202,17 @@ export default {
             template: "Pattern",
             templatePlaceholder: "Select",
             groups: {
-                frequency: "By frequency",
                 timePoint: "By exact time",
                 date: "By date",
+                frequency: "By frequency",
                 combo: "Combination"
             },
             templates: {
                 freqSeconds: "Every N seconds (Quartz)",
                 freqMinutes: "Every N minutes",
                 freqHours: "Every N hours",
-                freqDays: "Every N days",
-                freqWeeks: "Every N weeks (weekday)",
+                freqDays: "Every N days (within month)",
+                freqWeeks: "Weekday step (within week)",
                 freqMonths: "Every N months (day)",
                 freqYears: "Yearly on date",
                 timeFixed: "Fixed time (daily)",
@@ -221,8 +221,12 @@ export default {
                 dateMonthDays: "Specific days of month",
                 dateWeekdays: "Specific weekdays",
                 dateLastDay: "Last day of month (L)",
+                dateLastDayOffset: "Last day offset (L-n)",
+                dateLastWeekday: "Last weekday of month (LW)",
+                dateLastWeekdayOfMonth: "Last weekday of month (xL)",
                 dateNearestWeekday: "Nearest weekday (W)",
                 dateNthWeekday: "Nth weekday (#)",
+                dateYear: "Specific year date",
                 comboWorkdaysHours: "Workdays + hours",
                 comboQuarterStart: "Quarter + month start",
                 comboRangeStep: "Range + step"
@@ -230,8 +234,8 @@ export default {
             intervalSeconds: "Second interval",
             intervalMinutes: "Minute interval",
             intervalHours: "Hour interval",
-            intervalDays: "Day interval",
-            intervalWeeks: "Week interval",
+            intervalDays: "Day step",
+            intervalWeeks: "Weekday step",
             intervalMonths: "Month interval",
             hour: "Hour",
             minute: "Minute",
@@ -249,6 +253,8 @@ export default {
             monthsPlaceholder: "Select months",
             weekday: "Weekday",
             weekdayPlaceholder: "Select",
+            year: "Year",
+            lastDayOffset: "Offset from month end",
             weekdays: {
                 mon: "Mon",
                 tue: "Tue",
@@ -261,8 +267,11 @@ export default {
             dayOfMonth: "Day of month (1-31)",
             dayOfMonthPlaceholder: "Select days",
             preview: "Expression preview",
+            nextRuns: "Next 5 run times",
+            nextRunsEmpty: "No preview available",
             apply: "Use this expression",
-            invalid: "Generated expression is invalid"
+            invalid: "Generated expression is invalid",
+            timeZone: "Time zone"
         },
         logs: {
             title: "Execution logs",

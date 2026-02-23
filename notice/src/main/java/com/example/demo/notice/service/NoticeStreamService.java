@@ -47,8 +47,12 @@ public class NoticeStreamService {
         if (userId == null) {
             return emitter;
         }
-        if (!tryAcquireConnection(userId)) {
+        boolean replaced = closeUserEmitters(userId);
+        if (!replaced && !tryAcquireConnection(userId)) {
             return rejectConnection(userId);
+        }
+        if (replaced) {
+            acquireConnection(userId);
         }
         emitters.computeIfAbsent(userId, key -> new CopyOnWriteArrayList<>()).add(emitter);
         emitter.onCompletion(() -> removeEmitter(userId, emitter));
@@ -203,6 +207,25 @@ public class NoticeStreamService {
                 latestCache.invalidate(userId);
             }
         }
+    }
+
+    private boolean closeUserEmitters(Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        List<SseEmitter> userEmitters = emitters.get(userId);
+        if (userEmitters == null || userEmitters.isEmpty()) {
+            return false;
+        }
+        for (SseEmitter emitter : userEmitters) {
+            try {
+                emitter.complete();
+            } catch (RuntimeException ex) {
+                log.debug("Failed to close existing notice SSE emitter for user {}.", userId, ex);
+                removeEmitter(userId, emitter);
+            }
+        }
+        return true;
     }
 
     private void sendInitEvent(Long userId, SseEmitter emitter, Long unreadCount) {
@@ -426,6 +449,20 @@ public class NoticeStreamService {
             }
         }
         return true;
+    }
+
+    private void acquireConnection(Long userId) {
+        if (userId == null) {
+            return;
+        }
+        totalConnections.incrementAndGet();
+        int maxPerUser = noticeConstants.getStream().getMaxConnectionsPerUser();
+        if (maxPerUser > 0) {
+            AtomicInteger counter = userConnectionCounter.get(userId, key -> new AtomicInteger());
+            if (counter != null) {
+                counter.incrementAndGet();
+            }
+        }
     }
 
     private void releaseConnection(Long userId) {

@@ -177,36 +177,42 @@
 
     <el-dialog v-model="cronHelperVisible" align-center :title="t('job.cronHelper.title')" width="640px">
       <el-form label-position="top" class="cron-helper">
-        <el-form-item :label="t('job.cronHelper.template')">
-          <el-select v-model="cronHelperTemplate" :placeholder="t('job.cronHelper.templatePlaceholder')">
-            <el-option-group :label="t('job.cronHelper.groups.frequency')">
-              <el-option :label="t('job.cronHelper.templates.freqSeconds')" value="freq_seconds"/>
-              <el-option :label="t('job.cronHelper.templates.freqMinutes')" value="freq_minutes"/>
-              <el-option :label="t('job.cronHelper.templates.freqHours')" value="freq_hours"/>
-              <el-option :label="t('job.cronHelper.templates.freqDays')" value="freq_days"/>
-              <el-option :label="t('job.cronHelper.templates.freqWeeks')" value="freq_weeks"/>
-              <el-option :label="t('job.cronHelper.templates.freqMonths')" value="freq_months"/>
-              <el-option :label="t('job.cronHelper.templates.freqYears')" value="freq_years"/>
-            </el-option-group>
-            <el-option-group :label="t('job.cronHelper.groups.timePoint')">
-              <el-option :label="t('job.cronHelper.templates.timeFixed')" value="time_fixed"/>
-              <el-option :label="t('job.cronHelper.templates.timeMulti')" value="time_multi"/>
-              <el-option :label="t('job.cronHelper.templates.timeRange')" value="time_range"/>
-            </el-option-group>
-            <el-option-group :label="t('job.cronHelper.groups.date')">
-              <el-option :label="t('job.cronHelper.templates.dateMonthDays')" value="date_month_days"/>
-              <el-option :label="t('job.cronHelper.templates.dateWeekdays')" value="date_weekdays"/>
-              <el-option :label="t('job.cronHelper.templates.dateLastDay')" value="date_last_day"/>
-              <el-option :label="t('job.cronHelper.templates.dateNearestWeekday')" value="date_nearest_weekday"/>
-              <el-option :label="t('job.cronHelper.templates.dateNthWeekday')" value="date_nth_weekday"/>
-            </el-option-group>
-            <el-option-group :label="t('job.cronHelper.groups.combo')">
-              <el-option :label="t('job.cronHelper.templates.comboWorkdaysHours')" value="combo_workdays_hours"/>
-              <el-option :label="t('job.cronHelper.templates.comboQuarterStart')" value="combo_quarter_start"/>
-              <el-option :label="t('job.cronHelper.templates.comboRangeStep')" value="combo_range_step"/>
-            </el-option-group>
-          </el-select>
-        </el-form-item>
+        <div class="cron-helper-main">
+          <el-form-item :label="t('job.cronHelper.template')">
+            <el-select v-model="cronHelperTemplate" :placeholder="t('job.cronHelper.templatePlaceholder')">
+              <el-option-group :label="t('job.cronHelper.groups.timePoint')">
+                <el-option :label="t('job.cronHelper.templates.timeFixed')" value="time_fixed"/>
+                <el-option :label="t('job.cronHelper.templates.timeMulti')" value="time_multi"/>
+                <el-option :label="t('job.cronHelper.templates.timeRange')" value="time_range"/>
+              </el-option-group>
+              <el-option-group :label="t('job.cronHelper.groups.date')">
+                <el-option :label="t('job.cronHelper.templates.dateMonthDays')" value="date_month_days"/>
+                <el-option :label="t('job.cronHelper.templates.dateWeekdays')" value="date_weekdays"/>
+                <el-option :label="t('job.cronHelper.templates.dateLastDay')" value="date_last_day"/>
+                <el-option :label="t('job.cronHelper.templates.dateLastDayOffset')" value="date_last_day_offset"/>
+                <el-option :label="t('job.cronHelper.templates.dateLastWeekday')" value="date_last_weekday"/>
+                <el-option :label="t('job.cronHelper.templates.dateLastWeekdayOfMonth')"
+                           value="date_last_weekday_of_month"/>
+                <el-option :label="t('job.cronHelper.templates.dateNearestWeekday')" value="date_nearest_weekday"/>
+                <el-option :label="t('job.cronHelper.templates.dateNthWeekday')" value="date_nth_weekday"/>
+                <el-option :label="t('job.cronHelper.templates.dateYear')" value="date_year"/>
+              </el-option-group>
+              <el-option-group :label="t('job.cronHelper.groups.frequency')">
+                <el-option :label="t('job.cronHelper.templates.freqSeconds')" value="freq_seconds"/>
+                <el-option :label="t('job.cronHelper.templates.freqMinutes')" value="freq_minutes"/>
+                <el-option :label="t('job.cronHelper.templates.freqHours')" value="freq_hours"/>
+                <el-option :label="t('job.cronHelper.templates.freqDays')" value="freq_days"/>
+                <el-option :label="t('job.cronHelper.templates.freqWeeks')" value="freq_weeks"/>
+                <el-option :label="t('job.cronHelper.templates.freqMonths')" value="freq_months"/>
+                <el-option :label="t('job.cronHelper.templates.freqYears')" value="freq_years"/>
+              </el-option-group>
+              <el-option-group :label="t('job.cronHelper.groups.combo')">
+                <el-option :label="t('job.cronHelper.templates.comboWorkdaysHours')" value="combo_workdays_hours"/>
+                <el-option :label="t('job.cronHelper.templates.comboQuarterStart')" value="combo_quarter_start"/>
+                <el-option :label="t('job.cronHelper.templates.comboRangeStep')" value="combo_range_step"/>
+              </el-option-group>
+            </el-select>
+          </el-form-item>
 
         <el-form-item v-if="cronHelperTemplate === 'freq_seconds'" :label="t('job.cronHelper.intervalSeconds')">
           <el-input-number v-model="cronHelper.intervalSeconds" :min="1" :max="59"/>
@@ -221,12 +227,12 @@
         </el-form-item>
 
         <el-form-item v-if="cronHelperTemplate === 'freq_days'" :label="t('job.cronHelper.intervalDays')">
-          <el-input-number v-model="cronHelper.intervalDays" :min="1" :max="365"/>
+          <el-input-number v-model="cronHelper.intervalDays" :max="31" :min="1"/>
         </el-form-item>
 
         <div v-if="cronHelperTemplate === 'freq_weeks'" class="cron-row">
           <el-form-item :label="t('job.cronHelper.intervalWeeks')" class="cron-item">
-            <el-input-number v-model="cronHelper.intervalWeeks" :min="1" :max="52"/>
+            <el-input-number v-model="cronHelper.intervalWeeks" :max="7" :min="1"/>
           </el-form-item>
           <el-form-item :label="t('job.cronHelper.weekday')" class="cron-item">
             <el-select v-model="cronHelper.weekday" :placeholder="t('job.cronHelper.weekdayPlaceholder')">
@@ -412,6 +418,48 @@
           </el-form-item>
         </div>
 
+          <div v-if="cronHelperTemplate === 'date_last_day_offset'" class="cron-row">
+            <el-form-item :label="t('job.cronHelper.lastDayOffset')" class="cron-item">
+              <el-input-number v-model="cronHelper.lastDayOffset" :max="30" :min="1"/>
+            </el-form-item>
+            <el-form-item :label="t('job.cronHelper.hour')" class="cron-item">
+              <el-input-number v-model="cronHelper.fixedHour" :max="23" :min="0"/>
+            </el-form-item>
+            <el-form-item :label="t('job.cronHelper.minute')" class="cron-item">
+              <el-input-number v-model="cronHelper.fixedMinute" :max="59" :min="0"/>
+            </el-form-item>
+          </div>
+
+          <div v-if="cronHelperTemplate === 'date_last_weekday'" class="cron-row">
+            <el-form-item :label="t('job.cronHelper.hour')" class="cron-item">
+              <el-input-number v-model="cronHelper.fixedHour" :max="23" :min="0"/>
+            </el-form-item>
+            <el-form-item :label="t('job.cronHelper.minute')" class="cron-item">
+              <el-input-number v-model="cronHelper.fixedMinute" :max="59" :min="0"/>
+            </el-form-item>
+          </div>
+
+          <div v-if="cronHelperTemplate === 'date_last_weekday_of_month'" class="cron-row">
+            <el-form-item :label="t('job.cronHelper.weekday')" class="cron-item">
+              <el-select v-model="cronHelper.lastWeekday" :placeholder="t('job.cronHelper.weekdayPlaceholder')">
+                <el-option :label="t('job.cronHelper.weekdays.mon')" value="MON"/>
+                <el-option :label="t('job.cronHelper.weekdays.tue')" value="TUE"/>
+                <el-option :label="t('job.cronHelper.weekdays.wed')" value="WED"/>
+                <el-option :label="t('job.cronHelper.weekdays.thu')" value="THU"/>
+                <el-option :label="t('job.cronHelper.weekdays.fri')" value="FRI"/>
+                <el-option :label="t('job.cronHelper.weekdays.sat')" value="SAT"/>
+                <el-option :label="t('job.cronHelper.weekdays.sun')" value="SUN"/>
+              </el-select>
+            </el-form-item>
+            <el-form-item :label="t('job.cronHelper.time')" class="cron-item">
+              <div class="cron-inline">
+                <el-input-number v-model="cronHelper.fixedHour" :max="23" :min="0"/>
+                <span class="cron-sep">:</span>
+                <el-input-number v-model="cronHelper.fixedMinute" :max="59" :min="0"/>
+              </div>
+            </el-form-item>
+          </div>
+
         <div v-if="cronHelperTemplate === 'date_nearest_weekday'" class="cron-row">
           <el-form-item :label="t('job.cronHelper.dayOfMonth')" class="cron-item">
             <el-input-number v-model="cronHelper.nearestWeekday" :min="1" :max="31"/>
@@ -447,6 +495,32 @@
             </div>
           </el-form-item>
         </div>
+
+          <div v-if="cronHelperTemplate === 'date_year'" class="cron-row">
+            <el-form-item :label="t('job.cronHelper.year')" class="cron-item">
+              <el-input-number v-model="cronHelper.yearlyYear" :max="2099" :min="1970"/>
+            </el-form-item>
+            <el-form-item :label="t('job.cronHelper.months')" class="cron-item">
+              <el-select v-model="cronHelper.yearlyMonth" :placeholder="t('job.cronHelper.monthsPlaceholder')">
+                <el-option
+                    v-for="option in monthOptions"
+                    :key="option.value"
+                    :label="option.label"
+                    :value="option.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item :label="t('job.cronHelper.dayOfMonth')" class="cron-item">
+              <el-input-number v-model="cronHelper.yearlyDay" :max="31" :min="1"/>
+            </el-form-item>
+            <el-form-item :label="t('job.cronHelper.time')" class="cron-item">
+              <div class="cron-inline">
+                <el-input-number v-model="cronHelper.fixedHour" :max="23" :min="0"/>
+                <span class="cron-sep">:</span>
+                <el-input-number v-model="cronHelper.fixedMinute" :max="59" :min="0"/>
+              </div>
+            </el-form-item>
+          </div>
 
         <div v-if="cronHelperTemplate === 'combo_workdays_hours'" class="cron-row">
           <el-form-item :label="t('job.cronHelper.rangeStartHour')" class="cron-item">
@@ -519,9 +593,37 @@
           </el-form-item>
         </div>
 
-        <el-form-item :label="t('job.cronHelper.preview')">
-          <el-input :model-value="cronHelperPreview" readonly/>
-        </el-form-item>
+        </div>
+        <div class="cron-helper-side">
+          <el-form-item :label="t('job.cronHelper.preview')">
+            <el-input :model-value="cronHelperPreview" class="cron-preview-input" readonly/>
+          </el-form-item>
+          <el-form-item :label="t('job.cronHelper.nextRuns')">
+            <div v-loading="cronPreviewLoading" class="cron-preview-list">
+              <div v-if="!cronHelperPreview" class="cron-preview-empty">
+                {{ t("job.cronHelper.nextRunsEmpty") }}
+              </div>
+              <template v-else>
+                <div v-if="!cronPreviewTimes.length" class="cron-preview-empty">
+                  {{ t("job.cronHelper.nextRunsEmpty") }}
+                </div>
+                <div v-else>
+                  <div
+                      v-for="(item, index) in cronPreviewTimes"
+                      :key="`${item}-${index}`"
+                      class="cron-preview-item"
+                  >
+                    <span class="cron-preview-index">{{ index + 1 }}</span>
+                    <span class="cron-preview-time">{{ item }}</span>
+                  </div>
+                </div>
+                <div v-if="cronPreviewTimeZone" class="cron-preview-zone">
+                  {{ t("job.cronHelper.timeZone") }}: {{ cronPreviewTimeZone }}
+                </div>
+              </template>
+            </div>
+          </el-form-item>
+        </div>
       </el-form>
       <template #footer>
         <el-button @click="cronHelperVisible = false">{{ t("common.cancel") }}</el-button>
@@ -534,7 +636,7 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, onMounted, reactive, ref} from "vue";
+import {computed, onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {ElMessage} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {
@@ -550,6 +652,7 @@ import {
   listJobHandlers,
   listJobLogs,
   listJobs,
+  previewJobCron,
   runJob,
   updateJob,
   updateJobStatus,
@@ -624,8 +727,12 @@ type CronTemplate =
     | "date_month_days"
     | "date_weekdays"
     | "date_last_day"
+    | "date_last_day_offset"
+    | "date_last_weekday"
+    | "date_last_weekday_of_month"
     | "date_nearest_weekday"
     | "date_nth_weekday"
+    | "date_year"
     | "combo_workdays_hours"
     | "combo_quarter_start"
     | "combo_range_step";
@@ -654,8 +761,11 @@ const cronHelper = reactive({
   nearestWeekday: 15,
   nthWeekday: "SAT",
   nthWeek: 3,
+  lastDayOffset: 1,
+  lastWeekday: "MON",
   yearlyMonth: 1,
   yearlyDay: 1,
+  yearlyYear: new Date().getFullYear(),
   workdayStartHour: 9,
   workdayEndHour: 18,
   workdayMinute: 0,
@@ -666,6 +776,12 @@ const cronHelper = reactive({
   stepEndHour: 12,
   stepWeekdays: ["MON", "TUE", "WED", "THU", "FRI"]
 });
+
+const cronPreviewTimes = ref<string[]>([]);
+const cronPreviewTimeZone = ref("");
+const cronPreviewLoading = ref(false);
+let cronPreviewTimer: number | null = null;
+let cronPreviewRequestSeq = 0;
 
 const minuteOptions = computed(() => buildNumberOptions(0, 59));
 const hourOptions = computed(() => buildNumberOptions(0, 23));
@@ -687,11 +803,11 @@ const cronHelperPreview = computed(() => {
       return `0 0 */${interval} * * ?`;
     }
     case "freq_days": {
-      const interval = clampNumber(cronHelper.intervalDays, 1, 365);
+      const interval = clampNumber(cronHelper.intervalDays, 1, 31);
       return `0 0 0 */${interval} * ?`;
     }
     case "freq_weeks": {
-      const interval = clampNumber(cronHelper.intervalWeeks, 1, 52);
+      const interval = clampNumber(cronHelper.intervalWeeks, 1, 7);
       const weekday = normalizeWeekdaySingle(cronHelper.weekday) || "MON";
       return `0 ${clampNumber(cronHelper.fixedMinute, 0, 59)} ${clampNumber(cronHelper.fixedHour, 0, 23)} ? * ${weekday}/${interval}`;
     }
@@ -739,6 +855,17 @@ const cronHelperPreview = computed(() => {
     case "date_last_day": {
       return `0 ${clampNumber(cronHelper.fixedMinute, 0, 59)} ${clampNumber(cronHelper.fixedHour, 0, 23)} L * ?`;
     }
+    case "date_last_day_offset": {
+      const offset = clampNumber(cronHelper.lastDayOffset, 1, 30);
+      return `0 ${clampNumber(cronHelper.fixedMinute, 0, 59)} ${clampNumber(cronHelper.fixedHour, 0, 23)} L-${offset} * ?`;
+    }
+    case "date_last_weekday": {
+      return `0 ${clampNumber(cronHelper.fixedMinute, 0, 59)} ${clampNumber(cronHelper.fixedHour, 0, 23)} LW * ?`;
+    }
+    case "date_last_weekday_of_month": {
+      const weekday = normalizeWeekdaySingle(cronHelper.lastWeekday) || "MON";
+      return `0 ${clampNumber(cronHelper.fixedMinute, 0, 59)} ${clampNumber(cronHelper.fixedHour, 0, 23)} ? * ${weekday}L`;
+    }
     case "date_nearest_weekday": {
       const day = clampNumber(cronHelper.nearestWeekday, 1, 31);
       return `0 ${clampNumber(cronHelper.fixedMinute, 0, 59)} ${clampNumber(cronHelper.fixedHour, 0, 23)} ${day}W * ?`;
@@ -747,6 +874,12 @@ const cronHelperPreview = computed(() => {
       const weekday = normalizeWeekdaySingle(cronHelper.nthWeekday) || "MON";
       const nth = clampNumber(cronHelper.nthWeek, 1, 5);
       return `0 ${clampNumber(cronHelper.fixedMinute, 0, 59)} ${clampNumber(cronHelper.fixedHour, 0, 23)} ? * ${weekday}#${nth}`;
+    }
+    case "date_year": {
+      const year = clampNumber(cronHelper.yearlyYear, 1970, 2099);
+      const month = clampNumber(cronHelper.yearlyMonth, 1, 12);
+      const day = clampNumber(cronHelper.yearlyDay, 1, 31);
+      return `0 ${clampNumber(cronHelper.fixedMinute, 0, 59)} ${clampNumber(cronHelper.fixedHour, 0, 23)} ${day} ${month} ? ${year}`;
     }
     case "combo_workdays_hours": {
       const [start, end] = normalizeRange(cronHelper.workdayStartHour, cronHelper.workdayEndHour, 0, 23);
@@ -775,6 +908,67 @@ const cronHelperPreview = computed(() => {
 });
 
 const cronHelperValid = computed(() => Boolean(cronHelperPreview.value));
+
+function resetCronPreview() {
+  cronPreviewTimes.value = [];
+  cronPreviewTimeZone.value = "";
+}
+
+function scheduleCronPreview() {
+  if (cronPreviewTimer != null) {
+    window.clearTimeout(cronPreviewTimer);
+  }
+  cronPreviewTimer = window.setTimeout(() => {
+    cronPreviewTimer = null;
+    void loadCronPreview();
+  }, 250);
+}
+
+async function loadCronPreview() {
+  const expression = cronHelperPreview.value.trim();
+  if (!cronHelperVisible.value || !expression) {
+    resetCronPreview();
+    return;
+  }
+  const requestSeq = ++cronPreviewRequestSeq;
+  cronPreviewLoading.value = true;
+  try {
+    const result = await previewJobCron(expression);
+    if (requestSeq !== cronPreviewRequestSeq) {
+      return;
+    }
+    if (result?.code === 200 && result.data) {
+      cronPreviewTimes.value = result.data.nextFireTimes || [];
+      cronPreviewTimeZone.value = result.data.timeZone || "";
+      return;
+    }
+    resetCronPreview();
+  } catch (error) {
+    if (requestSeq !== cronPreviewRequestSeq) {
+      return;
+    }
+    resetCronPreview();
+  } finally {
+    if (requestSeq === cronPreviewRequestSeq) {
+      cronPreviewLoading.value = false;
+    }
+  }
+}
+
+watch(cronHelperVisible, (visible) => {
+  if (visible) {
+    scheduleCronPreview();
+    return;
+  }
+  resetCronPreview();
+});
+
+watch(cronHelperPreview, () => {
+  if (!cronHelperVisible.value) {
+    return;
+  }
+  scheduleCronPreview();
+});
 
 function formatDateTime(value?: string) {
   if (!value) {
@@ -1095,6 +1289,13 @@ onMounted(() => {
   loadHandlers();
   loadJobs();
 });
+
+onUnmounted(() => {
+  if (cronPreviewTimer != null) {
+    window.clearTimeout(cronPreviewTimer);
+    cronPreviewTimer = null;
+  }
+});
 </script>
 
 <style scoped>
@@ -1209,25 +1410,74 @@ onMounted(() => {
 }
 
 .cron-helper {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.6fr);
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--el-fill-color-light);
+  align-items: start;
+}
+
+.cron-helper-main {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+}
+
+.cron-helper-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+}
+
+.cron-helper-side :deep(.el-form-item) {
+  margin-bottom: 0;
+}
+
+.cron-helper-side :deep(.el-input) {
+  width: 100%;
+}
+
+.cron-preview-input {
+  width: 100%;
+}
+
+.cron-helper-side :deep(.el-form-item__content) {
+  width: 100%;
+}
+
+.cron-preview-input :deep(.el-input__wrapper) {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .cron-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
+  align-items: end;
 }
 
 .cron-inline {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 4px 6px;
+  border-radius: 10px;
+  background: var(--el-fill-color-lighter);
+  border: 1px dashed var(--el-border-color);
 }
 
 .cron-sep {
   color: var(--muted);
+}
+
+.cron-helper :deep(.el-input__wrapper),
+.cron-helper :deep(.el-select__wrapper) {
+  border-radius: 10px;
 }
 
 .cron-item :deep(.el-input-number),
@@ -1241,9 +1491,74 @@ onMounted(() => {
   width: auto;
 }
 
+.cron-preview-input :deep(.el-input__wrapper) {
+  font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.cron-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 10px;
+  background: var(--el-fill-color-blank);
+  min-height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cron-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: var(--el-fill-color-light);
+  font-size: 12px;
+}
+
+.cron-preview-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  font-size: 12px;
+  flex: 0 0 auto;
+}
+
+.cron-preview-time {
+  color: var(--el-text-color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cron-preview-empty {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+.cron-preview-zone {
+  margin-top: 4px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
 @media (max-width: 720px) {
   .job-editor-form {
     grid-template-columns: 1fr;
+  }
+
+  .cron-helper {
+    grid-template-columns: 1fr;
+  }
+
+  .cron-helper-side {
+    position: static;
   }
 
   .cron-row {

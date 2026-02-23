@@ -1056,13 +1056,15 @@ function applyNoticePayload(payload: any) {
     noticeStreamRetryHintMs = payload.retryAfterMillis;
   }
   if (payload && payload.streamStatus === "rejected") {
-    noticeStreamRetryExhausted.value = true;
+    noticeStreamRetryExhausted.value = false;
     skipRefresh = true;
     hasUnreadCount = true;
     if (noticeStreamRetryTimer != null) {
       window.clearTimeout(noticeStreamRetryTimer);
       noticeStreamRetryTimer = null;
     }
+    closeNoticeStream();
+    scheduleNoticeStreamReconnect();
   }
   if (payload && Array.isArray(payload.latestNotices) && !noticeVisible.value) {
     noticeItems.value = payload.latestNotices.map(mapLatestToNotice);

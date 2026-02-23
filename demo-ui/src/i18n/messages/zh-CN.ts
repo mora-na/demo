@@ -202,17 +202,17 @@ export default {
             template: "生成方式",
             templatePlaceholder: "请选择",
             groups: {
-                frequency: "按频率（间隔）",
                 timePoint: "按时间点（精确）",
                 date: "按日期",
+                frequency: "按频率（间隔）",
                 combo: "组合条件"
             },
             templates: {
                 freqSeconds: "每 N 秒（Quartz）",
                 freqMinutes: "每 N 分钟",
                 freqHours: "每 N 小时",
-                freqDays: "每 N 天",
-                freqWeeks: "每 N 周（指定星期）",
+                freqDays: "每月内每 N 天",
+                freqWeeks: "每周内按星期步进",
                 freqMonths: "每 N 月（指定日期）",
                 freqYears: "每年指定日期",
                 timeFixed: "固定时刻（每天）",
@@ -221,8 +221,12 @@ export default {
                 dateMonthDays: "每月指定日",
                 dateWeekdays: "每周指定星期",
                 dateLastDay: "每月最后一天（L）",
+                dateLastDayOffset: "每月倒数第 N 天（L-n）",
+                dateLastWeekday: "每月最后一个工作日（LW）",
+                dateLastWeekdayOfMonth: "每月最后一个星期几（xL）",
                 dateNearestWeekday: "最近工作日（W）",
                 dateNthWeekday: "第 N 个星期几（#）",
+                dateYear: "指定年份日期",
                 comboWorkdaysHours: "工作日 + 工作时间",
                 comboQuarterStart: "季度 + 月初",
                 comboRangeStep: "范围 + 步长"
@@ -230,8 +234,8 @@ export default {
             intervalSeconds: "秒间隔",
             intervalMinutes: "分钟间隔",
             intervalHours: "小时间隔",
-            intervalDays: "天间隔",
-            intervalWeeks: "周间隔",
+            intervalDays: "天步进",
+            intervalWeeks: "星期步进",
             intervalMonths: "月间隔",
             hour: "小时",
             minute: "分钟",
@@ -249,6 +253,8 @@ export default {
             monthsPlaceholder: "请选择月份",
             weekday: "星期",
             weekdayPlaceholder: "请选择",
+            year: "年份",
+            lastDayOffset: "倒数天数",
             weekdays: {
                 mon: "周一",
                 tue: "周二",
@@ -261,8 +267,11 @@ export default {
             dayOfMonth: "日期(1-31)",
             dayOfMonthPlaceholder: "请选择日期",
             preview: "表达式预览",
+            nextRuns: "未来 5 次执行时间",
+            nextRunsEmpty: "暂无可预览的执行时间",
             apply: "使用该表达式",
-            invalid: "生成的表达式无效"
+            invalid: "生成的表达式无效",
+            timeZone: "时区"
         },
         logs: {
             title: "执行记录",

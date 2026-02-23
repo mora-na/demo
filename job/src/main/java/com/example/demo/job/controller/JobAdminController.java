@@ -17,13 +17,17 @@ import com.example.demo.job.support.JobHandlerRegistry;
 import com.example.demo.job.support.JobParamValidator;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.quartz.CronExpression;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.List;
-import java.util.Locale;
+import java.text.ParseException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  * 定时任务管理接口。
@@ -191,6 +195,20 @@ public class JobAdminController extends BaseController {
         return success(jobLogService.toDetailView(log));
     }
 
+    @PostMapping("/cron/preview")
+    @RequirePermission("job:query")
+    public CommonResult<JobCronPreviewVO> previewCron(@Valid @RequestBody JobCronPreviewRequest request) {
+        String cron = request.getCronExpression();
+        if (!jobParamValidator.isValidCron(cron)) {
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobCronInvalid()));
+        }
+        try {
+            return success(buildCronPreview(cron.trim()));
+        } catch (ParseException ex) {
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobCronInvalid()));
+        }
+    }
+
     /**
      * JobLogCollector 指标（监控）。
      */
@@ -202,6 +220,29 @@ public class JobAdminController extends BaseController {
             return error(HttpServletResponse.SC_FORBIDDEN, i18n("auth.permission.denied"));
         }
         return success(jobLogCollector.snapshotMetrics());
+    }
+
+    private JobCronPreviewVO buildCronPreview(String cronExpression) throws ParseException {
+        CronExpression cron = new CronExpression(cronExpression);
+        TimeZone timeZone = TimeZone.getDefault();
+        cron.setTimeZone(timeZone);
+        Date now = new Date();
+        List<String> nextTimes = new ArrayList<>(5);
+        Date next = cron.getNextValidTimeAfter(now);
+        ZoneId zoneId = timeZone.toZoneId();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        int count = 0;
+        while (next != null && count < 5) {
+            ZonedDateTime time = ZonedDateTime.ofInstant(next.toInstant(), zoneId);
+            nextTimes.add(formatter.format(time));
+            next = cron.getNextValidTimeAfter(next);
+            count += 1;
+        }
+        JobCronPreviewVO preview = new JobCronPreviewVO();
+        preview.setCronExpression(cronExpression);
+        preview.setTimeZone(zoneId.getId());
+        preview.setNextFireTimes(nextTimes);
+        return preview;
     }
 
     private boolean isSuperUser(AuthUser user) {

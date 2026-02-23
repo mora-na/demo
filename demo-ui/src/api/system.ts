@@ -936,6 +936,12 @@ export interface JobLogCollectorMetrics {
     degradeBufferRatio: number;
 }
 
+export interface JobCronPreviewVO {
+    cronExpression: string;
+    timeZone?: string;
+    nextFireTimes: string[];
+}
+
 export async function listJobs(params: JobQuery): Promise<ApiResponse<PageResult<JobVO>>> {
     const response = await api.get<ApiResponse<PageResult<JobVO>>>('/jobs', {params});
     return response.data;
@@ -973,6 +979,11 @@ export async function runJob(id: number): Promise<ApiResponse<void>> {
 
 export async function listJobHandlers(): Promise<ApiResponse<JobHandlerInfo[]>> {
     const response = await api.get<ApiResponse<JobHandlerInfo[]>>('/jobs/handlers');
+    return response.data;
+}
+
+export async function previewJobCron(cronExpression: string): Promise<ApiResponse<JobCronPreviewVO>> {
+    const response = await api.post<ApiResponse<JobCronPreviewVO>>('/jobs/cron/preview', {cronExpression});
     return response.data;
 }
 
