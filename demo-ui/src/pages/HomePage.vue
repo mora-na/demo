@@ -1,110 +1,11 @@
 <template>
   <main :class="{ 'drawer-open': navDrawerVisible }" class="console">
 
-    <aside :class="{ open: navDrawerVisible, ready: navDrawerReady }" class="console-drawer">
-      <div class="nav-toggle">
-        <el-button
-            :aria-label="navDrawerVisible ? t('home.nav.collapse') : t('home.nav.expand')"
-            class="icon-button nav-trigger"
-            text
-            @click="toggleNav"
-        >
-          <Menu class="topbar-icon"/>
-        </el-button>
-      </div>
-      <nav class="console-nav">
-        <div class="nav-brand">
-          <div class="nav-brand-row">
-            <span class="badge">{{ t("home.nav.badge") }}</span>
-            <div class="nav-title">{{ t("home.nav.title") }}</div>
-            <div class="nav-sub">{{ t("home.nav.sub") }}</div>
-          </div>
-        </div>
-        <div class="nav-section">
-          <div class="nav-section-title">{{ t("home.nav.section") }}</div>
-          <div class="nav-tree">
-            <div v-if="!layoutReady" aria-hidden="true" class="nav-skeleton">
-              <div v-for="item in 7" :key="item" class="nav-skeleton-row"/>
-            </div>
-            <template v-else>
-            <el-empty v-if="!filteredMenuTree.length" :description="t('home.nav.empty')"/>
-            <div v-else class="nav-groups">
-              <div v-for="group in filteredMenuTree" :key="group.id" v-memo="[group.id, activeMenuId, expandedGroupId]"
-                   class="nav-group">
-                <button
-                    :class="{ active: activeGroup?.id === group.id }"
-                    class="nav-item nav-root"
-                    type="button"
-                    @click="handleGroupClick(group, $event)"
-                >
-                  <span class="nav-icon">
-                    <component :is="menuIconComponent(group)" class="nav-icon-svg"/>
-                  </span>
-                  <span class="nav-label">{{ group.name }}</span>
-                  <span
-                      v-if="group.children?.length"
-                      :class="{ expanded: isGroupExpanded(group) }"
-                      class="nav-arrow"
-                      @click.stop.prevent="toggleGroup(group.id)"
-                  >
-                    ▾
-                  </span>
-                </button>
-                <div
-                    v-if="group.children?.length"
-                    v-show="isGroupExpanded(group)"
-                    class="nav-children"
-                >
-                  <div v-for="child in group.children" :key="child.id" class="nav-subgroup">
-                    <button
-                        v-memo="[child.id, activeMenuId]"
-                        :class="{ active: isMenuActive(child) }"
-                        class="nav-item nav-child"
-                        type="button"
-                        @click="handleChildClick(child, $event)"
-                    >
-                      <span class="nav-icon">
-                        <component :is="menuIconComponent(child)" class="nav-icon-svg"/>
-                      </span>
-                      <span class="nav-label">{{ child.name }}</span>
-                      <span
-                          v-if="child.children?.length"
-                          :class="{ expanded: isChildExpanded(child) }"
-                          class="nav-arrow"
-                          @click.stop.prevent="toggleChild(child.id)"
-                      >
-                        ▾
-                      </span>
-                    </button>
-                    <div
-                        v-if="child.children?.length"
-                        v-show="isChildExpanded(child)"
-                        class="nav-children nav-grandchildren"
-                    >
-                      <button
-                          v-for="grand in child.children"
-                          :key="grand.id"
-                          v-memo="[grand.id, activeMenuId]"
-                          :class="{ active: activeMenuId === grand.id }"
-                          class="nav-item nav-grandchild"
-                          type="button"
-                          @click="selectMenu(grand)"
-                      >
-                        <span class="nav-icon">
-                          <component :is="menuIconComponent(grand)" class="nav-icon-svg"/>
-                        </span>
-                        <span class="nav-label">{{ grand.name }}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            </template>
-          </div>
-        </div>
-      </nav>
-    </aside>
+    <Sidebar
+        :collapsed="!navDrawerVisible"
+        :menus="filteredMenuTree"
+        @toggle="toggleNav"
+    />
 
     <div class="console-content">
       <header class="console-topbar">
@@ -261,6 +162,29 @@
                     <span class="main-card-icon">↗</span>
                   </div>
                   <div class="main-card-desc">{{ menuDescription(item) }}</div>
+                  <div v-if="menuChildren(item).length" class="main-card-sub">
+                    <div class="main-card-subtitle">{{ t("home.main.metrics.submenu") }}</div>
+                    <div class="main-card-sublist">
+                      <button
+                          v-for="child in cardSubmenus(item)"
+                          :key="child.id"
+                          class="main-submenu-chip"
+                          type="button"
+                          @click.stop="selectMenu(child)"
+                      >
+                        <span class="chip-label">{{ child.name }}</span>
+                        <span v-if="child.children?.length" class="chip-arrow">▸</span>
+                      </button>
+                      <button
+                          v-if="submenuOverflowCount(item) > 0"
+                          class="main-submenu-more"
+                          type="button"
+                          @click.stop="toggleSubmenuExpand(item.id)"
+                      >
+                        {{ isSubmenuExpanded(item.id) ? "收起" : `更多 ${submenuOverflowCount(item)}+` }}
+                      </button>
+                    </div>
+                  </div>
                 </article>
               </template>
             </div>
@@ -379,38 +303,16 @@
 </template>
 
 <script lang="ts" setup>
-import type {Component} from "vue";
 import {computed, defineAsyncComponent, onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {ElMessage} from "element-plus";
 import {useI18n} from "vue-i18n";
 import {useRoute, useRouter} from "vue-router";
-import {
-  Activity,
-  BarChart3,
-  Bell,
-  BookOpen,
-  Briefcase,
-  Building2,
-  Circle,
-  Folder,
-  Home,
-  KeyRound,
-  LayoutDashboard,
-  LayoutList,
-  Menu,
-  ScrollText,
-  Settings2,
-  Shield,
-  ShoppingCart,
-  SlidersHorizontal,
-  Timer,
-  Users,
-  Wrench
-} from "lucide-vue-next";
+import {Bell, SlidersHorizontal} from "lucide-vue-next";
 import {logout, type MenuTree, updateProfile} from "../api/auth";
 import {getUnreadNoticeCount, listMyNotices, markAllNoticesRead, markNoticeRead, type NoticeMyVO} from "../api/system";
 import {useAuthStore} from "../stores/auth";
 import {useDictStore} from "../stores/dict";
+import Sidebar from "../components/Sidebar.vue";
 
 const SystemManagementPanel = defineAsyncComponent(() => import("./system/SystemManagementPanel.vue"));
 const DataScopePanel = defineAsyncComponent(() => import("./system/DataScopePanel.vue"));
@@ -474,14 +376,30 @@ let menuQueryTimer: number | null = null;
 const activeSelection = computed(() => resolveSelectionFromPath(menuItems.value, currentRoutePath()));
 const activeMenuId = computed(() => activeSelection.value?.menu.id ?? null);
 const navDrawerVisible = ref(readStoredNavDrawerState() ?? true);
-const navDrawerReady = ref(false);
 const layoutReady = computed(() => authStore.profileLoaded);
 const MENU_STORAGE_KEY = "demo.activeMenuId";
 const NAV_DRAWER_STORAGE_KEY = "demo.navDrawerOpen";
 const HOME_ROUTE_NAME = "home";
 const HOME_PATH_PREFIX = "/home";
-const expandedGroupId = ref<number | null>(null);
-const expandedChildState = ref<Record<number, boolean>>({});
+const SUBMENU_PREVIEW_LIMIT = 6;
+const expandedSubmenuState = ref<Record<number, boolean>>({});
+const menuChildrenIndex = computed(() => {
+  const index = new Map<number, MenuTree[]>();
+  const queue = [...menuItems.value];
+  while (queue.length) {
+    const current = queue.shift();
+    if (!current) {
+      continue;
+    }
+    if (current.id != null && current.children?.length) {
+      index.set(current.id, current.children);
+    }
+    if (current.children?.length) {
+      queue.push(...current.children);
+    }
+  }
+  return index;
+});
 
 const menuPathIndex = computed(() => buildMenuPathIndex(menuItems.value));
 
@@ -832,7 +750,6 @@ async function syncMenuRouteState() {
   }
   const items = menuItems.value;
   if (!items.length) {
-    expandedGroupId.value = null;
     return;
   }
   const routePath = currentRoutePath();
@@ -840,12 +757,10 @@ async function syncMenuRouteState() {
   if (!selection) {
     const fallback = getDefaultSelection(items);
     if (!fallback) {
-      expandedGroupId.value = null;
       return;
     }
     selection = fallback;
     const targetPath = resolveMenuPathForNavigation(selection.menu);
-    expandedGroupId.value = selection.group.id;
     storeMenuId(selection.menu.id);
     if (targetPath && !isCurrentHomePath(targetPath)) {
       syncingMenuRoute = true;
@@ -857,7 +772,6 @@ async function syncMenuRouteState() {
     }
     return;
   }
-  expandedGroupId.value = selection.group.id;
   storeMenuId(selection.menu.id);
   const targetPath = resolveMenuPathForNavigation(selection.menu);
   if (targetPath && targetPath !== routePath) {
@@ -890,7 +804,6 @@ async function selectMenu(menu: MenuTree) {
   if (isCurrentHomePath(targetPath)) {
     const selection = resolveSelectionFromPath(menuItems.value, targetPath);
     if (selection) {
-      expandedGroupId.value = selection.group.id;
       storeMenuId(selection.menu.id);
     }
     return;
@@ -898,78 +811,43 @@ async function selectMenu(menu: MenuTree) {
   await router.push(buildHomePath(targetPath));
 }
 
-function handleGroupClick(menu: MenuTree, event?: MouseEvent) {
-  if (menu?.id == null) {
-    return;
+function isSubmenuExpanded(menuId: number | null): boolean {
+  if (menuId == null) {
+    return false;
   }
-  if (event?.defaultPrevented) {
-    return;
-  }
-  if (event?.target instanceof Element && event.target.closest(".nav-arrow")) {
-    return;
-  }
-  if (menu.children?.length) {
-    toggleGroup(menu.id);
-  }
-  void selectMenu(menu);
+  return expandedSubmenuState.value[menuId] === true;
 }
 
-function handleChildClick(menu: MenuTree, event?: MouseEvent) {
-  if (menu?.id == null) {
-    return;
-  }
-  if (event?.defaultPrevented) {
-    return;
-  }
-  if (menu.children?.length) {
-    expandedChildState.value = {
-      ...expandedChildState.value,
-      [menu.id]: true
-    };
-  }
-  void selectMenu(menu);
-}
-
-function toggleGroup(id: number) {
-  if (expandedGroupId.value === id) {
-    expandedGroupId.value = null;
-    return;
-  }
-  expandedGroupId.value = id;
-}
-
-function isGroupExpanded(group: MenuTree) {
-  return expandedGroupId.value === group.id;
-}
-
-function toggleChild(id: number) {
-  const current = expandedChildState.value[id];
-  expandedChildState.value = {
-    ...expandedChildState.value,
-    [id]: !current
+function toggleSubmenuExpand(menuId: number) {
+  expandedSubmenuState.value = {
+    ...expandedSubmenuState.value,
+    [menuId]: !expandedSubmenuState.value[menuId]
   };
 }
 
-function isChildExpanded(menu: MenuTree) {
-  if (!menu.children?.length) {
-    return false;
+function menuChildren(menu: MenuTree): MenuTree[] {
+  if (menu?.id == null) {
+    return menu.children ?? [];
   }
-  const stored = expandedChildState.value[menu.id];
-  if (stored != null) {
-    return stored;
-  }
-  return true;
+  return menuChildrenIndex.value.get(menu.id) ?? menu.children ?? [];
 }
 
-function isMenuActive(menu: MenuTree): boolean {
-  if (activeMenuId.value === menu.id) {
-    return true;
+function cardSubmenus(menu: MenuTree): MenuTree[] {
+  const children = menuChildren(menu);
+  if (children.length <= SUBMENU_PREVIEW_LIMIT || isSubmenuExpanded(menu.id)) {
+    return children;
   }
-  if (!menu.children?.length) {
-    return false;
-  }
-  return menu.children.some((child) => isMenuActive(child));
+  return children.slice(0, SUBMENU_PREVIEW_LIMIT);
 }
+
+function submenuOverflowCount(menu: MenuTree): number {
+  const count = menuChildren(menu).length;
+  if (count <= SUBMENU_PREVIEW_LIMIT) {
+    return 0;
+  }
+  return isSubmenuExpanded(menu.id) ? 0 : count - SUBMENU_PREVIEW_LIMIT;
+}
+
 
 function selectMenuById(id: number) {
   const menu = findMenuById(menuItems.value, id);
@@ -981,46 +859,6 @@ function selectMenuById(id: number) {
 
 function toggleNav() {
   navDrawerVisible.value = !navDrawerVisible.value;
-}
-
-const MENU_ICON_MAP: Record<string, Component> = {
-  home: Home,
-  dashboard: LayoutDashboard,
-  system: Settings2,
-  "data-scope": Shield,
-  user: Users,
-  role: Shield,
-  menu: LayoutList,
-  dept: Building2,
-  post: Briefcase,
-  permission: KeyRound,
-  notice: Bell,
-  order: ShoppingCart,
-  job: Timer,
-  log: ScrollText,
-  report: BarChart3,
-  monitor: Activity,
-  extension: Wrench,
-  config: Settings2,
-  file: Folder,
-  dict: BookOpen,
-  tool: Wrench,
-  "dynamic-api": Wrench,
-  "dynamic-api-log": ScrollText
-};
-
-function menuIconComponent(menu: MenuTree): Component {
-  const code = (menu.code || "").toLowerCase();
-  const path = (menu.path || "").toLowerCase();
-  if (MENU_ICON_MAP[code]) {
-    return MENU_ICON_MAP[code];
-  }
-  for (const [key, icon] of Object.entries(MENU_ICON_MAP)) {
-    if (code.includes(key) || path.includes(key)) {
-      return icon;
-    }
-  }
-  return Circle;
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -1189,13 +1027,11 @@ function startNoticeStream() {
   };
   const handlePayloadEvent = (event: MessageEvent) => {
     markNoticeStreamAlive();
-    let updated = false;
     let hasUnreadCount = false;
     if (event?.data) {
       try {
         const payload = JSON.parse(event.data);
         const result = applyNoticePayload(payload);
-        updated = result.updated;
         hasUnreadCount = result.hasUnreadCount;
       } catch {
         // ignore parse errors
@@ -1308,7 +1144,7 @@ async function openNotice(item: NoticeMyVO) {
     } catch (error) {
       ElMessage.error(getErrorMessage(error, t("common.error")));
     } finally {
-      refreshUnreadCount();
+      await refreshUnreadCount();
     }
   }
 }
@@ -1591,7 +1427,6 @@ async function handleLogout() {
 }
 
 onMounted(async () => {
-  navDrawerReady.value = true;
   await loadProfile();
   if (passwordPolicyLock.value) {
     await openSettings();
@@ -1618,9 +1453,11 @@ onUnmounted(() => {
   z-index: 1;
   width: 100%;
   max-width: none;
-  min-height: calc(100vh - 16px);
+  height: 100%;
+  min-height: 0;
   display: flex;
   gap: 8px;
+  overflow: hidden;
 }
 
 .route-anchor {
@@ -1631,7 +1468,10 @@ onUnmounted(() => {
   flex: 0 0 var(--nav-drawer-width);
   max-width: var(--nav-drawer-width);
   min-width: 0;
+  min-height: 0;
+  height: 100%;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
   opacity: 1;
   pointer-events: auto;
@@ -1657,9 +1497,11 @@ onUnmounted(() => {
   flex: 1;
   min-width: 0;
   min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow: hidden;
 }
 
 .console-nav {
@@ -1669,6 +1511,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 10px;
   padding: 12px 10px 12px;
+  overflow: hidden;
 }
 
 .nav-toggle {
@@ -1714,6 +1557,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1;
+  min-height: 0;
 }
 
 .nav-section-title {
@@ -1725,8 +1570,10 @@ onUnmounted(() => {
 
 .nav-tree {
   overflow: auto;
-  padding-right: 4px;
+  padding-right: 16px;
   flex: 1;
+  min-height: 0;
+  overscroll-behavior: contain;
 }
 
 .nav-skeleton {
@@ -1758,7 +1605,7 @@ onUnmounted(() => {
   width: 100%;
   border: 1px solid transparent;
   border-radius: 14px;
-  padding: 10px 12px 10px var(--nav-item-indent, 14px);
+  padding: 6px 12px 6px var(--nav-item-indent, 14px);
   background: rgba(255, 255, 255, 0.7);
   display: flex;
   flex-direction: row;
@@ -1798,7 +1645,12 @@ onUnmounted(() => {
 
 .nav-arrow {
   margin-left: auto;
-  font-size: 12px;
+  font-size: 16px;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--muted);
 }
 
@@ -1838,134 +1690,6 @@ onUnmounted(() => {
   font-size: 12px;
   background: rgba(15, 23, 42, 0.08);
   color: #2b3a55;
-}
-
-.nav-item.nav-child {
-  --nav-item-indent: 22px;
-}
-
-.nav-item.nav-child .nav-icon-svg {
-  width: 14px;
-  height: 14px;
-}
-
-.nav-item.nav-grandchild {
-  --nav-item-indent: 30px;
-  font-size: 12px;
-}
-
-.nav-item.nav-grandchild .nav-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  font-size: 10px;
-  background: rgba(15, 23, 42, 0.05);
-  color: #2b3a55;
-}
-
-.nav-item.nav-grandchild .nav-icon-svg {
-  width: 12px;
-  height: 12px;
-}
-
-.nav-label {
-  display: inline-block;
-  max-width: 220px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.nav-children {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-left: 0;
-}
-
-.nav-grandchildren {
-  padding-left: 8px;
-  gap: 5px;
-}
-
-.nav-brand-row,
-.nav-section-title,
-.nav-label,
-.badge,
-.nav-arrow {
-}
-
-.nav-brand-row,
-.nav-section-title {
-  max-height: 200px;
-  overflow: hidden;
-}
-
-.console-drawer:not(.open) .nav-brand-row,
-.console-drawer:not(.open) .nav-section-title,
-.console-drawer:not(.open) .nav-label,
-.console-drawer:not(.open) .badge,
-.console-drawer:not(.open) .nav-arrow {
-  opacity: 0;
-  transform: translateX(-6px);
-  max-width: 0;
-  max-height: 0;
-  pointer-events: none;
-}
-
-.console-drawer:not(.open) .nav-item {
-  padding: 10px;
-  justify-content: center;
-  gap: 0;
-}
-
-.console-drawer:not(.open) .nav-label,
-.console-drawer:not(.open) .nav-arrow {
-  display: none;
-}
-
-.console-drawer:not(.open) .nav-children {
-  padding-left: 0;
-}
-
-.console-drawer:not(.open) .nav-brand {
-  justify-content: center;
-}
-
-.console-drawer:not(.open) .nav-item .nav-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 10px;
-}
-
-.console-drawer:not(.open) .nav-item .nav-icon-svg {
-  width: 16px;
-  height: 16px;
-}
-
-.console-drawer:not(.open) .nav-item.active {
-  background: transparent;
-  border-color: transparent;
-  box-shadow: none;
-}
-
-.console-drawer:not(.open) .nav-item.active::before {
-  display: none;
-}
-
-.console-drawer:not(.open) .nav-item .nav-icon {
-  position: relative;
-  z-index: 1;
-}
-
-.console-drawer:not(.open) .nav-item.active .nav-icon::after {
-  content: "";
-  position: absolute;
-  inset: -7px;
-  border-radius: 12px;
-  background: rgba(43, 124, 255, 0.12);
-  border: 1px solid rgba(43, 124, 255, 0.35);
-  pointer-events: none;
-  z-index: -1;
 }
 
 .console-topbar {
@@ -2227,15 +1951,6 @@ onUnmounted(() => {
   margin-top: -6px;
 }
 
-.profile-grid :deep(.el-form-item) {
-  margin-bottom: 12px;
-}
-
-.profile-grid :deep(.el-select),
-.profile-grid :deep(.el-input) {
-  width: 100%;
-}
-
 .console-main {
   display: flex;
   flex-direction: column;
@@ -2244,9 +1959,11 @@ onUnmounted(() => {
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(18, 18, 18, 0.08);
-  box-shadow: var(--shadow);
+  box-shadow: none;
   flex: 1;
   min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .main-skeleton {
@@ -2363,6 +2080,66 @@ onUnmounted(() => {
   line-height: 1.5;
 }
 
+.main-card-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(18, 18, 18, 0.1);
+}
+
+.main-card-subtitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.main-card-sublist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.main-submenu-chip,
+.main-submenu-more {
+  border: 1px solid rgba(18, 18, 18, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 180px;
+}
+
+.main-submenu-chip:hover,
+.main-submenu-more:hover {
+  border-color: rgba(43, 124, 255, 0.35);
+  color: var(--accent);
+}
+
+.main-submenu-more {
+  background: rgba(43, 124, 255, 0.08);
+  border-color: rgba(43, 124, 255, 0.2);
+  color: #1c3f8f;
+}
+
+.chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip-arrow {
+  font-size: 10px;
+  color: var(--muted);
+}
+
 
 .main-metrics {
   display: grid;
@@ -2405,16 +2182,6 @@ onUnmounted(() => {
   .console {
     --nav-drawer-collapsed-width: 0px;
     gap: 0;
-  }
-
-  .console {
-    min-height: auto;
-  }
-
-  .console-nav,
-  .console-topbar,
-  .console-main {
-    padding: 12px;
   }
 
   .topbar-right {

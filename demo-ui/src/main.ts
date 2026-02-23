@@ -7,6 +7,7 @@ import {useAuthStore} from "./stores/auth";
 import router from "./router";
 import "element-plus/dist/index.css";
 import "./style.css";
+import "./styles/sidebar.scss";
 
 const app = createApp(App);
 const pinia = createPinia();

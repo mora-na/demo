@@ -34,6 +34,7 @@ const isHomeRoute = computed(() => route.path.startsWith("/home"));
 .page--home {
   align-items: stretch;
   justify-content: flex-start;
+  height: 100vh;
 }
 
 .page::before,

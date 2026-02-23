@@ -9,6 +9,16 @@ export default defineConfig(({mode}) => {
 
     return {
         plugins: [vue()],
+        css: {
+            preprocessorOptions: {
+                scss: {
+                    api: "modern-compiler"
+                },
+                sass: {
+                    api: "modern-compiler"
+                }
+            }
+        },
         server: {
             port: 5173,
             proxy: {
