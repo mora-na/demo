@@ -1,15 +1,10 @@
 package com.example.demo.job.log;
 
-import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.IThrowableProxy;
-import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.AppenderBase;
 import com.example.demo.job.config.JobConstants;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 /**
@@ -22,6 +17,7 @@ public class JobLogAppender extends AppenderBase<ILoggingEvent> {
 
     private final JobLogCollector collector;
     private final JobConstants jobConstants;
+    private PatternLayout layout;
 
     public JobLogAppender(JobLogCollector collector, JobConstants jobConstants) {
         this.collector = collector;
@@ -29,16 +25,28 @@ public class JobLogAppender extends AppenderBase<ILoggingEvent> {
     }
 
     @Override
+    public void start() {
+        PatternLayout patternLayout = new PatternLayout();
+        patternLayout.setContext(getContext());
+        String pattern = jobConstants.getAppender().getPattern();
+        patternLayout.setPattern(pattern == null || pattern.trim().isEmpty()
+                ? JobConstants.Appender.DEFAULT_PATTERN
+                : pattern);
+        patternLayout.start();
+        this.layout = patternLayout;
+        super.start();
+    }
+
+    @Override
     protected void append(ILoggingEvent event) {
         if (event == null || !jobConstants.getLogCollect().isEnabled() || collector.getMaxLength() <= 0) {
             return;
         }
-        Level minLevel = Level.toLevel(jobConstants.getLogCollect().getMinLevel(), Level.INFO);
-        if (event.getLevel() == null || !event.getLevel().isGreaterOrEqual(minLevel)) {
-            return;
-        }
         String runId = resolveRunId(event);
         if (runId == null) {
+            return;
+        }
+        if (event.getLevel() == null || !collector.shouldCollect(runId, event.getLevel())) {
             return;
         }
         String line = formatLine(event);
@@ -68,20 +76,20 @@ public class JobLogAppender extends AppenderBase<ILoggingEvent> {
     }
 
     private String formatLine(ILoggingEvent event) {
-        String message = event.getFormattedMessage();
-        if (message == null) {
-            message = jobConstants.getAppender().getEmptyMessage();
+        if (layout == null) {
+            return "";
         }
-        String time = Instant.ofEpochMilli(event.getTimeStamp())
-                .atZone(ZoneId.systemDefault())
-                .format(resolveTimeFormatter());
-        String logger = event.getLoggerName();
-        String base = time + " " + event.getLevel() + " " + logger + " - " + message;
-        IThrowableProxy throwable = event.getThrowableProxy();
-        if (throwable == null) {
-            return base;
+        String raw = layout.doLayout(event);
+        if (raw == null || raw.isEmpty()) {
+            return "";
         }
-        return base + jobConstants.getAppender().getThrowableSeparator() + ThrowableProxyUtil.asString(throwable);
+        if (raw.endsWith("\r\n")) {
+            return raw.substring(0, raw.length() - 2);
+        }
+        if (raw.endsWith("\n")) {
+            return raw.substring(0, raw.length() - 1);
+        }
+        return raw;
     }
 
     private String resolveThreadContextRunId() {
@@ -92,7 +100,4 @@ public class JobLogAppender extends AppenderBase<ILoggingEvent> {
         return collector.isActive(runId) ? runId : null;
     }
 
-    private DateTimeFormatter resolveTimeFormatter() {
-        return DateTimeFormatter.ofPattern(jobConstants.getAppender().getTimePattern());
-    }
 }

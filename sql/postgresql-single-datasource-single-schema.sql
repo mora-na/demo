@@ -716,6 +716,7 @@ CREATE TABLE IF NOT EXISTS sys_job
     allow_concurrent SMALLINT     NOT NULL DEFAULT 1,
     misfire_policy   VARCHAR(32)           DEFAULT 'DEFAULT',
     params           TEXT,
+    log_collect_level VARCHAR(16) DEFAULT 'INFO',
     created_by       BIGINT,
     created_name     VARCHAR(64),
     created_at       TIMESTAMP    NOT NULL,
@@ -734,6 +735,7 @@ COMMENT ON COLUMN sys_job.status IS '状态：1-启用，0-停用';
 COMMENT ON COLUMN sys_job.allow_concurrent IS '是否允许并发：1-允许，0-禁止';
 COMMENT ON COLUMN sys_job.misfire_policy IS '误触发策略';
 COMMENT ON COLUMN sys_job.params IS '任务参数';
+COMMENT ON COLUMN sys_job.log_collect_level IS '日志收集级别';
 COMMENT ON COLUMN sys_job.remark IS '备注';
 COMMENT ON COLUMN sys_job.created_by IS '创建人ID';
 COMMENT ON COLUMN sys_job.created_name IS '创建人名称';

@@ -575,20 +575,21 @@
 
 **Message 组（i18n 消息键）**
 
-| 配置键                                              | 默认值                        | 说明               |
-|--------------------------------------------------|----------------------------|------------------|
-| `job.constants.message.job-not-found`            | `job.not.found`            | 任务不存在消息键。        |
-| `job.constants.message.job-log-not-found`        | `job.log.not.found`        | 任务日志不存在消息键。      |
-| `job.constants.message.job-cron-invalid`         | `job.cron.invalid`         | Cron 表达式非法消息键。   |
-| `job.constants.message.job-handler-invalid`      | `job.handler.invalid`      | 任务处理器非法消息键。      |
-| `job.constants.message.job-misfire-invalid`      | `job.misfire.invalid`      | Misfire 策略非法消息键。 |
-| `job.constants.message.job-status-invalid`       | `job.status.invalid`       | 任务状态非法消息键。       |
-| `job.constants.message.job-concurrent-invalid`   | `job.concurrent.invalid`   | 任务并发配置非法消息键。     |
-| `job.constants.message.job-create-failed`        | `job.create.failed`        | 创建任务失败消息键。       |
-| `job.constants.message.job-update-failed`        | `job.update.failed`        | 更新任务失败消息键。       |
-| `job.constants.message.job-delete-failed`        | `job.delete.failed`        | 删除任务失败消息键。       |
-| `job.constants.message.job-status-update-failed` | `job.status.update.failed` | 更新任务状态失败消息键。     |
-| `job.constants.message.job-run-failed`           | `job.run.failed`           | 手动执行任务失败消息键。     |
+| 配置键                                                   | 默认值                             | 说明               |
+|-------------------------------------------------------|---------------------------------|------------------|
+| `job.constants.message.job-not-found`                 | `job.not.found`                 | 任务不存在消息键。        |
+| `job.constants.message.job-log-not-found`             | `job.log.not.found`             | 任务日志不存在消息键。      |
+| `job.constants.message.job-cron-invalid`              | `job.cron.invalid`              | Cron 表达式非法消息键。   |
+| `job.constants.message.job-handler-invalid`           | `job.handler.invalid`           | 任务处理器非法消息键。      |
+| `job.constants.message.job-misfire-invalid`           | `job.misfire.invalid`           | Misfire 策略非法消息键。 |
+| `job.constants.message.job-status-invalid`            | `job.status.invalid`            | 任务状态非法消息键。       |
+| `job.constants.message.job-concurrent-invalid`        | `job.concurrent.invalid`        | 任务并发配置非法消息键。     |
+| `job.constants.message.job-log-collect-level-invalid` | `job.log.collect.level.invalid` | 日志收集级别非法消息键。     |
+| `job.constants.message.job-create-failed`             | `job.create.failed`             | 创建任务失败消息键。       |
+| `job.constants.message.job-update-failed`             | `job.update.failed`             | 更新任务失败消息键。       |
+| `job.constants.message.job-delete-failed`             | `job.delete.failed`             | 删除任务失败消息键。       |
+| `job.constants.message.job-status-update-failed`      | `job.status.update.failed`      | 更新任务状态失败消息键。     |
+| `job.constants.message.job-run-failed`                | `job.run.failed`                | 手动执行任务失败消息键。     |
 
 **Page 组（分页默认值）**
 
@@ -624,13 +625,14 @@
 
 **DataMap 组（Quartz JobDataMap 键）**
 
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `job.constants.data-map.job-id-key` | `jobId` | 任务 ID 的 JobDataMap 键。 |
-| `job.constants.data-map.job-name-key` | `jobName` | 任务名的 JobDataMap 键。 |
-| `job.constants.data-map.handler-name-key` | `handlerName` | 处理器名的 JobDataMap 键。 |
-| `job.constants.data-map.cron-expression-key` | `cronExpression` | Cron 表达式的 JobDataMap 键。 |
-| `job.constants.data-map.params-key` | `params` | 参数字符串的 JobDataMap 键。 |
+| 配置键                                            | 默认值               | 说明                      |
+|------------------------------------------------|-------------------|-------------------------|
+| `job.constants.data-map.job-id-key`            | `jobId`           | 任务 ID 的 JobDataMap 键。   |
+| `job.constants.data-map.job-name-key`          | `jobName`         | 任务名的 JobDataMap 键。      |
+| `job.constants.data-map.handler-name-key`      | `handlerName`     | 处理器名的 JobDataMap 键。     |
+| `job.constants.data-map.cron-expression-key`   | `cronExpression`  | Cron 表达式的 JobDataMap 键。 |
+| `job.constants.data-map.params-key`            | `params`          | 参数字符串的 JobDataMap 键。    |
+| `job.constants.data-map.log-collect-level-key` | `logCollectLevel` | 日志收集级别的 JobDataMap 键。   |
 
 **Execution 组（执行日志拼装）**
 
@@ -662,29 +664,27 @@
 
 **Log Collect 组（自动日志收集）**
 
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `job.constants.log-collect.enabled` | `true` | 是否启用任务自动日志收集。 |
-| `job.constants.log-collect.scope` | `MDC` | 收集范围：`MDC` 或 `THREAD`。 |
-| `job.constants.log-collect.min-level` | `INFO` | 最低收集日志级别。 |
-| `job.constants.log-collect.max-length` | `65536` | 单次执行自动日志最大长度（字符）。 |
-| `job.constants.log-collect.merge-delay-millis` | `3000` | 延迟合并日志毫秒数。 |
-| `job.constants.log-collect.max-hold-millis` | `60000` | 运行实例日志缓冲最大保留毫秒数。 |
-| `job.constants.log-collect.inherit-thread-context` | `true` | 是否允许线程上下文兜底透传 runId。 |
-| `job.constants.log-collect.mdc-key` | `jobLogId` | runId 在 MDC 的键名。 |
-| `job.constants.log-collect.thread-key` | `jobLogThread` | 线程名在 MDC 的键名（`scope=THREAD` 生效）。 |
-| `job.constants.log-collect.collector-thread-name` | `job-log-collector` | 收集器后台线程名。 |
-| `job.constants.log-collect.cleanup-initial-delay-millis` | `60000` | 缓冲清理任务首次执行延迟。 |
-| `job.constants.log-collect.cleanup-interval-millis` | `60000` | 缓冲清理任务执行周期。 |
+| 配置键                                                      | 默认值                 | 说明                               |
+|----------------------------------------------------------|---------------------|----------------------------------|
+| `job.constants.log-collect.enabled`                      | `true`              | 是否启用任务自动日志收集。                    |
+| `job.constants.log-collect.scope`                        | `MDC`               | 收集范围：`MDC` 或 `THREAD`。           |
+| `job.constants.log-collect.min-level`                    | `INFO`              | 默认日志收集级别（任务未指定时使用）。              |
+| `job.constants.log-collect.max-length`                   | `65536`             | 单次执行自动日志最大长度（字符）。                |
+| `job.constants.log-collect.merge-delay-millis`           | `3000`              | 延迟合并日志毫秒数。                       |
+| `job.constants.log-collect.max-hold-millis`              | `60000`             | 运行实例日志缓冲最大保留毫秒数。                 |
+| `job.constants.log-collect.inherit-thread-context`       | `true`              | 是否允许线程上下文兜底透传 runId。             |
+| `job.constants.log-collect.mdc-key`                      | `jobLogId`          | runId 在 MDC 的键名。                 |
+| `job.constants.log-collect.thread-key`                   | `jobLogThread`      | 线程名在 MDC 的键名（`scope=THREAD` 生效）。 |
+| `job.constants.log-collect.collector-thread-name`        | `job-log-collector` | 收集器后台线程名。                        |
+| `job.constants.log-collect.cleanup-initial-delay-millis` | `60000`             | 缓冲清理任务首次执行延迟。                    |
+| `job.constants.log-collect.cleanup-interval-millis`      | `60000`             | 缓冲清理任务执行周期。                      |
 
 **Appender 组（Logback 收集器）**
 
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `job.constants.appender.appender-name` | `JOB_LOG_COLLECTOR` | 注入 Root Logger 的 appender 名称。 |
-| `job.constants.appender.time-pattern` | `HH:mm:ss.SSS` | 收集日志时间格式。 |
-| `job.constants.appender.empty-message` | `` | 日志消息为 null 时的替代文本。 |
-| `job.constants.appender.throwable-separator` | `\n` | 普通日志与异常堆栈拼接分隔符。 |
+| 配置键                                    | 默认值                                                                                | 说明                             |
+|----------------------------------------|------------------------------------------------------------------------------------|--------------------------------|
+| `job.constants.appender.appender-name` | `JOB_LOG_COLLECTOR`                                                                | 注入 Root Logger 的 appender 名称。  |
+| `job.constants.appender.pattern`       | `%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %X{traceId} [%thread] %logger{36} - %msg%ex` | Job 日志收集输出格式（Logback Pattern）。 |
 
 ### 安全防护
 

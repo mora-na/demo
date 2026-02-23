@@ -40,9 +40,9 @@ public class LogJobHandler implements JobHandler, DynamicApiHandler {
     @Override
     public void execute(JobContext context) {
         String params = context.getParams();
-        context.appendLog(MANUAL_LOG_START);
+        log.info("[Job-Manual] {}", MANUAL_LOG_START);
         if (params != null && !params.trim().isEmpty()) {
-            context.appendLog(PARAMS_PREFIX + params);
+            log.info("[Job-Manual] {}{}", PARAMS_PREFIX, params);
         }
 
         // 情形 1：当前任务线程内日志（Quartz 任务线程） -> 一定会被收集。
@@ -53,7 +53,7 @@ public class LogJobHandler implements JobHandler, DynamicApiHandler {
         // 新建线程会继承父线程上下文，因此此处日志也会被收集。
         Thread plainThread = new Thread(() -> {
             log.info("[Job-NewThread] name={}, params={}", context.getJobName(), params);
-            context.appendLog(NEW_THREAD_LOG);
+            log.info("[Job-Manual] {}", NEW_THREAD_LOG);
         }, PLAIN_THREAD_NAME);
         plainThread.setDaemon(true);
         plainThread.start();
@@ -61,7 +61,7 @@ public class LogJobHandler implements JobHandler, DynamicApiHandler {
         // 情形 3：new Thread 显式透传 MDC（最稳妥，可避免线程池复用导致的上下文丢失）。
         Runnable asyncTask = MdcUtils.wrap(() -> {
             log.info("[Job-Async] name={}, async params={}", context.getJobName(), params);
-            context.appendLog(ASYNC_THREAD_LOG);
+            log.info("[Job-Manual] {}", ASYNC_THREAD_LOG);
         });
         Thread asyncThread = MdcUtils.newThread(ASYNC_THREAD_NAME, asyncTask, true);
         asyncThread.start();
@@ -87,7 +87,7 @@ public class LogJobHandler implements JobHandler, DynamicApiHandler {
                 TimeUnit.MILLISECONDS);
         scheduled.shutdown();
 
-        context.appendLog(MANUAL_LOG_END);
+        log.info("[Job-Manual] {}", MANUAL_LOG_END);
     }
 
     @Override

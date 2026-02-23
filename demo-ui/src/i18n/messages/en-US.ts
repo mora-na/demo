@@ -184,6 +184,8 @@ export default {
             misfireIgnore: "Ignore misfires",
             misfireFire: "Fire and proceed",
             misfireDoNothing: "Do nothing",
+            logCollectLevel: "Log collect level",
+            logCollectLevelPlaceholder: "Select a level",
             concurrent: "Allow concurrent",
             concurrentPlaceholder: "Select",
             concurrentYes: "Allow",

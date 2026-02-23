@@ -866,6 +866,7 @@ export interface JobVO {
     allowConcurrent?: number;
     misfirePolicy?: string;
     params?: string;
+    logCollectLevel?: string;
     remark?: string;
     createdName?: string;
     createdAt?: string;
@@ -894,6 +895,7 @@ export interface JobCreatePayload {
     allowConcurrent?: number;
     misfirePolicy?: string;
     params?: string;
+    logCollectLevel?: string;
     remark?: string;
 }
 
@@ -905,6 +907,7 @@ export interface JobUpdatePayload {
     allowConcurrent?: number;
     misfirePolicy?: string;
     params?: string;
+    logCollectLevel?: string;
     remark?: string;
 }
 

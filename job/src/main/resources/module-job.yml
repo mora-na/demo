@@ -60,7 +60,7 @@ job:
       enabled: true
       # 收集范围：MDC | THREAD
       scope: MDC
-      # 最低收集级别（含）：TRACE/DEBUG/INFO/WARN/ERROR
+      # 默认日志收集级别（任务未指定时使用）：TRACE/DEBUG/INFO/WARN/ERROR
       min-level: INFO
       # 单次执行最大日志长度（字符）
       max-length: 65536
@@ -80,3 +80,6 @@ job:
       mdc-key: jobLogId
       # 线程名 MDC 键（scope=THREAD 生效）
       thread-key: jobLogThread
+    appender:
+      # Job 日志收集输出格式（logback pattern）
+      pattern: '%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %X{traceId} [%thread] %logger{36} - %msg%ex'

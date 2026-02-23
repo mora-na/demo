@@ -87,6 +87,9 @@ public class JobAdminController extends BaseController {
         if (!jobParamValidator.isValidMisfirePolicy(request.getMisfirePolicy())) {
             return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobMisfireInvalid()));
         }
+        if (!jobParamValidator.isValidLogCollectLevel(request.getLogCollectLevel())) {
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobLogCollectLevelInvalid()));
+        }
         if (!jobParamValidator.isValidStatus(request.getStatus())) {
             return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobStatusInvalid()));
         }
@@ -118,6 +121,10 @@ public class JobAdminController extends BaseController {
         }
         if (!jobParamValidator.isValidMisfirePolicy(request.getMisfirePolicy())) {
             return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobMisfireInvalid()));
+        }
+        if (request.getLogCollectLevel() != null
+                && !jobParamValidator.isValidLogCollectLevel(request.getLogCollectLevel())) {
+            return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobLogCollectLevelInvalid()));
         }
         if (request.getStatus() != null && !jobParamValidator.isValidStatus(request.getStatus())) {
             return error(jobConstants.getController().getBadRequestCode(), i18n(jobConstants.getMessage().getJobStatusInvalid()));

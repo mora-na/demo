@@ -40,6 +40,18 @@ public class JobParamValidator {
         return StringUtils.isBlank(policy) || JobMisfirePolicy.isSupported(policy);
     }
 
+    public boolean isValidLogCollectLevel(String level) {
+        if (StringUtils.isBlank(level)) {
+            return true;
+        }
+        String normalized = level.trim().toUpperCase(Locale.ROOT);
+        return "TRACE".equals(normalized)
+                || "DEBUG".equals(normalized)
+                || "INFO".equals(normalized)
+                || "WARN".equals(normalized)
+                || "ERROR".equals(normalized);
+    }
+
     public boolean isValidStatus(Integer status) {
         if (status == null) {
             return true;
@@ -78,6 +90,17 @@ public class JobParamValidator {
             return allowConcurrent;
         }
         return null;
+    }
+
+    public String normalizeLogCollectLevel(String level) {
+        String normalized = StringUtils.trimToEmpty(level).toUpperCase(Locale.ROOT);
+        if (normalized.isEmpty()) {
+            normalized = StringUtils.trimToEmpty(jobConstants.getLogCollect().getMinLevel()).toUpperCase(Locale.ROOT);
+        }
+        if (normalized.isEmpty()) {
+            normalized = JobConstants.LogCollect.DEFAULT_MIN_LEVEL;
+        }
+        return isValidLogCollectLevel(normalized) ? normalized : null;
     }
 
     public String normalizeMisfirePolicy(String policy) {

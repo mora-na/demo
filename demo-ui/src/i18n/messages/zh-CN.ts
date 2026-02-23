@@ -184,6 +184,8 @@ export default {
             misfireIgnore: "忽略错过",
             misfireFire: "立即执行",
             misfireDoNothing: "跳过执行",
+            logCollectLevel: "日志收集级别",
+            logCollectLevelPlaceholder: "请选择级别",
             concurrent: "允许并发",
             concurrentPlaceholder: "请选择",
             concurrentYes: "允许",

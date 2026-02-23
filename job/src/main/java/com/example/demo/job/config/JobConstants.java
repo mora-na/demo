@@ -56,6 +56,7 @@ public class JobConstants {
         public static final String DEFAULT_JOB_MISFIRE_INVALID = "job.misfire.invalid";
         public static final String DEFAULT_JOB_STATUS_INVALID = "job.status.invalid";
         public static final String DEFAULT_JOB_CONCURRENT_INVALID = "job.concurrent.invalid";
+        public static final String DEFAULT_JOB_LOG_COLLECT_LEVEL_INVALID = "job.log.collect.level.invalid";
         public static final String DEFAULT_JOB_CREATE_FAILED = "job.create.failed";
         public static final String DEFAULT_JOB_UPDATE_FAILED = "job.update.failed";
         public static final String DEFAULT_JOB_DELETE_FAILED = "job.delete.failed";
@@ -69,6 +70,7 @@ public class JobConstants {
         private String jobMisfireInvalid = DEFAULT_JOB_MISFIRE_INVALID;
         private String jobStatusInvalid = DEFAULT_JOB_STATUS_INVALID;
         private String jobConcurrentInvalid = DEFAULT_JOB_CONCURRENT_INVALID;
+        private String jobLogCollectLevelInvalid = DEFAULT_JOB_LOG_COLLECT_LEVEL_INVALID;
         private String jobCreateFailed = DEFAULT_JOB_CREATE_FAILED;
         private String jobUpdateFailed = DEFAULT_JOB_UPDATE_FAILED;
         private String jobDeleteFailed = DEFAULT_JOB_DELETE_FAILED;
@@ -151,12 +153,14 @@ public class JobConstants {
         public static final String DEFAULT_HANDLER_NAME_KEY = "handlerName";
         public static final String DEFAULT_CRON_EXPRESSION_KEY = "cronExpression";
         public static final String DEFAULT_PARAMS_KEY = "params";
+        public static final String DEFAULT_LOG_COLLECT_LEVEL_KEY = "logCollectLevel";
 
         private String jobIdKey = DEFAULT_JOB_ID_KEY;
         private String jobNameKey = DEFAULT_JOB_NAME_KEY;
         private String handlerNameKey = DEFAULT_HANDLER_NAME_KEY;
         private String cronExpressionKey = DEFAULT_CRON_EXPRESSION_KEY;
         private String paramsKey = DEFAULT_PARAMS_KEY;
+        private String logCollectLevelKey = DEFAULT_LOG_COLLECT_LEVEL_KEY;
     }
 
     @Data
@@ -248,13 +252,13 @@ public class JobConstants {
     @Data
     public static class Appender {
         public static final String DEFAULT_APPENDER_NAME = "JOB_LOG_COLLECTOR";
-        public static final String DEFAULT_TIME_PATTERN = "HH:mm:ss.SSS";
-        public static final String DEFAULT_EMPTY_MESSAGE = "";
-        public static final String DEFAULT_THROWABLE_SEPARATOR = "\n";
+        public static final String DEFAULT_PATTERN =
+                "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %X{traceId} [%thread] %logger{36} - %msg%ex";
 
         private String appenderName = DEFAULT_APPENDER_NAME;
-        private String timePattern = DEFAULT_TIME_PATTERN;
-        private String emptyMessage = DEFAULT_EMPTY_MESSAGE;
-        private String throwableSeparator = DEFAULT_THROWABLE_SEPARATOR;
+        /**
+         * Logback pattern for collected job logs.
+         */
+        private String pattern = DEFAULT_PATTERN;
     }
 }

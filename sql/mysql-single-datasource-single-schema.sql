@@ -498,6 +498,7 @@ CREATE TABLE IF NOT EXISTS sys_job
     allow_concurrent TINYINT      NOT NULL DEFAULT 1 COMMENT '是否允许并发：1-允许，0-禁止',
     misfire_policy   VARCHAR(32)           DEFAULT 'DEFAULT' COMMENT '误触发策略',
     params           TEXT COMMENT '任务参数',
+    log_collect_level VARCHAR(16) DEFAULT 'INFO' COMMENT '日志收集级别',
     created_by       BIGINT COMMENT '创建人ID',
     created_name     VARCHAR(64) COMMENT '创建人名称',
     created_at       DATETIME     NOT NULL COMMENT '创建时间',

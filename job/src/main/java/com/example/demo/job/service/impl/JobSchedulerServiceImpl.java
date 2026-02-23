@@ -115,6 +115,8 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
         map.put(jobConstants.getDataMap().getHandlerNameKey(), job.getHandlerName());
         map.put(jobConstants.getDataMap().getCronExpressionKey(), job.getCronExpression());
         map.put(jobConstants.getDataMap().getParamsKey(), StringUtils.defaultString(job.getParams()));
+        map.put(jobConstants.getDataMap().getLogCollectLevelKey(),
+                StringUtils.defaultString(job.getLogCollectLevel(), jobConstants.getLogCollect().getMinLevel()));
 
         Class<? extends Job> jobClass = resolveJobClass(job.getAllowConcurrent());
         return JobBuilder.newJob(jobClass)

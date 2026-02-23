@@ -49,6 +49,9 @@ public class SysJob implements Serializable {
     @TableField("params")
     private String params;
 
+    @TableField("log_collect_level")
+    private String logCollectLevel;
+
     @TableField("remark")
     private String remark;
 

@@ -576,20 +576,21 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 
 **Message Group**
 
-| Key                                              | Default                    | Description                            |
-|--------------------------------------------------|----------------------------|----------------------------------------|
-| `job.constants.message.job-not-found`            | `job.not.found`            | i18n key for missing job.              |
-| `job.constants.message.job-log-not-found`        | `job.log.not.found`        | i18n key for missing job log.          |
-| `job.constants.message.job-cron-invalid`         | `job.cron.invalid`         | i18n key for invalid cron expression.  |
-| `job.constants.message.job-handler-invalid`      | `job.handler.invalid`      | i18n key for invalid handler name.     |
-| `job.constants.message.job-misfire-invalid`      | `job.misfire.invalid`      | i18n key for invalid misfire policy.   |
-| `job.constants.message.job-status-invalid`       | `job.status.invalid`       | i18n key for invalid job status.       |
-| `job.constants.message.job-concurrent-invalid`   | `job.concurrent.invalid`   | i18n key for invalid concurrency flag. |
-| `job.constants.message.job-create-failed`        | `job.create.failed`        | i18n key for job creation failure.     |
-| `job.constants.message.job-update-failed`        | `job.update.failed`        | i18n key for job update failure.       |
-| `job.constants.message.job-delete-failed`        | `job.delete.failed`        | i18n key for job delete failure.       |
-| `job.constants.message.job-status-update-failed` | `job.status.update.failed` | i18n key for status update failure.    |
-| `job.constants.message.job-run-failed`           | `job.run.failed`           | i18n key for manual run failure.       |
+| Key                                                   | Default                         | Description                             |
+|-------------------------------------------------------|---------------------------------|-----------------------------------------|
+| `job.constants.message.job-not-found`                 | `job.not.found`                 | i18n key for missing job.               |
+| `job.constants.message.job-log-not-found`             | `job.log.not.found`             | i18n key for missing job log.           |
+| `job.constants.message.job-cron-invalid`              | `job.cron.invalid`              | i18n key for invalid cron expression.   |
+| `job.constants.message.job-handler-invalid`           | `job.handler.invalid`           | i18n key for invalid handler name.      |
+| `job.constants.message.job-misfire-invalid`           | `job.misfire.invalid`           | i18n key for invalid misfire policy.    |
+| `job.constants.message.job-status-invalid`            | `job.status.invalid`            | i18n key for invalid job status.        |
+| `job.constants.message.job-concurrent-invalid`        | `job.concurrent.invalid`        | i18n key for invalid concurrency flag.  |
+| `job.constants.message.job-log-collect-level-invalid` | `job.log.collect.level.invalid` | i18n key for invalid log collect level. |
+| `job.constants.message.job-create-failed`             | `job.create.failed`             | i18n key for job creation failure.      |
+| `job.constants.message.job-update-failed`             | `job.update.failed`             | i18n key for job update failure.        |
+| `job.constants.message.job-delete-failed`             | `job.delete.failed`             | i18n key for job delete failure.        |
+| `job.constants.message.job-status-update-failed`      | `job.status.update.failed`      | i18n key for status update failure.     |
+| `job.constants.message.job-run-failed`                | `job.run.failed`                | i18n key for manual run failure.        |
 
 **Page Group**
 
@@ -625,13 +626,14 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 
 **DataMap Group**
 
-| Key | Default | Description |
-|---|---|---|
-| `job.constants.data-map.job-id-key` | `jobId` | JobDataMap key for job id. |
-| `job.constants.data-map.job-name-key` | `jobName` | JobDataMap key for job name. |
-| `job.constants.data-map.handler-name-key` | `handlerName` | JobDataMap key for handler name. |
-| `job.constants.data-map.cron-expression-key` | `cronExpression` | JobDataMap key for cron expression. |
-| `job.constants.data-map.params-key` | `params` | JobDataMap key for params. |
+| Key                                            | Default           | Description                           |
+|------------------------------------------------|-------------------|---------------------------------------|
+| `job.constants.data-map.job-id-key`            | `jobId`           | JobDataMap key for job id.            |
+| `job.constants.data-map.job-name-key`          | `jobName`         | JobDataMap key for job name.          |
+| `job.constants.data-map.handler-name-key`      | `handlerName`     | JobDataMap key for handler name.      |
+| `job.constants.data-map.cron-expression-key`   | `cronExpression`  | JobDataMap key for cron expression.   |
+| `job.constants.data-map.params-key`            | `params`          | JobDataMap key for params.            |
+| `job.constants.data-map.log-collect-level-key` | `logCollectLevel` | JobDataMap key for log collect level. |
 
 **Execution Group**
 
@@ -663,29 +665,27 @@ This document is split from `README_EN.md` and centralizes all configuration ref
 
 **Log Collect Group**
 
-| Key | Default | Description |
-|---|---|---|
-| `job.constants.log-collect.enabled` | `true` | Whether automatic job-log collection is enabled. |
-| `job.constants.log-collect.scope` | `MDC` | Collection scope: `MDC` or `THREAD`. |
-| `job.constants.log-collect.min-level` | `INFO` | Minimum log level to collect. |
-| `job.constants.log-collect.max-length` | `65536` | Max collected log length per run (chars). |
-| `job.constants.log-collect.merge-delay-millis` | `3000` | Delay before merge/update after run completion. |
-| `job.constants.log-collect.max-hold-millis` | `60000` | Max in-memory hold time for a run buffer. |
-| `job.constants.log-collect.inherit-thread-context` | `true` | Whether inheritable thread context fallback is enabled. |
-| `job.constants.log-collect.mdc-key` | `jobLogId` | MDC key storing run id. |
-| `job.constants.log-collect.thread-key` | `jobLogThread` | MDC key storing thread name (used when `scope=THREAD`). |
-| `job.constants.log-collect.collector-thread-name` | `job-log-collector` | Background collector thread name. |
-| `job.constants.log-collect.cleanup-initial-delay-millis` | `60000` | Initial delay before cleanup task starts. |
-| `job.constants.log-collect.cleanup-interval-millis` | `60000` | Cleanup task fixed-rate interval. |
+| Key                                                      | Default             | Description                                                |
+|----------------------------------------------------------|---------------------|------------------------------------------------------------|
+| `job.constants.log-collect.enabled`                      | `true`              | Whether automatic job-log collection is enabled.           |
+| `job.constants.log-collect.scope`                        | `MDC`               | Collection scope: `MDC` or `THREAD`.                       |
+| `job.constants.log-collect.min-level`                    | `INFO`              | Default log collect level when a job does not specify one. |
+| `job.constants.log-collect.max-length`                   | `65536`             | Max collected log length per run (chars).                  |
+| `job.constants.log-collect.merge-delay-millis`           | `3000`              | Delay before merge/update after run completion.            |
+| `job.constants.log-collect.max-hold-millis`              | `60000`             | Max in-memory hold time for a run buffer.                  |
+| `job.constants.log-collect.inherit-thread-context`       | `true`              | Whether inheritable thread context fallback is enabled.    |
+| `job.constants.log-collect.mdc-key`                      | `jobLogId`          | MDC key storing run id.                                    |
+| `job.constants.log-collect.thread-key`                   | `jobLogThread`      | MDC key storing thread name (used when `scope=THREAD`).    |
+| `job.constants.log-collect.collector-thread-name`        | `job-log-collector` | Background collector thread name.                          |
+| `job.constants.log-collect.cleanup-initial-delay-millis` | `60000`             | Initial delay before cleanup task starts.                  |
+| `job.constants.log-collect.cleanup-interval-millis`      | `60000`             | Cleanup task fixed-rate interval.                          |
 
 **Appender Group**
 
-| Key | Default | Description |
-|---|---|---|
-| `job.constants.appender.appender-name` | `JOB_LOG_COLLECTOR` | Name of the appender attached to root logger. |
-| `job.constants.appender.time-pattern` | `HH:mm:ss.SSS` | Time format used in collected lines. |
-| `job.constants.appender.empty-message` | `` | Replacement text when log message is null. |
-| `job.constants.appender.throwable-separator` | `\n` | Separator between base log line and throwable stack string. |
+| Key                                    | Default                                                                            | Description                                   |
+|----------------------------------------|------------------------------------------------------------------------------------|-----------------------------------------------|
+| `job.constants.appender.appender-name` | `JOB_LOG_COLLECTOR`                                                                | Name of the appender attached to root logger. |
+| `job.constants.appender.pattern`       | `%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %X{traceId} [%thread] %logger{36} - %msg%ex` | Logback pattern used for collected job logs.  |
 
 ### Security Protections
 

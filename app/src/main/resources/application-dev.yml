@@ -29,7 +29,7 @@ logging:
 # SQL 日志配置
 sql-log:
   # 是否打印 SQL
-  enabled: true
+  enabled: false
 
 # 认证配置
 auth:
@@ -240,6 +240,35 @@ spring:
         url-pattern: /*
         # 过滤器排除资源
         exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
+      # SQL 监控 + 防火墙 + 日志（单数据源模式也启用）
+      filters: stat,wall,slf4j
+      filter:
+        # SQL 统计
+        stat:
+          enabled: true
+          merge-sql: true
+          slow-sql-millis: 5000
+        # SQL 防火墙
+        wall:
+          enabled: true
+          config:
+            # 是否拦截 where 条件恒真（如 WHERE 1=1）
+            select-where-alway-true-check: true
+            # 是否允许 AND 条件恒真（如 AND 1=1）
+            condition-and-alway-true-allow: false
+            # 是否检查 DELETE 语句必须带 WHERE 条件
+            delete-where-none-check: true
+            # 是否检查 UPDATE 语句必须带 WHERE 条件
+            update-where-none-check: true
+            # 是否允许多语句执行
+            multi-statement-allow: true
+            # 是否允许非基本语句
+            none-base-statement-allow: true
+        # 日志输出
+        slf4j:
+          enabled: true
+      # Spring 监控（按需调整包路径）
+      aop-patterns: com.example.demo.*.service.*
     # 动态数据源配置
     dynamic:
       # 总开关由 app.datasource.mode 自动派生（本值会被运行时覆盖）

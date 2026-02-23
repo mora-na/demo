@@ -95,6 +95,16 @@
             <el-option :label="t('job.dialog.misfireDoNothing')" value="DO_NOTHING"/>
           </el-select>
         </el-form-item>
+        <el-form-item :label="t('job.dialog.logCollectLevel')">
+          <el-select v-model="form.logCollectLevel" :placeholder="t('job.dialog.logCollectLevelPlaceholder')">
+            <el-option
+                v-for="level in logCollectLevelOptions"
+                :key="level"
+                :label="level"
+                :value="level"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="t('job.dialog.concurrent')">
           <el-select v-model="form.allowConcurrent" :placeholder="t('job.dialog.concurrentPlaceholder')">
             <el-option :value="1" :label="t('job.dialog.concurrentYes')"/>
@@ -706,12 +716,15 @@ const form = reactive<JobCreatePayload & JobUpdatePayload>({
   allowConcurrent: 1,
   misfirePolicy: "DEFAULT",
   params: "",
+  logCollectLevel: "INFO",
   remark: ""
 });
 
 const editorTitle = computed(() =>
     editorMode.value === "create" ? t("job.dialog.createTitle") : t("job.dialog.editTitle")
 );
+
+const logCollectLevelOptions = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"];
 
 type CronTemplate =
     | "freq_seconds"
@@ -1125,6 +1138,7 @@ function resetForm() {
   form.allowConcurrent = 1;
   form.misfirePolicy = "DEFAULT";
   form.params = "";
+  form.logCollectLevel = "INFO";
   form.remark = "";
 }
 
@@ -1145,6 +1159,7 @@ function openEdit(row: JobVO) {
   form.allowConcurrent = row.allowConcurrent ?? 1;
   form.misfirePolicy = row.misfirePolicy || "DEFAULT";
   form.params = row.params || "";
+  form.logCollectLevel = row.logCollectLevel || "INFO";
   form.remark = row.remark || "";
   editorVisible.value = true;
 }

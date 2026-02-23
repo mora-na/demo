@@ -71,6 +71,9 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         if (!jobParamValidator.isValidMisfirePolicy(request.getMisfirePolicy())) {
             return null;
         }
+        if (!jobParamValidator.isValidLogCollectLevel(request.getLogCollectLevel())) {
+            return null;
+        }
         Integer status = jobParamValidator.normalizeStatus(request.getStatus());
         if (status == null) {
             return null;
@@ -83,6 +86,10 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         if (misfirePolicy == null) {
             return null;
         }
+        String logCollectLevel = jobParamValidator.normalizeLogCollectLevel(request.getLogCollectLevel());
+        if (logCollectLevel == null) {
+            return null;
+        }
         SysJob job = new SysJob();
         job.setName(StringUtils.trimToEmpty(request.getName()));
         job.setHandlerName(StringUtils.trimToEmpty(request.getHandlerName()));
@@ -91,6 +98,7 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         job.setAllowConcurrent(allowConcurrent);
         job.setMisfirePolicy(misfirePolicy);
         job.setParams(normalizeParams(request.getParams()));
+        job.setLogCollectLevel(logCollectLevel);
         job.setRemark(request.getRemark());
         if (creator != null) {
             job.setCreatedBy(creator.getId());
@@ -169,6 +177,13 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         if (request.getParams() != null) {
             job.setParams(normalizeParams(request.getParams()));
         }
+        if (request.getLogCollectLevel() != null) {
+            String level = jobParamValidator.normalizeLogCollectLevel(request.getLogCollectLevel());
+            if (level == null) {
+                return false;
+            }
+            job.setLogCollectLevel(level);
+        }
         if (request.getRemark() != null) {
             job.setRemark(request.getRemark());
         }
@@ -245,6 +260,9 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         view.setAllowConcurrent(job.getAllowConcurrent());
         view.setMisfirePolicy(job.getMisfirePolicy());
         view.setParams(job.getParams());
+        view.setLogCollectLevel(StringUtils.defaultIfBlank(
+                job.getLogCollectLevel(),
+                jobConstants.getLogCollect().getMinLevel()));
         view.setRemark(job.getRemark());
         view.setCreatedName(job.getCreatedName());
         view.setCreatedAt(job.getCreatedAt());

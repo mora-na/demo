@@ -10,6 +10,7 @@ import com.example.demo.job.log.JobLogThreadContext;
 import com.example.demo.job.model.JobLogDetailPart;
 import com.example.demo.job.service.SysJobLogDetailService;
 import com.example.demo.job.service.SysJobLogService;
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -24,14 +25,16 @@ import java.time.LocalDateTime;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/12
  */
+@Slf4j
 public abstract class AbstractQuartzJob implements Job {
+
+    private static final String LOG_PREFIX = "[Job-Execution] ";
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         JobConstants constants = resolveConstants();
         JobDataMap dataMap = context.getMergedJobDataMap();
         JobContext jobContext = buildContext(dataMap, constants);
-        jobContext.setMaxLogLength(constants.getExecution().getLogDetailMaxLength());
         SysJobLogService logService = SpringContextHolder.getBean(SysJobLogService.class);
         JobLogCollector logCollector = SpringContextHolder.getBean(JobLogCollector.class);
         LocalDateTime start = LocalDateTime.now();
@@ -40,36 +43,34 @@ public abstract class AbstractQuartzJob implements Job {
         String runId = null;
         SysJobLogDetailService detailService = SpringContextHolder.getBean(SysJobLogDetailService.class);
         if (logCollector != null && logCollector.isEnabled()) {
-            runId = logCollector.start();
+            runId = logCollector.start(jobContext.getLogCollectLevel());
             if (runId != null) {
                 MDC.put(logCollector.getMdcKey(), runId);
                 MDC.put(logCollector.getThreadKey(), Thread.currentThread().getName());
                 JobLogThreadContext.set(runId);
             }
         }
-        jobContext.appendLog(constants.getExecution().getExecuteStartPrefix() + start);
+        logExecutionInfo(constants.getExecution().getExecuteStartPrefix() + start);
         if (jobContext.getParams() != null && !jobContext.getParams().trim().isEmpty()) {
-            jobContext.appendLog(constants.getExecution().getParamsPrefix() + jobContext.getParams());
+            logExecutionInfo(constants.getExecution().getParamsPrefix() + jobContext.getParams());
         }
         try {
             JobHandlerRegistry registry = SpringContextHolder.getBean(JobHandlerRegistry.class);
             JobHandler handler = registry == null ? null : registry.getHandler(jobContext.getHandlerName());
             if (handler == null) {
                 message = constants.getExecution().getHandlerNotFoundMessage();
-                jobContext.appendLog(constants.getExecution().getHandlerNotFoundLogPrefix() + jobContext.getHandlerName());
+                logExecutionWarn(constants.getExecution().getHandlerNotFoundLogPrefix() + jobContext.getHandlerName());
                 return;
             }
             handler.execute(jobContext);
             success = true;
-            jobContext.appendLog(constants.getExecution().getExecuteSuccessLog());
+            logExecutionInfo(constants.getExecution().getExecuteSuccessLog());
         } catch (Exception ex) {
             message = ex.getMessage();
-            jobContext.appendLog(constants.getExecution().getExecuteErrorPrefix()
-                    + (message == null ? ex.getClass().getSimpleName() : message));
-            jobContext.appendLog(buildStackTrace(ex));
+            logExecutionError(constants.getExecution().getExecuteErrorPrefix()
+                    + (message == null ? ex.getClass().getSimpleName() : message), ex);
             throw new JobExecutionException(ex);
         } finally {
-            String manualLog = jobContext.getLogContent();
             String autoLog = null;
             if (logCollector != null) {
                 MDC.remove(logCollector.getMdcKey());
@@ -91,16 +92,10 @@ public abstract class AbstractQuartzJob implements Job {
                 log.setEndTime(end);
                 log.setDurationMs(java.time.Duration.between(start, end).toMillis());
                 if (detailService == null) {
-                    String merged = logCollector != null
-                            ? logCollector.mergeLogs(manualLog, autoLog)
-                            : mergeLogDetail(manualLog, null, constants.getExecution().getLogMergeSeparator());
-                    log.setLogDetail(logCollector != null
-                            ? merged
-                            : trimLogDetail(merged, constants.getExecution().getLogDetailMaxLength()));
+                    log.setLogDetail(trimLogDetail(autoLog, constants.getExecution().getLogDetailMaxLength()));
                 }
                 logService.save(log);
                 if (detailService != null) {
-                    detailService.saveDetail(log.getId(), JobLogDetailPart.MANUAL, manualLog);
                     if (logCollector != null && runId != null) {
                         if (logCollector.shouldDelayMerge()) {
                             logCollector.scheduleMerge(runId, log.getId());
@@ -123,7 +118,20 @@ public abstract class AbstractQuartzJob implements Job {
         context.setHandlerName(dataMap.getString(constants.getDataMap().getHandlerNameKey()));
         context.setCronExpression(dataMap.getString(constants.getDataMap().getCronExpressionKey()));
         context.setParams(dataMap.getString(constants.getDataMap().getParamsKey()));
+        context.setLogCollectLevel(dataMap.getString(constants.getDataMap().getLogCollectLevelKey()));
         return context;
+    }
+
+    private void logExecutionInfo(String message) {
+        log.info(LOG_PREFIX + message);
+    }
+
+    private void logExecutionWarn(String message) {
+        log.warn(LOG_PREFIX + message);
+    }
+
+    private void logExecutionError(String message, Exception ex) {
+        log.error(LOG_PREFIX + message, ex);
     }
 
     private String trimMessage(String message, int maxLength) {
@@ -149,25 +157,6 @@ public abstract class AbstractQuartzJob implements Job {
             return value;
         }
         return value.substring(0, maxLength);
-    }
-
-    private String mergeLogDetail(String manual, String autoLog, String separator) {
-        String left = manual == null ? "" : manual.trim();
-        String right = autoLog == null ? "" : autoLog.trim();
-        if (left.isEmpty()) {
-            return right.isEmpty() ? null : right;
-        }
-        if (right.isEmpty()) {
-            return left;
-        }
-        return left + separator + right;
-    }
-
-    private String buildStackTrace(Exception ex) {
-        java.io.StringWriter writer = new java.io.StringWriter();
-        java.io.PrintWriter printWriter = new java.io.PrintWriter(writer);
-        ex.printStackTrace(printWriter);
-        return writer.toString();
     }
 
     private JobConstants resolveConstants() {

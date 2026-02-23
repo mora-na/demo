@@ -69,8 +69,8 @@ public class SysJobLogDetailServiceImpl extends ServiceImpl<SysJobLogDetailMappe
                 auto = detail.getLogDetail();
             }
         }
-        String merged = merge(manual, auto, separator);
-        return trim(merged, maxLength);
+        String selected = auto != null && !auto.trim().isEmpty() ? auto : manual;
+        return trim(selected, maxLength);
     }
 
     private boolean exists(Long logId, JobLogDetailPart partType) {
@@ -78,18 +78,6 @@ public class SysJobLogDetailServiceImpl extends ServiceImpl<SysJobLogDetailMappe
                 .eq(SysJobLogDetail::getLogId, logId)
                 .eq(SysJobLogDetail::getPartType, partType.name())
                 .count() > 0;
-    }
-
-    private String merge(String manual, String auto, String separator) {
-        String left = manual == null ? "" : manual.trim();
-        String right = auto == null ? "" : auto.trim();
-        if (left.isEmpty()) {
-            return right.isEmpty() ? null : right;
-        }
-        if (right.isEmpty()) {
-            return left;
-        }
-        return left + (separator == null ? "" : separator) + right;
     }
 
     private String trim(String value, int maxLength) {

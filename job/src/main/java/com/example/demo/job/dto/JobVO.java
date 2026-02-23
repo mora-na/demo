@@ -29,6 +29,8 @@ public class JobVO {
 
     private String params;
 
+    private String logCollectLevel;
+
     private String remark;
 
     private String createdName;

@@ -65,7 +65,7 @@ public class JobLogCollector {
         return jobConstants.getLogCollect().isInheritThreadContext();
     }
 
-    public String start() {
+    public String start(String minLevel) {
         if (!jobConstants.getLogCollect().isEnabled() || jobConstants.getLogCollect().getMaxLength() <= 0) {
             return null;
         }
@@ -77,8 +77,21 @@ public class JobLogCollector {
             return null;
         }
         String runId = UUID.randomUUID().toString();
-        buffers.put(runId, new JobLogBuffer(jobConstants.getLogCollect().getMaxLength()));
+        buffers.put(runId, new JobLogBuffer(
+                jobConstants.getLogCollect().getMaxLength(),
+                resolveMinLevel(minLevel)));
         return runId;
+    }
+
+    public boolean shouldCollect(String runId, ch.qos.logback.classic.Level level) {
+        if (runId == null || level == null || buffers == null) {
+            return false;
+        }
+        JobLogBuffer buffer = buffers.getIfPresent(runId);
+        if (buffer == null) {
+            return false;
+        }
+        return level.isGreaterOrEqual(buffer.getMinLevel());
     }
 
     public void append(String runId, String line) {
@@ -143,18 +156,6 @@ public class JobLogCollector {
         }
         long delay = jobConstants.getLogCollect().getMergeDelayMillis();
         scheduler.schedule(() -> mergeAndStore(runId, logId), delay, TimeUnit.MILLISECONDS);
-    }
-
-    public String mergeLogs(String manual, String autoLog) {
-        String left = manual == null ? "" : manual.trim();
-        String right = autoLog == null ? "" : autoLog.trim();
-        if (left.isEmpty()) {
-            return right.isEmpty() ? null : trim(right);
-        }
-        if (right.isEmpty()) {
-            return trim(left);
-        }
-        return trim(left + jobConstants.getExecution().getLogMergeSeparator() + right);
     }
 
     @PostConstruct
@@ -284,6 +285,15 @@ public class JobLogCollector {
         }
     }
 
+    private ch.qos.logback.classic.Level resolveMinLevel(String minLevel) {
+        JobConstants.LogCollect config = jobConstants.getLogCollect();
+        String configured = minLevel == null ? "" : minLevel.trim();
+        if (configured.isEmpty()) {
+            configured = config.getMinLevel();
+        }
+        return ch.qos.logback.classic.Level.toLevel(configured, ch.qos.logback.classic.Level.INFO);
+    }
+
     private void flushBuffer(JobLogBuffer buffer) {
         if (buffer == null || buffer.getLogId() == null) {
             return;
@@ -304,13 +314,15 @@ public class JobLogCollector {
 
     private static final class JobLogBuffer {
         private final int maxLength;
+        private final ch.qos.logback.classic.Level minLevel;
         private final StringBuilder builder = new StringBuilder();
         private boolean truncated = false;
         private volatile long closedAt = 0L;
         private volatile Long logId;
 
-        private JobLogBuffer(int maxLength) {
+        private JobLogBuffer(int maxLength, ch.qos.logback.classic.Level minLevel) {
             this.maxLength = Math.max(0, maxLength);
+            this.minLevel = minLevel == null ? ch.qos.logback.classic.Level.INFO : minLevel;
         }
 
         private synchronized void append(String line, long maxHoldMillis) {
@@ -354,6 +366,10 @@ public class JobLogCollector {
 
         private Long getLogId() {
             return logId;
+        }
+
+        private ch.qos.logback.classic.Level getMinLevel() {
+            return minLevel;
         }
 
         private void markClosed() {
