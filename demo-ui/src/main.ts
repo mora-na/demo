@@ -1,11 +1,11 @@
 import {createApp} from "vue";
-import ElementPlus from "element-plus";
 import {createPinia} from "pinia";
 import App from "./App.vue";
 import {i18n} from "./i18n";
 import {useAuthStore} from "./stores/auth";
 import router from "./router";
-import "element-plus/dist/index.css";
+import "element-plus/theme-chalk/el-message.css";
+import "element-plus/theme-chalk/el-message-box.css";
 import "./style.css";
 import "./styles/sidebar.scss";
 
@@ -13,7 +13,6 @@ const app = createApp(App);
 const pinia = createPinia();
 app.use(pinia);
 app.use(i18n);
-app.use(ElementPlus);
 app.use(router);
 
 const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;

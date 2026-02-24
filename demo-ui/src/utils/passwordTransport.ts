@@ -1,11 +1,17 @@
-import {sm2} from "sm-crypto";
-
 type BufferLike = {
     from: (data: string | Uint8Array, encoding?: string) => Uint8Array & { toString: (encoding: string) => string };
 };
 
 const textEncoder = new TextEncoder();
 const nodeBuffer = (globalThis as { Buffer?: BufferLike }).Buffer;
+let sm2Promise: Promise<{ doEncrypt: typeof import("sm-crypto")["sm2"]["doEncrypt"] }> | null = null;
+
+async function loadSm2() {
+    if (!sm2Promise) {
+        sm2Promise = import("sm-crypto").then((module) => module.sm2);
+    }
+    return sm2Promise;
+}
 
 function base64ToBytes(base64: string): Uint8Array {
     if (typeof atob === "function") {
@@ -111,11 +117,12 @@ function normalizeSm2PublicKey(hexKey?: string | null): string | null {
     return hexKey.startsWith("04") ? hexKey : `04${hexKey}`;
 }
 
-function encryptSm2(plainText: string, base64PublicKey?: string): string {
+async function encryptSm2(plainText: string, base64PublicKey?: string): Promise<string> {
     const keyHex = normalizeSm2PublicKey(spkiBase64ToPublicKeyHex(base64PublicKey));
     if (!keyHex) {
         throw new Error("SM2 public key is missing or invalid");
     }
+    const sm2 = await loadSm2();
     const cipherHex = sm2.doEncrypt(plainText, keyHex, 1);
     const normalized = `04${cipherHex}`;
     return bytesToBase64(hexToBytes(normalized));
