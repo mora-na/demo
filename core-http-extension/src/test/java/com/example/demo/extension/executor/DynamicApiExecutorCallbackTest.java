@@ -119,7 +119,26 @@ class DynamicApiExecutorCallbackTest {
         }
     }
 
+    @Test
+    void autoTimeoutCancelsExecution() throws Exception {
+        RecordingStrategy strategy = new RecordingStrategy(Behavior.BLOCK);
+        try (ExecutorHarness harness = new ExecutorHarness(strategy)) {
+            DynamicApiExecution execution = harness.executor.submit(buildContext(100));
+            assertTrue(strategy.started.await(1, TimeUnit.SECONDS));
+            DynamicApiExecuteResult result = execution.getFuture().get(2, TimeUnit.SECONDS);
+            assertEquals(DynamicApiTerminationReason.TIMEOUT.name(), result.getTerminationReason());
+            assertTrue(strategy.onTimeout.await(1, TimeUnit.SECONDS));
+            assertTrue(strategy.afterExecute.await(1, TimeUnit.SECONDS));
+        } finally {
+            strategy.releaseBlock();
+        }
+    }
+
     private DynamicApiContext buildContext() {
+        return buildContext(1000L);
+    }
+
+    private DynamicApiContext buildContext(long timeoutMs) {
         DynamicApi api = new DynamicApi();
         api.setId(1L);
         api.setPath("/ext/test");
@@ -130,7 +149,7 @@ class DynamicApiExecutorCallbackTest {
                 .path("/ext/test")
                 .method("GET")
                 .build();
-        return new DynamicApiContext(meta, request, 1000L, null, null, null, null);
+        return new DynamicApiContext(meta, request, timeoutMs, null, null, null, null);
     }
 
     private enum Behavior {

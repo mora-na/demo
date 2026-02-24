@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 动态接口执行器。
@@ -82,6 +83,8 @@ public class DynamicApiExecutor {
         AtomicBoolean afterInvoked = new AtomicBoolean(false);
         AtomicBoolean completionRecorded = new AtomicBoolean(false);
         AtomicLong startNanos = new AtomicLong(0L);
+        AtomicReference<Future<?>> taskRef = new AtomicReference<>();
+        AtomicReference<ScheduledFuture<?>> timeoutRef = new AtomicReference<>();
         long submitNanos = System.nanoTime();
         if (metrics != null) {
             metrics.recordSubmit(context.getMeta());
@@ -174,13 +177,14 @@ public class DynamicApiExecutor {
                                     DynamicApiTerminationReason.REJECTED)),
                     null);
         }
-        Future<?> finalTask = taskFuture;
-        return new DynamicApiExecution(resultFuture, (reason, cause) -> {
+        taskRef.set(taskFuture);
+        DynamicApiExecution execution = new DynamicApiExecution(resultFuture, (reason, cause) -> {
             if (resultFuture.isDone()) {
                 return;
             }
             if (reason == DynamicApiTerminationReason.TIMEOUT) {
                 invokeCleanupOnce(strategy, context, cleanupInvoked, reason, cause);
+                Future<?> finalTask = taskRef.get();
                 if (finalTask != null) {
                     finalTask.cancel(true);
                 }
@@ -221,6 +225,7 @@ public class DynamicApiExecutor {
             }
             if (reason == DynamicApiTerminationReason.CANCELLED) {
                 invokeCleanupOnce(strategy, context, cleanupInvoked, reason, cause);
+                Future<?> finalTask = taskRef.get();
                 if (finalTask != null) {
                     finalTask.cancel(true);
                 }
@@ -243,6 +248,8 @@ public class DynamicApiExecutor {
                 }
             }
         });
+        scheduleTimeout(context, execution, resultFuture, timeoutRef);
+        return execution;
     }
 
     private void invokeCleanupOnce(ExecuteStrategy strategy,
@@ -361,6 +368,39 @@ public class DynamicApiExecutor {
             return DynamicApiTerminationReason.valueOf(reason);
         } catch (Exception ex) {
             return DynamicApiTerminationReason.ERROR;
+        }
+    }
+
+    private void scheduleTimeout(DynamicApiContext context,
+                                 DynamicApiExecution execution,
+                                 CompletableFuture<DynamicApiExecuteResult> resultFuture,
+                                 AtomicReference<ScheduledFuture<?>> timeoutRef) {
+        if (context == null || execution == null || resultFuture == null || timeoutRef == null || cleanupScheduler == null) {
+            return;
+        }
+        long timeoutMs = context.getTimeoutMs();
+        if (timeoutMs <= 0L || resultFuture.isDone()) {
+            return;
+        }
+        try {
+            ScheduledFuture<?> timeoutFuture = cleanupScheduler.schedule(() -> {
+                if (resultFuture.isDone()) {
+                    return;
+                }
+                execution.cancelTimeout();
+            }, timeoutMs, TimeUnit.MILLISECONDS);
+            timeoutRef.set(timeoutFuture);
+            resultFuture.whenComplete((r, t) -> {
+                ScheduledFuture<?> scheduled = timeoutRef.get();
+                if (scheduled != null) {
+                    scheduled.cancel(false);
+                }
+            });
+        } catch (RejectedExecutionException ex) {
+            log.warn("Dynamic api timeout schedule rejected: apiId={}, type={}",
+                    context.getMeta() == null || context.getMeta().getApi() == null
+                            ? null : context.getMeta().getApi().getId(),
+                    context.getMeta() == null ? null : context.getMeta().getType());
         }
     }
 }
