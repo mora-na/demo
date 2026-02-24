@@ -102,6 +102,19 @@ public class BeanExecuteStrategy implements ExecuteStrategy {
             return DynamicApiExecuteResult.success(result);
         } catch (Exception ex) {
             String traceId = MDC.get("traceId");
+            boolean interrupted = ex instanceof InterruptedException || Thread.currentThread().isInterrupted();
+            if (interrupted) {
+                log.warn("Dynamic api bean execution interrupted: apiId={}, path={}, method={}, bean={}, traceId={}",
+                        context.getApiId(),
+                        context.getPath(),
+                        context.getMethod(),
+                        beanName,
+                        traceId,
+                        ex);
+                return DynamicApiExecuteResult.error(constants.getController().getServiceUnavailableCode(),
+                        constants.getMessage().getTimeout(),
+                        DynamicApiTerminationReason.TIMEOUT);
+            }
             log.error("Dynamic api bean execute failed: apiId={}, path={}, method={}, bean={}, traceId={}",
                     context.getApiId(),
                     context.getPath(),
