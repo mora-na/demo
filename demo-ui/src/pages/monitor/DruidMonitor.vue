@@ -28,8 +28,6 @@
           :datasource-extra-rows="datasourceExtraRows"
           :datasource-field-rows="datasourceFieldRows"
           :datasource-options="datasourceOptions"
-          :datasource-sql-columns="datasourceSqlColumns"
-          :datasource-sql-rows="datasourceSqlRows"
           :format-cell="formatCell"
           :format-pre="formatPre"
           :pooling-connection-info="poolingConnectionInfoDisplay"
@@ -123,7 +121,7 @@ interface FieldDef {
   fieldName?: string;
 }
 
-const {t, te} = useI18n();
+const {t, te, locale} = useI18n();
 const authStore = useAuthStore();
 
 const props = defineProps<{
@@ -318,7 +316,27 @@ function formatCell(value: unknown) {
     return formatStringValue(value);
   }
   if (Array.isArray(value)) {
-    return value.map((item) => String(item)).join("\n");
+    return value
+        .map((item) => {
+          if (item == null) {
+            return String(item);
+          }
+          if (typeof item === "string") {
+            return formatStringValue(item);
+          }
+          if (typeof item === "number") {
+            return Number.isFinite(item) ? item.toLocaleString() : String(item);
+          }
+          if (typeof item === "boolean") {
+            return item ? "true" : "false";
+          }
+          try {
+            return JSON.stringify(item);
+          } catch (_err) {
+            return String(item);
+          }
+        })
+        .join("\n");
   }
   if (typeof value === "number") {
     return Number.isFinite(value) ? value.toLocaleString() : String(value);
@@ -341,7 +359,27 @@ function formatPre(value: unknown) {
     return formatStringValue(value);
   }
   if (Array.isArray(value)) {
-    return value.map((item) => String(item)).join("\n");
+    return value
+        .map((item) => {
+          if (item == null) {
+            return String(item);
+          }
+          if (typeof item === "string") {
+            return formatStringValue(item);
+          }
+          if (typeof item === "number") {
+            return Number.isFinite(item) ? item.toLocaleString() : String(item);
+          }
+          if (typeof item === "boolean") {
+            return item ? "true" : "false";
+          }
+          try {
+            return JSON.stringify(item, null, 2);
+          } catch (_err) {
+            return String(item);
+          }
+        })
+        .join("\n");
   }
   try {
     return JSON.stringify(value, null, 2);
@@ -372,6 +410,35 @@ function colFromKeys(key: string, labelKey: string, valueKeys: string[], classNa
     aliases: valueKeys,
     getter: (row) => readValue(row, valueKeys)
   };
+}
+
+function colFromKeysWithFormatter(
+    key: string,
+    labelKey: string,
+    valueKeys: string[],
+    className: string | undefined,
+    formatter: (value: unknown) => unknown
+): BaseColumn {
+  return {
+    key,
+    labelKey,
+    class: className,
+    aliases: valueKeys,
+    getter: (row) => formatter(readValue(row, valueKeys))
+  };
+}
+
+function formatHistogramValue(value: unknown) {
+  if (value == null) {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item)).join(" ");
+  }
+  if (typeof value === "string") {
+    return value.replace(/\s+/g, " ").trim();
+  }
+  return value;
 }
 
 const datasourceRows = computed(() => normalizeRows(summary.value?.datasources));
@@ -426,11 +493,9 @@ const currentDatasource = computed(() => {
   }
   return base || detail || null;
 });
-
-const currentDatasourceName = computed(() => {
+computed(() => {
   return readValue(currentDatasource.value || undefined, ["Name", "name", "DataSource", "dataSource", "DataSourceName", "datasourceName"]);
 });
-
 const activeConnectionStacks = computed(() => summary.value?.activeConnectionStacks || {});
 const poolingConnectionInfo = computed(() => summary.value?.poolingConnectionInfo || {});
 
@@ -671,8 +736,9 @@ const datasourceExtraRows = computed(() => {
       return;
     }
     const normalized = normalizeColumnLabel(key);
+    const descKey = `druid.extraFields.${normalized}`;
     const labelKey = `druid.columns.${normalized}`;
-    const desc = te(labelKey) ? t(labelKey) : "-";
+    const desc = te(descKey) ? t(descKey) : (te(labelKey) ? t(labelKey) : t("druid.extra.noDesc"));
     rows.push({key, value: (currentDatasource.value as Record<string, unknown>)[key], desc});
   });
   return rows.sort((a, b) => a.key.localeCompare(b.key));
@@ -681,67 +747,60 @@ const datasourceExtraRows = computed(() => {
 const sqlRows = computed(() => normalizeRows(summary.value?.sqls));
 const sqlDetailRows = computed(() => normalizeRows(summary.value?.sqlDetails));
 
-const datasourceSqlRows = computed(() => {
-  if (!selectedDatasourceId.value) {
-    return sqlRows.value;
-  }
-  const id = String(selectedDatasourceId.value);
-  const name = currentDatasourceName.value ? String(currentDatasourceName.value) : null;
-  return sqlRows.value.filter((row) => {
-    const rowId = readValue(row, ["DataSourceId", "dataSourceId", "DatasourceId", "datasourceId"]);
-    if (rowId != null) {
-      return String(rowId) === id;
-    }
-    const rowName = readValue(row, ["DataSource", "dataSource", "DataSourceName", "datasourceName"]);
-    if (rowName != null && name) {
-      return String(rowName) === name;
-    }
-    return false;
-  });
-});
 
 const webAppRows = computed(() => normalizeUnknownRows(summary.value?.webapp));
 const webUriRows = computed(() => normalizeRows(summary.value?.weburi));
 const springRows = computed(() => normalizeRows(summary.value?.spring));
 const sessionRows = computed(() => normalizeUnknownRows(summary.value?.session));
 
-const datasourceSqlColumns = computed(() => buildColumns([
+const sqlColumns = computed(() => filterColumnsByRows(buildColumns([
   {
     key: "index",
     labelKey: "druid.sql.columns.index",
+    class: "col-index",
     getter: (_row, index) => index + 1
   },
   colFromKeys("sql", "druid.sql.columns.sql", ["SQL", "sql"], "col-sql"),
-  colFromKeys("executeCount", "druid.sql.columns.executeCount", ["ExecuteCount", "executeCount"]),
-  colFromKeys("totalTime", "druid.sql.columns.totalTime", ["TotalTime", "totalTime", "ExecuteTime", "executeTime"]),
-  colFromKeys("maxTime", "druid.sql.columns.maxTime", ["MaxTime", "maxTime"]),
-  colFromKeys("errorCount", "druid.sql.columns.errorCount", ["ErrorCount", "errorCount"])
-], datasourceSqlRows.value));
+  colFromKeys("datasource", "druid.sql.columns.datasource", ["DataSource", "dataSource", "DataSourceName", "datasourceName"], "col-ds"),
+  colFromKeys("executeCount", "druid.sql.columns.executeCount", ["ExecuteCount", "executeCount"], "col-small"),
+  colFromKeys("totalTime", "druid.sql.columns.totalTime", ["TotalTime", "totalTime", "ExecuteTime", "executeTime"], "col-time"),
+  colFromKeys("maxTime", "druid.sql.columns.maxTime", ["MaxTime", "maxTime"], "col-time"),
+  colFromKeys("transactionCount", "druid.sql.columns.transactionCount", ["InTransactionCount", "inTransactionCount", "TransactionCount", "transactionCount"], "col-small"),
+  colFromKeys("errorCount", "druid.sql.columns.errorCount", ["ErrorCount", "errorCount"], "col-small"),
+  colFromKeys("updateCount", "druid.sql.columns.updateCount", ["EffectedRowCount", "effectedRowCount", "UpdatedRowCount", "updateRowCount"], "col-small"),
+  colFromKeys("fetchCount", "druid.sql.columns.fetchCount", ["FetchRowCount", "fetchRowCount"], "col-small"),
+  colFromKeys("runningCount", "druid.sql.columns.runningCount", ["RunningCount", "runningCount"], "col-small"),
+  colFromKeys("concurrentMax", "druid.sql.columns.concurrentMax", ["ConcurrentMax", "concurrentMax"], "col-small"),
+  colFromKeysWithFormatter("executeHistogram", "druid.sql.columns.executeHistogram", ["ExecuteTimeHistogram", "executeTimeHistogram", "ExecuteHistogram", "executeHistogram", "Histogram", "histogram"], "col-hist", formatHistogramValue),
+  colFromKeysWithFormatter("executeRsHistogram", "druid.sql.columns.executeRsHistogram", ["ExecuteAndResultSetHoldTimeHistogram", "executeAndResultSetHoldTimeHistogram"], "col-hist", formatHistogramValue),
+  colFromKeysWithFormatter("fetchHistogram", "druid.sql.columns.fetchHistogram", ["FetchRowCountHistogram", "fetchRowCountHistogram"], "col-hist", formatHistogramValue),
+  colFromKeysWithFormatter("updateHistogram", "druid.sql.columns.updateHistogram", ["UpdateRowCountHistogram", "updateRowCountHistogram", "EffectedRowCountHistogram"], "col-hist", formatHistogramValue)
+], sqlRows.value), sqlRows.value));
 
-const sqlColumns = computed(() => buildColumns([
+const sqlDetailColumns = computed(() => filterColumnsByRows(buildColumns([
   {
     key: "index",
     labelKey: "druid.sql.columns.index",
+    class: "col-index",
     getter: (_row, index) => index + 1
   },
   colFromKeys("sql", "druid.sql.columns.sql", ["SQL", "sql"], "col-sql"),
-  colFromKeys("datasource", "druid.sql.columns.datasource", ["DataSource", "dataSource", "DataSourceName", "datasourceName"]),
-  colFromKeys("executeCount", "druid.sql.columns.executeCount", ["ExecuteCount", "executeCount"]),
-  colFromKeys("totalTime", "druid.sql.columns.totalTime", ["TotalTime", "totalTime", "ExecuteTime", "executeTime"]),
-  colFromKeys("maxTime", "druid.sql.columns.maxTime", ["MaxTime", "maxTime"]),
-  colFromKeys("transactionCount", "druid.sql.columns.transactionCount", ["InTransactionCount", "inTransactionCount", "TransactionCount", "transactionCount"]),
-  colFromKeys("errorCount", "druid.sql.columns.errorCount", ["ErrorCount", "errorCount"]),
-  colFromKeys("updateCount", "druid.sql.columns.updateCount", ["EffectedRowCount", "effectedRowCount", "UpdatedRowCount", "updateRowCount"]),
-  colFromKeys("fetchCount", "druid.sql.columns.fetchCount", ["FetchRowCount", "fetchRowCount"]),
-  colFromKeys("runningCount", "druid.sql.columns.runningCount", ["RunningCount", "runningCount"]),
-  colFromKeys("concurrentMax", "druid.sql.columns.concurrentMax", ["ConcurrentMax", "concurrentMax"]),
-  colFromKeys("executeHistogram", "druid.sql.columns.executeHistogram", ["ExecuteTimeHistogram", "executeTimeHistogram", "ExecuteHistogram", "executeHistogram", "Histogram", "histogram"]),
-  colFromKeys("executeRsHistogram", "druid.sql.columns.executeRsHistogram", ["ExecuteAndResultSetHoldTimeHistogram", "executeAndResultSetHoldTimeHistogram"]),
-  colFromKeys("fetchHistogram", "druid.sql.columns.fetchHistogram", ["FetchRowCountHistogram", "fetchRowCountHistogram"]),
-  colFromKeys("updateHistogram", "druid.sql.columns.updateHistogram", ["UpdateRowCountHistogram", "updateRowCountHistogram", "EffectedRowCountHistogram"])
-], sqlRows.value));
-
-const sqlDetailColumns = computed(() => buildColumns([], sqlDetailRows.value));
+  colFromKeys("datasource", "druid.sql.columns.datasource", ["DataSource", "dataSource", "DataSourceName", "datasourceName"], "col-ds"),
+  colFromKeys("executeCount", "druid.sql.columns.executeCount", ["ExecuteCount", "executeCount"], "col-small"),
+  colFromKeys("totalTime", "druid.sql.columns.totalTime", ["TotalTime", "totalTime", "ExecuteTime", "executeTime"], "col-time"),
+  colFromKeys("maxTime", "druid.sql.columns.maxTime", ["MaxTime", "maxTime"], "col-time"),
+  colFromKeys("avgTime", "druid.columns.avgtime", ["AvgTime", "avgTime", "AvgExecuteTime", "avgExecuteTime"], "col-time"),
+  colFromKeys("errorCount", "druid.sql.columns.errorCount", ["ErrorCount", "errorCount"], "col-small"),
+  colFromKeys("transactionCount", "druid.sql.columns.transactionCount", ["InTransactionCount", "inTransactionCount", "TransactionCount", "transactionCount"], "col-small"),
+  colFromKeys("updateCount", "druid.sql.columns.updateCount", ["EffectedRowCount", "effectedRowCount", "UpdatedRowCount", "updateRowCount"], "col-small"),
+  colFromKeys("fetchCount", "druid.sql.columns.fetchCount", ["FetchRowCount", "fetchRowCount"], "col-small"),
+  colFromKeys("runningCount", "druid.sql.columns.runningCount", ["RunningCount", "runningCount"], "col-small"),
+  colFromKeys("concurrentMax", "druid.sql.columns.concurrentMax", ["ConcurrentMax", "concurrentMax"], "col-small"),
+  colFromKeysWithFormatter("executeHistogram", "druid.sql.columns.executeHistogram", ["ExecuteTimeHistogram", "executeTimeHistogram", "ExecuteHistogram", "executeHistogram", "Histogram", "histogram"], "col-hist", formatHistogramValue),
+  colFromKeysWithFormatter("executeRsHistogram", "druid.sql.columns.executeRsHistogram", ["ExecuteAndResultSetHoldTimeHistogram", "executeAndResultSetHoldTimeHistogram"], "col-hist", formatHistogramValue),
+  colFromKeysWithFormatter("fetchHistogram", "druid.sql.columns.fetchHistogram", ["FetchRowCountHistogram", "fetchRowcountHistogram", "fetchRowCountHistogram"], "col-hist", formatHistogramValue),
+  colFromKeysWithFormatter("updateHistogram", "druid.sql.columns.updateHistogram", ["UpdateRowCountHistogram", "updateRowCountHistogram", "EffectedRowCountHistogram"], "col-hist", formatHistogramValue)
+], sqlDetailRows.value), sqlDetailRows.value));
 
 const webAppColumns = computed(() => buildColumns([
   colFromKeys("contextPath", "druid.webapp.columns.contextPath", ["ContextPath", "contextPath"]),
@@ -757,21 +816,21 @@ const webAppColumns = computed(() => buildColumns([
 ], webAppRows.value));
 
 const webUriColumns = computed(() => buildColumns([
-  {key: "index", labelKey: "druid.weburi.columns.index", getter: (_row, index) => index + 1},
-  colFromKeys("uri", "druid.weburi.columns.uri", ["URI", "uri"], "col-sql"),
-  colFromKeys("requestCount", "druid.weburi.columns.requestCount", ["RequestCount", "requestCount"]),
-  colFromKeys("requestTime", "druid.weburi.columns.requestTime", ["RequestTime", "requestTime"]),
-  colFromKeys("requestTimeMax", "druid.weburi.columns.requestTimeMax", ["RequestTimeMax", "requestTimeMax"]),
-  colFromKeys("runningCount", "druid.weburi.columns.runningCount", ["RunningCount", "runningCount"]),
-  colFromKeys("concurrentMax", "druid.weburi.columns.concurrentMax", ["ConcurrentMax", "concurrentMax"]),
-  colFromKeys("jdbcExecuteCount", "druid.weburi.columns.jdbcExecuteCount", ["JdbcExecuteCount", "jdbcExecuteCount"]),
-  colFromKeys("jdbcExecuteErrorCount", "druid.weburi.columns.jdbcExecuteErrorCount", ["JdbcExecuteErrorCount", "jdbcExecuteErrorCount"]),
-  colFromKeys("jdbcExecuteTime", "druid.weburi.columns.jdbcExecuteTime", ["JdbcExecuteTime", "jdbcExecuteTime"]),
-  colFromKeys("jdbcCommitCount", "druid.weburi.columns.jdbcCommitCount", ["JdbcCommitCount", "jdbcCommitCount"]),
-  colFromKeys("jdbcRollbackCount", "druid.weburi.columns.jdbcRollbackCount", ["JdbcRollbackCount", "jdbcRollbackCount"]),
-  colFromKeys("fetchRowCount", "druid.weburi.columns.fetchRowCount", ["FetchRowCount", "fetchRowCount"]),
-  colFromKeys("updateRowCount", "druid.weburi.columns.updateRowCount", ["UpdateRowCount", "updateRowCount", "EffectedRowCount", "effectedRowCount"]),
-  colFromKeys("histogram", "druid.weburi.columns.histogram", ["RequestTimeHistogram", "requestTimeHistogram", "Histogram", "histogram"])
+  {key: "index", labelKey: "druid.weburi.columns.index", class: "col-index", getter: (_row, index) => index + 1},
+  colFromKeys("uri", "druid.weburi.columns.uri", ["URI", "uri"], "col-uri"),
+  colFromKeys("requestCount", "druid.weburi.columns.requestCount", ["RequestCount", "requestCount"], "col-small"),
+  colFromKeys("requestTime", "druid.weburi.columns.requestTime", ["RequestTime", "requestTime"], "col-time"),
+  colFromKeys("requestTimeMax", "druid.weburi.columns.requestTimeMax", ["RequestTimeMax", "requestTimeMax"], "col-time"),
+  colFromKeys("runningCount", "druid.weburi.columns.runningCount", ["RunningCount", "runningCount"], "col-small"),
+  colFromKeys("concurrentMax", "druid.weburi.columns.concurrentMax", ["ConcurrentMax", "concurrentMax"], "col-small"),
+  colFromKeys("jdbcExecuteCount", "druid.weburi.columns.jdbcExecuteCount", ["JdbcExecuteCount", "jdbcExecuteCount"], "col-small"),
+  colFromKeys("jdbcExecuteErrorCount", "druid.weburi.columns.jdbcExecuteErrorCount", ["JdbcExecuteErrorCount", "jdbcExecuteErrorCount"], "col-small"),
+  colFromKeys("jdbcExecuteTime", "druid.weburi.columns.jdbcExecuteTime", ["JdbcExecuteTime", "jdbcExecuteTime"], "col-time"),
+  colFromKeys("jdbcCommitCount", "druid.weburi.columns.jdbcCommitCount", ["JdbcCommitCount", "jdbcCommitCount"], "col-small"),
+  colFromKeys("jdbcRollbackCount", "druid.weburi.columns.jdbcRollbackCount", ["JdbcRollbackCount", "jdbcRollbackCount"], "col-small"),
+  colFromKeys("fetchRowCount", "druid.weburi.columns.fetchRowCount", ["FetchRowCount", "fetchRowCount"], "col-small"),
+  colFromKeys("updateRowCount", "druid.weburi.columns.updateRowCount", ["UpdateRowCount", "updateRowCount", "EffectedRowCount", "effectedRowCount"], "col-small"),
+  colFromKeys("histogram", "druid.weburi.columns.histogram", ["RequestTimeHistogram", "requestTimeHistogram", "Histogram", "histogram"], "col-hist")
 ], webUriRows.value));
 
 const sessionColumns = computed(() => buildColumns([
@@ -779,7 +838,7 @@ const sessionColumns = computed(() => buildColumns([
   colFromKeys("sessionId", "druid.session.columns.sessionId", ["SessionId", "sessionId"]),
   colFromKeys("principal", "druid.session.columns.principal", ["Principal", "principal"]),
   colFromKeys("createTime", "druid.session.columns.createTime", ["CreateTime", "createTime"]),
-  colFromKeys("lastAccessTime", "druid.session.columns.lastAccessTime", ["LastAccessTime", "lastAccessTime"]),
+  colFromKeys("lastAccessTime", "druid.session.columns.lastAccessTime", ["LastAccessTime", "lastAccessTime"], "col-time-wide"),
   colFromKeys("remoteAddress", "druid.session.columns.remoteAddress", ["RemoteAddress", "remoteAddress"]),
   colFromKeys("requestCount", "druid.session.columns.requestCount", ["RequestCount", "requestCount"]),
   colFromKeys("requestTimeTotal", "druid.session.columns.requestTimeTotal", ["RequestTime", "requestTime", "RequestTimeTotal", "requestTimeTotal"]),
@@ -794,18 +853,18 @@ const sessionColumns = computed(() => buildColumns([
 ], sessionRows.value));
 
 const springColumns = computed(() => buildColumns([
-  {key: "index", labelKey: "druid.spring.columns.index", getter: (_row, index) => index + 1},
-  colFromKeys("class", "druid.spring.columns.className", ["Class", "class", "ClassName", "className"]),
-  colFromKeys("method", "druid.spring.columns.method", ["Method", "method"]),
-  colFromKeys("executeCount", "druid.spring.columns.executeCount", ["ExecuteCount", "executeCount"]),
-  colFromKeys("totalTime", "druid.spring.columns.totalTime", ["TotalTime", "totalTime"]),
-  colFromKeys("runningCount", "druid.spring.columns.runningCount", ["RunningCount", "runningCount"]),
-  colFromKeys("concurrentMax", "druid.spring.columns.concurrentMax", ["ConcurrentMax", "concurrentMax"]),
-  colFromKeys("errorCount", "druid.spring.columns.errorCount", ["ErrorCount", "errorCount"]),
-  colFromKeys("jdbcCommitCount", "druid.spring.columns.jdbcCommitCount", ["JdbcCommitCount", "jdbcCommitCount"]),
-  colFromKeys("jdbcRollbackCount", "druid.spring.columns.jdbcRollbackCount", ["JdbcRollbackCount", "jdbcRollbackCount"]),
-  colFromKeys("fetchRowCount", "druid.spring.columns.fetchRowCount", ["FetchRowCount", "fetchRowCount"]),
-  colFromKeys("updateRowCount", "druid.spring.columns.updateRowCount", ["UpdateRowCount", "updateRowCount", "EffectedRowCount", "effectedRowCount"])
+  {key: "index", labelKey: "druid.spring.columns.index", class: "col-index", getter: (_row, index) => index + 1},
+  colFromKeys("class", "druid.spring.columns.className", ["Class", "class", "ClassName", "className"], "col-class"),
+  colFromKeys("method", "druid.spring.columns.method", ["Method", "method"], "col-method"),
+  colFromKeys("executeCount", "druid.spring.columns.executeCount", ["ExecuteCount", "executeCount"], "col-small"),
+  colFromKeys("totalTime", "druid.spring.columns.totalTime", ["TotalTime", "totalTime"], "col-time"),
+  colFromKeys("runningCount", "druid.spring.columns.runningCount", ["RunningCount", "runningCount"], "col-small"),
+  colFromKeys("concurrentMax", "druid.spring.columns.concurrentMax", ["ConcurrentMax", "concurrentMax"], "col-small"),
+  colFromKeys("errorCount", "druid.spring.columns.errorCount", ["ErrorCount", "errorCount"], "col-small"),
+  colFromKeys("jdbcCommitCount", "druid.spring.columns.jdbcCommitCount", ["JdbcCommitCount", "jdbcCommitCount"], "col-small"),
+  colFromKeys("jdbcRollbackCount", "druid.spring.columns.jdbcRollbackCount", ["JdbcRollbackCount", "jdbcRollbackCount"], "col-small"),
+  colFromKeys("fetchRowCount", "druid.spring.columns.fetchRowCount", ["FetchRowCount", "fetchRowCount"], "col-small"),
+  colFromKeys("updateRowCount", "druid.spring.columns.updateRowCount", ["UpdateRowCount", "updateRowCount", "EffectedRowCount", "effectedRowCount"], "col-small")
 ], springRows.value));
 
 const wallGroups = computed(() => {
@@ -870,6 +929,109 @@ function normalizeColumnLabel(key: string) {
   return key.replace(/[^a-zA-Z0-9]+/g, "_").toLowerCase();
 }
 
+function resolveExtraColumnClass(key: string) {
+  const normalized = normalizeColumnLabel(key);
+  const compact = key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  if (compact.includes("useragent")) {
+    return "col-useragent";
+  }
+  if (normalized.includes("occurtime") || normalized.endsWith("time") || normalized.endsWith("datetime")) {
+    return "col-time-wide";
+  }
+  return undefined;
+}
+
+function splitColumnTokens(value: string) {
+  return value
+      .replace(/[^a-zA-Z0-9]+/g, " ")
+      .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+      .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+}
+
+function humanizeColumnLabel(key: string) {
+  const tokens = splitColumnTokens(key);
+  if (!tokens.length) {
+    return key;
+  }
+  const lang = String(locale.value || "").toLowerCase();
+  if (lang.startsWith("zh")) {
+    const map: Record<string, string> = {
+      jdbc: "Jdbc",
+      sql: "SQL",
+      uri: "URI",
+      id: "ID",
+      max: "最大",
+      min: "最小",
+      avg: "平均",
+      total: "总计",
+      count: "次数",
+      time: "时间",
+      timespan: "耗时",
+      occur: "发生",
+      request: "请求",
+      execute: "执行",
+      error: "错误",
+      fetch: "读取",
+      update: "更新",
+      row: "行",
+      rows: "行数",
+      commit: "提交",
+      rollback: "回滚",
+      concurrent: "并发",
+      running: "执行中",
+      histogram: "分布",
+      result: "结果",
+      set: "集",
+      resultset: "结果集",
+      last: "最后",
+      slow: "慢",
+      access: "访问",
+      remote: "远端",
+      address: "地址",
+      success: "成功",
+      fail: "失败",
+      batch: "批量",
+      length: "长度",
+      bytes: "字节",
+      string: "字符",
+      class: "类型",
+      trace: "堆栈"
+    };
+    return tokens
+        .map((token) => map[token.toLowerCase()] ?? token)
+        .join("");
+  }
+  return tokens.map((token) => token[0].toUpperCase() + token.slice(1)).join(" ");
+}
+
+function hasMeaningfulValue(value: unknown) {
+  if (value == null) {
+    return false;
+  }
+  if (typeof value === "string") {
+    return value.trim() !== "";
+  }
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+  return true;
+}
+
+function filterColumnsByRows(columns: TableColumn[], rows: DruidRow[]) {
+  if (!rows.length) {
+    return columns;
+  }
+  return columns.filter((col) => {
+    if (col.key === "index") {
+      return true;
+    }
+    return rows.some((row, rowIndex) => hasMeaningfulValue(col.getter(row, rowIndex)));
+  });
+}
+
 function buildColumns(baseColumns: BaseColumn[], rows: DruidRow[]) {
   const columns: TableColumn[] = baseColumns.map((col) => ({
     key: col.key,
@@ -909,7 +1071,8 @@ function buildColumns(baseColumns: BaseColumn[], rows: DruidRow[]) {
         const labelKey = `druid.columns.${normalized}`;
         columns.push({
           key,
-          label: te(labelKey) ? t(labelKey) : key,
+          class: resolveExtraColumnClass(key),
+          label: te(labelKey) ? t(labelKey) : humanizeColumnLabel(key),
           getter: (row) => readValue(row, [key])
         });
       });

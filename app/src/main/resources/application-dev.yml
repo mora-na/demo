@@ -222,6 +222,8 @@ spring:
     type: com.alibaba.druid.pool.DruidDataSource
     # Druid 连接池通用配置
     druid:
+      # 开启连接泄漏检测
+      removeAbandoned: true
       # Druid 监控页面配置
       stat-view-servlet:
         # 是否启用监控页面

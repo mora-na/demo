@@ -475,6 +475,52 @@ export default {
             stackTitle: "活跃连接堆栈查看",
             poolTitle: "连接池中连接信息",
             sqlListTitle: "sql列表",
+            pool: {
+                connectionTitle: "连接 {id}",
+                connectionIndexTitle: "连接 {index}",
+                fields: {
+                    id: {
+                        label: "记录ID",
+                        desc: "连接统计记录ID"
+                    },
+                    connectionId: {
+                        label: "连接ID",
+                        desc: "连接实例ID"
+                    },
+                    useCount: {
+                        label: "使用次数",
+                        desc: "连接被使用次数"
+                    },
+                    lastActiveTime: {
+                        label: "最后活跃时间",
+                        desc: "最后一次活跃时间"
+                    },
+                    connectTime: {
+                        label: "建立时间",
+                        desc: "连接建立时间"
+                    },
+                    holdability: {
+                        label: "结果集持有性",
+                        desc: "JDBC ResultSet 持有性设置"
+                    },
+                    transactionIsolation: {
+                        label: "事务隔离级别",
+                        desc: "JDBC 事务隔离级别"
+                    },
+                    autoCommit: {
+                        label: "自动提交",
+                        desc: "是否自动提交"
+                    },
+                    readOnly: {
+                        label: "只读",
+                        desc: "连接是否只读"
+                    },
+                    keepAliveCheckCount: {
+                        label: "保活检测次数",
+                        desc: "连接保活检测次数"
+                    }
+                }
+            },
             fields: {
                 userName: "用户名",
                 url: "连接地址",
@@ -548,7 +594,8 @@ export default {
             key: "字段",
             field: "字段名",
             value: "值",
-            desc: "解释"
+            desc: "解释",
+            noDesc: "暂无说明"
         },
         sql: {
             refreshLabel: "SQL刷新时间",
@@ -665,16 +712,16 @@ export default {
                 path: "路径"
             },
             items: {
-                basic: "basic.json",
-                datasource: "datasource.json",
-                datasourceDetail: "datasource-{id}.json",
-                activeConnectionStack: "activeConnectionStackTrace-{datasourceId}.json",
-                sql: "sql.json",
-                wallStat: "wallStat.json",
-                wall: "wall-{id}.json",
-                weburi: "weburi.json",
-                websession: "websession.json",
-                resetAll: "reset-all.json"
+                basic: "基础信息",
+                datasource: "数据源列表",
+                datasourceDetail: "数据源详情（按ID）",
+                activeConnectionStack: "活跃连接堆栈（按数据源ID）",
+                sql: "SQL 列表",
+                wallStat: "防火墙统计",
+                wall: "防火墙详情（按ID）",
+                weburi: "URI 统计",
+                websession: "Session 统计",
+                resetAll: "重置全部统计"
             }
         },
         columns: {
@@ -688,21 +735,63 @@ export default {
             username: "用户名",
             driverclassname: "驱动类名",
             filterclassnames: "Filter 类名",
+            id: "ID",
+            sqlhash64: "SQL 哈希64",
+            sqlsample: "SQL 样例",
+            sqltype: "SQL 类型",
+            name: "名称",
             executecount: "执行数",
             totaltime: "总耗时",
             maxtime: "最慢",
+            mintime: "最快",
             avgtime: "平均耗时",
             errorcount: "错误数",
+            executeerrorcount: "执行错误数",
             effectedrowcount: "更新行数",
+            effectedrowcountmax: "更新行数最大值",
             updaterowcount: "更新行数",
             fetchrowcount: "读取行数",
+            fetchrowcountmax: "读取行数最大值",
             runningcount: "执行中",
             concurrentmax: "最大并发",
             executetime: "执行时间",
+            lasttime: "最后执行时间",
+            lasterrortime: "最后错误时间",
+            lasterrormessage: "最后错误信息",
+            lasterrorclass: "最后错误类型",
+            lasterrortrace: "最后错误堆栈",
+            lasterror: "最后错误",
+            lasterrorstacktrace: "最后错误堆栈",
+            lastslowtime: "最后慢SQL时间",
+            lastslowparameters: "最后慢SQL参数",
+            lastslowsql: "最后慢SQL",
+            maxtimespan: "最长耗时",
+            maxtimespanoccurtime: "最长耗时发生时间",
+            maxoccurtime: "最慢发生时间",
             executetimehistogram: "执行时间分布",
+            executeandresultsetholdtime: "执行+结果集持有时间",
+            executeandresultsetholdtimemax: "执行+结果集持有时间（最大）",
+            executeandresultsetholdtimetotal: "执行+结果集持有时间（总计）",
+            executeandresultsetholdtimeavg: "执行+结果集持有时间（平均）",
             executeandresultsetholdtimehistogram: "执行+RS时分布",
+            executeandresultholdtimehistogram: "执行+结果集时分布",
+            resultsetholdtime: "结果集持有时间",
+            resultsetholdtimemax: "结果集持有时间（最大）",
+            resultsetholdtimetotal: "结果集持有时间（总计）",
+            resultsetholdtimeavg: "结果集持有时间（平均）",
             fetchrowcounthistogram: "读取行分布",
             updaterowcounthistogram: "更新行分布",
+            batchsizetotal: "批量大小总计",
+            batchsizemax: "批量大小最大值",
+            batchsizeavg: "批量大小平均值",
+            readbyteslength: "读取字节总数",
+            readstringlength: "读取字符总数",
+            inputstreamopencount: "InputStream 打开次数",
+            readeropencount: "Reader 打开次数",
+            resultsetopencount: "ResultSet 打开次数",
+            lobopencount: "LOB 打开次数",
+            clobopencount: "CLOB 打开次数",
+            blobopencount: "BLOB 打开次数",
             intransactioncount: "事务执行",
             transactioncount: "事务执行",
             requestcount: "请求次数",
@@ -725,6 +814,17 @@ export default {
             jdbccommitcount: "事务提交数",
             jdbcrollbackcount: "事务回滚数",
             histogram: "区间分布"
+        },
+        extraFields: {
+            identity: "数据源标识",
+            name: "数据源名称",
+            notemptywaitcount: "等待连接次数",
+            notemptywaitmillis: "等待连接总时长（毫秒）",
+            preparedstatementclosedcount: "预编译语句关闭次数",
+            preparedstatementopencount: "预编译语句打开次数",
+            recycleerrorcount: "回收错误次数",
+            removeabandoned: "是否移除泄漏连接",
+            starttransactioncount: "事务开始次数"
         }
     },
     extensionPanel: {

@@ -475,6 +475,52 @@ export default {
             stackTitle: "Active Connection Stack Trace",
             poolTitle: "Pooling Connection Info",
             sqlListTitle: "SQL List",
+            pool: {
+                connectionTitle: "Connection {id}",
+                connectionIndexTitle: "Connection {index}",
+                fields: {
+                    id: {
+                        label: "Record ID",
+                        desc: "Connection stat record id"
+                    },
+                    connectionId: {
+                        label: "Connection ID",
+                        desc: "Connection instance id"
+                    },
+                    useCount: {
+                        label: "Use Count",
+                        desc: "Times the connection was used"
+                    },
+                    lastActiveTime: {
+                        label: "Last Active Time",
+                        desc: "Last active timestamp"
+                    },
+                    connectTime: {
+                        label: "Connect Time",
+                        desc: "Connection created time"
+                    },
+                    holdability: {
+                        label: "Holdability",
+                        desc: "JDBC ResultSet holdability"
+                    },
+                    transactionIsolation: {
+                        label: "Transaction Isolation",
+                        desc: "JDBC transaction isolation level"
+                    },
+                    autoCommit: {
+                        label: "Auto Commit",
+                        desc: "Whether auto-commit is enabled"
+                    },
+                    readOnly: {
+                        label: "Read Only",
+                        desc: "Whether the connection is read-only"
+                    },
+                    keepAliveCheckCount: {
+                        label: "KeepAlive Check Count",
+                        desc: "Keepalive checks performed"
+                    }
+                }
+            },
             fields: {
                 userName: "Username",
                 url: "JDBC URL",
@@ -548,7 +594,8 @@ export default {
             key: "Field",
             field: "Field",
             value: "Value",
-            desc: "Description"
+            desc: "Description",
+            noDesc: "No description"
         },
         sql: {
             refreshLabel: "SQL Refresh Interval",
@@ -665,16 +712,16 @@ export default {
                 path: "Path"
             },
             items: {
-                basic: "basic.json",
-                datasource: "datasource.json",
-                datasourceDetail: "datasource-{id}.json",
-                activeConnectionStack: "activeConnectionStackTrace-{datasourceId}.json",
-                sql: "sql.json",
-                wallStat: "wallStat.json",
-                wall: "wall-{id}.json",
-                weburi: "weburi.json",
-                websession: "websession.json",
-                resetAll: "reset-all.json"
+                basic: "Basic Stats",
+                datasource: "Datasource List",
+                datasourceDetail: "Datasource Detail (by ID)",
+                activeConnectionStack: "Active Connection Stack (by Datasource ID)",
+                sql: "SQL List",
+                wallStat: "Wall Stats",
+                wall: "Wall Detail (by ID)",
+                weburi: "URI Stats",
+                websession: "Session Stats",
+                resetAll: "Reset All Stats"
             }
         },
         columns: {
@@ -688,21 +735,63 @@ export default {
             username: "Username",
             driverclassname: "Driver Class",
             filterclassnames: "Filter Classes",
+            id: "ID",
+            sqlhash64: "SQL Hash64",
+            sqlsample: "SQL Sample",
+            sqltype: "SQL Type",
+            name: "Name",
             executecount: "Execute Count",
             totaltime: "Total Time",
             maxtime: "Max Time",
+            mintime: "Min Time",
             avgtime: "Avg Time",
             errorcount: "Error Count",
+            executeerrorcount: "Execute Error Count",
             effectedrowcount: "Updated Rows",
+            effectedrowcountmax: "Updated Rows Max",
             updaterowcount: "Updated Rows",
             fetchrowcount: "Fetch Rows",
+            fetchrowcountmax: "Fetch Rows Max",
             runningcount: "Running",
             concurrentmax: "Max Concurrency",
             executetime: "Execute Time",
+            lasttime: "Last Execute Time",
+            lasterrortime: "Last Error Time",
+            lasterrormessage: "Last Error Message",
+            lasterrorclass: "Last Error Class",
+            lasterrortrace: "Last Error Trace",
+            lasterror: "Last Error",
+            lasterrorstacktrace: "Last Error Stack Trace",
+            lastslowtime: "Last Slow Time",
+            lastslowparameters: "Last Slow Parameters",
+            lastslowsql: "Last Slow SQL",
+            maxtimespan: "Max Timespan",
+            maxtimespanoccurtime: "Max Timespan Occur Time",
+            maxoccurtime: "Max Occur Time",
             executetimehistogram: "Execute Time Histogram",
+            executeandresultsetholdtime: "Execute+RS Hold Time",
+            executeandresultsetholdtimemax: "Execute+RS Hold Time (Max)",
+            executeandresultsetholdtimetotal: "Execute+RS Hold Time (Total)",
+            executeandresultsetholdtimeavg: "Execute+RS Hold Time (Avg)",
             executeandresultsetholdtimehistogram: "Execute + RS Histogram",
+            executeandresultholdtimehistogram: "Execute + Result Histogram",
+            resultsetholdtime: "ResultSet Hold Time",
+            resultsetholdtimemax: "ResultSet Hold Time (Max)",
+            resultsetholdtimetotal: "ResultSet Hold Time (Total)",
+            resultsetholdtimeavg: "ResultSet Hold Time (Avg)",
             fetchrowcounthistogram: "Fetch Row Histogram",
             updaterowcounthistogram: "Update Row Histogram",
+            batchsizetotal: "Batch Size Total",
+            batchsizemax: "Batch Size Max",
+            batchsizeavg: "Batch Size Avg",
+            readbyteslength: "Read Bytes Length",
+            readstringlength: "Read String Length",
+            inputstreamopencount: "InputStream Open Count",
+            readeropencount: "Reader Open Count",
+            resultsetopencount: "ResultSet Open Count",
+            lobopencount: "LOB Open Count",
+            clobopencount: "CLOB Open Count",
+            blobopencount: "BLOB Open Count",
             intransactioncount: "Transaction Count",
             transactioncount: "Transaction Count",
             requestcount: "Request Count",
@@ -725,6 +814,17 @@ export default {
             jdbccommitcount: "Commit Count",
             jdbcrollbackcount: "Rollback Count",
             histogram: "Histogram"
+        },
+        extraFields: {
+            identity: "Datasource Identity",
+            name: "Datasource Name",
+            notemptywaitcount: "Wait Count",
+            notemptywaitmillis: "Total Wait Time (ms)",
+            preparedstatementclosedcount: "PreparedStatement Close Count",
+            preparedstatementopencount: "PreparedStatement Open Count",
+            recycleerrorcount: "Recycle Error Count",
+            removeabandoned: "Remove Abandoned",
+            starttransactioncount: "Start Transaction Count"
         }
     },
     extensionPanel: {

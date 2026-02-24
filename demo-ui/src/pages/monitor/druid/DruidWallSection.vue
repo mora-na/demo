@@ -13,8 +13,9 @@
         <tbody>
         <tr v-for="row in group.rows" :key="row.key">
           <td class="col-label">{{ row.key }}</td>
-          <td :class="{ 'cell-pre': shouldPreformat(row.key) }" class="col-value">
-            {{ formatCell(row.value) }}
+          <td class="col-value">
+            <pre v-if="shouldPreformat(row.key)" class="cell-pre">{{ formatStructured(row.value) }}</pre>
+            <span v-else>{{ formatCell(row.value) }}</span>
           </td>
         </tr>
         </tbody>
@@ -35,6 +36,46 @@ const props = defineProps<{
 const {t} = useI18n();
 const formatCell = props.formatCell;
 const shouldPreformat = props.shouldPreformat;
+
+function formatStructured(value: unknown) {
+  if (value == null || value === "") {
+    return "-";
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed) {
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        try {
+          return JSON.stringify(JSON.parse(trimmed), null, 2);
+        } catch (_err) {
+          return normalizeWhitespace(trimmed);
+        }
+      }
+      return normalizeWhitespace(trimmed);
+    }
+    return "-";
+  }
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch (_err) {
+      return String(value);
+    }
+  }
+  return formatCell(value);
+}
+
+function normalizeWhitespace(value: string) {
+  const unescaped = value
+      .replace(/\\r\\n/g, "\n")
+      .replace(/\\n/g, "\n")
+      .replace(/\\t/g, "\t")
+      .replace(/\\r/g, "\n");
+  return unescaped
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      .replace(/\t/g, "  ");
+}
 </script>
 
 <style scoped>
@@ -76,15 +117,16 @@ const shouldPreformat = props.shouldPreformat;
 }
 
 .col-label {
-  width: 32%;
+  width: 16%;
 }
 
 .col-value {
-  width: 68%;
+  width: 84%;
 }
 
 .cell-pre {
   white-space: pre-wrap;
-  word-break: break-all;
+  word-break: break-word;
+  margin: 0;
 }
 </style>

@@ -2,7 +2,7 @@
   <section>
     <div class="section-title">{{ t("druid.menu.spring") }}</div>
     <div class="druid-table-scroll">
-      <table class="druid-table druid-sql-table">
+      <table class="druid-table druid-spring-table">
         <thead>
         <tr>
           <th v-for="col in columns" :key="col.key" :class="col.class">{{ col.label }}</th>
@@ -53,7 +53,7 @@ const formatCell = props.formatCell;
 }
 
 .druid-table-scroll .druid-table {
-  min-width: 1400px;
+  min-width: 1200px;
 }
 
 .druid-table {
@@ -73,6 +73,10 @@ const formatCell = props.formatCell;
 .druid-table th {
   background: rgba(148, 163, 184, 0.12);
   font-weight: 600;
+}
+
+.druid-spring-table th {
+  white-space: nowrap;
 }
 
 </style>

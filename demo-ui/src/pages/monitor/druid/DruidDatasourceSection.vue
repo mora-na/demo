@@ -42,12 +42,14 @@
         <tr>
           <th class="col-label">{{ t("druid.extra.field") }}</th>
           <th class="col-value">{{ t("druid.extra.value") }}</th>
+          <th class="col-desc">{{ t("druid.extra.desc") }}</th>
         </tr>
         </thead>
         <tbody>
         <tr v-for="row in datasourceExtraRows" :key="row.key">
           <td class="col-label">{{ row.key }}</td>
           <td class="col-value">{{ formatCell(row.value) }}</td>
+          <td class="col-desc">{{ row.desc || "-" }}</td>
         </tr>
         </tbody>
       </table>
@@ -62,32 +64,32 @@
 
     <div class="section-block">
       <div class="block-title">{{ t("druid.datasource.poolTitle") }}</div>
-      <div class="block-pre">
+      <div v-if="poolingConnectionTables.length" class="pooling-table-list">
+        <div v-for="table in poolingConnectionTables" :key="table.key" class="pooling-table">
+          <div class="block-subtitle">{{ table.title }}</div>
+          <table class="druid-table">
+            <thead>
+            <tr>
+              <th class="col-label">{{ t("druid.datasource.table.field") }}</th>
+              <th class="col-value">{{ t("druid.datasource.table.value") }}</th>
+              <th class="col-desc">{{ t("druid.datasource.table.desc") }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="row in table.rows" :key="row.key">
+              <td class="col-label">{{ row.name }}</td>
+              <td class="col-value">{{ formatCell(row.value) }}</td>
+              <td class="col-desc">{{ row.desc || "-" }}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div v-else class="block-pre">
         <pre>{{ formatPre(poolingConnectionInfo) }}</pre>
       </div>
     </div>
 
-    <div class="section-block">
-      <div class="block-title">{{ t("druid.datasource.sqlListTitle") }}</div>
-      <div class="druid-table-scroll">
-        <table class="druid-table druid-sql-table">
-          <thead>
-          <tr>
-            <th v-for="col in datasourceSqlColumns" :key="col.key" :class="col.class">
-              {{ col.label }}
-            </th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="(row, rowIndex) in datasourceSqlRows" :key="row._idx">
-            <td v-for="col in datasourceSqlColumns" :key="col.key" :class="col.class">
-              {{ formatCell(col.getter(row, rowIndex)) }}
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
   </section>
 </template>
 
@@ -100,14 +102,6 @@ interface DatasourceOption {
   label: string;
   name?: string;
 }
-
-interface TableColumn {
-  key: string;
-  label: string;
-  class?: string;
-  getter: (row: Record<string, unknown>, rowIndex: number) => unknown;
-}
-
 const props = defineProps<{
   selectedDatasourceId: string | null;
   datasourceOptions: DatasourceOption[];
@@ -115,15 +109,13 @@ const props = defineProps<{
   datasourceExtraRows: Array<{ key: string; value: unknown; desc?: string }>;
   activeConnectionStack: unknown;
   poolingConnectionInfo: unknown;
-  datasourceSqlColumns: TableColumn[];
-  datasourceSqlRows: Array<Record<string, unknown> & { _idx?: number }>;
   formatCell: (value: unknown) => string;
   formatPre: (value: unknown) => string;
 }>();
 
 const emit = defineEmits<{ (e: "update:selectedDatasourceId", id: string | null): void }>();
 
-const {t} = useI18n();
+const {t, te} = useI18n();
 const formatCell = props.formatCell;
 const formatPre = props.formatPre;
 
@@ -135,6 +127,67 @@ const localSelectedId = computed({
 function handleSelectChange(value: string | null) {
   emit("update:selectedDatasourceId", value);
 }
+
+type PoolingRow = { key: string; name: string; value: unknown; desc: string };
+type PoolingTable = { key: string; title: string; rows: PoolingRow[] };
+
+const poolingFieldAliases: Record<string, string> = {
+  readoonly: "readOnly",
+  readonly: "readOnly",
+  connectionid: "connectionId",
+  connecttime: "connectTime",
+  lastactivetime: "lastActiveTime",
+  usecount: "useCount",
+  keepalivecheckcount: "keepAliveCheckCount",
+  transactionisolation: "transactionIsolation"
+};
+
+function normalizePoolFieldKey(key: string) {
+  const normalized = key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  return poolingFieldAliases[normalized] ?? key;
+}
+
+function buildPoolRows(item: Record<string, unknown>) {
+  return Object.keys(item)
+      .filter((key) => key !== "_idx")
+      .map((key) => {
+        const normalized = normalizePoolFieldKey(key);
+        const descKey = `druid.datasource.pool.fields.${normalized}.desc`;
+        return {
+          key,
+          name: key,
+          value: item[key],
+          desc: te(descKey) ? t(descKey) : "-"
+        };
+      });
+}
+
+function resolvePoolTitle(item: Record<string, unknown>, index: number) {
+  const connectionId = item.connectionId ?? item.ConnectionId ?? item.connId ?? item.ConnId;
+  if (connectionId != null) {
+    return t("druid.datasource.pool.connectionTitle", {id: connectionId});
+  }
+  return t("druid.datasource.pool.connectionIndexTitle", {index: index + 1});
+}
+
+const poolingConnectionTables = computed<PoolingTable[]>(() => {
+  const info = props.poolingConnectionInfo;
+  const list: Record<string, unknown>[] = [];
+  if (Array.isArray(info)) {
+    info.forEach((item) => {
+      if (item && typeof item === "object" && !Array.isArray(item)) {
+        list.push(item as Record<string, unknown>);
+      }
+    });
+  } else if (info && typeof info === "object" && !Array.isArray(info)) {
+    list.push(info as Record<string, unknown>);
+  }
+  return list.map((item, index) => ({
+    key: String(item.id ?? item.connectionId ?? index),
+    title: resolvePoolTitle(item, index),
+    rows: buildPoolRows(item)
+  }));
+});
 </script>
 
 <style scoped>
@@ -173,6 +226,15 @@ function handleSelectChange(value: string | null) {
   font-weight: 600;
 }
 
+.block-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pooling-table {
+  margin-top: 6px;
+}
+
 .block-pre {
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 10px;
@@ -186,11 +248,6 @@ function handleSelectChange(value: string | null) {
   font-size: 12px;
   white-space: pre-wrap;
   word-break: break-all;
-}
-
-.druid-table-scroll {
-  width: 100%;
-  overflow-x: auto;
 }
 
 .druid-table-scroll .druid-table {

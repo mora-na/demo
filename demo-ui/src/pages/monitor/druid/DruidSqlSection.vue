@@ -128,6 +128,10 @@ const localRefreshInterval = computed({
   min-width: 1400px;
 }
 
+.druid-sql-table {
+  table-layout: auto;
+}
+
 .druid-table {
   width: 100%;
   border-collapse: collapse;
@@ -145,6 +149,10 @@ const localRefreshInterval = computed({
 .druid-table th {
   background: rgba(148, 163, 184, 0.12);
   font-weight: 600;
+}
+
+.druid-sql-table th {
+  white-space: nowrap;
 }
 
 </style>

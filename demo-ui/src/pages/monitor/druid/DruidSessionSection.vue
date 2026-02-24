@@ -75,4 +75,8 @@ const formatCell = props.formatCell;
   font-weight: 600;
 }
 
+.druid-table th {
+  white-space: nowrap;
+}
+
 </style>
