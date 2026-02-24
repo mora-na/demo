@@ -24,7 +24,9 @@
         <module>log-api</module>
         <module>extension-api</module>
         <module>job-api</module>
+        <module>config-api</module>
         <module>core-http-extension</module>
+        <module>config</module>
         <module>system</module>
         <module>log</module>
         <module>auth</module>
@@ -267,7 +269,17 @@
             </dependency>
             <dependency>
                 <groupId>com.example</groupId>
+                <artifactId>config-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example</groupId>
                 <artifactId>core-http-extension</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.example</groupId>
+                <artifactId>config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -1795,3 +1795,47 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA extension TO demo_s
 GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA extension TO demo_system_rw;
 ALTER DEFAULT PRIVILEGES IN SCHEMA extension GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
 ALTER DEFAULT PRIVILEGES IN SCHEMA extension GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
+
+CREATE SEQUENCE IF NOT EXISTS system.sys_config_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS system.sys_config
+(
+    id             BIGINT PRIMARY KEY    DEFAULT nextval('system.sys_config_id_seq'),
+    config_key     VARCHAR(128) NOT NULL,
+    config_group   VARCHAR(64)  NOT NULL DEFAULT 'default',
+    config_value   TEXT,
+    config_type    VARCHAR(32)  NOT NULL DEFAULT 'STRING',
+    config_schema  TEXT,
+    config_version INT          NOT NULL DEFAULT 1,
+    status         SMALLINT     NOT NULL DEFAULT 1,
+    hot_update     SMALLINT     NOT NULL DEFAULT 1,
+    sensitive      SMALLINT     NOT NULL DEFAULT 0,
+    create_time    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by      BIGINT,
+    create_dept    BIGINT,
+    update_by      BIGINT,
+    is_deleted     SMALLINT     NOT NULL DEFAULT 0,
+    version        INT          NOT NULL DEFAULT 0,
+    remark         VARCHAR(500)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_config_group_key ON system.sys_config (config_group, config_key, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_config_status_deleted ON system.sys_config (status, is_deleted);
+COMMENT ON TABLE system.sys_config IS '系统配置表';
+COMMENT ON COLUMN system.sys_config.id IS '主键ID';
+COMMENT ON COLUMN system.sys_config.config_key IS '配置键';
+COMMENT ON COLUMN system.sys_config.config_group IS '配置分组';
+COMMENT ON COLUMN system.sys_config.config_value IS '配置值';
+COMMENT ON COLUMN system.sys_config.config_type IS '配置类型';
+COMMENT ON COLUMN system.sys_config.config_schema IS 'JSON Schema';
+COMMENT ON COLUMN system.sys_config.config_version IS '配置版本号';
+COMMENT ON COLUMN system.sys_config.status IS '状态：1-启用，0-禁用';
+COMMENT ON COLUMN system.sys_config.hot_update IS '是否支持热更新：1-是，0-否';
+COMMENT ON COLUMN system.sys_config.sensitive IS '是否敏感配置：1-是，0-否';
+COMMENT ON COLUMN system.sys_config.create_time IS '创建时间';
+COMMENT ON COLUMN system.sys_config.update_time IS '更新时间';
+COMMENT ON COLUMN system.sys_config.create_by IS '创建人';
+COMMENT ON COLUMN system.sys_config.create_dept IS '创建人所属部门ID（数据归属部门）';
+COMMENT ON COLUMN system.sys_config.update_by IS '更新人';
+COMMENT ON COLUMN system.sys_config.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
+COMMENT ON COLUMN system.sys_config.version IS '乐观锁版本号';
+COMMENT ON COLUMN system.sys_config.remark IS '备注';

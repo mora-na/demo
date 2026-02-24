@@ -27,6 +27,7 @@ spring:
       - optional:classpath:module-security.yml
       - optional:classpath:module-auth.yml
       - optional:classpath:module-dynamic-api.yml
+      - optional:classpath:module-config.yml
 
   # 应用元信息
   application:

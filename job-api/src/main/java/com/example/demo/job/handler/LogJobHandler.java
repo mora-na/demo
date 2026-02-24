@@ -97,6 +97,9 @@ public class LogJobHandler implements JobHandler, DynamicApiHandler {
             return Collections.singletonMap("message", "empty request");
         }
 
+        //todo 修复超时时间不生效的问题
+        Thread.sleep(50);
+
         String mode = request.getParamMode() == null ? "AUTO" : request.getParamMode().name();
         String rawBody = request.abbreviateRawBody(200);
 

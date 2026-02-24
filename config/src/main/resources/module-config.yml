@@ -1,0 +1,14 @@
+# 配置模块默认设置
+config:
+  constants:
+    cache:
+      # 配置缓存时长（秒），<=0 表示不缓存
+      ttl-seconds: 300
+      # 缓存 key 前缀
+      key-prefix: "config:"
+    group:
+      # 默认分组
+      default-group: "default"
+    mask:
+      # 敏感配置展示脱敏值
+      mask-value: "******"

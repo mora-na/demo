@@ -1331,3 +1331,31 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON extension.* TO 'demo_extension_rw'@'%';
 GRANT SELECT ON extension.* TO 'demo_extension_ro'@'%';
 
 FLUSH PRIVILEGES;
+
+CREATE TABLE IF NOT EXISTS system.sys_config
+(
+    id             BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    config_key     VARCHAR(128) NOT NULL COMMENT '配置键',
+    config_group   VARCHAR(64)  NOT NULL DEFAULT 'default' COMMENT '配置分组',
+    config_value   TEXT COMMENT '配置值',
+    config_type    VARCHAR(32)  NOT NULL DEFAULT 'STRING' COMMENT '配置类型',
+    config_schema  TEXT COMMENT 'JSON Schema',
+    config_version INT          NOT NULL DEFAULT 1 COMMENT '配置版本号',
+    status         TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+    hot_update     TINYINT      NOT NULL DEFAULT 1 COMMENT '是否支持热更新：1-是，0-否',
+    sensitive      TINYINT      NOT NULL DEFAULT 0 COMMENT '是否敏感配置：1-是，0-否',
+    create_time    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    create_by      BIGINT                DEFAULT NULL COMMENT '创建人',
+    create_dept    BIGINT COMMENT '创建人所属部门ID（数据归属部门）',
+    update_by      BIGINT                DEFAULT NULL COMMENT '更新人',
+    is_deleted     TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删除 1-已删除)',
+    version        INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+    remark         VARCHAR(500)          DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sys_config_group_key (config_group, config_key, is_deleted),
+    KEY idx_sys_config_status_deleted (status, is_deleted)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='系统配置表';
