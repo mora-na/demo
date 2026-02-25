@@ -23,6 +23,7 @@ import java.util.*;
 public class DataScopeEvaluator {
 
     private static final String GLOBAL_SCOPE_KEY = "GLOBAL";
+    private static final String DEPT_SCOPE_KEY = "dept:query";
     private static final int DISABLED_STATUS = 0;
     private final PermissionProperties permissionProperties;
 
@@ -36,13 +37,13 @@ public class DataScopeEvaluator {
         String normalizedKey = StringUtils.isBlank(scopeKey) ? null : scopeKey.trim();
         UserScopeOverride override = resolveUserOverride(user, normalizedKey);
         if (override != null) {
-            return applyOverride(user, override);
+            return normalizeSelfScope(user, normalizedKey, applyOverride(user, override));
         }
         List<RoleDataScope> roles = user.getRoleDataScopes();
         if (roles == null || roles.isEmpty()) {
-            return FinalScope.selfOnly(user.getId());
+            return normalizeSelfScope(user, normalizedKey, FinalScope.selfOnly(user.getId()));
         }
-        return mergeRoleScopes(user, normalizedKey, roles);
+        return normalizeSelfScope(user, normalizedKey, mergeRoleScopes(user, normalizedKey, roles));
     }
 
     private UserScopeOverride resolveUserOverride(AuthUser user, String scopeKey) {
@@ -201,6 +202,26 @@ public class DataScopeEvaluator {
             }
         }
         return false;
+    }
+
+    /**
+     * dept:query 场景下，SELF 代表“本人所属部门”而不是创建人。
+     */
+    private FinalScope normalizeSelfScope(AuthUser user, String scopeKey, FinalScope scope) {
+        if (scope == null) {
+            return FinalScope.none();
+        }
+        if (!DEPT_SCOPE_KEY.equals(scopeKey)) {
+            return scope;
+        }
+        if (!scope.isSelf() || (scope.getDeptIds() != null && !scope.getDeptIds().isEmpty())) {
+            return scope;
+        }
+        Long deptId = user == null ? null : user.getDeptId();
+        if (deptId == null) {
+            return scope;
+        }
+        return FinalScope.ofDept(deptId);
     }
 
     private static final class RoleScope {

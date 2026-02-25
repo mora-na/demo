@@ -154,7 +154,7 @@ import {
   deleteNotice,
   deleteNotices,
   type DeptVO,
-  listDepts,
+  listDeptOptions,
   listNoticeRecipients,
   listNotices,
   listRoles,
@@ -379,7 +379,7 @@ async function ensureDepts() {
   if (depts.value.length) {
     return;
   }
-  const result = await listDepts();
+  const result = await listDeptOptions();
   if (result?.code === 200 && result.data) {
     depts.value = result.data;
   }

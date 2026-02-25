@@ -212,7 +212,7 @@ import {
   type DeptVO,
   getRoleMenuDataScope,
   getRoleMenuIds,
-  listDepts,
+  listDeptOptions,
   listMenus,
   listPermissions,
   listRoles,
@@ -355,7 +355,7 @@ async function fetchDepts() {
   if (depts.value.length) {
     return;
   }
-  const result = await listDepts();
+  const result = await listDeptOptions();
   if (result?.code === 200 && result.data) {
     depts.value = result.data;
     deptTree.value = buildTree(result.data);

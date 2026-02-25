@@ -6,8 +6,10 @@
         <div class="module-sub">{{ t("operLog.subtitle") }}</div>
       </div>
       <div class="module-actions" @keyup.enter="handleSearch">
-        <el-input v-model.trim="filters.userName" clearable size="small" :placeholder="t('operLog.filter.user')"/>
-        <el-input v-model.trim="filters.title" clearable size="small" :placeholder="t('operLog.filter.title')"/>
+        <el-input v-model.trim="filters.userName" :placeholder="t('operLog.filter.user')" class="filter-input" clearable
+                  size="small"/>
+        <el-input v-model.trim="filters.title" :placeholder="t('operLog.filter.title')" class="filter-input" clearable
+                  size="small"/>
         <el-select v-model="filters.businessType" clearable size="small" :placeholder="t('operLog.filter.type')" style="width: 130px">
           <el-option v-for="item in businessTypeOptions" :key="item.value" :label="item.label" :value="item.value"/>
         </el-select>
@@ -231,6 +233,10 @@ onMounted(loadLogs);
   justify-content: flex-end;
   min-width: 0;
   max-width: 100%;
+}
+
+.filter-input {
+  width: 140px;
 }
 
 .module-footer {

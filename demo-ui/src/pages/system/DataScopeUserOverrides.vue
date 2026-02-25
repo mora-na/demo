@@ -2,8 +2,10 @@
   <div class="override-panel">
     <div class="override-head">
       <div class="filters" @keyup.enter="handleSearch">
-        <el-input v-model.trim="filters.userName" clearable :placeholder="t('dataScope.user.userName')"/>
-        <el-input v-model.trim="filters.menuKeyword" clearable :placeholder="t('dataScope.user.menuKeyword')"/>
+        <el-input v-model.trim="filters.userName" :placeholder="t('dataScope.user.userName')" class="filter-input"
+                  clearable/>
+        <el-input v-model.trim="filters.menuKeyword" :placeholder="t('dataScope.user.menuKeyword')" class="filter-input"
+                  clearable/>
         <el-select v-model="filters.status" clearable :placeholder="t('dataScope.user.statusPlaceholder')" style="width: 120px">
           <el-option :label="t('common.enabled')" :value="1"/>
           <el-option :label="t('common.disabled')" :value="0"/>
@@ -338,6 +340,10 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.filter-input {
+  width: 140px;
 }
 
 .action-buttons {

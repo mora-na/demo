@@ -21,4 +21,14 @@ public interface DeptService extends IService<Dept> {
      * @date 2026/2/9
      */
     boolean updateStatus(Long deptId, Integer status);
+
+    /**
+     * 获取部门列表（应用数据范围过滤）。
+     *
+     * @param enabledOnly 是否仅返回启用部门
+     * @return 部门列表
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/25
+     */
+    java.util.List<Dept> listByScope(boolean enabledOnly);
 }

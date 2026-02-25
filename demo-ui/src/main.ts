@@ -4,8 +4,8 @@ import App from "./App.vue";
 import {i18n} from "./i18n";
 import {useAuthStore} from "./stores/auth";
 import router from "./router";
-import "element-plus/theme-chalk/el-message.css";
-import "element-plus/theme-chalk/el-message-box.css";
+import ElementPlus from "element-plus";
+import "element-plus/dist/index.css";
 import "./style.css";
 import "./styles/sidebar.scss";
 
@@ -14,6 +14,7 @@ const pinia = createPinia();
 app.use(pinia);
 app.use(i18n);
 app.use(router);
+app.use(ElementPlus);
 
 const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
 const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || connection?.saveData;

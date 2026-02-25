@@ -658,6 +658,13 @@ export async function listDepts(): Promise<ApiResponse<DeptVO[]>> {
     return response.data;
 }
 
+export async function listDeptOptions(enabledOnly = false): Promise<ApiResponse<DeptVO[]>> {
+    const response = await api.get<ApiResponse<DeptVO[]>>("/depts/options", {
+        params: {enabledOnly}
+    });
+    return response.data;
+}
+
 export async function createDept(payload: DeptCreatePayload): Promise<ApiResponse<DeptVO>> {
     const response = await api.post<ApiResponse<DeptVO>>("/depts", payload);
     return response.data;

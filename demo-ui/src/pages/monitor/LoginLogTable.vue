@@ -6,8 +6,10 @@
         <div class="module-sub">{{ t("loginLog.subtitle") }}</div>
       </div>
       <div class="module-actions" @keyup.enter="handleSearch">
-        <el-input v-model.trim="filters.userName" clearable size="small" :placeholder="t('loginLog.filter.user')"/>
-        <el-input v-model.trim="filters.loginIp" clearable size="small" :placeholder="t('loginLog.filter.ip')"/>
+        <el-input v-model.trim="filters.userName" :placeholder="t('loginLog.filter.user')" class="filter-input" clearable
+                  size="small"/>
+        <el-input v-model.trim="filters.loginIp" :placeholder="t('loginLog.filter.ip')" class="filter-input" clearable
+                  size="small"/>
         <el-select v-model="filters.loginType" clearable size="small" :placeholder="t('loginLog.filter.type')" style="width: 120px">
           <el-option :value="1" :label="t('loginLog.type.login')"/>
           <el-option :value="2" :label="t('loginLog.type.logout')"/>
@@ -207,6 +209,10 @@ onMounted(loadLogs);
   justify-content: flex-end;
   min-width: 0;
   max-width: 100%;
+}
+
+.filter-input {
+  width: 140px;
 }
 
 .module-footer {

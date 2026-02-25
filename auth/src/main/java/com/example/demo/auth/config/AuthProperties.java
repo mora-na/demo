@@ -336,6 +336,21 @@ public class AuthProperties {
          * 是否启用用户状态缓存。
          */
         private boolean userStatusCacheEnabled = true;
+
+        /**
+         * 数据范围画像缓存时长（秒）。<=0 表示不启用缓存。
+         */
+        @Min(0)
+        private int dataScopeProfileTtlSeconds = 180;
+        /**
+         * 数据范围画像缓存最大条目数。
+         */
+        @Min(0)
+        private int dataScopeProfileMaxSize = 5000;
+        /**
+         * 是否启用数据范围画像缓存。
+         */
+        private boolean dataScopeProfileCacheEnabled = true;
     }
 
     /**

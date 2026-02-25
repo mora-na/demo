@@ -17,16 +17,23 @@
         <div class="panel-head">
           <div class="panel-title">{{ t("dict.type.title") }}</div>
           <div class="panel-actions" @keyup.enter="handleTypeSearch">
-            <el-input v-model.trim="typeFilters.dictType" clearable size="small" :placeholder="t('dict.type.filterType')"/>
-            <el-input v-model.trim="typeFilters.dictName" clearable size="small" :placeholder="t('dict.type.filterName')"/>
-            <el-select v-model="typeFilters.status" clearable size="small" :placeholder="t('dict.type.filterStatus')" style="width: 120px">
-              <el-option :value="1" :label="t('common.enabled')"/>
-              <el-option :value="0" :label="t('common.disabled')"/>
-            </el-select>
-            <el-button size="small" @click="handleTypeSearch">{{ t("common.search") }}</el-button>
-            <el-button v-permission="'dict:create'" size="small" type="primary" @click="openTypeCreate">
-              {{ t("dict.type.create") }}
-            </el-button>
+            <div class="filter-fields">
+              <el-input v-model.trim="typeFilters.dictType" :placeholder="t('dict.type.filterType')" class="filter-input" clearable
+                        size="small"/>
+              <el-input v-model.trim="typeFilters.dictName" :placeholder="t('dict.type.filterName')" class="filter-input" clearable
+                        size="small"/>
+              <el-select v-model="typeFilters.status" :placeholder="t('dict.type.filterStatus')" clearable size="small"
+                         style="width: 120px">
+                <el-option :label="t('common.enabled')" :value="1"/>
+                <el-option :label="t('common.disabled')" :value="0"/>
+              </el-select>
+            </div>
+            <div class="filter-actions">
+              <el-button size="small" @click="handleTypeSearch">{{ t("common.search") }}</el-button>
+              <el-button v-permission="'dict:create'" size="small" type="primary" @click="openTypeCreate">
+                {{ t("dict.type.create") }}
+              </el-button>
+            </div>
           </div>
         </div>
 
@@ -79,16 +86,23 @@
             <span v-if="activeType" class="panel-sub">({{ activeType.dictType }} - {{ activeType.dictName }})</span>
           </div>
           <div class="panel-actions" @keyup.enter="handleDataSearch">
-            <el-input v-model.trim="dataFilters.dictLabel" clearable size="small" :placeholder="t('dict.data.filterLabel')"/>
-            <el-input v-model.trim="dataFilters.dictValue" clearable size="small" :placeholder="t('dict.data.filterValue')"/>
-            <el-select v-model="dataFilters.status" clearable size="small" :placeholder="t('dict.data.filterStatus')" style="width: 120px">
-              <el-option :value="1" :label="t('common.enabled')"/>
-              <el-option :value="0" :label="t('common.disabled')"/>
-            </el-select>
-            <el-button size="small" @click="handleDataSearch">{{ t("common.search") }}</el-button>
-            <el-button v-permission="'dict:create'" size="small" type="primary" @click="openDataCreate">
-              {{ t("dict.data.create") }}
-            </el-button>
+            <div class="filter-fields">
+              <el-input v-model.trim="dataFilters.dictLabel" :placeholder="t('dict.data.filterLabel')" class="filter-input" clearable
+                        size="small"/>
+              <el-input v-model.trim="dataFilters.dictValue" :placeholder="t('dict.data.filterValue')" class="filter-input" clearable
+                        size="small"/>
+              <el-select v-model="dataFilters.status" :placeholder="t('dict.data.filterStatus')" clearable size="small"
+                         style="width: 120px">
+                <el-option :label="t('common.enabled')" :value="1"/>
+                <el-option :label="t('common.disabled')" :value="0"/>
+              </el-select>
+            </div>
+            <div class="filter-actions">
+              <el-button size="small" @click="handleDataSearch">{{ t("common.search") }}</el-button>
+              <el-button v-permission="'dict:create'" size="small" type="primary" @click="openDataCreate">
+                {{ t("dict.data.create") }}
+              </el-button>
+            </div>
           </div>
         </div>
 
@@ -588,7 +602,7 @@ onMounted(() => {
 <style scoped>
 .dict-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.4fr);
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
   gap: 12px;
 }
 
@@ -603,9 +617,10 @@ onMounted(() => {
 }
 
 .panel-head {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  align-items: center;
 }
 
 .panel-title {
@@ -621,8 +636,24 @@ onMounted(() => {
 
 .panel-actions {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
   gap: 8px;
+}
+
+.filter-fields {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-input {
+  width: 140px;
 }
 
 .action-buttons {
@@ -638,6 +669,22 @@ onMounted(() => {
 @media (max-width: 1200px) {
   .dict-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .panel-head {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .panel-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .filter-fields {
+    flex-wrap: wrap;
   }
 }
 </style>

@@ -112,7 +112,7 @@ import {
   deletePost,
   deletePosts,
   type DeptVO,
-  listDepts,
+  listDeptOptions,
   listPosts,
   type PostVO,
   updatePost,
@@ -185,7 +185,7 @@ async function fetchPosts() {
 }
 
 async function fetchDepts() {
-  const result = await listDepts();
+  const result = await listDeptOptions();
   if (result?.code === 200 && result.data) {
     depts.value = result.data;
   }

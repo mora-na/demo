@@ -13,7 +13,12 @@ import com.example.demo.common.i18n.I18nService;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.CommonExcludePathsProperties;
 import com.example.demo.common.web.permission.AuthBypassEvaluator;
+import com.example.demo.datascope.model.RoleDataScope;
+import com.example.demo.datascope.model.UserScopeOverride;
+import com.example.demo.identity.api.dto.IdentityDataScopeProfileDTO;
+import com.example.demo.identity.api.dto.IdentityRoleDataScopeDTO;
 import com.example.demo.identity.api.dto.IdentityUserDTO;
+import com.example.demo.identity.api.dto.IdentityUserScopeOverrideDTO;
 import com.example.demo.identity.api.facade.IdentityReadFacade;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +36,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.*;
 
 /**
  * 认证过滤器，校验请求令牌并注入认证上下文。
@@ -164,6 +170,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         user.setUserName(dbUser.getUserName());
         user.setNickName(dbUser.getNickName());
         user.setDeptId(dbUser.getDeptId());
+        user.setDataScopeType(dbUser.getDataScopeType());
+        user.setDataScopeValue(dbUser.getDataScopeValue());
+        IdentityDataScopeProfileDTO profile = loadDataScopeProfile(user.getId());
+        applyDataScopeProfile(user, profile);
         AuthContext.set(user);
         try {
             filterChain.doFilter(request, response);
@@ -212,5 +222,94 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                     || filterConstants.getPutMethod().equalsIgnoreCase(method);
         }
         return logoutPath && filterConstants.getPostMethod().equalsIgnoreCase(method);
+    }
+
+    private IdentityDataScopeProfileDTO loadDataScopeProfile(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        IdentityDataScopeProfileDTO cached = authUserStatusCache.getProfile(userId);
+        if (cached != null) {
+            return cached;
+        }
+        IdentityDataScopeProfileDTO profile = identityReadFacade.buildDataScopeProfile(userId);
+        int ttlSeconds = authProperties.getCache().getDataScopeProfileTtlSeconds();
+        if (profile != null && ttlSeconds > 0) {
+            authUserStatusCache.putProfile(userId, profile, ttlSeconds);
+        }
+        return profile;
+    }
+
+    private void applyDataScopeProfile(AuthUser user, IdentityDataScopeProfileDTO profile) {
+        if (user == null) {
+            return;
+        }
+        if (profile == null) {
+            user.setDeptTreeIds(Collections.emptySet());
+            user.setRoleDataScopes(Collections.emptyList());
+            user.setUserScopeOverrides(Collections.emptyMap());
+            return;
+        }
+        if (profile.getDeptTreeIds() == null || profile.getDeptTreeIds().isEmpty()) {
+            user.setDeptTreeIds(Collections.emptySet());
+        } else {
+            user.setDeptTreeIds(new LinkedHashSet<>(profile.getDeptTreeIds()));
+        }
+        user.setRoleDataScopes(mapRoleDataScopes(profile.getRoleDataScopes()));
+        user.setUserScopeOverrides(mapUserScopeOverrides(profile.getUserScopeOverrides()));
+    }
+
+    private java.util.List<RoleDataScope> mapRoleDataScopes(java.util.List<IdentityRoleDataScopeDTO> sources) {
+        if (sources == null || sources.isEmpty()) {
+            return Collections.emptyList();
+        }
+        java.util.List<RoleDataScope> result = new ArrayList<>(sources.size());
+        for (IdentityRoleDataScopeDTO source : sources) {
+            if (source == null) {
+                continue;
+            }
+            RoleDataScope scope = new RoleDataScope();
+            scope.setRoleId(source.getRoleId());
+            scope.setRoleCode(source.getRoleCode());
+            scope.setDataScopeType(source.getDataScopeType());
+            if (source.getCustomDeptIds() != null) {
+                scope.setCustomDeptIds(new LinkedHashSet<>(source.getCustomDeptIds()));
+            }
+            if (source.getMenuDataScopes() != null) {
+                scope.setMenuDataScopes(new LinkedHashMap<>(source.getMenuDataScopes()));
+            }
+            if (source.getMenuCustomDepts() != null) {
+                LinkedHashMap<String, java.util.Set<Long>> menuCustoms = new LinkedHashMap<>();
+                for (Map.Entry<String, java.util.Set<Long>> entry : source.getMenuCustomDepts().entrySet()) {
+                    menuCustoms.put(entry.getKey(),
+                            entry.getValue() == null ? new LinkedHashSet<>() : new LinkedHashSet<>(entry.getValue()));
+                }
+                scope.setMenuCustomDepts(menuCustoms);
+            }
+            result.add(scope);
+        }
+        return result;
+    }
+
+    private Map<String, UserScopeOverride> mapUserScopeOverrides(Map<String, IdentityUserScopeOverrideDTO> sources) {
+        if (sources == null || sources.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, UserScopeOverride> result = new LinkedHashMap<>();
+        for (Map.Entry<String, IdentityUserScopeOverrideDTO> entry : sources.entrySet()) {
+            IdentityUserScopeOverrideDTO source = entry.getValue();
+            if (source == null) {
+                continue;
+            }
+            UserScopeOverride override = new UserScopeOverride();
+            override.setScopeKey(source.getScopeKey());
+            override.setDataScopeType(source.getDataScopeType());
+            if (source.getCustomDeptIds() != null) {
+                override.setCustomDeptIds(new LinkedHashSet<>(source.getCustomDeptIds()));
+            }
+            override.setStatus(source.getStatus());
+            result.put(entry.getKey(), override);
+        }
+        return result;
     }
 }

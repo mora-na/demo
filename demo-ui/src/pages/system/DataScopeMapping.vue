@@ -2,8 +2,10 @@
   <div class="mapping-panel">
     <div class="mapping-head">
       <div class="filters" @keyup.enter="handleSearch">
-        <el-input v-model.trim="filters.scopeKey" clearable :placeholder="t('dataScope.mapping.scopeKey')"/>
-        <el-input v-model.trim="filters.tableName" clearable :placeholder="t('dataScope.mapping.tableName')"/>
+        <el-input v-model.trim="filters.scopeKey" :placeholder="t('dataScope.mapping.scopeKey')" class="filter-input"
+                  clearable/>
+        <el-input v-model.trim="filters.tableName" :placeholder="t('dataScope.mapping.tableName')" class="filter-input"
+                  clearable/>
         <el-button v-permission="'data-scope:rule:query'" @click="handleSearch">{{ t("common.search") }}</el-button>
       </div>
       <el-button v-permission="'data-scope:rule:create'" type="primary" @click="openCreate">{{ t("dataScope.mapping.create") }}</el-button>
@@ -272,6 +274,10 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.filter-input {
+  width: 140px;
 }
 
 .action-buttons {

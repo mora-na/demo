@@ -3,6 +3,7 @@
     <div class="filter-row">
       <el-select
           v-model="selectedUserId"
+          class="filter-input"
           :loading="userLoading"
           :placeholder="t('dataScope.overview.userPlaceholder')"
           filterable
@@ -20,6 +21,7 @@
       </el-select>
       <el-select
           v-model="selectedPermission"
+          class="filter-input"
           :placeholder="t('dataScope.overview.menuPlaceholder')"
           clearable
           filterable
@@ -31,7 +33,8 @@
             :value="menu.permission"
         />
       </el-select>
-      <el-button v-permission="'data-scope:resolve'" type="primary" :loading="loading" @click="handleResolve">
+      <el-button v-permission="'data-scope:resolve'" :loading="loading" class="filter-button" type="primary"
+                 @click="handleResolve">
         {{ t("dataScope.overview.search") }}
       </el-button>
     </div>
@@ -202,9 +205,18 @@ onMounted(() => {
 
 .filter-row {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) minmax(220px, 1fr) auto;
+  grid-template-columns: repeat(2, minmax(140px, 160px)) 1fr;
   gap: 12px;
   align-items: center;
+}
+
+.filter-input {
+  width: 160px;
+}
+
+.filter-button {
+  width: 120px;
+  justify-self: end;
 }
 
 .resolve-grid {

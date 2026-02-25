@@ -563,7 +563,8 @@ INSERT INTO sys_data_scope_rule (scope_key, table_name, table_alias, dept_column
                                  create_time, update_time, remark)
 VALUES ('order:query', 'sys_order', '', 'create_dept', 'user_id', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
         '订单数据范围'),
-       ('user:query', 'sys_user', '', 'dept_id', 'id', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '用户数据范围')
+       ('user:query', 'sys_user', '', 'dept_id', 'id', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '用户数据范围'),
+       ('dept:query', 'sys_dept', '', 'id', 'create_by', 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '部门数据范围')
 ON CONFLICT (scope_key) DO UPDATE
     SET table_name  = EXCLUDED.table_name,
         table_alias = EXCLUDED.table_alias,

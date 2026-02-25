@@ -3,6 +3,7 @@ package com.example.demo.dept.controller;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.web.BaseController;
+import com.example.demo.common.web.permission.RequireLogin;
 import com.example.demo.common.web.permission.RequirePermission;
 import com.example.demo.dept.config.DeptConstants;
 import com.example.demo.dept.dto.DeptCreateRequest;
@@ -48,7 +49,21 @@ public class DeptAdminController extends BaseController {
     @GetMapping
     @RequirePermission("dept:query")
     public CommonResult<List<DeptVO>> list() {
-        return success(toVOs(deptService.list()));
+        return success(toVOs(deptService.listByScope(false)));
+    }
+
+    /**
+     * 获取部门选项列表（登录用户可用）。
+     *
+     * @param enabledOnly 是否仅返回启用部门
+     * @return 部门选项列表
+     * @author GPT-5.2-codex(high)
+     * @date 2026/2/25
+     */
+    @GetMapping("/options")
+    @RequireLogin
+    public CommonResult<List<DeptVO>> options(@RequestParam(value = "enabledOnly", defaultValue = "false") boolean enabledOnly) {
+        return success(toVOs(deptService.listByScope(enabledOnly)));
     }
 
     /**

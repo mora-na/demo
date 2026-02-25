@@ -387,7 +387,8 @@ CREATE TABLE IF NOT EXISTS sys_data_scope_rule
 INSERT INTO sys_data_scope_rule (id, scope_key, table_name, table_alias, dept_column, user_column, filter_type, status,
                                  create_time, update_time, remark)
 VALUES (1, 'order:query', 'sys_order', '', 'create_dept', 'user_id', 1, 1, NOW(), NOW(), '订单数据范围'),
-       (2, 'user:query', 'sys_user', '', 'dept_id', 'id', 1, 1, NOW(), NOW(), '用户数据范围')
+       (2, 'user:query', 'sys_user', '', 'dept_id', 'id', 1, 1, NOW(), NOW(), '用户数据范围'),
+       (3, 'dept:query', 'sys_dept', '', 'id', 'create_by', 1, 1, NOW(), NOW(), '部门数据范围')
 ;
 
 USE demo;

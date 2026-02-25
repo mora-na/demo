@@ -110,7 +110,7 @@ public class DataScopeResolveService {
         if (override != null) {
             response.setLayer3(buildLayer3Summary(override));
             DataScopeEvaluator.FinalScope finalScope = applyOverride(user, profile, override);
-            fillFinal(response, finalScope, normalizedKey);
+            fillFinal(response, normalizeDeptSelfScope(normalizedKey, user, finalScope), normalizedKey);
             return response;
         }
 
@@ -120,10 +120,11 @@ public class DataScopeResolveService {
         }
         RoleScopeResult merged = mergeRoleScopes(user, profile, roleScopes, normalizedKey);
         response.setRoleScopes(merged.details);
-        response.setMergedDeptIds(merged.deptIds);
-        response.setIncludeSelf(merged.includeSelf);
-        response.setFinalScopeLabel(merged.finalLabel);
-        fillRuleAndSql(response, merged.finalScope, normalizedKey);
+        DataScopeEvaluator.FinalScope normalizedFinal = normalizeDeptSelfScope(normalizedKey, user, merged.finalScope);
+        response.setMergedDeptIds(normalizedFinal.getDeptIds());
+        response.setIncludeSelf(normalizedFinal.isSelf());
+        response.setFinalScopeLabel(buildFinalLabel(normalizedFinal));
+        fillRuleAndSql(response, normalizedFinal, normalizedKey);
         return response;
     }
 
@@ -479,6 +480,26 @@ public class DataScopeResolveService {
             return dataScopeConstants.getLabel().getFinalSelf();
         }
         return dataScopeConstants.getLabel().getFinalNone();
+    }
+
+    /**
+     * dept:query 场景下，将 SELF 映射为“本人所属部门”。
+     */
+    private DataScopeEvaluator.FinalScope normalizeDeptSelfScope(String scopeKey, SysUser user, DataScopeEvaluator.FinalScope scope) {
+        if (scope == null) {
+            return DataScopeEvaluator.FinalScope.none();
+        }
+        if (!"dept:query".equals(scopeKey)) {
+            return scope;
+        }
+        if (!scope.isSelf() || (scope.getDeptIds() != null && !scope.getDeptIds().isEmpty())) {
+            return scope;
+        }
+        Long deptId = user == null ? null : user.getDeptId();
+        if (deptId == null) {
+            return scope;
+        }
+        return DataScopeEvaluator.FinalScope.ofDept(deptId);
     }
 
     private String resolveSourceLayer(DataScopeResolveResponse.Layer3Summary layer3,
