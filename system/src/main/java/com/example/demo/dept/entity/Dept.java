@@ -19,7 +19,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName(value = "system.sys_dept")
+@TableName(value = "demo_system.sys_dept")
 @EqualsAndHashCode(callSuper = true)
 public class Dept extends BaseEntity implements Serializable {
 

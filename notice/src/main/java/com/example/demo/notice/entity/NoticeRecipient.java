@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TableName(value = "notice.sys_notice_recipient")
+@TableName(value = "demo_notice.sys_notice_recipient")
 public class NoticeRecipient extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

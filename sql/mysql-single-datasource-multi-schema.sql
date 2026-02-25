@@ -1,24 +1,24 @@
-DROP DATABASE IF EXISTS system;
-DROP DATABASE IF EXISTS config;
-DROP DATABASE IF EXISTS ` order `;
-DROP DATABASE IF EXISTS notice;
-DROP DATABASE IF EXISTS job;
-DROP DATABASE IF EXISTS log;
-DROP DATABASE IF EXISTS dict;
-DROP DATABASE IF EXISTS cache;
-DROP DATABASE IF EXISTS extension;
+DROP DATABASE IF EXISTS demo_system;
+DROP DATABASE IF EXISTS demo_config;
+DROP DATABASE IF EXISTS demo_order;
+DROP DATABASE IF EXISTS demo_notice;
+DROP DATABASE IF EXISTS demo_job;
+DROP DATABASE IF EXISTS demo_log;
+DROP DATABASE IF EXISTS demo_dict;
+DROP DATABASE IF EXISTS demo_cache;
+DROP DATABASE IF EXISTS demo_extension;
 
-CREATE DATABASE system DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE config DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE ` order ` DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE notice DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE job DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE log DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE dict DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE cache DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE extension DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE demo_system DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE demo_config DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE demo_order DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE demo_notice DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE demo_job DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE demo_log DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE demo_dict DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE demo_cache DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE demo_extension DEFAULT CHARACTER SET utf8mb4;
 
-USE system;
+USE demo_system;
 
 CREATE TABLE IF NOT EXISTS sys_user
 (
@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS sys_permission
     COMMENT
         ='权限表';
 
-USE dict;
+USE demo_dict;
 
 CREATE TABLE IF NOT EXISTS sys_dict_type
 (
@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS sys_dict_data
     COMMENT
         ='字典数据表';
 
-USE system;
+USE demo_system;
 
 CREATE TABLE IF NOT EXISTS sys_menu
 (
@@ -408,7 +408,7 @@ VALUES (1, 'order:query', 'sys_order', '', 'create_dept', 'user_id', 1, 1, NOW()
        (3, 'dept:query', 'sys_dept', '', 'id', 'create_by', 1, 1, NOW(), NOW(), '部门数据范围')
 ;
 
-USE `order`;
+USE demo_order;
 
 CREATE TABLE IF NOT EXISTS sys_order
 (
@@ -433,7 +433,7 @@ CREATE TABLE IF NOT EXISTS sys_order
     COMMENT
         ='订单表';
 
-USE cache;
+USE demo_cache;
 
 CREATE TABLE IF NOT EXISTS sys_cache
 (
@@ -449,7 +449,7 @@ CREATE TABLE IF NOT EXISTS sys_cache
     COMMENT
         ='缓存表';
 
-USE notice;
+USE demo_notice;
 
 CREATE TABLE IF NOT EXISTS sys_notice
 (
@@ -504,7 +504,7 @@ CREATE TABLE IF NOT EXISTS sys_notice_recipient
     COMMENT
         ='系统通知接收表';
 
-USE job;
+USE demo_job;
 
 CREATE TABLE IF NOT EXISTS sys_job
 (
@@ -567,7 +567,7 @@ CREATE TABLE IF NOT EXISTS sys_job_log_detail
     COMMENT
         ='定时任务日志明细表';
 
-USE log;
+USE demo_log;
 
 CREATE TABLE IF NOT EXISTS sys_oper_log
 (
@@ -659,7 +659,7 @@ CREATE TABLE IF NOT EXISTS sys_dynamic_api_log
     COMMENT
         ='动态接口日志表';
 
-USE extension;
+USE demo_extension;
 
 CREATE TABLE IF NOT EXISTS dynamic_api
 (
@@ -689,7 +689,7 @@ CREATE TABLE IF NOT EXISTS dynamic_api
     COMMENT
         ='动态接口配置表';
 
-USE job;
+USE demo_job;
 
 -- 清理 Quartz 表，避免重复建索引失败
 SET FOREIGN_KEY_CHECKS = 0;
@@ -884,7 +884,7 @@ create index idx_sys_quartz_ft_t_g on sys_quartz_fired_triggers (sched_name, tri
 create index idx_sys_quartz_ft_tg on sys_quartz_fired_triggers (sched_name, trigger_group);
 
 -- 初始化基础数据（默认密码示例：Passowrd@123）
-USE system;
+USE demo_system;
 
 INSERT INTO sys_dept (id, name, code, parent_id, status, sort, remark)
 VALUES (1, '总部', 'HQ', NULL, 1, 0, '根部门'),
@@ -1056,7 +1056,7 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
         'dynamic-api-log:query', 1, 20, '动态接口日志')
 ;
 
-USE dict;
+USE demo_dict;
 
 INSERT INTO sys_dict_type (id, dict_type, dict_name, status, sort, remark)
 VALUES (1, 'sys_gender', '性别', 1, 10, '系统内置'),
@@ -1070,7 +1070,7 @@ VALUES (1, 'sys_gender', '男', 'M', 1, 10, NULL),
        (4, 'sys_status', '停用', '0', 1, 20, NULL)
 ;
 
-USE system;
+USE demo_system;
 
 INSERT INTO sys_user (id, user_name, nick_name, phone, email, password, status, dept_id, data_scope_type,
                       data_scope_value,
@@ -1269,7 +1269,7 @@ VALUES (1, 10, NULL),
        (3, 200, NULL)
 ;
 
-USE `order`;
+USE demo_order;
 
 
 INSERT INTO sys_order (id, user_id, amount, create_time, update_time, create_by, create_dept, update_by, is_deleted,
@@ -1286,26 +1286,26 @@ VALUES (1, 2, 1999.00, '2026-02-01 09:12:00', '2026-02-01 09:12:00', 2, 100, 2, 
 
 -- =========================
 -- 单数据源账号与权限（需 root/DBA 执行）
--- 单账号覆盖全部模块 database（system/config/order/notice/job/log/dict/cache/extension）
+-- 单账号覆盖全部模块 database（demo_system/demo_config/demo_order/demo_notice/demo_job/demo_log/demo_dict/demo_cache/demo_extension）
 -- 默认账号与 application-dev.yml 的单数据源默认值一致：demo_system_rw
 -- =========================
 CREATE USER IF NOT EXISTS 'demo_system_rw'@'%' IDENTIFIED BY 'demo_system_rw';
 
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_system_rw'@'%';
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON `system`.* TO 'demo_system_rw'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE ON `config`.* TO 'demo_system_rw'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE ON `order`.* TO 'demo_system_rw'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE ON notice.* TO 'demo_system_rw'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE ON job.* TO 'demo_system_rw'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE ON log.* TO 'demo_system_rw'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE ON dict.* TO 'demo_system_rw'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE ON cache.* TO 'demo_system_rw'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE ON extension.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON `demo_system`.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON `demo_config`.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON `demo_order`.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON demo_notice.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON demo_job.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON demo_log.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON demo_dict.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON demo_cache.* TO 'demo_system_rw'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON demo_extension.* TO 'demo_system_rw'@'%';
 
 FLUSH PRIVILEGES;
 
-CREATE TABLE IF NOT EXISTS config.sys_config
+CREATE TABLE IF NOT EXISTS demo_config.sys_config
 (
     id             BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     config_key     VARCHAR(128) NOT NULL COMMENT '配置键',
@@ -1316,7 +1316,7 @@ CREATE TABLE IF NOT EXISTS config.sys_config
     config_version INT          NOT NULL DEFAULT 1 COMMENT '配置版本号',
     status         TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
     hot_update TINYINT NOT NULL DEFAULT 0 COMMENT '是否支持热更新：1-是，0-否',
-    sensitive      TINYINT      NOT NULL DEFAULT 0 COMMENT '是否敏感配置：1-是，0-否',
+    config_sensitive TINYINT NOT NULL DEFAULT 0 COMMENT '是否敏感配置：1-是，0-否',
     create_time    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by      BIGINT                DEFAULT NULL COMMENT '创建人',

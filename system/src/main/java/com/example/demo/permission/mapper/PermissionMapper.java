@@ -28,17 +28,17 @@ public interface PermissionMapper extends BaseMapper<Permission> {
      * @date 2026/2/9
      */
     @Select("select distinct code from (" +
-            "select p.code as code from system.sys_permission p " +
-            "join system.sys_role_permission rp on rp.permission_id = p.id " +
-            "join system.sys_role r on r.id = rp.role_id " +
-            "join system.sys_user_role ur on ur.role_id = rp.role_id " +
+            "select p.code as code from demo_system.sys_permission p " +
+            "join demo_system.sys_role_permission rp on rp.permission_id = p.id " +
+            "join demo_system.sys_role r on r.id = rp.role_id " +
+            "join demo_system.sys_user_role ur on ur.role_id = rp.role_id " +
             "where ur.user_id = #{userId} and p.status = 1 and r.status = 1 " +
             "and p.is_deleted = 0 and rp.is_deleted = 0 and r.is_deleted = 0 and ur.is_deleted = 0 " +
             "union " +
-            "select m.permission as code from system.sys_menu m " +
-            "join system.sys_role_menu rm on rm.menu_id = m.id " +
-            "join system.sys_role r2 on r2.id = rm.role_id " +
-            "join system.sys_user_role ur2 on ur2.role_id = rm.role_id " +
+            "select m.permission as code from demo_system.sys_menu m " +
+            "join demo_system.sys_role_menu rm on rm.menu_id = m.id " +
+            "join demo_system.sys_role r2 on r2.id = rm.role_id " +
+            "join demo_system.sys_user_role ur2 on ur2.role_id = rm.role_id " +
             "where ur2.user_id = #{userId} and m.status = 1 and r2.status = 1 " +
             "and m.is_deleted = 0 and rm.is_deleted = 0 and r2.is_deleted = 0 and ur2.is_deleted = 0" +
             ") t where t.code is not null and t.code <> ''")

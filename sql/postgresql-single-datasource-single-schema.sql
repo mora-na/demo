@@ -1728,7 +1728,7 @@ CREATE TABLE IF NOT EXISTS demo.sys_config
     config_version INT          NOT NULL DEFAULT 1,
     status         SMALLINT     NOT NULL DEFAULT 1,
     hot_update SMALLINT NOT NULL DEFAULT 0,
-    sensitive      SMALLINT     NOT NULL DEFAULT 0,
+    config_sensitive SMALLINT NOT NULL DEFAULT 0,
     create_time    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by      BIGINT,
@@ -1750,7 +1750,7 @@ COMMENT ON COLUMN demo.sys_config.config_schema IS 'JSON Schema';
 COMMENT ON COLUMN demo.sys_config.config_version IS '配置版本号';
 COMMENT ON COLUMN demo.sys_config.status IS '状态：1-启用，0-禁用';
 COMMENT ON COLUMN demo.sys_config.hot_update IS '是否支持热更新：1-是，0-否';
-COMMENT ON COLUMN demo.sys_config.sensitive IS '是否敏感配置：1-是，0-否';
+COMMENT ON COLUMN demo.sys_config.config_sensitive IS '是否敏感配置：1-是，0-否';
 COMMENT ON COLUMN demo.sys_config.create_time IS '创建时间';
 COMMENT ON COLUMN demo.sys_config.update_time IS '更新时间';
 COMMENT ON COLUMN demo.sys_config.create_by IS '创建人';

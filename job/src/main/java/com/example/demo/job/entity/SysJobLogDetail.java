@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  * @date 2026/2/21
  */
 @Data
-@TableName(value = "job.sys_job_log_detail")
+@TableName(value = "demo_job.sys_job_log_detail")
 public class SysJobLogDetail implements Serializable {
 
     private static final long serialVersionUID = 1L;

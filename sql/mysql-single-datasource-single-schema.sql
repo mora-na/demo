@@ -1289,7 +1289,7 @@ CREATE TABLE IF NOT EXISTS sys_config
     config_version INT          NOT NULL DEFAULT 1 COMMENT '配置版本号',
     status         TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
     hot_update TINYINT NOT NULL DEFAULT 0 COMMENT '是否支持热更新：1-是，0-否',
-    sensitive      TINYINT      NOT NULL DEFAULT 0 COMMENT '是否敏感配置：1-是，0-否',
+    config_sensitive TINYINT NOT NULL DEFAULT 0 COMMENT '是否敏感配置：1-是，0-否',
     create_time    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by      BIGINT                DEFAULT NULL COMMENT '创建人',

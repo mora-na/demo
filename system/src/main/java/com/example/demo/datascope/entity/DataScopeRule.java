@@ -20,7 +20,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TableName(value = "system.sys_data_scope_rule")
+@TableName(value = "demo_system.sys_data_scope_rule")
 public class DataScopeRule extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

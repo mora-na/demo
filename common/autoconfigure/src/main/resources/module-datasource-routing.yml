@@ -77,14 +77,14 @@ app:
       # 是否启用单 schema SQL 重写由 app.datasource.mode 自动派生
       target-schema: demo
       source-schemas:
-        - config
-        - system
-        - notice
-        - job
-        - log
-        - dict
-        - cache
-        - extension
-        - order
+        - demo_config
+        - demo_system
+        - demo_notice
+        - demo_job
+        - demo_log
+        - demo_dict
+        - demo_cache
+        - demo_extension
+        - demo_order
       cache-size: 512
       fallback-to-regex: true

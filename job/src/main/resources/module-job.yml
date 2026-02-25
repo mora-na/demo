@@ -38,7 +38,7 @@ spring:
             # JDBC 方言委托类
             driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
             # 表前缀（需与建表脚本保持一致）
-            tablePrefix: job.sys_quartz_
+            tablePrefix: demo_job.sys_quartz_
             # Misfire 判定阈值（毫秒）
             misfireThreshold: 60000
             # 单次处理的 misfire 数量上限

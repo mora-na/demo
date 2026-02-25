@@ -61,7 +61,7 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
                 .eq(StringUtils.isNotBlank(query == null ? null : query.getType()), SysConfig::getConfigType, query == null ? null : query.getType())
                 .eq(query != null && query.getStatus() != null, SysConfig::getStatus, query == null ? null : query.getStatus())
                 .eq(query != null && query.getHotUpdate() != null, SysConfig::getHotUpdate, query == null ? null : query.getHotUpdate())
-                .eq(query != null && query.getSensitive() != null, SysConfig::getSensitive, query == null ? null : query.getSensitive())
+                .eq(query != null && query.getSensitive() != null, SysConfig::getConfigSensitive, query == null ? null : query.getSensitive())
                 .orderByDesc(SysConfig::getUpdateTime)
                 .orderByDesc(SysConfig::getId));
     }
@@ -103,7 +103,7 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
         config.setConfigSchema(schema);
         config.setStatus(status);
         config.setHotUpdate(hotUpdate);
-        config.setSensitive(sensitive);
+        config.setConfigSensitive(sensitive);
         config.setConfigVersion(1);
         config.setRemark(StringUtils.trimToNull(request.getRemark()));
         if (!this.save(config)) {
@@ -145,7 +145,7 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
         }
         Integer status = request.getStatus() == null ? existing.getStatus() : normalizeStatus(request.getStatus());
         Integer hotUpdate = request.getHotUpdate() == null ? existing.getHotUpdate() : normalizeHotUpdate(request.getHotUpdate());
-        Integer sensitive = request.getSensitive() == null ? existing.getSensitive() : normalizeSensitive(request.getSensitive());
+        Integer sensitive = request.getSensitive() == null ? existing.getConfigSensitive() : normalizeSensitive(request.getSensitive());
         String schema = request.getSchema() == null ? existing.getConfigSchema() : normalizeSchema(request.getSchema());
         NormalizedValue normalized = normalizeValue(type, request.getValue(), schema);
         if (!normalized.success) {
@@ -161,7 +161,7 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
         update.setConfigSchema(schema);
         update.setStatus(status);
         update.setHotUpdate(hotUpdate);
-        update.setSensitive(sensitive);
+        update.setConfigSensitive(sensitive);
         update.setConfigVersion(nextVersion(existing.getConfigVersion()));
         update.setRemark(StringUtils.trimToNull(request.getRemark()));
         if (!this.updateById(update)) {
@@ -169,7 +169,7 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
         }
         cacheService.evict(existing.getConfigGroup(), existing.getConfigKey());
         cacheService.evict(group, key);
-        String oldValue = cryptoService.decryptIfNeeded(existing.getSensitive() != null && existing.getSensitive() == 1, existing.getConfigValue());
+        String oldValue = cryptoService.decryptIfNeeded(existing.getConfigSensitive() != null && existing.getConfigSensitive() == 1, existing.getConfigValue());
         boolean oldEnabled = existing.getStatus() != null && existing.getStatus() == constants.getStatus().getEnabled();
         boolean newEnabled = status != null && status == constants.getStatus().getEnabled();
         SysConfig merged = merge(existing, update);
@@ -198,7 +198,7 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
         boolean removed = this.removeById(id);
         if (removed) {
             cacheService.evict(existing.getConfigGroup(), existing.getConfigKey());
-            String oldValue = cryptoService.decryptIfNeeded(existing.getSensitive() != null && existing.getSensitive() == 1, existing.getConfigValue());
+            String oldValue = cryptoService.decryptIfNeeded(existing.getConfigSensitive() != null && existing.getConfigSensitive() == 1, existing.getConfigValue());
             publishDisable(existing, oldValue);
         }
         return removed;
@@ -364,7 +364,7 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
         merged.setConfigSchema(update.getConfigSchema() == null ? existing.getConfigSchema() : update.getConfigSchema());
         merged.setStatus(update.getStatus() == null ? existing.getStatus() : update.getStatus());
         merged.setHotUpdate(update.getHotUpdate() == null ? existing.getHotUpdate() : update.getHotUpdate());
-        merged.setSensitive(update.getSensitive() == null ? existing.getSensitive() : update.getSensitive());
+        merged.setConfigSensitive(update.getConfigSensitive() == null ? existing.getConfigSensitive() : update.getConfigSensitive());
         merged.setConfigVersion(update.getConfigVersion() == null ? existing.getConfigVersion() : update.getConfigVersion());
         return merged;
     }

@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName(value = "\"order\".sys_order")
+@TableName(value = "demo_order.sys_order")
 @EqualsAndHashCode(callSuper = true)
 public class Order extends BaseEntity implements Serializable {
 

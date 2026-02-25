@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName(value = "job.sys_job")
+@TableName(value = "demo_job.sys_job")
 public class SysJob implements Serializable {
 
     private static final long serialVersionUID = 1L;

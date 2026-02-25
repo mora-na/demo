@@ -20,7 +20,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TableName(value = "system.sys_post")
+@TableName(value = "demo_system.sys_post")
 public class SysPost extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

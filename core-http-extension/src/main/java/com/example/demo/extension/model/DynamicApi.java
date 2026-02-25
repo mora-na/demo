@@ -9,14 +9,14 @@ import lombok.EqualsAndHashCode;
 import java.io.Serializable;
 
 /**
- * 动态接口实体，映射 extension.dynamic_api 表。
+ * 动态接口实体，映射 demo_extension.dynamic_api 表。
  *
  * @author GPT-5.2-codex(high)
  * @date 2026/2/17
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("extension.dynamic_api")
+@TableName("demo_extension.dynamic_api")
 public class DynamicApi extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

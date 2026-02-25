@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * 动态接口日志实体。
  */
 @Data
-@TableName("log.sys_dynamic_api_log")
+@TableName("demo_log.sys_dynamic_api_log")
 public class SysDynamicApiLog implements Serializable {
 
     private static final long serialVersionUID = 1L;

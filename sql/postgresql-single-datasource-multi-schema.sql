@@ -1,24 +1,24 @@
-DROP SCHEMA IF EXISTS system CASCADE;
-DROP SCHEMA IF EXISTS config CASCADE;
-DROP SCHEMA IF EXISTS "order" CASCADE;
-DROP SCHEMA IF EXISTS notice CASCADE;
-DROP SCHEMA IF EXISTS job CASCADE;
-DROP SCHEMA IF EXISTS log CASCADE;
-DROP SCHEMA IF EXISTS dict CASCADE;
-DROP SCHEMA IF EXISTS cache CASCADE;
-DROP SCHEMA IF EXISTS extension CASCADE;
+DROP SCHEMA IF EXISTS demo_system CASCADE;
+DROP SCHEMA IF EXISTS demo_config CASCADE;
+DROP SCHEMA IF EXISTS demo_order CASCADE;
+DROP SCHEMA IF EXISTS demo_notice CASCADE;
+DROP SCHEMA IF EXISTS demo_job CASCADE;
+DROP SCHEMA IF EXISTS demo_log CASCADE;
+DROP SCHEMA IF EXISTS demo_dict CASCADE;
+DROP SCHEMA IF EXISTS demo_cache CASCADE;
+DROP SCHEMA IF EXISTS demo_extension CASCADE;
 
-CREATE SCHEMA system;
-CREATE SCHEMA config;
-CREATE SCHEMA "order";
-CREATE SCHEMA notice;
-CREATE SCHEMA job;
-CREATE SCHEMA log;
-CREATE SCHEMA dict;
-CREATE SCHEMA cache;
-CREATE SCHEMA extension;
+CREATE SCHEMA demo_system;
+CREATE SCHEMA demo_config;
+CREATE SCHEMA demo_order;
+CREATE SCHEMA demo_notice;
+CREATE SCHEMA demo_job;
+CREATE SCHEMA demo_log;
+CREATE SCHEMA demo_dict;
+CREATE SCHEMA demo_cache;
+CREATE SCHEMA demo_extension;
 
-SET search_path TO system, public;
+SET search_path TO demo_system, public;
 
 CREATE SEQUENCE IF NOT EXISTS sys_user_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_user
@@ -214,7 +214,7 @@ COMMENT ON COLUMN sys_permission.code IS '权限编码（唯一）';
 COMMENT ON COLUMN sys_permission.name IS '权限名称';
 COMMENT ON COLUMN sys_permission.status IS '状态：1-启用，0-禁用';
 
-SET search_path TO dict, public;
+SET search_path TO demo_dict, public;
 
 CREATE SEQUENCE IF NOT EXISTS sys_dict_type_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_dict_type
@@ -287,7 +287,7 @@ COMMENT ON COLUMN sys_dict_data.is_deleted IS '逻辑删除(0-未删除 1-已删
 COMMENT ON COLUMN sys_dict_data.version IS '乐观锁版本号';
 COMMENT ON COLUMN sys_dict_data.remark IS '备注';
 
-SET search_path TO system, public;
+SET search_path TO demo_system, public;
 
 CREATE SEQUENCE IF NOT EXISTS sys_menu_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_menu
@@ -592,7 +592,7 @@ ON CONFLICT (scope_key) DO UPDATE
         update_time = EXCLUDED.update_time,
         remark      = EXCLUDED.remark;
 
-SET search_path TO "order", public;
+SET search_path TO demo_order, public;
 
 CREATE SEQUENCE IF NOT EXISTS sys_order_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_order
@@ -626,7 +626,7 @@ COMMENT ON COLUMN sys_order.remark IS '备注';
 COMMENT ON COLUMN sys_order.user_id IS '用户ID';
 COMMENT ON COLUMN sys_order.amount IS '订单金额';
 
-SET search_path TO cache, public;
+SET search_path TO demo_cache, public;
 
 CREATE TABLE IF NOT EXISTS sys_cache
 (
@@ -643,7 +643,7 @@ COMMENT ON COLUMN sys_cache.cache_value IS '缓存内容（JSON）';
 COMMENT ON COLUMN sys_cache.value_class IS '值类型名称';
 COMMENT ON COLUMN sys_cache.expire_at IS '过期时间（毫秒时间戳）';
 
-SET search_path TO notice, public;
+SET search_path TO demo_notice, public;
 
 CREATE SEQUENCE IF NOT EXISTS sys_notice_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_notice
@@ -721,7 +721,7 @@ COMMENT ON COLUMN sys_notice_recipient.user_id IS '接收用户ID';
 COMMENT ON COLUMN sys_notice_recipient.read_status IS '阅读状态：0-未读，1-已读';
 COMMENT ON COLUMN sys_notice_recipient.read_time IS '阅读时间';
 
-SET search_path TO job, public;
+SET search_path TO demo_job, public;
 
 CREATE SEQUENCE IF NOT EXISTS sys_job_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_job
@@ -807,7 +807,7 @@ COMMENT ON COLUMN sys_job_log_detail.part_type IS '日志片段类型: MANUAL/AU
 COMMENT ON COLUMN sys_job_log_detail.log_detail IS '日志内容';
 COMMENT ON COLUMN sys_job_log_detail.created_at IS '创建时间';
 
-SET search_path TO log, public;
+SET search_path TO demo_log, public;
 
 CREATE SEQUENCE IF NOT EXISTS sys_oper_log_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS sys_oper_log
@@ -944,7 +944,7 @@ COMMENT ON COLUMN sys_dynamic_api_log.request_param IS '请求参数';
 COMMENT ON COLUMN sys_dynamic_api_log.duration_ms IS '耗时毫秒';
 COMMENT ON COLUMN sys_dynamic_api_log.request_time IS '请求时间';
 
-SET search_path TO extension, public;
+SET search_path TO demo_extension, public;
 
 CREATE SEQUENCE IF NOT EXISTS dynamic_api_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS dynamic_api
@@ -989,7 +989,7 @@ COMMENT ON COLUMN dynamic_api.is_deleted IS '逻辑删除(0-未删除 1-已删�
 COMMENT ON COLUMN dynamic_api.version IS '乐观锁版本号';
 COMMENT ON COLUMN dynamic_api.remark IS '备注';
 
-SET search_path TO job, public;
+SET search_path TO demo_job, public;
 
 create table if not exists sys_quartz_job_details
 (
@@ -1174,101 +1174,101 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_sys_user_update_time
     BEFORE UPDATE
-    ON system.sys_user
+    ON demo_system.sys_user
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_dept_update_time
     BEFORE UPDATE
-    ON system.sys_dept
+    ON demo_system.sys_dept
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_post_update_time
     BEFORE UPDATE
-    ON system.sys_post
+    ON demo_system.sys_post
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_role_update_time
     BEFORE UPDATE
-    ON system.sys_role
+    ON demo_system.sys_role
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_permission_update_time
     BEFORE UPDATE
-    ON system.sys_permission
+    ON demo_system.sys_permission
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_menu_update_time
     BEFORE UPDATE
-    ON system.sys_menu
+    ON demo_system.sys_menu
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_role_permission_update_time
     BEFORE UPDATE
-    ON system.sys_role_permission
+    ON demo_system.sys_role_permission
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_role_menu_update_time
     BEFORE UPDATE
-    ON system.sys_role_menu
+    ON demo_system.sys_role_menu
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_role_menu_dept_update_time
     BEFORE UPDATE
-    ON system.sys_role_menu_dept
+    ON demo_system.sys_role_menu_dept
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_user_role_update_time
     BEFORE UPDATE
-    ON system.sys_user_role
+    ON demo_system.sys_user_role
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_user_post_update_time
     BEFORE UPDATE
-    ON system.sys_user_post
+    ON demo_system.sys_user_post
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_user_data_scope_update_time
     BEFORE UPDATE
-    ON system.sys_user_data_scope
+    ON demo_system.sys_user_data_scope
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_data_scope_rule_update_time
     BEFORE UPDATE
-    ON system.sys_data_scope_rule
+    ON demo_system.sys_data_scope_rule
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_order_update_time
     BEFORE UPDATE
-    ON "order".sys_order
+    ON demo_order.sys_order
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_notice_update_time
     BEFORE UPDATE
-    ON notice.sys_notice
+    ON demo_notice.sys_notice
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
 CREATE TRIGGER trg_sys_notice_recipient_update_time
     BEFORE UPDATE
-    ON notice.sys_notice_recipient
+    ON demo_notice.sys_notice_recipient
     FOR EACH ROW
 EXECUTE FUNCTION public.fn_sys_update_time();
 
-SET search_path TO system, public;
+SET search_path TO demo_system, public;
 
 
 -- 初始化基础数据（默认密码示例：Passowrd@123）
@@ -1442,7 +1442,7 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
         'dynamic-api-log:query', 1, 20, '动态接口日志')
 ;
 
-SET search_path TO dict, public;
+SET search_path TO demo_dict, public;
 
 INSERT INTO sys_dict_type (id, dict_type, dict_name, status, sort, remark)
 VALUES (1, 'sys_gender', '性别', 1, 10, '系统内置'),
@@ -1456,7 +1456,7 @@ VALUES (1, 'sys_gender', '男', 'M', 1, 10, NULL),
        (4, 'sys_status', '停用', '0', 1, 20, NULL)
 ;
 
-SET search_path TO system, public;
+SET search_path TO demo_system, public;
 
 INSERT INTO sys_user (id, user_name, nick_name, phone, email, password, status, dept_id, data_scope_type,
                       data_scope_value,
@@ -1655,7 +1655,7 @@ VALUES (1, 10, NULL),
        (3, 200, NULL)
 ;
 
-SET search_path TO "order", public;
+SET search_path TO demo_order, public;
 
 INSERT INTO sys_order (id, user_id, amount, create_time, update_time, create_by, create_dept, update_by, is_deleted,
                        version, remark)
@@ -1668,37 +1668,42 @@ VALUES (1, 2, 1999.00, '2026-02-01 09:12:00', '2026-02-01 09:12:00', 2, 100, 2, 
 ;
 
 -- 显式主键种子数据后，同步序列到最新值
-SELECT setval('system.sys_dept_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_dept));
-SELECT setval('system.sys_post_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_post));
-SELECT setval('system.sys_role_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_role));
-SELECT setval('system.sys_permission_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_permission));
-SELECT setval('system.sys_menu_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_menu));
-SELECT setval('system.sys_user_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_user));
-SELECT setval('system.sys_role_permission_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_role_permission));
-SELECT setval('system.sys_role_menu_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_role_menu));
-SELECT setval('system.sys_role_menu_dept_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_role_menu_dept));
-SELECT setval('system.sys_user_role_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_user_role));
-SELECT setval('system.sys_user_data_scope_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_user_data_scope));
-SELECT setval('system.sys_user_post_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_user_post));
-SELECT setval('system.sys_data_scope_rule_id_seq', (SELECT COALESCE(MAX(id), 1) FROM system.sys_data_scope_rule));
-SELECT setval('dict.sys_dict_type_id_seq', (SELECT COALESCE(MAX(id), 1) FROM dict.sys_dict_type));
-SELECT setval('dict.sys_dict_data_id_seq', (SELECT COALESCE(MAX(id), 1) FROM dict.sys_dict_data));
-SELECT setval('"order".sys_order_id_seq', (SELECT COALESCE(MAX(id), 1) FROM "order".sys_order));
-SELECT setval('notice.sys_notice_id_seq', (SELECT COALESCE(MAX(id), 1) FROM notice.sys_notice));
-SELECT setval('notice.sys_notice_recipient_id_seq', (SELECT COALESCE(MAX(id), 1) FROM notice.sys_notice_recipient));
-SELECT setval('job.sys_job_id_seq', (SELECT COALESCE(MAX(id), 1) FROM job.sys_job));
-SELECT setval('job.sys_job_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM job.sys_job_log));
-SELECT setval('job.sys_job_log_detail_id_seq', (SELECT COALESCE(MAX(id), 1) FROM job.sys_job_log_detail));
-SELECT setval('log.sys_oper_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM log.sys_oper_log));
-SELECT setval('log.sys_login_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM log.sys_login_log));
-SELECT setval('log.sys_dynamic_api_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM log.sys_dynamic_api_log));
-SELECT setval('extension.dynamic_api_id_seq', (SELECT COALESCE(MAX(id), 1) FROM extension.dynamic_api));
+SELECT setval('demo_system.sys_dept_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_dept));
+SELECT setval('demo_system.sys_post_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_post));
+SELECT setval('demo_system.sys_role_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_role));
+SELECT setval('demo_system.sys_permission_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_permission));
+SELECT setval('demo_system.sys_menu_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_menu));
+SELECT setval('demo_system.sys_user_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_user));
+SELECT setval('demo_system.sys_role_permission_id_seq',
+              (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_role_permission));
+SELECT setval('demo_system.sys_role_menu_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_role_menu));
+SELECT setval('demo_system.sys_role_menu_dept_id_seq',
+              (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_role_menu_dept));
+SELECT setval('demo_system.sys_user_role_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_user_role));
+SELECT setval('demo_system.sys_user_data_scope_id_seq',
+              (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_user_data_scope));
+SELECT setval('demo_system.sys_user_post_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_user_post));
+SELECT setval('demo_system.sys_data_scope_rule_id_seq',
+              (SELECT COALESCE(MAX(id), 1) FROM demo_system.sys_data_scope_rule));
+SELECT setval('demo_dict.sys_dict_type_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_dict.sys_dict_type));
+SELECT setval('demo_dict.sys_dict_data_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_dict.sys_dict_data));
+SELECT setval('demo_order.sys_order_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_order.sys_order));
+SELECT setval('demo_notice.sys_notice_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_notice.sys_notice));
+SELECT setval('demo_notice.sys_notice_recipient_id_seq',
+              (SELECT COALESCE(MAX(id), 1) FROM demo_notice.sys_notice_recipient));
+SELECT setval('demo_job.sys_job_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_job.sys_job));
+SELECT setval('demo_job.sys_job_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_job.sys_job_log));
+SELECT setval('demo_job.sys_job_log_detail_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_job.sys_job_log_detail));
+SELECT setval('demo_log.sys_oper_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_log.sys_oper_log));
+SELECT setval('demo_log.sys_login_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_log.sys_login_log));
+SELECT setval('demo_log.sys_dynamic_api_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_log.sys_dynamic_api_log));
+SELECT setval('demo_extension.dynamic_api_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_extension.dynamic_api));
 
 
 
 -- =========================
 -- 单数据源账号与权限（需 DBA/Superuser 执行）
--- 单账号覆盖全部模块 schema（system/config/order/notice/job/log/dict/cache/extension）
+-- 单账号覆盖全部模块 schema（demo_system/demo_config/demo_order/demo_notice/demo_job/demo_log/demo_dict/demo_cache/demo_extension）
 -- 默认账号与 application-dev.yml 的单数据源默认值一致：demo_system_rw
 -- =========================
 DO
@@ -1717,45 +1722,46 @@ $$
     BEGIN
         EXECUTE format('REVOKE ALL ON DATABASE %I FROM PUBLIC', db_name);
         EXECUTE format('GRANT CONNECT ON DATABASE %I TO demo_system_rw', db_name);
-        EXECUTE format('ALTER ROLE demo_system_rw IN DATABASE %I SET search_path = system, public', db_name);
+        EXECUTE format('ALTER ROLE demo_system_rw IN DATABASE %I SET search_path = demo_system, public', db_name);
     END
 $$;
 
-REVOKE ALL ON SCHEMA system FROM PUBLIC;
-REVOKE ALL ON SCHEMA config FROM PUBLIC;
-REVOKE ALL ON SCHEMA "order" FROM PUBLIC;
-REVOKE ALL ON SCHEMA notice FROM PUBLIC;
-REVOKE ALL ON SCHEMA job FROM PUBLIC;
-REVOKE ALL ON SCHEMA log FROM PUBLIC;
-REVOKE ALL ON SCHEMA dict FROM PUBLIC;
-REVOKE ALL ON SCHEMA cache FROM PUBLIC;
-REVOKE ALL ON SCHEMA extension FROM PUBLIC;
+REVOKE ALL ON SCHEMA demo_system FROM PUBLIC;
+REVOKE ALL ON SCHEMA demo_config FROM PUBLIC;
+REVOKE ALL ON SCHEMA demo_order FROM PUBLIC;
+REVOKE ALL ON SCHEMA demo_notice FROM PUBLIC;
+REVOKE ALL ON SCHEMA demo_job FROM PUBLIC;
+REVOKE ALL ON SCHEMA demo_log FROM PUBLIC;
+REVOKE ALL ON SCHEMA demo_dict FROM PUBLIC;
+REVOKE ALL ON SCHEMA demo_cache FROM PUBLIC;
+REVOKE ALL ON SCHEMA demo_extension FROM PUBLIC;
 
-REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA system FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA config FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA "order" FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA notice FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA job FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA log FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA dict FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA cache FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA extension FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA demo_system FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA demo_config FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA demo_order FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA demo_notice FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA demo_job FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA demo_log FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA demo_dict FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA demo_cache FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA demo_extension FROM PUBLIC;
 
-REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA system FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA config FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA "order" FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA notice FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA job FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA log FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA dict FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA cache FROM PUBLIC;
-REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA extension FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA demo_system FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA demo_config FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA demo_order FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA demo_notice FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA demo_job FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA demo_log FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA demo_dict FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA demo_cache FROM PUBLIC;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA demo_extension FROM PUBLIC;
 
 DO
 $$
     DECLARE
         schema_name    TEXT;
-        module_schemas TEXT[] := ARRAY ['system', 'config', 'order', 'notice', 'job', 'log', 'dict', 'cache', 'extension'];
+        module_schemas TEXT[] := ARRAY ['demo_system', 'demo_config', 'demo_order', 'demo_notice', 'demo_job', 'demo_log',
+            'demo_dict', 'demo_cache', 'demo_extension'];
     BEGIN
         FOREACH schema_name IN ARRAY module_schemas
             LOOP
@@ -1768,62 +1774,62 @@ $$
     END
 $$;
 
-GRANT USAGE ON SCHEMA system TO demo_system_rw;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA system TO demo_system_rw;
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA system TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA system GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA system GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
+GRANT USAGE ON SCHEMA demo_system TO demo_system_rw;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA demo_system TO demo_system_rw;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA demo_system TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_system GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_system GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
 
-GRANT USAGE ON SCHEMA config TO demo_system_rw;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA config TO demo_system_rw;
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA config TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA config GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA config GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
+GRANT USAGE ON SCHEMA demo_config TO demo_system_rw;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA demo_config TO demo_system_rw;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA demo_config TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_config GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_config GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
 
-GRANT USAGE ON SCHEMA "order" TO demo_system_rw;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA "order" TO demo_system_rw;
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA "order" TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA "order" GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA "order" GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
+GRANT USAGE ON SCHEMA demo_order TO demo_system_rw;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA demo_order TO demo_system_rw;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA demo_order TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_order GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_order GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
 
-GRANT USAGE ON SCHEMA notice TO demo_system_rw;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA notice TO demo_system_rw;
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA notice TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA notice GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA notice GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
+GRANT USAGE ON SCHEMA demo_notice TO demo_system_rw;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA demo_notice TO demo_system_rw;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA demo_notice TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_notice GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_notice GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
 
-GRANT USAGE ON SCHEMA job TO demo_system_rw;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA job TO demo_system_rw;
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA job TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA job GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA job GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
+GRANT USAGE ON SCHEMA demo_job TO demo_system_rw;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA demo_job TO demo_system_rw;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA demo_job TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_job GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_job GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
 
-GRANT USAGE ON SCHEMA log TO demo_system_rw;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA log TO demo_system_rw;
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA log TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA log GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA log GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
+GRANT USAGE ON SCHEMA demo_log TO demo_system_rw;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA demo_log TO demo_system_rw;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA demo_log TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_log GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_log GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
 
-GRANT USAGE ON SCHEMA dict TO demo_system_rw;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA dict TO demo_system_rw;
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA dict TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA dict GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA dict GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
+GRANT USAGE ON SCHEMA demo_dict TO demo_system_rw;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA demo_dict TO demo_system_rw;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA demo_dict TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_dict GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_dict GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
 
-GRANT USAGE ON SCHEMA cache TO demo_system_rw;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA cache TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA cache GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
+GRANT USAGE ON SCHEMA demo_cache TO demo_system_rw;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA demo_cache TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_cache GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
 
-GRANT USAGE ON SCHEMA extension TO demo_system_rw;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA extension TO demo_system_rw;
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA extension TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA extension GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
-ALTER DEFAULT PRIVILEGES IN SCHEMA extension GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
+GRANT USAGE ON SCHEMA demo_extension TO demo_system_rw;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA demo_extension TO demo_system_rw;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA demo_extension TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_extension GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO demo_system_rw;
+ALTER DEFAULT PRIVILEGES IN SCHEMA demo_extension GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO demo_system_rw;
 
-CREATE SEQUENCE IF NOT EXISTS config.sys_config_id_seq START WITH 1 INCREMENT BY 1;
-CREATE TABLE IF NOT EXISTS config.sys_config
+CREATE SEQUENCE IF NOT EXISTS demo_config.sys_config_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS demo_config.sys_config
 (
-    id         BIGINT PRIMARY KEY DEFAULT nextval('config.sys_config_id_seq'),
+    id               BIGINT PRIMARY KEY DEFAULT nextval('demo_config.sys_config_id_seq'),
     config_key     VARCHAR(128) NOT NULL,
     config_group   VARCHAR(64)  NOT NULL DEFAULT 'default',
     config_value   TEXT,
@@ -1832,7 +1838,7 @@ CREATE TABLE IF NOT EXISTS config.sys_config
     config_version INT          NOT NULL DEFAULT 1,
     status         SMALLINT     NOT NULL DEFAULT 1,
     hot_update SMALLINT NOT NULL  DEFAULT 0,
-    sensitive      SMALLINT     NOT NULL DEFAULT 0,
+    config_sensitive SMALLINT NOT NULL  DEFAULT 0,
     create_time    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_by      BIGINT,
@@ -1842,24 +1848,24 @@ CREATE TABLE IF NOT EXISTS config.sys_config
     version        INT          NOT NULL DEFAULT 0,
     remark         VARCHAR(500)
 );
-CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_config_group_key ON config.sys_config (config_group, config_key, is_deleted);
-CREATE INDEX IF NOT EXISTS idx_sys_config_status_deleted ON config.sys_config (status, is_deleted);
-COMMENT ON TABLE config.sys_config IS '系统配置表';
-COMMENT ON COLUMN config.sys_config.id IS '主键ID';
-COMMENT ON COLUMN config.sys_config.config_key IS '配置键';
-COMMENT ON COLUMN config.sys_config.config_group IS '配置分组';
-COMMENT ON COLUMN config.sys_config.config_value IS '配置值';
-COMMENT ON COLUMN config.sys_config.config_type IS '配置类型';
-COMMENT ON COLUMN config.sys_config.config_schema IS 'JSON Schema';
-COMMENT ON COLUMN config.sys_config.config_version IS '配置版本号';
-COMMENT ON COLUMN config.sys_config.status IS '状态：1-启用，0-禁用';
-COMMENT ON COLUMN config.sys_config.hot_update IS '是否支持热更新：1-是，0-否';
-COMMENT ON COLUMN config.sys_config.sensitive IS '是否敏感配置：1-是，0-否';
-COMMENT ON COLUMN config.sys_config.create_time IS '创建时间';
-COMMENT ON COLUMN config.sys_config.update_time IS '更新时间';
-COMMENT ON COLUMN config.sys_config.create_by IS '创建人';
-COMMENT ON COLUMN config.sys_config.create_dept IS '创建人所属部门ID（数据归属部门）';
-COMMENT ON COLUMN config.sys_config.update_by IS '更新人';
-COMMENT ON COLUMN config.sys_config.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
-COMMENT ON COLUMN config.sys_config.version IS '乐观锁版本号';
-COMMENT ON COLUMN config.sys_config.remark IS '备注';
+CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_config_group_key ON demo_config.sys_config (config_group, config_key, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_sys_config_status_deleted ON demo_config.sys_config (status, is_deleted);
+COMMENT ON TABLE demo_config.sys_config IS '系统配置表';
+COMMENT ON COLUMN demo_config.sys_config.id IS '主键ID';
+COMMENT ON COLUMN demo_config.sys_config.config_key IS '配置键';
+COMMENT ON COLUMN demo_config.sys_config.config_group IS '配置分组';
+COMMENT ON COLUMN demo_config.sys_config.config_value IS '配置值';
+COMMENT ON COLUMN demo_config.sys_config.config_type IS '配置类型';
+COMMENT ON COLUMN demo_config.sys_config.config_schema IS 'JSON Schema';
+COMMENT ON COLUMN demo_config.sys_config.config_version IS '配置版本号';
+COMMENT ON COLUMN demo_config.sys_config.status IS '状态：1-启用，0-禁用';
+COMMENT ON COLUMN demo_config.sys_config.hot_update IS '是否支持热更新：1-是，0-否';
+COMMENT ON COLUMN demo_config.sys_config.config_sensitive IS '是否敏感配置：1-是，0-否';
+COMMENT ON COLUMN demo_config.sys_config.create_time IS '创建时间';
+COMMENT ON COLUMN demo_config.sys_config.update_time IS '更新时间';
+COMMENT ON COLUMN demo_config.sys_config.create_by IS '创建人';
+COMMENT ON COLUMN demo_config.sys_config.create_dept IS '创建人所属部门ID（数据归属部门）';
+COMMENT ON COLUMN demo_config.sys_config.update_by IS '更新人';
+COMMENT ON COLUMN demo_config.sys_config.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
+COMMENT ON COLUMN demo_config.sys_config.version IS '乐观锁版本号';
+COMMENT ON COLUMN demo_config.sys_config.remark IS '备注';

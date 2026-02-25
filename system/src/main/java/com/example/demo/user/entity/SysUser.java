@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TableName(value = "system.sys_user")
+@TableName(value = "demo_system.sys_user")
 public class SysUser extends BaseEntity implements Serializable {
 
     public static final int STATUS_ENABLED = 1;

@@ -17,7 +17,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TableName("config.sys_config")
+@TableName("demo_config.sys_config")
 public class SysConfig extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -46,6 +46,6 @@ public class SysConfig extends BaseEntity implements Serializable {
     @TableField("hot_update")
     private Integer hotUpdate;
 
-    @TableField("sensitive")
-    private Integer sensitive;
+    @TableField("config_sensitive")
+    private Integer configSensitive;
 }

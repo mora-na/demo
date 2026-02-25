@@ -262,7 +262,7 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
             config.setHotUpdate(meta.hotUpdateEnabled
                     ? configConstants.getHotUpdate().getEnabled()
                     : configConstants.getHotUpdate().getDisabled());
-            config.setSensitive(0);
+            config.setConfigSensitive(0);
             config.setRemark("seeded by config binding");
             toInsert.add(config);
         }
@@ -296,7 +296,7 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
                 continue;
             }
             String raw = config.getConfigValue();
-            boolean sensitive = config.getSensitive() != null && config.getSensitive() == 1;
+            boolean sensitive = config.getConfigSensitive() != null && config.getConfigSensitive() == 1;
             String value = cryptoService == null ? raw : cryptoService.decryptIfNeeded(sensitive, raw);
             ConfigValueType type = ConfigValueType.from(config.getConfigType());
             if (type == null) {
@@ -477,7 +477,7 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
             return null;
         }
         String raw = config.getConfigValue();
-        boolean sensitive = config.getSensitive() != null && config.getSensitive() == 1;
+        boolean sensitive = config.getConfigSensitive() != null && config.getConfigSensitive() == 1;
         if (cryptoService == null) {
             return raw;
         }

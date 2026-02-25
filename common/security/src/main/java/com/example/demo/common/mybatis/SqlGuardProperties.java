@@ -30,7 +30,8 @@ public class SqlGuardProperties {
     private boolean blockCrossSchemaJoin = true;
 
     private List<String> allowedSchemas = new ArrayList<>(Arrays.asList(
-            "system", "config", "order", "notice", "job", "log", "dict", "cache", "extension", "demo"
+            "demo_system", "demo_config", "demo_order", "demo_notice", "demo_job",
+            "demo_log", "demo_dict", "demo_cache", "demo_extension", "demo"
     ));
 
     /**

@@ -125,12 +125,12 @@ public class ConfigAdminController extends BaseController {
         vo.setSchema(config.getConfigSchema());
         vo.setStatus(config.getStatus());
         vo.setHotUpdate(config.getHotUpdate());
-        vo.setSensitive(config.getSensitive());
+        vo.setSensitive(config.getConfigSensitive());
         vo.setConfigVersion(config.getConfigVersion());
         vo.setRemark(config.getRemark());
         vo.setCreateTime(config.getCreateTime());
         vo.setUpdateTime(config.getUpdateTime());
-        if (config.getSensitive() != null && config.getSensitive() == 1) {
+        if (config.getConfigSensitive() != null && config.getConfigSensitive() == 1) {
             vo.setValue(constants.getMask().getMaskValue());
         } else {
             vo.setValue(config.getConfigValue());

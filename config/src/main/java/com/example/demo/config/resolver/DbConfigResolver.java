@@ -52,7 +52,7 @@ public class DbConfigResolver implements ConfigResolver {
             return null;
         }
         String raw = config.getConfigValue();
-        boolean sensitive = config.getSensitive() != null && config.getSensitive() == 1;
+        boolean sensitive = config.getConfigSensitive() != null && config.getConfigSensitive() == 1;
         String value = cryptoService.decryptIfNeeded(sensitive, raw);
         ConfigValueType type = ConfigValueType.from(config.getConfigType());
         if (type == null) {

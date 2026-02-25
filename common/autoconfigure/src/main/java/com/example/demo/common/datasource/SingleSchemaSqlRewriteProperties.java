@@ -19,7 +19,8 @@ public class SingleSchemaSqlRewriteProperties {
     private String targetSchema = "demo";
 
     private List<String> sourceSchemas = new ArrayList<>(Arrays.asList(
-            "system", "notice", "job", "log", "dict", "cache", "extension", "order"
+            "demo_system", "demo_config", "demo_notice", "demo_job", "demo_log",
+            "demo_dict", "demo_cache", "demo_extension", "demo_order"
     ));
 
     private int cacheSize = 512;
