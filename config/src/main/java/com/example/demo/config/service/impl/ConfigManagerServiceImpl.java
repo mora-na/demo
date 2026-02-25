@@ -124,14 +124,21 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
         if (existing == null) {
             return ConfigOperationResult.failed(constants.getMessage().getConfigNotFound());
         }
-        String group = normalizeGroup(request.getGroup());
-        String key = StringUtils.trimToNull(request.getKey());
-        if (key == null) {
+        String requestedKey = StringUtils.trimToNull(request.getKey());
+        if (requestedKey == null) {
             return ConfigOperationResult.failed(constants.getMessage().getConfigValueInvalid());
         }
-        if (exists(group, key, id)) {
-            return ConfigOperationResult.failed(constants.getMessage().getConfigKeyExists());
+        String existingKey = existing.getConfigKey();
+        if (existingKey != null && !existingKey.equals(requestedKey)) {
+            return ConfigOperationResult.failed(constants.getMessage().getConfigKeyImmutable());
         }
+        String requestedGroup = StringUtils.trimToNull(request.getGroup());
+        String existingGroup = normalizeGroup(existing.getConfigGroup());
+        if (requestedGroup != null && !requestedGroup.equals(existingGroup)) {
+            return ConfigOperationResult.failed(constants.getMessage().getConfigGroupImmutable());
+        }
+        String group = existingGroup;
+        String key = existingKey == null ? requestedKey : existingKey;
         ConfigValueType type = request.getType() == null ? ConfigValueType.from(existing.getConfigType()) : normalizeType(request.getType());
         if (type == null) {
             type = ConfigValueType.STRING;
@@ -244,7 +251,7 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
 
     private Integer normalizeHotUpdate(Integer hotUpdate) {
         if (hotUpdate == null) {
-            return constants.getHotUpdate().getEnabled();
+            return constants.getHotUpdate().getDisabled();
         }
         return hotUpdate;
     }

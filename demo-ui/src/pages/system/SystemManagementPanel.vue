@@ -21,6 +21,7 @@
       <DictManagement v-else-if="activeMenuCode === 'dict'"/>
       <NoticeManagement v-else-if="activeMenuCode === 'notice'"/>
       <JobManagement v-else-if="activeMenuCode === 'job'"/>
+      <ConfigManagement v-else-if="activeMenuCode === 'config'"/>
       <DataScopePanel
           v-else-if="activeMenuCode === 'data-scope' || activeMenuCode.startsWith('data-scope')"
           :active-code="activeMenuCode"
@@ -48,6 +49,7 @@ const DictManagement = defineAsyncComponent(() => import("./DictManagement.vue")
 const NoticeManagement = defineAsyncComponent(() => import("./NoticeManagement.vue"));
 const JobManagement = defineAsyncComponent(() => import("./JobManagement.vue"));
 const DataScopePanel = defineAsyncComponent(() => import("./DataScopePanel.vue"));
+const ConfigManagement = defineAsyncComponent(() => import("./ConfigManagement.vue"));
 
 const props = defineProps<{
   menus: MenuTree[];
@@ -94,6 +96,8 @@ function menuLabel(menu: MenuTree) {
       return t("systemPanel.tabs.job");
     case "data-scope":
       return t("systemPanel.tabs.dataScope");
+    case "config":
+      return t("systemPanel.tabs.config");
     default:
       return menu.name;
   }

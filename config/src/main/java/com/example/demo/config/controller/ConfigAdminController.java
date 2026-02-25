@@ -38,7 +38,7 @@ public class ConfigAdminController extends BaseController {
     @GetMapping
     @RequirePermission("config:query")
     public CommonResult<PageResult<ConfigVO>> list(@ModelAttribute ConfigQuery query) {
-        PageResult<ConfigVO> result = page(query, (page, q) -> configManagerService.page(page, q), this::toVO);
+        PageResult<ConfigVO> result = page(query, configManagerService::page, this::toVO);
         return success(result);
     }
 

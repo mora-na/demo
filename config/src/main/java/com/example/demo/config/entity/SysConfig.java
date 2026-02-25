@@ -17,7 +17,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TableName("system.sys_config")
+@TableName("config.sys_config")
 public class SysConfig extends BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;

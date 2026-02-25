@@ -6,9 +6,12 @@
         <div class="module-sub">{{ t("user.subtitle") }}</div>
       </div>
       <div class="module-actions" @keyup.enter="handleSearch">
-        <el-input v-model.trim="filters.userName" clearable size="small" :placeholder="t('user.filter.userNamePlaceholder')"/>
-        <el-input v-model.trim="filters.nickName" clearable size="small" :placeholder="t('user.filter.nickNamePlaceholder')"/>
-        <el-select v-model="filters.status" clearable size="small" :placeholder="t('user.filter.statusPlaceholder')" style="width: 120px">
+        <el-input v-model.trim="filters.userName" :placeholder="t('user.filter.userNamePlaceholder')" class="filter-input" clearable
+                  size="small"/>
+        <el-input v-model.trim="filters.nickName" :placeholder="t('user.filter.nickNamePlaceholder')" class="filter-input" clearable
+                  size="small"/>
+        <el-select v-model="filters.status" :placeholder="t('user.filter.statusPlaceholder')" class="filter-select" clearable
+                   size="small">
           <el-option :value="1" :label="t('user.dialog.statusEnabled')"/>
           <el-option :value="0" :label="t('user.dialog.statusDisabled')"/>
         </el-select>
@@ -28,8 +31,8 @@
         @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="46"/>
-      <el-table-column :label="t('user.table.userName')" min-width="110" prop="userName" show-overflow-tooltip/>
-      <el-table-column :label="t('user.table.nickName')" min-width="110" prop="nickName" show-overflow-tooltip/>
+      <el-table-column :label="t('user.table.userName')" min-width="90" prop="userName" show-overflow-tooltip/>
+      <el-table-column :label="t('user.table.nickName')" min-width="90" prop="nickName" show-overflow-tooltip/>
       <el-table-column :label="t('user.table.phone')" width="110" prop="phone" show-overflow-tooltip/>
       <el-table-column :label="t('user.table.email')" min-width="140" prop="email" show-overflow-tooltip/>
       <el-table-column :label="t('user.table.sex')" width="60">
@@ -916,6 +919,14 @@ onMounted(() => {
   max-width: 100%;
 }
 
+.filter-input {
+  width: 150px;
+}
+
+.filter-select {
+  width: 120px;
+}
+
 @media (max-width: 900px) {
   .module-actions {
     justify-content: flex-start;
@@ -934,7 +945,7 @@ onMounted(() => {
 
 .action-buttons {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   flex-wrap: nowrap;
   align-items: center;
   width: 100%;
@@ -946,6 +957,14 @@ onMounted(() => {
 
 .action-buttons::-webkit-scrollbar {
   height: 0;
+}
+
+.action-buttons :deep(.el-button) {
+  padding: 0 6px;
+}
+
+.action-buttons :deep(.el-button + .el-button) {
+  margin-left: 0;
 }
 
 .data-scope-summary {

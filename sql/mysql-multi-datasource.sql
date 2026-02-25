@@ -1,4 +1,5 @@
 DROP DATABASE IF EXISTS system;
+DROP DATABASE IF EXISTS config;
 DROP DATABASE IF EXISTS ` order `;
 DROP DATABASE IF EXISTS notice;
 DROP DATABASE IF EXISTS job;
@@ -8,6 +9,7 @@ DROP DATABASE IF EXISTS cache;
 DROP DATABASE IF EXISTS extension;
 
 CREATE DATABASE system DEFAULT CHARACTER SET utf8mb4;
+CREATE DATABASE config DEFAULT CHARACTER SET utf8mb4;
 CREATE DATABASE ` order ` DEFAULT CHARACTER SET utf8mb4;
 CREATE DATABASE notice DEFAULT CHARACTER SET utf8mb4;
 CREATE DATABASE job DEFAULT CHARACTER SET utf8mb4;
@@ -990,7 +992,12 @@ VALUES (1, 'user:query', '用户查询', 1),
        (82, 'dynamic-api-log:delete', '动态接口日志删除', 1),
        (83, 'notice:stream:metrics', '通知流监控', 1),
        (84, 'job:log:metrics', '任务日志监控', 1),
-       (85, 'druid:monitor', '数据源监控', 1)
+       (85, 'druid:monitor', '数据源监控', 1),
+       (86, 'config:query', '配置查询', 1),
+       (87, 'config:create', '配置创建', 1),
+       (88, 'config:update', '配置更新', 1),
+       (89, 'config:delete', '配置删除', 1),
+       (90, 'config:cache:refresh', '配置缓存刷新', 1)
 ;
 
 INSERT INTO sys_menu (id, name, code, parent_id, path, component, permission, status, sort, remark)
@@ -1004,6 +1011,7 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
         '权限管理'),
        (155, '字典管理', 'dict', 100, '/system/dict', 'DictPage', 'dict:query', 1, 55, '字典管理'),
        (160, '系统通知', 'notice', 100, '/system/notice', 'NoticePage', 'notice:query', 1, 60, '系统通知'),
+       (165, '配置管理', 'config', 100, '/system/config', 'ConfigPage', 'config:query', 1, 65, '配置管理'),
        (170, '定时任务', 'job', 100, '/system/job', 'JobPage', 'job:query', 1, 70, '定时任务'),
        (180, '数据权限', 'data-scope', NULL, '/data-scope', 'DataScopePage', NULL, 1, 30, '数据权限'),
        (181, '权限总览', 'data-scope-overview', 180, '/data-scope/overview', 'DataScopeOverviewPage',
@@ -1191,6 +1199,11 @@ VALUES (1, 1),
        (1, 82),
        (1, 83),
        (1, 84),
+       (1, 86),
+       (1, 87),
+       (1, 88),
+       (1, 89),
+       (1, 90),
        (2, 1),
        (2, 4),
        (2, 5),
@@ -1223,6 +1236,7 @@ VALUES (1, 10, NULL),
        (1, 150, NULL),
        (1, 155, NULL),
        (1, 160, NULL),
+       (1, 165, NULL),
        (1, 170, NULL),
        (1, 180, NULL),
        (1, 181, NULL),
@@ -1274,6 +1288,8 @@ VALUES (1, 2, 1999.00, '2026-02-01 09:12:00', '2026-02-01 09:12:00', 2, 100, 2, 
 -- =========================
 CREATE USER IF NOT EXISTS 'demo_system_rw'@'%' IDENTIFIED BY 'demo_system_rw';
 CREATE USER IF NOT EXISTS 'demo_system_ro'@'%' IDENTIFIED BY 'demo_system_ro';
+CREATE USER IF NOT EXISTS 'demo_config_rw'@'%' IDENTIFIED BY 'demo_config_rw';
+CREATE USER IF NOT EXISTS 'demo_config_ro'@'%' IDENTIFIED BY 'demo_config_ro';
 CREATE USER IF NOT EXISTS 'demo_order_rw'@'%' IDENTIFIED BY 'demo_order_rw';
 CREATE USER IF NOT EXISTS 'demo_order_ro'@'%' IDENTIFIED BY 'demo_order_ro';
 CREATE USER IF NOT EXISTS 'demo_notice_rw'@'%' IDENTIFIED BY 'demo_notice_rw';
@@ -1291,6 +1307,8 @@ CREATE USER IF NOT EXISTS 'demo_extension_ro'@'%' IDENTIFIED BY 'demo_extension_
 
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_system_rw'@'%';
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_system_ro'@'%';
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_config_rw'@'%';
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_config_ro'@'%';
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_order_rw'@'%';
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_order_ro'@'%';
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_notice_rw'@'%';
@@ -1308,6 +1326,9 @@ REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'demo_extension_ro'@'%';
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON `system`.* TO 'demo_system_rw'@'%';
 GRANT SELECT ON `system`.* TO 'demo_system_ro'@'%';
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON `config`.* TO 'demo_config_rw'@'%';
+GRANT SELECT ON `config`.* TO 'demo_config_ro'@'%';
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON `order`.* TO 'demo_order_rw'@'%';
 GRANT SELECT ON `order`.* TO 'demo_order_ro'@'%';
@@ -1332,7 +1353,7 @@ GRANT SELECT ON extension.* TO 'demo_extension_ro'@'%';
 
 FLUSH PRIVILEGES;
 
-CREATE TABLE IF NOT EXISTS system.sys_config
+CREATE TABLE IF NOT EXISTS config.sys_config
 (
     id             BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     config_key     VARCHAR(128) NOT NULL COMMENT '配置键',
@@ -1342,7 +1363,7 @@ CREATE TABLE IF NOT EXISTS system.sys_config
     config_schema  TEXT COMMENT 'JSON Schema',
     config_version INT          NOT NULL DEFAULT 1 COMMENT '配置版本号',
     status         TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
-    hot_update     TINYINT      NOT NULL DEFAULT 1 COMMENT '是否支持热更新：1-是，0-否',
+    hot_update TINYINT NOT NULL DEFAULT 0 COMMENT '是否支持热更新：1-是，0-否',
     sensitive      TINYINT      NOT NULL DEFAULT 0 COMMENT '是否敏感配置：1-是，0-否',
     create_time    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',

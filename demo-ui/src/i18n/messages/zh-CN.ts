@@ -13,6 +13,7 @@ export default {
         refresh: "刷新",
         edit: "编辑",
         delete: "删除",
+        confirm: "确认",
         enabled: "启用",
         disabled: "停用",
         yes: "是",
@@ -342,7 +343,104 @@ export default {
             dict: "字典管理",
             notice: "系统通知",
             job: "定时任务",
-            dataScope: "数据权限"
+            dataScope: "数据权限",
+            config: "配置管理"
+        }
+    },
+    config: {
+        title: "配置管理",
+        subtitle: "集中维护系统配置，支持热更新与缓存刷新。",
+        actions: {
+            create: "新增配置",
+            refresh: "刷新缓存"
+        },
+        filter: {
+            group: "配置分组",
+            key: "配置键",
+            type: "类型",
+            status: "状态",
+            hotUpdate: "热更新",
+            sensitive: "敏感"
+        },
+        table: {
+            group: "分组",
+            key: "键",
+            type: "类型",
+            value: "值",
+            status: "状态",
+            hotUpdate: "热更新",
+            sensitive: "敏感",
+            version: "版本",
+            updatedAt: "更新时间",
+            action: "操作"
+        },
+        type: {
+            string: "字符串",
+            number: "数值",
+            boolean: "布尔",
+            json: "JSON"
+        },
+        boolean: {
+            true: "true",
+            false: "false"
+        },
+        hotUpdate: {
+            enabled: "支持",
+            disabled: "关闭"
+        },
+        sensitive: {
+            yes: "敏感",
+            no: "普通"
+        },
+        form: {
+            group: "配置分组",
+            groupPlaceholder: "默认分组可留空",
+            key: "配置键",
+            keyPlaceholder: "请输入配置键",
+            type: "配置类型",
+            typePlaceholder: "选择类型",
+            status: "状态",
+            hotUpdate: "热更新",
+            sensitive: "敏感配置",
+            value: "配置值",
+            valuePlaceholder: "请输入配置值",
+            valuePlaceholderJson: "请输入 JSON 配置值",
+            valuePlaceholderSensitive: "敏感配置需重新填写值",
+            schema: "JSON Schema",
+            schemaPlaceholder: "可选，填写 JSON Schema",
+            schemaHint: "仅 JSON 类型生效，需为合法 JSON。",
+            remark: "备注",
+            remarkPlaceholder: "补充说明",
+            version: "版本",
+            sensitiveHint: "敏感配置不会回显原值，保存前需重新输入。"
+        },
+        dialog: {
+            createTitle: "新增配置",
+            editTitle: "编辑配置"
+        },
+        msg: {
+            loadFailed: "加载配置失败",
+            createSuccess: "配置已创建",
+            createFailed: "创建失败",
+            updateSuccess: "配置已更新",
+            updateFailed: "更新失败",
+            deleteConfirm: "确认删除配置 {name}？",
+            deleteSuccess: "配置已删除",
+            deleteFailed: "删除失败",
+            refreshSuccess: "缓存已刷新",
+            refreshFailed: "缓存刷新失败",
+            keyRequired: "请输入配置键",
+            valueRequired: "请输入配置值",
+            valueInvalid: "配置值格式不正确",
+            schemaInvalid: "Schema 格式不正确"
+        },
+        refresh: {
+            title: "刷新配置缓存",
+            group: "配置分组",
+            key: "配置键",
+            groupPlaceholder: "可选，留空刷新全部分组",
+            keyPlaceholder: "可选，留空刷新全部配置",
+            hint: "不填写分组或键将刷新全部配置缓存。"
         }
     },
     dict: {

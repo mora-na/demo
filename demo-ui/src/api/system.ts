@@ -1161,3 +1161,72 @@ export async function fetchAllDictData(): Promise<ApiResponse<Record<string, Dic
     const response = await api.get<ApiResponse<Record<string, DictDataVO[]>>>(`/dict/data/all`);
     return response.data;
 }
+
+export type ConfigValueType = "STRING" | "NUMBER" | "BOOLEAN" | "JSON";
+
+export interface ConfigVO {
+    id: number;
+    group: string;
+    key: string;
+    value: string;
+    type: ConfigValueType;
+    schema?: string;
+    status?: number;
+    hotUpdate?: number;
+    sensitive?: number;
+    configVersion?: number;
+    remark?: string;
+    createTime?: string;
+    updateTime?: string;
+}
+
+export interface ConfigQuery {
+    pageNum?: number;
+    pageSize?: number;
+    group?: string;
+    key?: string;
+    type?: ConfigValueType;
+    status?: number;
+    hotUpdate?: number;
+    sensitive?: number;
+}
+
+export interface ConfigCreatePayload {
+    key: string;
+    group?: string;
+    value: string;
+    type?: ConfigValueType;
+    schema?: string;
+    status?: number;
+    hotUpdate?: number;
+    sensitive?: number;
+    remark?: string;
+}
+
+export interface ConfigUpdatePayload extends ConfigCreatePayload {
+}
+
+export async function listConfigs(params: ConfigQuery): Promise<ApiResponse<PageResult<ConfigVO>>> {
+    const response = await api.get<ApiResponse<PageResult<ConfigVO>>>(`/sys/config`, {params});
+    return response.data;
+}
+
+export async function createConfig(payload: ConfigCreatePayload): Promise<ApiResponse<ConfigVO>> {
+    const response = await api.post<ApiResponse<ConfigVO>>(`/sys/config`, payload);
+    return response.data;
+}
+
+export async function updateConfig(id: number, payload: ConfigUpdatePayload): Promise<ApiResponse<ConfigVO>> {
+    const response = await api.put<ApiResponse<ConfigVO>>(`/sys/config/${id}`, payload);
+    return response.data;
+}
+
+export async function deleteConfig(id: number): Promise<ApiResponse<void>> {
+    const response = await api.delete<ApiResponse<void>>(`/sys/config/${id}`);
+    return response.data;
+}
+
+export async function refreshConfigCache(params?: { group?: string; key?: string }): Promise<ApiResponse<void>> {
+    const response = await api.post<ApiResponse<void>>(`/sys/config/cache/refresh`, null, {params});
+    return response.data;
+}

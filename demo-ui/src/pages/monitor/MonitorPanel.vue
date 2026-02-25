@@ -11,6 +11,16 @@
       <el-tab-pane v-for="menu in menus" :key="menu.id" :label="menuLabel(menu)" :name="String(menu.id)" lazy/>
     </el-tabs>
 
+    <el-tabs
+        v-if="isDruidActive && druidMenus.length"
+        v-model="druidTab"
+        class="system-tabs druid-tabs"
+        @tab-change="handleDruidTabChange"
+    >
+      <el-tab-pane v-for="menu in druidMenus" :key="menu.id" :label="druidMenuLabel(menu)" :name="String(menu.id)"
+                   lazy/>
+    </el-tabs>
+
     <div class="system-body">
       <OperLogTable v-if="activeMenuCode === 'oper-log'"/>
       <LoginLogTable v-else-if="activeMenuCode === 'login-log'"/>
@@ -81,6 +91,21 @@ const isDruidActive = computed(() => activeMenuCode.value === "druid-monitor");
 
 const druidSection = computed(() => resolveDruidSection(activeLeafMenu.value));
 
+const druidMenus = computed(() => (isDruidActive.value ? activeRootMenu.value?.children || [] : []));
+
+const druidMenuBySection = computed(() => {
+  const map: Record<string, MenuTree | null> = {};
+  for (const menu of druidMenus.value) {
+    const section = resolveDruidSection(menu);
+    if (!map[section]) {
+      map[section] = menu;
+    }
+  }
+  return map;
+});
+
+const druidTab = ref("");
+
 function menuLabel(menu: MenuTree) {
   switch (menu.code) {
     case "oper-log":
@@ -116,6 +141,31 @@ function resolveDruidSection(menu?: MenuTree | null) {
   return "home";
 }
 
+function druidMenuLabel(menu: MenuTree) {
+  const section = resolveDruidSection(menu);
+  switch (section) {
+    case "datasource":
+      return t("druid.menu.datasource");
+    case "sql":
+      return t("druid.menu.sql");
+    case "wall":
+      return t("druid.menu.wall");
+    case "webapp":
+      return t("druid.menu.webapp");
+    case "weburi":
+      return t("druid.menu.weburi");
+    case "session":
+      return t("druid.menu.session");
+    case "spring":
+      return t("druid.menu.spring");
+    case "json":
+      return t("druid.menu.json");
+    case "home":
+    default:
+      return t("druid.menu.home");
+  }
+}
+
 function syncTab() {
   if (activeRootMenu.value?.id != null) {
     activeTab.value = String(activeRootMenu.value.id);
@@ -126,7 +176,28 @@ function syncTab() {
   }
 }
 
+function syncDruidTab() {
+  if (!isDruidActive.value || !druidMenus.value.length) {
+    return;
+  }
+  const current = druidMenuBySection.value[druidSection.value];
+  if (current?.id != null) {
+    druidTab.value = String(current.id);
+    return;
+  }
+  if (!druidTab.value) {
+    druidTab.value = String(druidMenus.value[0].id);
+  }
+}
+
 function handleTabChange(name: string | number) {
+  const id = Number(name);
+  if (Number.isFinite(id)) {
+    emit("menu-change", id);
+  }
+}
+
+function handleDruidTabChange(name: string | number) {
   const id = Number(name);
   if (Number.isFinite(id)) {
     emit("menu-change", id);
@@ -135,7 +206,10 @@ function handleTabChange(name: string | number) {
 
 watch(
     () => [props.activeMenuId, props.menus],
-    () => syncTab(),
+    () => {
+      syncTab();
+      syncDruidTab();
+    },
     {immediate: true}
 );
 </script>

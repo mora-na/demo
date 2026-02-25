@@ -1,5 +1,6 @@
 package com.example.demo.datascope.config;
 
+import com.example.demo.common.config.ConfigBinding;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/15
  */
+@ConfigBinding(group = "datascope", hotUpdate = true)
 @Data
 @Component
 @ConfigurationProperties(prefix = "datascope.constants")

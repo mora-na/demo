@@ -29,7 +29,7 @@ logging:
 # SQL 日志配置
 sql-log:
   # 是否打印 SQL
-  enabled: false
+  enabled: true
 
 # 认证配置
 auth:
@@ -351,6 +351,18 @@ spring:
           password: ${DB_SYSTEM_RO_PASSWORD:demo_system_ro}
           driver-class-name: org.postgresql.Driver
           type: com.alibaba.druid.pool.DruidDataSource
+        config_rw:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_CONFIG_RW_USER:demo_config_rw}
+          password: ${DB_CONFIG_RW_PASSWORD:demo_config_rw}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        config_ro:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_CONFIG_RO_USER:demo_config_ro}
+          password: ${DB_CONFIG_RO_PASSWORD:demo_config_ro}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
         order_rw:
           url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
           username: ${DB_ORDER_RW_USER:demo_order_rw}
@@ -421,5 +433,17 @@ spring:
           url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
           username: ${DB_CACHE_RO_USER:demo_cache_ro}
           password: ${DB_CACHE_RO_PASSWORD:demo_cache_ro}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        extension_rw:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_EXTENSION_RW_USER:demo_extension_rw}
+          password: ${DB_EXTENSION_RW_PASSWORD:demo_extension_rw}
+          driver-class-name: org.postgresql.Driver
+          type: com.alibaba.druid.pool.DruidDataSource
+        extension_ro:
+          url: ${DB_URL:jdbc:postgresql://localhost:5432/demo}
+          username: ${DB_EXTENSION_RO_USER:demo_extension_ro}
+          password: ${DB_EXTENSION_RO_PASSWORD:demo_extension_ro}
           driver-class-name: org.postgresql.Driver
           type: com.alibaba.druid.pool.DruidDataSource

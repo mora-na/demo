@@ -1,5 +1,6 @@
 package com.example.demo.config.config;
 
+import com.example.demo.common.config.ConfigBinding;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Component;
 /**
  * Config 模块常量配置。
  */
+@ConfigBinding(group = "config", hotUpdate = true)
 @Data
 @Component
 @ConfigurationProperties(prefix = "config.constants")
@@ -74,6 +76,8 @@ public class ConfigConstants {
     public static class Message {
         public static final String DEFAULT_CONFIG_NOT_FOUND = "config.not.found";
         public static final String DEFAULT_CONFIG_KEY_EXISTS = "config.key.exists";
+        public static final String DEFAULT_CONFIG_KEY_IMMUTABLE = "config.key.immutable";
+        public static final String DEFAULT_CONFIG_GROUP_IMMUTABLE = "config.group.immutable";
         public static final String DEFAULT_CONFIG_VALUE_INVALID = "config.value.invalid";
         public static final String DEFAULT_CONFIG_SCHEMA_INVALID = "config.schema.invalid";
         public static final String DEFAULT_COMMON_UPDATE_FAILED = "common.update.failed";
@@ -87,6 +91,14 @@ public class ConfigConstants {
          * 配置键冲突消息键。
          */
         private String configKeyExists = DEFAULT_CONFIG_KEY_EXISTS;
+        /**
+         * 配置键不可修改消息键。
+         */
+        private String configKeyImmutable = DEFAULT_CONFIG_KEY_IMMUTABLE;
+        /**
+         * 配置分组不可修改消息键。
+         */
+        private String configGroupImmutable = DEFAULT_CONFIG_GROUP_IMMUTABLE;
         /**
          * 配置值非法消息键。
          */

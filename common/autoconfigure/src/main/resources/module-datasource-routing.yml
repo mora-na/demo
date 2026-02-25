@@ -31,6 +31,11 @@ app:
             - com.example.demo.identity.facade
             - com.example.demo.common.mybatis
             - com.example.demo.common.web.permission
+        - name: config
+          rw-data-source: config_rw
+          ro-data-source: config_ro
+          packages:
+            - com.example.demo.config
         - name: order
           rw-data-source: order_rw
           ro-data-source: order_ro
@@ -62,11 +67,17 @@ app:
           force-read-write: true
           packages:
             - com.example.demo.common.cache
+        - name: extension
+          rw-data-source: extension_rw
+          ro-data-source: extension_ro
+          packages:
+            - com.example.demo.extension
 
     sql-rewrite:
       # 是否启用单 schema SQL 重写由 app.datasource.mode 自动派生
       target-schema: demo
       source-schemas:
+        - config
         - system
         - notice
         - job

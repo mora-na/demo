@@ -13,6 +13,7 @@ export default {
         refresh: "Refresh",
         edit: "Edit",
         delete: "Delete",
+        confirm: "Confirm",
         enabled: "Enabled",
         disabled: "Disabled",
         yes: "Yes",
@@ -342,7 +343,104 @@ export default {
             dict: "Dictionaries",
             notice: "Notices",
             job: "Scheduled Jobs",
-            dataScope: "Data Scope"
+            dataScope: "Data Scope",
+            config: "Configuration"
+        }
+    },
+    config: {
+        title: "Configuration Management",
+        subtitle: "Maintain system configuration with cache refresh and hot updates.",
+        actions: {
+            create: "New Configuration",
+            refresh: "Refresh Cache"
+        },
+        filter: {
+            group: "Group",
+            key: "Key",
+            type: "Type",
+            status: "Status",
+            hotUpdate: "Hot update",
+            sensitive: "Sensitive"
+        },
+        table: {
+            group: "Group",
+            key: "Key",
+            type: "Type",
+            value: "Value",
+            status: "Status",
+            hotUpdate: "Hot update",
+            sensitive: "Sensitive",
+            version: "Version",
+            updatedAt: "Updated",
+            action: "Action"
+        },
+        type: {
+            string: "String",
+            number: "Number",
+            boolean: "Boolean",
+            json: "JSON"
+        },
+        boolean: {
+            true: "true",
+            false: "false"
+        },
+        hotUpdate: {
+            enabled: "Enabled",
+            disabled: "Disabled"
+        },
+        sensitive: {
+            yes: "Sensitive",
+            no: "Normal"
+        },
+        form: {
+            group: "Group",
+            groupPlaceholder: "Leave empty for default group",
+            key: "Key",
+            keyPlaceholder: "Enter configuration key",
+            type: "Type",
+            typePlaceholder: "Select type",
+            status: "Status",
+            hotUpdate: "Hot update",
+            sensitive: "Sensitive",
+            value: "Value",
+            valuePlaceholder: "Enter configuration value",
+            valuePlaceholderJson: "Enter JSON value",
+            valuePlaceholderSensitive: "Sensitive value must be re-entered",
+            schema: "JSON Schema",
+            schemaPlaceholder: "Optional JSON Schema",
+            schemaHint: "Only for JSON types. Must be valid JSON.",
+            remark: "Remark",
+            remarkPlaceholder: "Additional notes",
+            version: "Version",
+            sensitiveHint: "Sensitive values are never shown. Re-enter before saving."
+        },
+        dialog: {
+            createTitle: "Create Configuration",
+            editTitle: "Edit Configuration"
+        },
+        msg: {
+            loadFailed: "Failed to load configurations",
+            createSuccess: "Configuration created",
+            createFailed: "Failed to create configuration",
+            updateSuccess: "Configuration updated",
+            updateFailed: "Failed to update configuration",
+            deleteConfirm: "Delete configuration {name}?",
+            deleteSuccess: "Configuration deleted",
+            deleteFailed: "Failed to delete configuration",
+            refreshSuccess: "Cache refreshed",
+            refreshFailed: "Failed to refresh cache",
+            keyRequired: "Enter configuration key",
+            valueRequired: "Enter configuration value",
+            valueInvalid: "Invalid configuration value",
+            schemaInvalid: "Invalid schema JSON"
+        },
+        refresh: {
+            title: "Refresh Configuration Cache",
+            group: "Group",
+            key: "Key",
+            groupPlaceholder: "Optional, leave empty for all groups",
+            keyPlaceholder: "Optional, leave empty for all configs",
+            hint: "Leaving group or key empty refreshes the entire cache."
         }
     },
     dict: {
