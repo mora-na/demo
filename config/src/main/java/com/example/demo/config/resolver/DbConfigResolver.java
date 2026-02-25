@@ -35,15 +35,20 @@ public class DbConfigResolver implements ConfigResolver {
         }
         ConfigKey key = request.getKey();
         String group = normalizeGroup(key.getGroup());
-        ConfigCacheValue cached = cacheService.get(group, key.getKey());
-        if (cached != null) {
-            return new ConfigValue(group, key.getKey(), cached.getValue(), cached.getType(), cached.getVersion(), cached.isHotUpdate());
+        ConfigCacheResult cached = cacheService.getResult(group, key.getKey());
+        if (cached.isHit()) {
+            ConfigCacheValue cacheValue = cached.getValue();
+            return new ConfigValue(group, key.getKey(), cacheValue.getValue(), cacheValue.getType(), cacheValue.getVersion(), cacheValue.isHotUpdate());
+        }
+        if (cached.isMiss()) {
+            return null;
         }
         SysConfig config = configMapper.selectOne(Wrappers.lambdaQuery(SysConfig.class)
                 .eq(SysConfig::getConfigGroup, group)
                 .eq(SysConfig::getConfigKey, key.getKey())
                 .eq(SysConfig::getStatus, constants.getStatus().getEnabled()));
         if (config == null) {
+            cacheService.putMiss(group, key.getKey());
             return null;
         }
         String raw = config.getConfigValue();

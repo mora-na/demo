@@ -7,15 +7,22 @@ import com.example.demo.config.api.enums.ConfigValueType;
 import com.example.demo.config.api.event.ConfigChangeEvent;
 import com.example.demo.config.api.facade.ConfigReadFacade;
 import com.example.demo.config.config.ConfigConstants;
+import com.example.demo.config.config.ConfigDefaultsProperties;
+import com.example.demo.config.config.ConfigPrewarmProperties;
+import com.example.demo.config.config.ConfigSeedProperties;
 import com.example.demo.config.entity.SysConfig;
 import com.example.demo.config.mapper.SysConfigMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.beans.PropertyDescriptor;
@@ -34,6 +41,13 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
     private final ConfigReadFacade configReadFacade;
     private final SysConfigMapper configMapper;
     private final ConfigConstants configConstants;
+    private final ConfigSeedProperties seedProperties;
+    private final ConfigDefaultsProperties defaultsProperties;
+    private final ConfigCryptoService cryptoService;
+    private final ConfigCacheService cacheService;
+    private final ConfigPrewarmProperties prewarmProperties;
+    private final Environment environment;
+    private final SqlSessionFactory sqlSessionFactory;
     private final ObjectMapper objectMapper;
 
     private final Map<String, List<BindingTarget>> groupTargets = new ConcurrentHashMap<>();
@@ -42,11 +56,25 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
                                 ConfigReadFacade configReadFacade,
                                 SysConfigMapper configMapper,
                                 ConfigConstants configConstants,
+                                ConfigSeedProperties seedProperties,
+                                ConfigDefaultsProperties defaultsProperties,
+                                ConfigCryptoService cryptoService,
+                                ConfigCacheService cacheService,
+                                ConfigPrewarmProperties prewarmProperties,
+                                Environment environment,
+                                SqlSessionFactory sqlSessionFactory,
                                 ObjectMapper objectMapper) {
         this.applicationContext = applicationContext;
         this.configReadFacade = configReadFacade;
         this.configMapper = configMapper;
         this.configConstants = configConstants;
+        this.seedProperties = seedProperties;
+        this.defaultsProperties = defaultsProperties;
+        this.cryptoService = cryptoService;
+        this.cacheService = cacheService;
+        this.prewarmProperties = prewarmProperties;
+        this.environment = environment;
+        this.sqlSessionFactory = sqlSessionFactory;
         this.objectMapper = objectMapper;
     }
 
@@ -70,8 +98,10 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
             }
             BindingTarget target = buildTarget(bean, binding);
             groupTargets.computeIfAbsent(target.group, key -> new ArrayList<>()).add(target);
-            seedDefaults(target);
-            applyOverrides(target);
+            Map<String, SysConfig> existingConfigs = prefetchConfigs(target);
+            seedDefaults(target, existingConfigs);
+            prewarmCache(target, existingConfigs);
+            applyOverrides(target, existingConfigs);
         }
     }
 
@@ -116,7 +146,7 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
         }
         String prefix = normalizePrefix(binding.prefix());
         BeanWrapper wrapper = new BeanWrapperImpl(bean);
-        Map<String, PropertyMeta> properties = collectProperties(bean, wrapper, "", binding.hotUpdate());
+        Map<String, PropertyMeta> properties = collectProperties(bean, wrapper, "", binding.hotUpdate(), binding.seed());
         Map<String, Object> defaults = new LinkedHashMap<>();
         for (PropertyMeta meta : properties.values()) {
             defaults.put(meta.path, cloneValue(meta.value, meta.genericType, meta.type));
@@ -124,9 +154,9 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
         return new BindingTarget(bean, wrapper, group, prefix, properties, defaults);
     }
 
-    private void applyOverrides(BindingTarget target) {
+    private void applyOverrides(BindingTarget target, Map<String, SysConfig> existingConfigs) {
         for (PropertyMeta meta : target.properties.values()) {
-            refreshProperty(target, meta);
+            refreshProperty(target, meta, existingConfigs);
         }
     }
 
@@ -147,12 +177,68 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
         }
     }
 
-    private void seedDefaults(BindingTarget target) {
+    private void refreshProperty(BindingTarget target, PropertyMeta meta, Map<String, SysConfig> existingConfigs) {
+        String path = meta.path;
+        String key = target.prefix + path;
+        String raw = resolveRawValue(target.group, key, existingConfigs);
+        if (raw == null) {
+            Object fallback = target.defaults.get(path);
+            if (fallback != null) {
+                target.wrapper.setPropertyValue(path, cloneValue(fallback, meta.genericType, meta.type));
+            }
+            return;
+        }
+        Object converted = convertValue(raw, meta.genericType, meta.type);
+        if (converted != null) {
+            target.wrapper.setPropertyValue(path, converted);
+        }
+    }
+
+    private Map<String, SysConfig> prefetchConfigs(BindingTarget target) {
+        if (target == null || target.properties == null || target.properties.isEmpty()) {
+            return new HashMap<>();
+        }
+        List<String> keys = new ArrayList<>(target.properties.size());
         for (PropertyMeta meta : target.properties.values()) {
+            keys.add(target.prefix + meta.path);
+        }
+        if (keys.isEmpty()) {
+            return new HashMap<>();
+        }
+        List<SysConfig> configs = configMapper.selectList(Wrappers.lambdaQuery(SysConfig.class)
+                .eq(SysConfig::getConfigGroup, target.group)
+                .in(SysConfig::getConfigKey, keys));
+        if (configs == null || configs.isEmpty()) {
+            return new HashMap<>();
+        }
+        Map<String, SysConfig> map = new HashMap<>(configs.size());
+        for (SysConfig config : configs) {
+            if (config == null || config.getConfigKey() == null) {
+                continue;
+            }
+            map.put(config.getConfigKey(), config);
+        }
+        return map;
+    }
+
+    private void seedDefaults(BindingTarget target, Map<String, SysConfig> existingConfigs) {
+        if (!isSeedEnabled()) {
+            return;
+        }
+        List<PropertyMeta> seedMetas = new ArrayList<>();
+        for (PropertyMeta meta : target.properties.values()) {
+            if (meta.seedEnabled) {
+                seedMetas.add(meta);
+            }
+        }
+        if (seedMetas.isEmpty()) {
+            return;
+        }
+        Map<String, SysConfig> existingMap = existingConfigs == null ? new HashMap<>() : existingConfigs;
+        List<SysConfig> toInsert = new ArrayList<>();
+        for (PropertyMeta meta : seedMetas) {
             String key = target.prefix + meta.path;
-            SysConfig existing = configMapper.selectOne(Wrappers.lambdaQuery(SysConfig.class)
-                    .eq(SysConfig::getConfigGroup, target.group)
-                    .eq(SysConfig::getConfigKey, key));
+            SysConfig existing = existingMap.get(key);
             if (existing != null) {
                 syncHotUpdate(existing, meta.hotUpdateEnabled);
                 continue;
@@ -178,7 +264,99 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
                     : configConstants.getHotUpdate().getDisabled());
             config.setSensitive(0);
             config.setRemark("seeded by config binding");
-            configMapper.insert(config);
+            toInsert.add(config);
+        }
+        batchInsert(toInsert);
+        for (SysConfig inserted : toInsert) {
+            if (inserted != null && inserted.getConfigKey() != null) {
+                existingMap.put(inserted.getConfigKey(), inserted);
+            }
+        }
+    }
+
+    private void prewarmCache(BindingTarget target, Map<String, SysConfig> existingConfigs) {
+        if (!isPrewarmEnabled() || cacheService == null || target == null || target.properties == null || target.properties.isEmpty()) {
+            return;
+        }
+        List<ConfigCacheValue> hits = new ArrayList<>();
+        List<String> misses = new ArrayList<>();
+        for (PropertyMeta meta : target.properties.values()) {
+            if (!shouldPrewarm(meta)) {
+                continue;
+            }
+            String key = target.prefix + meta.path;
+            SysConfig config = existingConfigs == null ? null : existingConfigs.get(key);
+            if (config == null) {
+                misses.add(key);
+                continue;
+            }
+            boolean enabled = config.getStatus() != null && config.getStatus() == configConstants.getStatus().getEnabled();
+            if (!enabled) {
+                misses.add(key);
+                continue;
+            }
+            String raw = config.getConfigValue();
+            boolean sensitive = config.getSensitive() != null && config.getSensitive() == 1;
+            String value = cryptoService == null ? raw : cryptoService.decryptIfNeeded(sensitive, raw);
+            ConfigValueType type = ConfigValueType.from(config.getConfigType());
+            if (type == null) {
+                type = ConfigValueType.STRING;
+            }
+            boolean hotUpdate = config.getHotUpdate() != null && config.getHotUpdate() == configConstants.getHotUpdate().getEnabled();
+            Integer version = config.getConfigVersion();
+            hits.add(new ConfigCacheValue(target.group, key, value, type, version, hotUpdate));
+        }
+        cacheService.putAll(hits);
+        cacheService.putMisses(target.group, misses);
+    }
+
+    private boolean isPrewarmEnabled() {
+        return prewarmProperties == null || prewarmProperties.isEnabled();
+    }
+
+    private boolean shouldPrewarm(PropertyMeta meta) {
+        if (prewarmProperties == null || prewarmProperties.getMode() == null) {
+            return true;
+        }
+        ConfigPrewarmProperties.PrewarmMode mode = prewarmProperties.getMode();
+        switch (mode) {
+            case NONE:
+                return false;
+            case SEEDED:
+                return meta.seedEnabled;
+            case HOT:
+                return meta.hotUpdateEnabled;
+            case SEEDED_OR_HOT:
+                return meta.seedEnabled || meta.hotUpdateEnabled;
+            case ALL:
+            default:
+                return true;
+        }
+    }
+
+    private void batchInsert(List<SysConfig> configs) {
+        if (configs == null || configs.isEmpty()) {
+            return;
+        }
+        if (sqlSessionFactory == null || configs.size() == 1) {
+            for (SysConfig config : configs) {
+                configMapper.insert(config);
+            }
+            return;
+        }
+        try (SqlSession session = sqlSessionFactory.openSession(ExecutorType.BATCH)) {
+            SysConfigMapper mapper = session.getMapper(SysConfigMapper.class);
+            int batchSize = 200;
+            int index = 0;
+            for (SysConfig config : configs) {
+                mapper.insert(config);
+                index++;
+                if (index % batchSize == 0) {
+                    session.flushStatements();
+                }
+            }
+            session.flushStatements();
+            session.commit();
         }
     }
 
@@ -202,10 +380,11 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
     private Map<String, PropertyMeta> collectProperties(Object bean,
                                                         BeanWrapper wrapper,
                                                         String pathPrefix,
-                                                        boolean defaultHotUpdate) {
+                                                        boolean defaultHotUpdate,
+                                                        boolean defaultSeed) {
         Map<String, PropertyMeta> result = new LinkedHashMap<>();
         Deque<PropertyCursor> queue = new ArrayDeque<>();
-        queue.add(new PropertyCursor(bean, wrapper, pathPrefix, defaultHotUpdate));
+        queue.add(new PropertyCursor(bean, wrapper, pathPrefix, defaultHotUpdate, defaultSeed));
         while (!queue.isEmpty()) {
             PropertyCursor cursor = queue.poll();
             for (PropertyDescriptor descriptor : cursor.wrapper.getPropertyDescriptors()) {
@@ -221,11 +400,12 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
                 Object value = cursor.wrapper.getPropertyValue(name);
                 Field field = findField(cursor.bean.getClass(), name);
                 boolean hotUpdateEnabled = resolveHotUpdate(cursor.defaultHotUpdate, field);
+                boolean seedEnabled = resolveSeed(cursor.defaultSeed, field);
                 if (isLeafType(type)) {
                     Type genericType = field == null ? type : field.getGenericType();
-                    result.put(path, new PropertyMeta(path, type, genericType, value, hotUpdateEnabled));
+                    result.put(path, new PropertyMeta(path, type, genericType, value, hotUpdateEnabled, seedEnabled));
                 } else if (value != null) {
-                    queue.add(new PropertyCursor(value, new BeanWrapperImpl(value), path, hotUpdateEnabled));
+                    queue.add(new PropertyCursor(value, new BeanWrapperImpl(value), path, hotUpdateEnabled, seedEnabled));
                 }
             }
         }
@@ -241,6 +421,86 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
             return defaultHotUpdate;
         }
         return configField.hotUpdate();
+    }
+
+    private boolean resolveSeed(boolean defaultSeed, Field field) {
+        if (field == null) {
+            return defaultSeed;
+        }
+        ConfigField configField = field.getAnnotation(ConfigField.class);
+        if (configField == null) {
+            return defaultSeed;
+        }
+        return configField.seed();
+    }
+
+    private String resolveRawValue(String group, String key, Map<String, SysConfig> existingConfigs) {
+        String envValue = resolveEnvValue(group, key);
+        if (envValue != null) {
+            return envValue;
+        }
+        String dbValue = resolveDbValue(key, existingConfigs);
+        if (dbValue != null) {
+            return dbValue;
+        }
+        return resolveDefaultValue(group, key);
+    }
+
+    private String resolveEnvValue(String group, String key) {
+        if (environment == null) {
+            return null;
+        }
+        String propertyKey = "config." + group + "." + key;
+        String value = environment.getProperty(propertyKey);
+        if (value == null) {
+            value = environment.getProperty("config." + key);
+        }
+        if (value == null) {
+            return null;
+        }
+        if (cryptoService != null && cryptoService.isEncrypted(value)) {
+            return cryptoService.decryptIfNeeded(true, value);
+        }
+        return value;
+    }
+
+    private String resolveDbValue(String key, Map<String, SysConfig> existingConfigs) {
+        if (existingConfigs == null || existingConfigs.isEmpty()) {
+            return null;
+        }
+        SysConfig config = existingConfigs.get(key);
+        if (config == null) {
+            return null;
+        }
+        boolean enabled = config.getStatus() != null && config.getStatus() == configConstants.getStatus().getEnabled();
+        if (!enabled) {
+            return null;
+        }
+        String raw = config.getConfigValue();
+        boolean sensitive = config.getSensitive() != null && config.getSensitive() == 1;
+        if (cryptoService == null) {
+            return raw;
+        }
+        return cryptoService.decryptIfNeeded(sensitive, raw);
+    }
+
+    private String resolveDefaultValue(String group, String key) {
+        if (defaultsProperties == null) {
+            return null;
+        }
+        Map<String, String> items = defaultsProperties.getItems();
+        if (items == null || items.isEmpty()) {
+            return null;
+        }
+        String value = items.get(group + "." + key);
+        if (value != null) {
+            return value;
+        }
+        return items.get(key);
+    }
+
+    private boolean isSeedEnabled() {
+        return seedProperties == null || seedProperties.isEnabled();
     }
 
     private boolean isLeafType(Class<?> type) {
@@ -450,12 +710,14 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
         private final BeanWrapper wrapper;
         private final String pathPrefix;
         private final boolean defaultHotUpdate;
+        private final boolean defaultSeed;
 
-        private PropertyCursor(Object bean, BeanWrapper wrapper, String pathPrefix, boolean defaultHotUpdate) {
+        private PropertyCursor(Object bean, BeanWrapper wrapper, String pathPrefix, boolean defaultHotUpdate, boolean defaultSeed) {
             this.bean = bean;
             this.wrapper = wrapper;
             this.pathPrefix = pathPrefix;
             this.defaultHotUpdate = defaultHotUpdate;
+            this.defaultSeed = defaultSeed;
         }
     }
 
@@ -488,13 +750,15 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
         private final Type genericType;
         private final Object value;
         private final boolean hotUpdateEnabled;
+        private final boolean seedEnabled;
 
-        private PropertyMeta(String path, Class<?> type, Type genericType, Object value, boolean hotUpdateEnabled) {
+        private PropertyMeta(String path, Class<?> type, Type genericType, Object value, boolean hotUpdateEnabled, boolean seedEnabled) {
             this.path = path;
             this.type = type;
             this.genericType = genericType;
             this.value = value;
             this.hotUpdateEnabled = hotUpdateEnabled;
+            this.seedEnabled = seedEnabled;
         }
     }
 }

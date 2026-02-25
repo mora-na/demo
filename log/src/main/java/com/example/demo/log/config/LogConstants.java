@@ -1,6 +1,7 @@
 package com.example.demo.log.config;
 
 import com.example.demo.common.config.ConfigBinding;
+import com.example.demo.common.config.ConfigField;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -13,7 +14,7 @@ import java.util.*;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/15
  */
-@ConfigBinding(group = "log", hotUpdate = true)
+@ConfigBinding(group = "log")
 @Data
 @Component
 @ConfigurationProperties(prefix = "log.constants")
@@ -25,6 +26,7 @@ public class LogConstants {
     private Query query = new Query();
     private Status status = new Status();
     private Http http = new Http();
+    @ConfigField(seed = true, hotUpdate = true)
     private Aspect aspect = new Aspect();
     private Ip ip = new Ip();
     private UserAgent userAgent = new UserAgent();

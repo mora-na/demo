@@ -27,4 +27,10 @@ public @interface ConfigBinding {
      * 默认关闭，只有显式设置为 true 才允许热更新。
      */
     boolean hotUpdate() default false;
+
+    /**
+     * 是否启用默认种子（仅影响通过 ConfigBinding 绑定的属性）。
+     * 默认关闭，只有显式设置为 true 才会参与种子。
+     */
+    boolean seed() default false;
 }

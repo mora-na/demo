@@ -1,6 +1,7 @@
 package com.example.demo.auth.config;
 
 import com.example.demo.common.config.ConfigBinding;
+import com.example.demo.common.config.ConfigField;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/15
  */
-@ConfigBinding(group = "auth", hotUpdate = true)
+@ConfigBinding(group = "auth")
 @Data
 @Component
 @ConfigurationProperties(prefix = "auth.constants")
@@ -22,8 +23,10 @@ public class AuthConstants {
     private Captcha captcha = new Captcha();
     private LoginAttempt loginAttempt = new LoginAttempt();
     private Password password = new Password();
+    @ConfigField(seed = true, hotUpdate = true)
     private Profile profile = new Profile();
     private LoginLog loginLog = new LoginLog();
+    @ConfigField(seed = true, hotUpdate = true)
     private Security security = new Security();
     private Controller controller = new Controller();
 

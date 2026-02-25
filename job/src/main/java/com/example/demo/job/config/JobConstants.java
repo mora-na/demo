@@ -1,6 +1,7 @@
 package com.example.demo.job.config;
 
 import com.example.demo.common.config.ConfigBinding;
+import com.example.demo.common.config.ConfigField;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/15
  */
-@ConfigBinding(group = "job", hotUpdate = true)
+@ConfigBinding(group = "job")
 @Data
 @Component
 @ConfigurationProperties(prefix = "job.constants")
@@ -24,8 +25,10 @@ public class JobConstants {
     private Concurrent concurrent = new Concurrent();
     private Scheduler scheduler = new Scheduler();
     private DataMap dataMap = new DataMap();
+    @ConfigField(seed = true, hotUpdate = true)
     private Execution execution = new Execution();
     private HandlerDemo handlerDemo = new HandlerDemo();
+    @ConfigField(seed = true, hotUpdate = true)
     private LogCollect logCollect = new LogCollect();
     private Appender appender = new Appender();
 

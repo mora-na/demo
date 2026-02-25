@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * 动态接口常量配置。
  */
-@ConfigBinding(group = "dynamic.api", hotUpdate = true)
+@ConfigBinding(group = "dynamic.api")
 @Data
 @Component
 @ConfigurationProperties(prefix = "dynamic.api.constants")
@@ -21,7 +21,9 @@ public class DynamicApiConstants {
 
     private Controller controller = new Controller();
     private Message message = new Message();
+    @ConfigField(seed = true, hotUpdate = true)
     private Http http = new Http();
+    @ConfigField(seed = true, hotUpdate = true)
     private Execute execute = new Execute();
 
     @Data
@@ -102,11 +104,11 @@ public class DynamicApiConstants {
         private String requestIdHeader = DEFAULT_REQUEST_ID_HEADER;
         private String tenantIdHeader = DEFAULT_TENANT_ID_HEADER;
         private String traceIdHeader = DEFAULT_TRACE_ID_HEADER;
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private int maxTotalConnections = DEFAULT_MAX_TOTAL_CONNECTIONS;
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private int maxConnectionsPerRoute = DEFAULT_MAX_CONNECTIONS_PER_ROUTE;
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private int idleEvictSeconds = DEFAULT_IDLE_EVICT_SECONDS;
         /**
          * HTTP 转发允许的协议（小写）。
@@ -136,7 +138,7 @@ public class DynamicApiConstants {
          * DNS 解析失败是否阻止访问。
          */
         private boolean blockUnknownHost = DEFAULT_BLOCK_UNKNOWN_HOST;
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private List<String> supportedMethods = new ArrayList<>(
                 Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE")
         );
@@ -199,12 +201,12 @@ public class DynamicApiConstants {
         /**
          * 运行中请求缓存上限（SQL/HTTP）。
          */
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private int runningMaxEntries = DEFAULT_RUNNING_MAX_ENTRIES;
         /**
          * 运行中请求缓存过期冗余时间（毫秒）。
          */
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private long runningExpireBufferMs = DEFAULT_RUNNING_EXPIRE_BUFFER_MS;
         /**
          * 日志脱敏字段列表（大小写不敏感）。
@@ -213,37 +215,37 @@ public class DynamicApiConstants {
         /**
          * 清理执行器核心线程数。
          */
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private int cleanupExecutorCorePoolSize = DEFAULT_CLEANUP_EXECUTOR_CORE_POOL_SIZE;
         /**
          * 清理执行器最大线程数。
          */
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private int cleanupExecutorMaxPoolSize = DEFAULT_CLEANUP_EXECUTOR_MAX_POOL_SIZE;
         /**
          * 清理执行器队列容量。
          */
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private int cleanupExecutorQueueCapacity = DEFAULT_CLEANUP_EXECUTOR_QUEUE_CAPACITY;
         /**
          * 清理执行器线程保活秒数。
          */
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private int cleanupExecutorKeepAliveSeconds = DEFAULT_CLEANUP_EXECUTOR_KEEP_ALIVE_SECONDS;
         /**
          * 清理调度器线程数。
          */
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private int cleanupSchedulerPoolSize = DEFAULT_CLEANUP_SCHEDULER_POOL_SIZE;
         /**
          * 清理执行器线程名前缀。
          */
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private String cleanupExecutorThreadNamePrefix = DEFAULT_CLEANUP_EXECUTOR_THREAD_NAME_PREFIX;
         /**
          * 清理调度器线程名前缀。
          */
-        @ConfigField(hotUpdate = false)
+        @ConfigField(seed = true, hotUpdate = false)
         private String cleanupSchedulerThreadNamePrefix = DEFAULT_CLEANUP_SCHEDULER_THREAD_NAME_PREFIX;
     }
 }

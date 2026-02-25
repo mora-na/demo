@@ -16,4 +16,9 @@ public @interface ConfigField {
      * 是否允许热更新。默认关闭，只有显式设置为 true 才允许热更新。
      */
     boolean hotUpdate() default false;
+
+    /**
+     * 是否参与配置种子。默认关闭，只有显式设置为 true 才会参与种子。
+     */
+    boolean seed() default false;
 }

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/15
  */
-@ConfigBinding(group = "common", hotUpdate = true)
+@ConfigBinding(group = "common")
 @Data
 @Component
 @ConfigurationProperties(prefix = "common.constants")
@@ -18,17 +18,16 @@ public class CommonConstants {
 
     private Http http = new Http();
     private Trace trace = new Trace();
+    @ConfigField(seed = true, hotUpdate = true)
     private RateLimit rateLimit = new RateLimit();
+    @ConfigField(seed = true, hotUpdate = true)
     private DuplicateSubmit duplicateSubmit = new DuplicateSubmit();
     private Permission permission = new Permission();
-    @ConfigField(hotUpdate = false)
     private Mybatis mybatis = new Mybatis();
-    @ConfigField(hotUpdate = false)
     private I18n i18n = new I18n();
-    @ConfigField(hotUpdate = false)
     private Mdc mdc = new Mdc();
-    @ConfigField(hotUpdate = false)
     private Cache cache = new Cache();
+    @ConfigField(seed = true, hotUpdate = true)
     private ExceptionHandling exceptionHandling = new ExceptionHandling();
 
     @Data

@@ -3,6 +3,23 @@ server:
   # HTTP 监听端口
   port: 8080
 
+# 配置种子开关（仅对显式标记 seed=true 的字段生效）
+config:
+  seed:
+    # 是否启用配置种子（关闭可加速启动）
+    enabled: true
+  # 配置缓存预热范围
+  prewarm:
+    # 是否启用配置缓存预热
+    enabled: true
+    # 预热范围：ALL / SEEDED / HOT / SEEDED_OR_HOT / NONE
+    mode: ALL
+  # 配置模块常量覆盖
+  constants:
+    cache:
+      # 负缓存 TTL（秒）
+      miss-ttl-seconds: 30
+
 # 日志级别配置
 logging:
   # 日志文件配置

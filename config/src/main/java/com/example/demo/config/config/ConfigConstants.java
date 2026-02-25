@@ -1,6 +1,7 @@
 package com.example.demo.config.config;
 
 import com.example.demo.common.config.ConfigBinding;
+import com.example.demo.common.config.ConfigField;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -8,17 +9,19 @@ import org.springframework.stereotype.Component;
 /**
  * Config 模块常量配置。
  */
-@ConfigBinding(group = "config", hotUpdate = true)
+@ConfigBinding(group = "config")
 @Data
 @Component
 @ConfigurationProperties(prefix = "config.constants")
 public class ConfigConstants {
 
+    @ConfigField(seed = true, hotUpdate = true)
     private Cache cache = new Cache();
     private Status status = new Status();
     private Controller controller = new Controller();
     private Message message = new Message();
     private Group group = new Group();
+    @ConfigField(seed = true, hotUpdate = true)
     private Mask mask = new Mask();
     private HotUpdate hotUpdate = new HotUpdate();
 
@@ -26,6 +29,7 @@ public class ConfigConstants {
     public static class Cache {
         public static final String DEFAULT_KEY_PREFIX = "config:";
         public static final long DEFAULT_TTL_SECONDS = 300L;
+        public static final long DEFAULT_MISS_TTL_SECONDS = 30L;
 
         /**
          * 缓存 key 前缀。
@@ -35,6 +39,10 @@ public class ConfigConstants {
          * 缓存时长（秒），<=0 表示不缓存。
          */
         private long ttlSeconds = DEFAULT_TTL_SECONDS;
+        /**
+         * 缓存未命中时的负缓存时长（秒），<=0 表示不缓存。
+         */
+        private long missTtlSeconds = DEFAULT_MISS_TTL_SECONDS;
     }
 
     @Data

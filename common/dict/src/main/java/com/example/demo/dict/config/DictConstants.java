@@ -1,6 +1,7 @@
 package com.example.demo.dict.config;
 
 import com.example.demo.common.config.ConfigBinding;
+import com.example.demo.common.config.ConfigField;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/15
  */
-@ConfigBinding(group = "dict", hotUpdate = true)
+@ConfigBinding(group = "dict")
 @Data
 @Component
 @ConfigurationProperties(prefix = "dict.constants")
@@ -22,6 +23,7 @@ public class DictConstants {
     private Controller controller = new Controller();
     private Message message = new Message();
     private PublicApi publicApi = new PublicApi();
+    @ConfigField(seed = true, hotUpdate = true)
     private Cache cache = new Cache();
     private Serializer serializer = new Serializer();
 

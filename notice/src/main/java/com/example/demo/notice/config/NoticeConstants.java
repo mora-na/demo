@@ -1,6 +1,7 @@
 package com.example.demo.notice.config;
 
 import com.example.demo.common.config.ConfigBinding;
+import com.example.demo.common.config.ConfigField;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/15
  */
-@ConfigBinding(group = "notice", hotUpdate = true)
+@ConfigBinding(group = "notice")
 @Data
 @Component
 @ConfigurationProperties(prefix = "notice.constants")
@@ -25,6 +26,7 @@ public class NoticeConstants {
     private User user = new User();
     private Common common = new Common();
     private Numeric numeric = new Numeric();
+    @ConfigField(seed = true, hotUpdate = true)
     private Stream stream = new Stream();
 
     @Data

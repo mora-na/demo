@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/15
  */
-@ConfigBinding(group = "post", hotUpdate = true)
+@ConfigBinding(group = "post")
 @Data
 @Component
 @ConfigurationProperties(prefix = "post.constants")

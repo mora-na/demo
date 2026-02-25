@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * @author GPT-5.2-codex(high)
  * @date 2026/2/15
  */
-@ConfigBinding(group = "permission", hotUpdate = true)
+@ConfigBinding(group = "permission")
 @Data
 @Component
 @ConfigurationProperties(prefix = "permission.constants")
