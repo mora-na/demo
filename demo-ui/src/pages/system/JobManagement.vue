@@ -43,7 +43,7 @@
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
-              @change="(value: number) => handleStatusChange(row, value)"
+              @change="(value) => handleStatusChange(row, value)"
           />
         </template>
       </el-table-column>
@@ -1211,10 +1211,11 @@ async function saveJob() {
   }
 }
 
-async function handleStatusChange(row: JobVO, value: number) {
-  const result = await updateJobStatus(row.id, value);
+async function handleStatusChange(row: JobVO, value: string | number | boolean) {
+  const nextStatus = value === true ? 1 : value === false ? 0 : Number(value);
+  const result = await updateJobStatus(row.id, nextStatus);
   if (result?.code === 200) {
-    row.status = value;
+    row.status = nextStatus;
     ElMessage.success(t("job.msg.statusUpdated"));
     await loadJobs();
   } else {

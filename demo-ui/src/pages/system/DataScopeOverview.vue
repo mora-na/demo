@@ -111,17 +111,16 @@ import {useI18n} from "vue-i18n";
 import {
   type DataScopeResolveMenuVO,
   type DataScopeResolveResponse,
-  type MenuVO,
   resolveAllDataScope,
   resolveDataScope,
   type UserVO
 } from "../../api/system";
-import {loadDataScopeMenus, loadDataScopeUsers, searchDataScopeUsers} from "./dataScopeOptions";
+import {loadDataScopeMenus, loadDataScopeUsers, type PermissionMenu, searchDataScopeUsers} from "./dataScopeOptions";
 
 const {t} = useI18n();
 const selectedUserId = ref<number | null>(null);
 const selectedPermission = ref<string | null>(null);
-const permissionOptions = ref<MenuVO[]>([]);
+const permissionOptions = ref<PermissionMenu[]>([]);
 const userOptions = ref<UserVO[]>([]);
 const userLoading = ref(false);
 const loading = ref(false);

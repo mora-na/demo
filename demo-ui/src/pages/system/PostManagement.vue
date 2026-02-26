@@ -40,7 +40,7 @@
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
-              @change="(value: number) => handleStatusChange(row, value)"
+              @change="(value) => handleStatusChange(row, value)"
           />
         </template>
       </el-table-column>
@@ -314,11 +314,12 @@ async function savePost() {
   }
 }
 
-async function handleStatusChange(row: PostVO, value: number) {
+async function handleStatusChange(row: PostVO, value: string | number | boolean) {
   const previous = row.status ?? 0;
-  row.status = value;
+  const nextStatus = value === true ? 1 : value === false ? 0 : Number(value);
+  row.status = nextStatus;
   try {
-    const result = await updatePostStatus(row.id, value);
+    const result = await updatePostStatus(row.id, nextStatus);
     if (result?.code !== 200) {
       row.status = previous;
       ElMessage.error(result?.message || t("post.msg.statusUpdateFailed"));

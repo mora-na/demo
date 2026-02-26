@@ -1,14 +1,20 @@
 import {listMenus, listUsers, type MenuVO, searchUsers, type UserVO} from "../../api/system";
 
-let cachedMenus: MenuVO[] | null = null;
-let menusLoading: Promise<MenuVO[]> | null = null;
+export type PermissionMenu = MenuVO & { permission: string };
+
+export function isPermissionMenu(menu: MenuVO): menu is PermissionMenu {
+    return typeof menu.permission === "string" && menu.permission.length > 0;
+}
+
+let cachedMenus: PermissionMenu[] | null = null;
+let menusLoading: Promise<PermissionMenu[]> | null = null;
 
 let cachedUsers: UserVO[] | null = null;
 let usersLoading: Promise<UserVO[]> | null = null;
 const userSearchCache = new Map<string, UserVO[]>();
 const userSearchLoading = new Map<string, Promise<UserVO[]>>();
 
-export async function loadDataScopeMenus(): Promise<MenuVO[]> {
+export async function loadDataScopeMenus(): Promise<PermissionMenu[]> {
     if (cachedMenus) {
         return cachedMenus;
     }
@@ -19,7 +25,7 @@ export async function loadDataScopeMenus(): Promise<MenuVO[]> {
         try {
             const result = await listMenus();
             if (result?.code === 200 && result.data) {
-                cachedMenus = result.data.filter((menu) => !!menu.permission);
+                cachedMenus = result.data.filter(isPermissionMenu);
                 return cachedMenus;
             }
         } finally {

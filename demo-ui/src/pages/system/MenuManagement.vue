@@ -42,7 +42,7 @@
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
-              @change="(value: number) => handleStatusChange(row, value)"
+              @change="(value) => handleStatusChange(row, value)"
           />
         </template>
       </el-table-column>
@@ -72,7 +72,9 @@
               <el-tree-select
                   v-model="form.parentId"
                   :data="menuTree"
-                  :props="{label: 'name', value: 'id', children: 'children'}"
+                  :props="{label: 'name', children: 'children'}"
+                  node-key="id"
+                  value-key="id"
                   :render-after-expand="false"
                   check-strictly
                   clearable
@@ -266,11 +268,12 @@ async function saveMenu() {
   }
 }
 
-async function handleStatusChange(menu: MenuVO, value: number) {
+async function handleStatusChange(menu: MenuVO, value: string | number | boolean) {
   const previous = menu.status ?? 0;
-  menu.status = value;
+  const nextStatus = value === true ? 1 : value === false ? 0 : Number(value);
+  menu.status = nextStatus;
   try {
-    const result = await updateMenuStatus(menu.id, value);
+    const result = await updateMenuStatus(menu.id, nextStatus);
     if (result?.code !== 200) {
       menu.status = previous;
       ElMessage.error(result?.message || t("menu.msg.statusUpdateFailed"));

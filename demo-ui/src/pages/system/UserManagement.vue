@@ -52,7 +52,7 @@
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
-              @change="(value: number) => handleStatusChange(row, value)"
+              @change="(value) => handleStatusChange(row, value)"
           />
         </template>
       </el-table-column>
@@ -331,7 +331,6 @@ import {
   listPosts,
   listRoles,
   listUsers,
-  type MenuVO,
   type PostVO,
   resetUserPassword,
   type RoleVO,
@@ -345,6 +344,7 @@ import {
   type UserUpdatePayload,
   type UserVO
 } from "../../api/system";
+import {isPermissionMenu, type PermissionMenu} from "./dataScopeOptions";
 
 const users = ref<UserVO[]>([]);
 const roles = ref<RoleVO[]>([]);
@@ -370,7 +370,7 @@ const dataScopeEditorMode = ref<"create" | "edit">("create");
 const dataScopeEditId = ref<number | null>(null);
 const dataScopeUser = ref<UserVO | null>(null);
 const dataScopeOverrides = ref<UserDataScopeVO[]>([]);
-const menuOptions = ref<MenuVO[]>([]);
+const menuOptions = ref<PermissionMenu[]>([]);
 const {t} = useI18n();
 
 const filters = reactive({
@@ -507,7 +507,7 @@ async function fetchMenuOptions() {
   }
   const result = await listMenus();
   if (result?.code === 200 && result.data) {
-    menuOptions.value = result.data.filter((menu) => !!menu.permission);
+    menuOptions.value = result.data.filter(isPermissionMenu);
   }
 }
 
@@ -620,11 +620,12 @@ async function saveUser() {
   }
 }
 
-async function handleStatusChange(row: UserVO, value: number) {
+async function handleStatusChange(row: UserVO, value: string | number | boolean) {
   const previous = row.status ?? 0;
-  row.status = value;
+  const nextStatus = value === true ? 1 : value === false ? 0 : Number(value);
+  row.status = nextStatus;
   try {
-    const result = await updateUserStatus(row.id, value);
+    const result = await updateUserStatus(row.id, nextStatus);
     if (result?.code !== 200) {
       row.status = previous;
       ElMessage.error(result?.message || t("user.msg.statusUpdateFailed"));

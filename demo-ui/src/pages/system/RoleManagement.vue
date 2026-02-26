@@ -35,7 +35,7 @@
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
-              @change="(value: number) => handleStatusChange(row, value)"
+              @change="(value) => handleStatusChange(row, value)"
           />
         </template>
       </el-table-column>
@@ -446,11 +446,12 @@ async function saveRole() {
   }
 }
 
-async function handleStatusChange(role: RoleVO, value: number) {
+async function handleStatusChange(role: RoleVO, value: string | number | boolean) {
   const previous = role.status ?? 0;
-  role.status = value;
+  const nextStatus = value === true ? 1 : value === false ? 0 : Number(value);
+  role.status = nextStatus;
   try {
-    const result = await updateRoleStatus(role.id, value);
+    const result = await updateRoleStatus(role.id, nextStatus);
     if (result?.code !== 200) {
       role.status = previous;
       ElMessage.error(result?.message || t("role.msg.statusUpdateFailed"));

@@ -40,7 +40,7 @@
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
-              @change="(value: number) => handleStatusChange(row, value)"
+              @change="(value) => handleStatusChange(row, value)"
           />
         </template>
       </el-table-column>
@@ -72,7 +72,9 @@
               <el-tree-select
                   v-model="form.parentId"
                   :data="deptTree"
-                  :props="{label: 'name', value: 'id', children: 'children'}"
+                  :props="{label: 'name', children: 'children'}"
+                  node-key="id"
+                  value-key="id"
                   :render-after-expand="false"
                   check-strictly
                   clearable
@@ -284,11 +286,12 @@ async function saveDept() {
   }
 }
 
-async function handleStatusChange(dept: DeptVO, value: number) {
+async function handleStatusChange(dept: DeptVO, value: string | number | boolean) {
   const previous = dept.status ?? 0;
-  dept.status = value;
+  const nextStatus = value === true ? 1 : value === false ? 0 : Number(value);
+  dept.status = nextStatus;
   try {
-    const result = await updateDeptStatus(dept.id, value);
+    const result = await updateDeptStatus(dept.id, nextStatus);
     if (result?.code !== 200) {
       dept.status = previous;
       ElMessage.error(result?.message || t("dept.msg.statusUpdateFailed"));

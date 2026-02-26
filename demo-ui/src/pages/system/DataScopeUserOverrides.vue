@@ -140,14 +140,13 @@ import {
   createUserDataScope,
   deleteUserDataScope,
   listUserDataScopes,
-  type MenuVO,
   updateUserDataScope,
   type UserDataScopeCreatePayload,
   type UserDataScopeUpdatePayload,
   type UserDataScopeVO,
   type UserVO
 } from "../../api/system";
-import {loadDataScopeMenus, loadDataScopeUsers, searchDataScopeUsers} from "./dataScopeOptions";
+import {loadDataScopeMenus, loadDataScopeUsers, type PermissionMenu, searchDataScopeUsers} from "./dataScopeOptions";
 
 const {t} = useI18n();
 const rows = ref<UserDataScopeVO[]>([]);
@@ -161,7 +160,7 @@ const pageSize = ref(10);
 const total = ref(0);
 const filters = reactive({userName: "", menuKeyword: "", status: undefined as number | undefined});
 const userOptions = ref<UserVO[]>([]);
-const permissionOptions = ref<MenuVO[]>([]);
+const permissionOptions = ref<PermissionMenu[]>([]);
 
 const form = reactive<UserDataScopeCreatePayload & UserDataScopeUpdatePayload & { userId?: number | null; scopeKey?: string }>({
   userId: null,

@@ -33,7 +33,7 @@
               :active-value="1"
               :inactive-value="0"
               :model-value="row.status ?? 0"
-              @change="(value: number) => handleStatusChange(row, value)"
+              @change="(value) => handleStatusChange(row, value)"
           />
         </template>
       </el-table-column>
@@ -182,11 +182,12 @@ async function savePermission() {
   }
 }
 
-async function handleStatusChange(permission: PermissionVO, value: number) {
+async function handleStatusChange(permission: PermissionVO, value: string | number | boolean) {
   const previous = permission.status ?? 0;
-  permission.status = value;
+  const nextStatus = value === true ? 1 : value === false ? 0 : Number(value);
+  permission.status = nextStatus;
   try {
-    const result = await updatePermissionStatus(permission.id, value);
+    const result = await updatePermissionStatus(permission.id, nextStatus);
     if (result?.code !== 200) {
       permission.status = previous;
       ElMessage.error(result?.message || t("permission.msg.statusUpdateFailed"));
