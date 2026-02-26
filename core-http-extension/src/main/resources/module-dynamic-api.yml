@@ -7,11 +7,29 @@ dynamic:
       execute:
         default-timeout-ms: 3000
     executor:
-      core-pool-size: 8
-      max-pool-size: 16
-      queue-capacity: 200
+      core-pool-size: 4
+      max-pool-size: 8
+      queue-capacity: 100
       keep-alive-seconds: 60
       thread-name-prefix: ext-exec-
+    metrics:
+      enabled: true
+      # 指标缓存最大条数
+      max-entries: 2000
+      # 返回明细上限
+      max-details: 100
+      # 指标缓存空闲过期时间（秒）
+      expire-after-access-seconds: 300
+      # 是否启用自动降级
+      auto-degrade-enabled: true
+      # 指标明细降级阈值比例（0-1）
+      degrade-ratio: 0.8
+    circuit-breaker:
+      enabled: false
+      # 状态缓存最大条数
+      max-entries: 2000
+      # 状态缓存空闲过期时间（秒）
+      expire-after-access-seconds: 600
     rate-limit-policies:
       - id: strict
         name: 严格策略

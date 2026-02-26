@@ -11,9 +11,9 @@ config:
   # 配置缓存预热范围
   prewarm:
     # 是否启用配置缓存预热
-    enabled: true
+    enabled: false
     # 预热范围：ALL / SEEDED / HOT / SEEDED_OR_HOT / NONE
-    mode: ALL
+    mode: NONE
   # 配置模块常量覆盖
   constants:
     cache:
@@ -175,6 +175,20 @@ spring:
       repositories:
         # 禁用 Spring Data Redis Repository 扫描（项目当前未使用 Repository 模式）
         enabled: false
+
+  task:
+    execution:
+      pool:
+        # 异步任务线程池核心线程数
+        core-size: 4
+        # 异步任务线程池最大线程数
+        max-size: 8
+        # 异步任务队列容量
+        queue-capacity: 100
+        # 线程保活时间（秒）
+        keep-alive: 60s
+      # 线程名前缀
+      thread-name-prefix: async-
 
   # SMTP 邮件配置（Spring Boot 标准）
   mail:

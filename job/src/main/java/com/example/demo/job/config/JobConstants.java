@@ -219,8 +219,8 @@ public class JobConstants {
         public static final boolean DEFAULT_ENABLED = true;
         public static final Scope DEFAULT_SCOPE = Scope.MDC;
         public static final String DEFAULT_MIN_LEVEL = "INFO";
-        public static final int DEFAULT_MAX_LENGTH = 65536;
-        public static final int DEFAULT_MAX_BUFFERS = 2000;
+        public static final int DEFAULT_MAX_LENGTH = 8192;
+        public static final int DEFAULT_MAX_BUFFERS = 200;
         public static final long DEFAULT_MERGE_DELAY_MILLIS = 3000L;
         public static final long DEFAULT_MAX_HOLD_MILLIS = 60000L;
         public static final boolean DEFAULT_INHERIT_THREAD_CONTEXT = true;

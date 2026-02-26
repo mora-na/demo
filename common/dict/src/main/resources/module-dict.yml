@@ -6,4 +6,4 @@ dict:
       class-cache-max-size: 1024
     cache:
       # 字典缓存时长（秒），<=0 表示不缓存
-      ttl-seconds: 600
+      ttl-seconds: 300

@@ -177,7 +177,7 @@ public class NoticeConstants {
         public static final int DEFAULT_DISPATCH_EVENT_TTL_SECONDS = 300;
         public static final String DEFAULT_DISPATCH_THREAD_NAME = "notice-sse-dispatch";
         public static final int DEFAULT_LATEST_LIMIT = 5;
-        public static final int DEFAULT_MAX_TOTAL_CONNECTIONS = 2000;
+        public static final int DEFAULT_MAX_TOTAL_CONNECTIONS = 500;
         public static final int DEFAULT_MAX_CONNECTIONS_PER_USER = 5;
         public static final long DEFAULT_LATEST_CACHE_MAX_SIZE = 50000L;
         public static final int DEFAULT_LATEST_CACHE_EXPIRE_MINUTES = 30;

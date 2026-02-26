@@ -729,7 +729,7 @@ CREATE TABLE IF NOT EXISTS sys_job
     allow_concurrent SMALLINT     NOT NULL DEFAULT 1,
     misfire_policy   VARCHAR(32)           DEFAULT 'DEFAULT',
     params           TEXT,
-    log_collect_level VARCHAR(16) DEFAULT 'INFO',
+    log_collect_level VARCHAR(16) DEFAULT 'ERROR',
     created_by       BIGINT,
     created_name     VARCHAR(64),
     created_at       TIMESTAMP    NOT NULL,

@@ -721,7 +721,7 @@ const form = reactive<JobCreatePayload & JobUpdatePayload>({
   allowConcurrent: 1,
   misfirePolicy: "DEFAULT",
   params: "",
-  logCollectLevel: "INFO",
+  logCollectLevel: "ERROR",
   remark: ""
 });
 
@@ -1143,7 +1143,7 @@ function resetForm() {
   form.allowConcurrent = 1;
   form.misfirePolicy = "DEFAULT";
   form.params = "";
-  form.logCollectLevel = "INFO";
+  form.logCollectLevel = "ERROR";
   form.remark = "";
 }
 
@@ -1164,7 +1164,7 @@ function openEdit(row: JobVO) {
   form.allowConcurrent = row.allowConcurrent ?? 1;
   form.misfirePolicy = row.misfirePolicy || "DEFAULT";
   form.params = row.params || "";
-  form.logCollectLevel = row.logCollectLevel || "INFO";
+  form.logCollectLevel = row.logCollectLevel || "ERROR";
   form.remark = row.remark || "";
   editorVisible.value = true;
 }

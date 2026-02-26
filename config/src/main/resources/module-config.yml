@@ -1,5 +1,10 @@
 # 配置模块默认设置
 config:
+  prewarm:
+    # 是否启用配置缓存预热
+    enabled: false
+    # 预热范围：ALL / SEEDED / HOT / SEEDED_OR_HOT / NONE
+    mode: NONE
   change-sync:
     # 是否启用跨节点同步
     enabled: true
@@ -24,7 +29,9 @@ config:
   constants:
     cache:
       # 配置缓存时长（秒），<=0 表示不缓存
-      ttl-seconds: 300
+      ttl-seconds: 120
+      # 缓存未命中时的负缓存时长（秒），<=0 表示不缓存
+      miss-ttl-seconds: 15
       # 缓存 key 前缀
       key-prefix: "config:"
     group:

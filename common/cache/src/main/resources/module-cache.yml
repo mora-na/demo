@@ -4,9 +4,9 @@ cache:
   location: redis
   memory:
     # 内存缓存最大条目数（避免 OOM）
-    maximum-size: 10000
+    maximum-size: 2000
     # 最大权重（MB，按估算内存权重限制），0 表示不启用权重限制
-    maximum-weight-mb: 64
+    maximum-weight-mb: 16
     # 清理间隔（秒），0 表示关闭定时清理
     cleanup-interval-seconds: 60
   db:

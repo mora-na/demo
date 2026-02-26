@@ -32,3 +32,11 @@ build/
 ### VS Code ###
 .vscode/
 /logs/
+
+### macOS ###
+.DS_Store
+**/.DS_Store
+
+### Node ###
+**/node_modules/
+demo-ui/dist/

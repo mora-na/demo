@@ -4,8 +4,6 @@ import App from "./App.vue";
 import {i18n} from "./i18n";
 import {useAuthStore} from "./stores/auth";
 import router from "./router";
-import ElementPlus from "element-plus";
-import "element-plus/dist/index.css";
 import "./style.css";
 import "./styles/sidebar.scss";
 
@@ -14,8 +12,13 @@ const pinia = createPinia();
 app.use(pinia);
 app.use(i18n);
 app.use(router);
-app.use(ElementPlus);
-
+if (import.meta.env.DEV) {
+    const [{default: ElementPlus}] = await Promise.all([
+        import("element-plus"),
+        import("element-plus/dist/index.css")
+    ]);
+    app.use(ElementPlus);
+}
 const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
 const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || connection?.saveData;
 if (reduceMotion) {

@@ -27,7 +27,7 @@ spring:
             # 线程池实现类
             class: org.quartz.simpl.SimpleThreadPool
             # 线程数（按并发任务量配置）
-            threadCount: 10
+            threadCount: 4
             # 线程优先级（1-10）
             threadPriority: 5
             # 继承初始化线程的上下文类加载器
@@ -61,11 +61,11 @@ job:
       # 收集范围：MDC | THREAD
       scope: MDC
       # 默认日志收集级别（任务未指定时使用）：TRACE/DEBUG/INFO/WARN/ERROR
-      min-level: INFO
+      min-level: ERROR
       # 单次执行最大日志长度（字符）
-      max-length: 65536
+      max-length: 8192
       # 最大缓冲实例数量
-      max-buffers: 2000
+      max-buffers: 200
       # 是否启用自动降级
       auto-degrade-enabled: true
       # 缓冲占用降级阈值比例（0-1）
@@ -73,7 +73,7 @@ job:
       # 延迟合并时间（毫秒）
       merge-delay-millis: 3000
       # 最大缓冲保留时间（毫秒）
-      max-hold-millis: 60000
+      max-hold-millis: 30000
       # 是否启用 InheritableThreadLocal 兜底透传
       inherit-thread-context: true
       # MDC 关联键
