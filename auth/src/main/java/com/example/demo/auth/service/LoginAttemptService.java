@@ -85,8 +85,11 @@ public class LoginAttemptService {
         if (remaining > 0) {
             return remaining;
         }
-        int lockSeconds = authProperties.getLoginLimit() == null ? 0 : authProperties.getLoginLimit().getLockSeconds();
-        return Math.max(0, lockSeconds);
+        if (remaining == -1) {
+            int lockSeconds = authProperties.getLoginLimit() == null ? 0 : authProperties.getLoginLimit().getLockSeconds();
+            return Math.max(0, lockSeconds);
+        }
+        return 0;
     }
 
     /**

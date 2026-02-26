@@ -100,8 +100,8 @@ public class AuthController extends BaseController {
                     credentialError, httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
-        if (loginAttemptService.isLocked(request.getUserName(), httpRequest)) {
-            long remaining = loginAttemptService.getRemainingLockSeconds(request.getUserName(), httpRequest);
+        long remaining = loginAttemptService.getRemainingLockSeconds(request.getUserName(), httpRequest);
+        if (remaining > 0) {
             publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
                     i18n("auth.login.locked", remaining), httpRequest);
             return error(controllerConstants.getTooManyRequestsCode(), i18n("auth.login.locked", remaining));
@@ -200,7 +200,7 @@ public class AuthController extends BaseController {
             return error(systemConstants.getController().getBadRequestCode(), i18n("auth.logout.token.empty"));
         }
         AuthUser loginUser = tokenService.verifyToken(token);
-        tokenService.revoke(token);
+        tokenService.revoke(loginUser == null ? null : loginUser.getId(), token);
         authCookieService.clearTokenCookie(response);
         int logoutType = systemConstants.getLoginLog().getTypeLogout();
         int successStatus = systemConstants.getLoginLog().getStatusSuccess();

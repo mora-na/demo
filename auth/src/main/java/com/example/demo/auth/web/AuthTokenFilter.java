@@ -134,7 +134,12 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             writeUnauthorized(response, i18nService.getMessage(request, filterConstants.getUserInvalidMessageKey()));
             return;
         }
-        IdentityUserDTO dbUser = authUserStatusCache.get(user.getId());
+        AuthUserStatusCache.Snapshot snapshot = authUserStatusCache.getSnapshot(user.getId());
+        IdentityUserDTO dbUser = snapshot == null ? null : snapshot.getUser();
+        IdentityDataScopeProfileDTO cachedProfile = snapshot == null ? null : snapshot.getProfile();
+        boolean profileCacheMissKnown = snapshot != null
+                && snapshot.isProfileCacheEnabled()
+                && !snapshot.isProfilePresent();
         if (dbUser == null) {
             dbUser = identityReadFacade.getUserById(user.getId());
             int ttlSeconds = authProperties.getCache().getUserStatusTtlSeconds();
@@ -172,7 +177,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         user.setDeptId(dbUser.getDeptId());
         user.setDataScopeType(dbUser.getDataScopeType());
         user.setDataScopeValue(dbUser.getDataScopeValue());
-        IdentityDataScopeProfileDTO profile = loadDataScopeProfile(user.getId());
+        IdentityDataScopeProfileDTO profile = cachedProfile;
+        if (profile == null) {
+            profile = loadDataScopeProfile(user.getId(), profileCacheMissKnown);
+        }
         applyDataScopeProfile(user, profile);
         AuthContext.set(user);
         try {
@@ -224,13 +232,15 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         return logoutPath && filterConstants.getPostMethod().equalsIgnoreCase(method);
     }
 
-    private IdentityDataScopeProfileDTO loadDataScopeProfile(Long userId) {
+    private IdentityDataScopeProfileDTO loadDataScopeProfile(Long userId, boolean cacheMissKnown) {
         if (userId == null) {
             return null;
         }
-        IdentityDataScopeProfileDTO cached = authUserStatusCache.getProfile(userId);
-        if (cached != null) {
-            return cached;
+        if (!cacheMissKnown) {
+            IdentityDataScopeProfileDTO cached = authUserStatusCache.getProfile(userId);
+            if (cached != null) {
+                return cached;
+            }
         }
         IdentityDataScopeProfileDTO profile = identityReadFacade.buildDataScopeProfile(userId);
         int ttlSeconds = authProperties.getCache().getDataScopeProfileTtlSeconds();

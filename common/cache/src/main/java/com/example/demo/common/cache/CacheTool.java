@@ -145,6 +145,10 @@ public class CacheTool {
         return cacheStore.hincrBy(key, field, delta);
     }
 
+    public Long hdel(String key, String... fields) {
+        return cacheStore.hdel(key, fields);
+    }
+
     public Long lpush(String key, Object... values) {
         if (values == null || values.length == 0) {
             return 0L;
@@ -206,6 +210,10 @@ public class CacheTool {
 
     public boolean multiSet(java.util.Map<String, Object> values) {
         return cacheStore.multiSet(values);
+    }
+
+    public java.util.List<Object> multiGet(java.util.List<String> keys) {
+        return cacheStore.multiGet(keys);
     }
 
     public boolean multi(java.util.Map<String, Object> values) {

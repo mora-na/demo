@@ -52,6 +52,8 @@ public interface CacheStore {
 
     Long hincrBy(String key, String field, long delta);
 
+    Long hdel(String key, String... fields);
+
     Long lpush(String key, List<Object> values);
 
     Long rpush(String key, List<Object> values);
@@ -75,6 +77,8 @@ public interface CacheStore {
     Long zrem(String key, Collection<String> members);
 
     boolean multiSet(Map<String, Object> values);
+
+    List<Object> multiGet(List<String> keys);
 
     /**
      * Try to acquire a lock for the given key with a token and TTL.

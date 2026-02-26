@@ -242,6 +242,19 @@ public class RedisCacheStore implements CacheStore {
     }
 
     @Override
+    public Long hdel(String key, String... fields) {
+        if (key == null || fields == null || fields.length == 0) {
+            return 0L;
+        }
+        Object[] castFields = new Object[fields.length];
+        for (int i = 0; i < fields.length; i++) {
+            castFields[i] = fields[i];
+        }
+        Long removed = redisTemplate.opsForHash().delete(key, castFields);
+        return removed == null ? 0L : removed;
+    }
+
+    @Override
     public Long lpush(String key, List<Object> values) {
         if (key == null || values == null || values.isEmpty()) {
             return 0L;
@@ -353,6 +366,14 @@ public class RedisCacheStore implements CacheStore {
             }
         });
         return result != null;
+    }
+
+    @Override
+    public List<Object> multiGet(List<String> keys) {
+        if (keys == null || keys.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return redisTemplate.opsForValue().multiGet(keys);
     }
 
     @Override

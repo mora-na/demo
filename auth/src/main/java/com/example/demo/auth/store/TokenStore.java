@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 令牌存储，基于缓存工具。
@@ -21,6 +23,10 @@ import java.time.Instant;
  */
 @Component
 public class TokenStore {
+
+    private static final String VERSION_FIELD = "ver";
+    private static final String TOKEN_FIELD_PREFIX = "token:";
+    private static final String TOKEN_INDEX_PREFIX = "idx:";
 
     private final CacheTool cacheTool;
     private final ObjectMapper objectMapper;
@@ -54,38 +60,45 @@ public class TokenStore {
             return;
         }
         Long userId = user.getId();
-        if (userId != null) {
-            cacheTool.set(buildUserTokenKey(userId), token, Duration.ofSeconds(remainingSeconds(expireAtSeconds)));
-            ensureVersionKey(userId, remainingSeconds(expireAtSeconds));
-        }
         long ttlSeconds = expireAtSeconds - Instant.now().getEpochSecond();
         if (ttlSeconds <= 0) {
             return;
         }
-        cacheTool.set(buildKey(token), new TokenRecord(user, expireAtSeconds), Duration.ofSeconds(ttlSeconds));
+        if (userId != null) {
+            cacheTool.hset(buildUserTokenKey(userId), buildTokenField(token), new TokenRecord(user, expireAtSeconds));
+            ensureBucketTtl(userId, bucketTtlSeconds(ttlSeconds));
+            cacheTool.set(buildTokenIndexKey(token), userId, Duration.ofSeconds(ttlSeconds));
+        }
     }
 
     /**
-     * 根据令牌获取用户信息，若已过期则返回 null 并清理。
+     * 单次读取令牌记录与版本号。
      *
-     * @param token 令牌字符串
-     * @return 令牌记录，未命中或过期返回 null
+     * @param userId 用户 ID
+     * @param token  令牌字符串
+     * @return 令牌快照，未命中返回 null
      */
-    public TokenRecord get(String token) {
-        if (token == null) {
+    public TokenSnapshot getSnapshot(Long userId, String token) {
+        if (userId == null || token == null) {
             return null;
         }
-        Object value = cacheTool.get(buildKey(token));
-        TokenRecord record = convertRecord(value);
-        if (record == null) {
+        String key = buildUserTokenKey(userId);
+        List<Object> values = cacheTool.hmget(key, VERSION_FIELD, buildTokenField(token));
+        if (values == null || values.size() < 2) {
             return null;
+        }
+        Long version = parseLong(values.get(0));
+        TokenRecord record = convertRecord(values.get(1));
+        if (record == null) {
+            return new TokenSnapshot(null, version == null ? 0L : version);
         }
         long now = Instant.now().getEpochSecond();
         if (record.getExpireAtSeconds() < now) {
-            cacheTool.delete(buildKey(token));
-            return null;
+            cacheTool.hdel(key, buildTokenField(token));
+            cacheTool.delete(buildTokenIndexKey(token));
+            return new TokenSnapshot(null, version == null ? 0L : version);
         }
-        return record;
+        return new TokenSnapshot(record, version == null ? 0L : version);
     }
 
     /**
@@ -95,8 +108,27 @@ public class TokenStore {
      */
     public void revoke(String token) {
         if (token != null) {
-            cacheTool.delete(buildKey(token));
+            Long userId = resolveUserIdFromIndex(token);
+            if (userId != null) {
+                revoke(userId, token);
+            } else {
+                cacheTool.delete(buildTokenIndexKey(token));
+            }
         }
+    }
+
+    /**
+     * 按用户撤销令牌并删除存储。
+     *
+     * @param userId 用户 ID
+     * @param token  令牌字符串
+     */
+    public void revoke(Long userId, String token) {
+        if (userId == null || token == null) {
+            return;
+        }
+        cacheTool.hdel(buildUserTokenKey(userId), buildTokenField(token));
+        cacheTool.delete(buildTokenIndexKey(token));
     }
 
     /**
@@ -108,36 +140,19 @@ public class TokenStore {
         if (userId == null) {
             return;
         }
-        String userKey = buildUserTokenKey(userId);
-        String token = cacheTool.get(userKey, String.class);
-        if (token != null) {
-            cacheTool.delete(buildKey(token));
-        }
-        cacheTool.delete(userKey);
         bumpUserTokenVersion(userId, ttlSeconds);
-    }
-
-    /**
-     * 构建缓存 Key。
-     *
-     * @param token 令牌字符串
-     * @return 缓存 Key
-     */
-    private String buildKey(String token) {
-        return systemConstants.getToken().getStoreKeyPrefix() + token;
     }
 
     private String buildUserTokenKey(Long userId) {
         return systemConstants.getToken().getStoreKeyPrefix() + "user:" + userId;
     }
 
-    private String buildUserTokenVersionKey(Long userId) {
-        return systemConstants.getToken().getStoreKeyPrefix() + "ver:" + userId;
+    private String buildTokenField(String token) {
+        return TOKEN_FIELD_PREFIX + token;
     }
 
-    private long remainingSeconds(long expireAtSeconds) {
-        long ttlSeconds = expireAtSeconds - Instant.now().getEpochSecond();
-        return Math.max(ttlSeconds, 1);
+    private String buildTokenIndexKey(String token) {
+        return systemConstants.getToken().getStoreKeyPrefix() + TOKEN_INDEX_PREFIX + token;
     }
 
     public long getOrInitVersion(Long userId, long ttlSeconds) {
@@ -154,7 +169,7 @@ public class TokenStore {
         if (userId == null) {
             return 0L;
         }
-        Object value = cacheTool.get(buildUserTokenVersionKey(userId));
+        Object value = cacheTool.hget(buildUserTokenKey(userId), VERSION_FIELD);
         Long parsed = parseLong(value);
         return parsed == null ? 0L : parsed;
     }
@@ -163,28 +178,19 @@ public class TokenStore {
         if (userId == null) {
             return;
         }
-        cacheTool.set(buildUserTokenVersionKey(userId), version, Duration.ofSeconds(versionTtlSeconds(ttlSeconds)));
+        cacheTool.hset(buildUserTokenKey(userId), VERSION_FIELD, version);
+        ensureBucketTtl(userId, versionTtlSeconds(ttlSeconds));
     }
 
     public long bumpUserTokenVersion(Long userId, long ttlSeconds) {
         if (userId == null) {
             return 0L;
         }
-        String key = buildUserTokenVersionKey(userId);
-        Long next = cacheTool.increment(key);
+        String key = buildUserTokenKey(userId);
+        Long next = cacheTool.hincrBy(key, VERSION_FIELD, 1L);
         long value = next == null ? 1L : next;
-        cacheTool.expire(key, Duration.ofSeconds(versionTtlSeconds(ttlSeconds)));
+        ensureBucketTtl(userId, versionTtlSeconds(ttlSeconds));
         return value;
-    }
-
-    private void ensureVersionKey(Long userId, long ttlSeconds) {
-        if (userId == null) {
-            return;
-        }
-        String key = buildUserTokenVersionKey(userId);
-        if (!cacheTool.hasKey(key)) {
-            setUserTokenVersion(userId, 1L, ttlSeconds);
-        }
     }
 
     private long versionTtlSeconds(long ttlSeconds) {
@@ -195,6 +201,30 @@ public class TokenStore {
         long base = Math.max(1L, ttlSeconds);
         long doubled = base * 2;
         return Math.max(doubled, base + 600);
+    }
+
+    private long bucketTtlSeconds(long tokenTtlSeconds) {
+        return Math.max(tokenTtlSeconds, versionTtlSeconds(tokenTtlSeconds));
+    }
+
+    private void ensureBucketTtl(Long userId, long ttlSeconds) {
+        if (userId == null || ttlSeconds <= 0) {
+            return;
+        }
+        String key = buildUserTokenKey(userId);
+        long current = cacheTool.getExpire(key, TimeUnit.SECONDS);
+        if (current < ttlSeconds) {
+            cacheTool.expire(key, Duration.ofSeconds(ttlSeconds));
+        }
+    }
+
+    private Long resolveUserIdFromIndex(String token) {
+        Object value = cacheTool.get(buildTokenIndexKey(token));
+        Long parsed = parseLong(value);
+        if (parsed != null) {
+            return parsed;
+        }
+        return null;
     }
 
     private Long parseLong(Object value) {
@@ -223,6 +253,14 @@ public class TokenStore {
         } catch (IllegalArgumentException ex) {
             return null;
         }
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class TokenSnapshot {
+        private TokenRecord record;
+        private long version;
     }
 
     /**

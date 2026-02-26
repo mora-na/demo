@@ -68,8 +68,8 @@ public class OperationConfirmService {
                     "auth.operation.confirm.email.empty", 0);
         }
         String cooldownKey = buildCooldownKey(userId, normalizedActionKey);
-        if (cacheTool.hasKey(cooldownKey)) {
-            long retryAfter = Math.max(cacheTool.getExpire(cooldownKey, java.util.concurrent.TimeUnit.SECONDS), 1L);
+        long retryAfter = cacheTool.getExpire(cooldownKey, java.util.concurrent.TimeUnit.SECONDS);
+        if (retryAfter > 0) {
             return SendCodeResult.fail(authConstants.getController().getTooManyRequestsCode(),
                     "auth.operation.confirm.send.too.frequent", retryAfter);
         }

@@ -82,29 +82,36 @@ public class TokenService {
         if (payload == null) {
             return null;
         }
+        Long userId = getLongClaim(payload, systemConstants.getToken().getJwtClaimUserId());
         Long exp = getLongClaim(payload, systemConstants.getToken().getJwtClaimExpiresAt());
         long now = Instant.now().getEpochSecond();
         if (exp == null || exp < now) {
-            tokenStore.revoke(token);
+            if (userId != null) {
+                tokenStore.revoke(userId, token);
+            } else {
+                tokenStore.revoke(token);
+            }
             return null;
         }
-        Long userId = getLongClaim(payload, systemConstants.getToken().getJwtClaimUserId());
         if (userId == null) {
             tokenStore.revoke(token);
             return null;
         }
+        TokenStore.TokenSnapshot snapshot = tokenStore.getSnapshot(userId, token);
+        if (snapshot == null || snapshot.getRecord() == null) {
+            return null;
+        }
         Long version = getLongClaim(payload, systemConstants.getToken().getJwtClaimTokenVersion());
-        long currentVersion = tokenStore.getUserTokenVersion(userId);
+        long currentVersion = snapshot.getVersion();
         if (currentVersion > 0) {
             if (version == null || version != currentVersion) {
-                tokenStore.revoke(token);
+                tokenStore.revoke(userId, token);
                 return null;
             }
         } else if (version != null) {
             tokenStore.setUserTokenVersion(userId, version, authProperties.getJwt().getTtlSeconds());
         }
-        TokenStore.TokenRecord record = tokenStore.get(token);
-        return record == null ? null : record.getUser();
+        return snapshot.getRecord().getUser();
     }
 
     /**
@@ -113,6 +120,17 @@ public class TokenService {
      * @param token JWT 字符串
      */
     public void revoke(String token) {
+        tokenStore.revoke(token);
+    }
+
+    public void revoke(Long userId, String token) {
+        if (token == null) {
+            return;
+        }
+        if (userId != null) {
+            tokenStore.revoke(userId, token);
+            return;
+        }
         tokenStore.revoke(token);
     }
 

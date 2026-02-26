@@ -274,10 +274,16 @@ public class NoticeStreamService {
         if (current - last > maxBatch) {
             start = Math.max(start, current - maxBatch + 1L);
         }
+        List<String> keys = new ArrayList<>();
         for (long seq = start; seq <= current; seq++) {
-            Object value = cacheTool.get(buildDispatchEventKey(seq));
-            if (value instanceof NoticeStreamDispatchEvent) {
-                dispatchEvent((NoticeStreamDispatchEvent) value);
+            keys.add(buildDispatchEventKey(seq));
+        }
+        List<Object> values = cacheTool.multiGet(keys);
+        if (values != null && !values.isEmpty()) {
+            for (Object value : values) {
+                if (value instanceof NoticeStreamDispatchEvent) {
+                    dispatchEvent((NoticeStreamDispatchEvent) value);
+                }
             }
         }
         lastDispatchSeq.set(current);

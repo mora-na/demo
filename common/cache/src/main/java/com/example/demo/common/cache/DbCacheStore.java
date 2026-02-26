@@ -453,6 +453,35 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
 
     @Override
     @Transactional
+    public Long hdel(String key, String... fields) {
+        if (key == null || fields == null || fields.length == 0) {
+            return 0L;
+        }
+        CacheEntry locked = lockFresh(key);
+        if (locked == null) {
+            return 0L;
+        }
+        Map<String, Object> map = toHash(deserializeValue(locked));
+        long removed = 0L;
+        for (String field : fields) {
+            if (field != null && map.remove(field) != null) {
+                removed++;
+            }
+        }
+        if (removed == 0L) {
+            return 0L;
+        }
+        if (map.isEmpty()) {
+            cacheMapper.deleteById(key);
+            return removed;
+        }
+        CacheEntry entry = buildEntry(key, map, locked.getExpireAt());
+        cacheMapper.updateById(entry);
+        return removed;
+    }
+
+    @Override
+    @Transactional
     public Long lpush(String key, List<Object> values) {
         if (key == null || values == null || values.isEmpty()) {
             return 0L;
@@ -775,6 +804,18 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
         }
         enforceMaxRows();
         return true;
+    }
+
+    @Override
+    public List<Object> multiGet(List<String> keys) {
+        if (keys == null || keys.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        List<Object> result = new ArrayList<>(keys.size());
+        for (String key : keys) {
+            result.add(get(key));
+        }
+        return result;
     }
 
     @Override

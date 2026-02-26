@@ -378,6 +378,34 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
     }
 
     @Override
+    public Long hdel(String key, String... fields) {
+        if (key == null || fields == null || fields.length == 0) {
+            return 0L;
+        }
+        AtomicLong removed = new AtomicLong(0);
+        cache.asMap().computeIfPresent(key, (k, existing) -> {
+            CacheItem item = normalizeItem(existing);
+            if (item == null) {
+                return null;
+            }
+            Map<String, Object> map = toHash(item.value);
+            for (String field : fields) {
+                if (field != null && map.remove(field) != null) {
+                    removed.incrementAndGet();
+                }
+            }
+            if (map.isEmpty()) {
+                return null;
+            }
+            return new CacheItem(map, item.expireAt);
+        });
+        if (maximumWeightBytes > 0) {
+            cache.cleanUp();
+        }
+        return removed.get();
+    }
+
+    @Override
     public Long lpush(String key, List<Object> values) {
         if (key == null || values == null || values.isEmpty()) {
             return 0L;
@@ -653,6 +681,18 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
             set(entry.getKey(), entry.getValue(), null);
         }
         return true;
+    }
+
+    @Override
+    public List<Object> multiGet(List<String> keys) {
+        if (keys == null || keys.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        List<Object> result = new ArrayList<>(keys.size());
+        for (String key : keys) {
+            result.add(get(key));
+        }
+        return result;
     }
 
     @Override
