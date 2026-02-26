@@ -1371,11 +1371,6 @@ onUnmounted(() => {
   width: min(96vw, 1000px);
 }
 
-:deep(.log-detail-dialog .el-dialog__body) {
-  max-height: 80vh;
-  overflow: auto;
-}
-
 .log-detail-meta {
   display: flex;
   flex-wrap: wrap;
