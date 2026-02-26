@@ -6,8 +6,12 @@
         <div class="module-sub">{{ t("dept.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-button v-permission="'dept:create'" type="primary" @click="openCreate">{{ t("dept.create") }}</el-button>
-        <el-button v-permission="'dept:delete'" v-if="selectedDeptIds.length" type="danger" @click="removeDepts">
+        <el-button v-permission="'dept:create'" size="small" type="primary" @click="openCreate">{{
+            t("dept.create")
+          }}
+        </el-button>
+        <el-button v-if="selectedDeptIds.length" v-permission="'dept:delete'" size="small" type="danger"
+                   @click="removeDepts">
           {{ t("dept.filter.delete") }}
         </el-button>
       </div>

@@ -172,6 +172,10 @@ public class NoticeConstants {
         public static final long DEFAULT_HEARTBEAT_INTERVAL_MILLIS = 30000L;
         public static final long DEFAULT_HEARTBEAT_TIMEOUT_MILLIS = 90000L;
         public static final long DEFAULT_RETRY_AFTER_MILLIS = 5000L;
+        public static final long DEFAULT_DISPATCH_POLL_INTERVAL_MILLIS = 500L;
+        public static final int DEFAULT_DISPATCH_MAX_BATCH_SIZE = 200;
+        public static final int DEFAULT_DISPATCH_EVENT_TTL_SECONDS = 300;
+        public static final String DEFAULT_DISPATCH_THREAD_NAME = "notice-sse-dispatch";
         public static final int DEFAULT_LATEST_LIMIT = 5;
         public static final int DEFAULT_MAX_TOTAL_CONNECTIONS = 2000;
         public static final int DEFAULT_MAX_CONNECTIONS_PER_USER = 5;
@@ -186,6 +190,8 @@ public class NoticeConstants {
         public static final String DEFAULT_EVENT_INIT_NAME = "init";
         public static final String DEFAULT_EVENT_PING_NAME = "ping";
         public static final String DEFAULT_HEARTBEAT_THREAD_NAME = "notice-sse-heartbeat";
+        public static final String DEFAULT_LOG_DISPATCH_DISABLED =
+                "Notice SSE dispatch disabled (interval={}ms).";
         public static final String DEFAULT_LOG_HEARTBEAT_DISABLED =
                 "Notice SSE heartbeat disabled (interval={}ms).";
         public static final String DEFAULT_LOG_PUSH_FAILED =
@@ -217,6 +223,26 @@ public class NoticeConstants {
          * 建议前端重连间隔（毫秒）。
          */
         private long retryAfterMillis = DEFAULT_RETRY_AFTER_MILLIS;
+        /**
+         * SSE emitter 空闲清理超时（毫秒），<=0 则使用 heartbeatTimeout/emitterTimeout。
+         */
+        private long emitterCleanupTimeoutMillis = 0L;
+        /**
+         * SSE emitter 空闲清理间隔（毫秒），<=0 则使用超时的一半（1s~60s）。
+         */
+        private long emitterCleanupIntervalMillis = 0L;
+        /**
+         * 跨节点分发轮询间隔（毫秒），<=0 表示禁用分发。
+         */
+        private long dispatchPollIntervalMillis = DEFAULT_DISPATCH_POLL_INTERVAL_MILLIS;
+        /**
+         * 单次分发最大批量。
+         */
+        private int dispatchMaxBatchSize = DEFAULT_DISPATCH_MAX_BATCH_SIZE;
+        /**
+         * 分发事件缓存 TTL（秒）。
+         */
+        private int dispatchEventTtlSeconds = DEFAULT_DISPATCH_EVENT_TTL_SECONDS;
         /**
          * SSE 最新通知列表缓存长度。
          */
@@ -273,6 +299,14 @@ public class NoticeConstants {
          * SSE 心跳线程名。
          */
         private String heartbeatThreadName = DEFAULT_HEARTBEAT_THREAD_NAME;
+        /**
+         * 分发线程名。
+         */
+        private String dispatchThreadName = DEFAULT_DISPATCH_THREAD_NAME;
+        /**
+         * 分发关闭日志模板。
+         */
+        private String logDispatchDisabled = DEFAULT_LOG_DISPATCH_DISABLED;
         /**
          * 心跳关闭日志模板。
          */

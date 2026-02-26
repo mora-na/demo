@@ -1,45 +1,34 @@
 package com.example.demo.auth.service;
 
 import com.example.demo.auth.config.AuthProperties;
+import com.example.demo.common.cache.CacheTool;
 import com.example.demo.identity.api.dto.IdentityDataScopeProfileDTO;
 import com.example.demo.identity.api.dto.IdentityUserDTO;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 /**
- * 轻量用户状态缓存，避免每次请求都访问 IdentityReadFacade。
+ * 轻量用户状态缓存（跨节点共享）。
  */
 @Component
 public class AuthUserStatusCache {
 
-    private final AuthProperties authProperties;
-    private final Cache<Long, CacheEntry> cache;
-    private final Cache<Long, ProfileCacheEntry> profileCache;
+    private static final String USER_STATUS_PREFIX = "auth:user:status:";
+    private static final String PROFILE_PREFIX = "auth:user:profile:";
+    private static final String NEGATIVE_MARKER = "__NEGATIVE__";
 
-    public AuthUserStatusCache(AuthProperties authProperties) {
+    private final AuthProperties authProperties;
+    private final CacheTool cacheTool;
+    private final ObjectMapper objectMapper;
+
+    public AuthUserStatusCache(AuthProperties authProperties,
+                               CacheTool cacheTool,
+                               ObjectMapper objectMapper) {
         this.authProperties = authProperties;
-        int ttlSeconds = Math.max(10, authProperties.getCache().getUserStatusTtlSeconds());
-        int maxSize = authProperties.getCache().getUserStatusMaxSize();
-        if (maxSize <= 0) {
-            maxSize = 5000;
-        }
-        this.cache = Caffeine.newBuilder()
-                .maximumSize(maxSize)
-                .expireAfterWrite(ttlSeconds, TimeUnit.SECONDS)
-                .build();
-        int profileTtlSeconds = Math.max(10, authProperties.getCache().getDataScopeProfileTtlSeconds());
-        int profileMaxSize = authProperties.getCache().getDataScopeProfileMaxSize();
-        if (profileMaxSize <= 0) {
-            profileMaxSize = 5000;
-        }
-        this.profileCache = Caffeine.newBuilder()
-                .maximumSize(profileMaxSize)
-                .expireAfterWrite(profileTtlSeconds, TimeUnit.SECONDS)
-                .build();
+        this.cacheTool = cacheTool;
+        this.objectMapper = objectMapper;
     }
 
     private boolean isEnabled() {
@@ -64,113 +53,84 @@ public class AuthUserStatusCache {
     }
 
     public IdentityUserDTO get(Long userId) {
-        if (userId == null) {
+        if (userId == null || !isEnabled()) {
             return null;
         }
-        if (!isEnabled()) {
+        Object value = cacheTool.get(buildUserKey(userId));
+        if (value == null) {
             return null;
         }
-        CacheEntry entry = cache.getIfPresent(userId);
-        if (entry == null) {
+        if (value instanceof String && NEGATIVE_MARKER.equals(value)) {
             return null;
         }
-        if (entry.expireAtSeconds < Instant.now().getEpochSecond()) {
-            cache.invalidate(userId);
-            return null;
-        }
-        return entry.negative ? null : entry.user;
+        return convert(value, IdentityUserDTO.class);
     }
 
     public IdentityDataScopeProfileDTO getProfile(Long userId) {
-        if (userId == null) {
+        if (userId == null || !isProfileEnabled()) {
             return null;
         }
-        if (!isProfileEnabled()) {
+        Object value = cacheTool.get(buildProfileKey(userId));
+        if (value == null) {
             return null;
         }
-        ProfileCacheEntry entry = profileCache.getIfPresent(userId);
-        if (entry == null) {
-            return null;
-        }
-        if (entry.expireAtSeconds < Instant.now().getEpochSecond()) {
-            profileCache.invalidate(userId);
-            return null;
-        }
-        return entry.profile;
+        return convert(value, IdentityDataScopeProfileDTO.class);
     }
 
     public void put(Long userId, IdentityUserDTO user, long ttlSeconds) {
-        if (userId == null || user == null || ttlSeconds <= 0) {
+        if (userId == null || user == null || ttlSeconds <= 0 || !isEnabled()) {
             return;
         }
-        if (!isEnabled()) {
-            return;
-        }
-        long expireAt = Instant.now().getEpochSecond() + ttlSeconds;
-        cache.put(userId, new CacheEntry(user, expireAt, false));
+        cacheTool.set(buildUserKey(userId), user, Duration.ofSeconds(ttlSeconds));
     }
 
     public void putProfile(Long userId, IdentityDataScopeProfileDTO profile, long ttlSeconds) {
-        if (userId == null || profile == null || ttlSeconds <= 0) {
+        if (userId == null || profile == null || ttlSeconds <= 0 || !isProfileEnabled()) {
             return;
         }
-        if (!isProfileEnabled()) {
-            return;
-        }
-        long expireAt = Instant.now().getEpochSecond() + ttlSeconds;
-        profileCache.put(userId, new ProfileCacheEntry(profile, expireAt));
+        cacheTool.set(buildProfileKey(userId), profile, Duration.ofSeconds(ttlSeconds));
     }
 
     public void putNegative(Long userId, long ttlSeconds) {
-        if (userId == null || ttlSeconds <= 0) {
+        if (userId == null || ttlSeconds <= 0 || !negativeEnabled()) {
             return;
         }
-        if (!negativeEnabled()) {
-            return;
-        }
-        long expireAt = Instant.now().getEpochSecond() + ttlSeconds;
-        cache.put(userId, new CacheEntry(null, expireAt, true));
+        cacheTool.set(buildUserKey(userId), NEGATIVE_MARKER, Duration.ofSeconds(ttlSeconds));
     }
 
     public void invalidate(Long userId) {
-        if (userId == null) {
+        if (userId == null || !isEnabled()) {
             return;
         }
-        if (!isEnabled()) {
-            return;
-        }
-        cache.invalidate(userId);
+        cacheTool.delete(buildUserKey(userId));
     }
 
     public void invalidateProfile(Long userId) {
-        if (userId == null) {
+        if (userId == null || !isProfileEnabled()) {
             return;
         }
-        if (!isProfileEnabled()) {
-            return;
-        }
-        profileCache.invalidate(userId);
+        cacheTool.delete(buildProfileKey(userId));
     }
 
-    private static final class CacheEntry {
-        private final IdentityUserDTO user;
-        private final long expireAtSeconds;
-        private final boolean negative;
-
-        private CacheEntry(IdentityUserDTO user, long expireAtSeconds, boolean negative) {
-            this.user = user;
-            this.expireAtSeconds = expireAtSeconds;
-            this.negative = negative;
-        }
+    private String buildUserKey(Long userId) {
+        return USER_STATUS_PREFIX + userId;
     }
 
-    private static final class ProfileCacheEntry {
-        private final IdentityDataScopeProfileDTO profile;
-        private final long expireAtSeconds;
+    private String buildProfileKey(Long userId) {
+        return PROFILE_PREFIX + userId;
+    }
 
-        private ProfileCacheEntry(IdentityDataScopeProfileDTO profile, long expireAtSeconds) {
-            this.profile = profile;
-            this.expireAtSeconds = expireAtSeconds;
+    private <T> T convert(Object value, Class<T> type) {
+        if (value == null || type == null) {
+            return null;
+        }
+        if (type.isInstance(value)) {
+            return type.cast(value);
+        }
+        try {
+            return objectMapper.convertValue(value, type);
+        } catch (IllegalArgumentException ex) {
+            return null;
         }
     }
 }

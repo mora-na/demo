@@ -1,6 +1,6 @@
 # 缓存配置
 cache:
-  # 缓存位置：redis | memory | db
+  # 缓存位置：redis | memory（仅限单机部署） | db
   location: redis
   memory:
     # 内存缓存最大条目数（避免 OOM）

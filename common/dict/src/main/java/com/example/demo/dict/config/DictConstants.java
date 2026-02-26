@@ -25,6 +25,7 @@ public class DictConstants {
     private PublicApi publicApi = new PublicApi();
     @ConfigField(seed = true, hotUpdate = true)
     private Cache cache = new Cache();
+    private Preload preload = new Preload();
     private Serializer serializer = new Serializer();
 
     @Data
@@ -150,5 +151,15 @@ public class DictConstants {
          * 自动补充字典标签字段后缀。
          */
         private String labelFieldSuffix = DEFAULT_LABEL_FIELD_SUFFIX;
+    }
+
+    @Data
+    public static class Preload {
+        public static final int DEFAULT_CLASS_CACHE_MAX_SIZE = 1024;
+
+        /**
+         * DictLabel 预加载反射缓存最大条数。
+         */
+        private int classCacheMaxSize = DEFAULT_CLASS_CACHE_MAX_SIZE;
     }
 }

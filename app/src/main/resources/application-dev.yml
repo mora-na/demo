@@ -257,6 +257,8 @@ spring:
         enabled: true
         # Web 统计过滤 URL 匹配
         url-pattern: /*
+        # 启用 Session 监控（需要应用实际创建 HttpSession）
+        session-stat-enable: true
         # 过滤器排除资源
         exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
       # SQL 监控 + 防火墙 + 日志（单数据源模式也启用）
@@ -341,9 +343,19 @@ spring:
         max-evictable-idle-time-millis: 900000
         # 连接属性
         connection-properties:
+          # 是否将相同结构但参数不同的 SQL 合并统计（用于 SQL 监控统计分析）
+          # true 表示将参数不同的 SQL 视为同一条 SQL 进行归并
           druid.stat.mergeSql: true
+          # 慢 SQL 判定时间（单位：毫秒）
+          # 超过 5000ms（5 秒）的 SQL 会被标记为慢 SQL 并记录
           druid.stat.slowSqlMillis: 5000
+          # 是否允许一次执行多条 SQL（多语句执行）
+          # true 表示允许，例如：select 1; select 2;
+          # 开启后需注意 SQL 注入风险
           wall.config.multiStatementAllow: true
+          # 是否允许执行非基础语句
+          # 基础语句通常是 SELECT、INSERT、UPDATE、DELETE 等
+          # true 表示允许执行如 DDL（建表、删表等）或其他特殊语句
           wall.config.noneBaseStatementAllow: true
       # 默认数据源名称
       primary: system_rw

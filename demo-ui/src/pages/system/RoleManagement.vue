@@ -6,8 +6,12 @@
         <div class="module-sub">{{ t("role.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-button v-permission="'role:create'" type="primary" @click="openCreate">{{ t("role.create") }}</el-button>
-        <el-button v-permission="'role:delete'" v-if="selectedRoleIds.length" type="danger" @click="removeRoles">
+        <el-button v-permission="'role:create'" size="small" type="primary" @click="openCreate">{{
+            t("role.create")
+          }}
+        </el-button>
+        <el-button v-if="selectedRoleIds.length" v-permission="'role:delete'" size="small" type="danger"
+                   @click="removeRoles">
           {{ t("role.filter.delete") }}
         </el-button>
       </div>

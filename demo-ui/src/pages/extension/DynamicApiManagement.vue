@@ -12,12 +12,14 @@
               :placeholder="t('dynamicApi.filter.path')"
               class="filter-input filter-input--wide"
               clearable
+              size="small"
           />
           <el-select
               v-model="filters.method"
               :placeholder="t('dynamicApi.filter.method')"
               class="filter-input filter-input--narrow"
               clearable
+              size="small"
           >
             <el-option v-for="item in methodOptions" :key="item" :label="item" :value="item"/>
           </el-select>
@@ -26,6 +28,7 @@
               :placeholder="t('dynamicApi.filter.status')"
               class="filter-input"
               clearable
+              size="small"
           >
             <el-option :label="t('dynamicApi.status.draft')" :value="'DRAFT'"/>
             <el-option :label="t('dynamicApi.status.enabled')" :value="'ENABLED'"/>
@@ -36,6 +39,7 @@
               :placeholder="t('dynamicApi.filter.type')"
               class="filter-input filter-input--narrow"
               clearable
+              size="small"
           >
             <el-option v-for="item in typeOptions" :key="item.code" :label="item.label" :value="item.code"/>
           </el-select>
@@ -44,18 +48,19 @@
               :placeholder="t('dynamicApi.filter.authMode')"
               class="filter-input filter-input--narrow"
               clearable
+              size="small"
           >
             <el-option :label="t('dynamicApi.auth.inherit')" :value="'INHERIT'"/>
             <el-option :label="t('dynamicApi.auth.public')" :value="'PUBLIC'"/>
           </el-select>
-          <el-button @click="handleSearch">{{ t("common.search") }}</el-button>
-          <el-button @click="handleReset">{{ t("dynamicApi.filter.reset") }}</el-button>
+          <el-button size="small" @click="handleSearch">{{ t("common.search") }}</el-button>
+          <el-button size="small" @click="handleReset">{{ t("dynamicApi.filter.reset") }}</el-button>
         </div>
         <div class="action-group">
-          <el-button v-permission="'dynamic-api:create'" type="primary" @click="openCreate">
+          <el-button v-permission="'dynamic-api:create'" size="small" type="primary" @click="openCreate">
             {{ t("dynamicApi.filter.create") }}
           </el-button>
-          <el-button v-permission="'dynamic-api:reload'" @click="handleReload">
+          <el-button v-permission="'dynamic-api:reload'" size="small" @click="handleReload">
             {{ t("dynamicApi.filter.reload") }}
           </el-button>
         </div>

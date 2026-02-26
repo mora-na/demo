@@ -721,6 +721,18 @@ COMMENT ON COLUMN sys_notice_recipient.user_id IS '接收用户ID';
 COMMENT ON COLUMN sys_notice_recipient.read_status IS '阅读状态：0-未读，1-已读';
 COMMENT ON COLUMN sys_notice_recipient.read_time IS '阅读时间';
 
+CREATE TABLE IF NOT EXISTS sys_notice_stream_node
+(
+    node_id          VARCHAR(128) PRIMARY KEY,
+    connection_count BIGINT    NOT NULL DEFAULT 0,
+    heartbeat_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_sys_notice_stream_node_heartbeat ON sys_notice_stream_node (heartbeat_at);
+COMMENT ON TABLE sys_notice_stream_node IS 'SSE节点连接计数';
+COMMENT ON COLUMN sys_notice_stream_node.node_id IS '节点ID';
+COMMENT ON COLUMN sys_notice_stream_node.connection_count IS '连接数';
+COMMENT ON COLUMN sys_notice_stream_node.heartbeat_at IS '心跳时间';
+
 SET search_path TO demo_job, public;
 
 CREATE SEQUENCE IF NOT EXISTS sys_job_id_seq START WITH 1 INCREMENT BY 1;
@@ -1869,3 +1881,40 @@ COMMENT ON COLUMN demo_config.sys_config.update_by IS '更新人';
 COMMENT ON COLUMN demo_config.sys_config.is_deleted IS '逻辑删除(0-未删除 1-已删除)';
 COMMENT ON COLUMN demo_config.sys_config.version IS '乐观锁版本号';
 COMMENT ON COLUMN demo_config.sys_config.remark IS '备注';
+
+CREATE SEQUENCE IF NOT EXISTS demo_config.sys_config_change_log_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS demo_config.sys_config_change_log
+(
+    id               BIGINT PRIMARY KEY    DEFAULT nextval('demo_config.sys_config_change_log_id_seq'),
+    config_id        BIGINT                DEFAULT NULL,
+    config_key       VARCHAR(128) NOT NULL,
+    config_group     VARCHAR(64)  NOT NULL DEFAULT 'default',
+    config_value_old TEXT,
+    config_value_new TEXT,
+    config_type      VARCHAR(32)  NOT NULL DEFAULT 'STRING',
+    config_version   INT          NOT NULL DEFAULT 1,
+    hot_update       SMALLINT     NOT NULL DEFAULT 0,
+    config_sensitive SMALLINT     NOT NULL DEFAULT 0,
+    change_type      VARCHAR(16)  NOT NULL,
+    change_time      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    node_id          VARCHAR(128)          DEFAULT NULL,
+    operator_id      BIGINT                DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_sys_config_change_group_key ON demo_config.sys_config_change_log (config_group, config_key);
+CREATE INDEX IF NOT EXISTS idx_sys_config_change_time ON demo_config.sys_config_change_log (change_time);
+CREATE INDEX IF NOT EXISTS idx_sys_config_change_config ON demo_config.sys_config_change_log (config_id, config_version);
+COMMENT ON TABLE demo_config.sys_config_change_log IS '系统配置变更流水';
+COMMENT ON COLUMN demo_config.sys_config_change_log.id IS '主键ID';
+COMMENT ON COLUMN demo_config.sys_config_change_log.config_id IS '配置ID';
+COMMENT ON COLUMN demo_config.sys_config_change_log.config_key IS '配置键';
+COMMENT ON COLUMN demo_config.sys_config_change_log.config_group IS '配置分组';
+COMMENT ON COLUMN demo_config.sys_config_change_log.config_value_old IS '旧配置值（存储值）';
+COMMENT ON COLUMN demo_config.sys_config_change_log.config_value_new IS '新配置值（存储值）';
+COMMENT ON COLUMN demo_config.sys_config_change_log.config_type IS '配置类型';
+COMMENT ON COLUMN demo_config.sys_config_change_log.config_version IS '配置版本号';
+COMMENT ON COLUMN demo_config.sys_config_change_log.hot_update IS '是否支持热更新：1-是，0-否';
+COMMENT ON COLUMN demo_config.sys_config_change_log.config_sensitive IS '是否敏感配置：1-是，0-否';
+COMMENT ON COLUMN demo_config.sys_config_change_log.change_type IS '变更类型：CREATE/UPDATE/DELETE';
+COMMENT ON COLUMN demo_config.sys_config_change_log.change_time IS '变更时间';
+COMMENT ON COLUMN demo_config.sys_config_change_log.node_id IS '节点ID';
+COMMENT ON COLUMN demo_config.sys_config_change_log.operator_id IS '操作人';

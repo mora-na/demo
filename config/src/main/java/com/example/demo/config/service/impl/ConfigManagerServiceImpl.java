@@ -35,19 +35,28 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
     private final ConfigSchemaValidator schemaValidator;
     private final ObjectMapper objectMapper;
     private final ConfigChangePublisher changePublisher;
+    private final ConfigChangeBroadcaster changeBroadcaster;
+    private final ConfigChangeLogService changeLogService;
+    private final com.example.demo.common.cluster.NodeIdProvider nodeIdProvider;
 
     public ConfigManagerServiceImpl(ConfigConstants constants,
                                     ConfigCacheService cacheService,
                                     ConfigCryptoService cryptoService,
                                     ConfigSchemaValidator schemaValidator,
                                     ObjectMapper objectMapper,
-                                    ConfigChangePublisher changePublisher) {
+                                    ConfigChangePublisher changePublisher,
+                                    ConfigChangeBroadcaster changeBroadcaster,
+                                    ConfigChangeLogService changeLogService,
+                                    com.example.demo.common.cluster.NodeIdProvider nodeIdProvider) {
         this.constants = constants;
         this.cacheService = cacheService;
         this.cryptoService = cryptoService;
         this.schemaValidator = schemaValidator;
         this.objectMapper = objectMapper;
         this.changePublisher = changePublisher;
+        this.changeBroadcaster = changeBroadcaster;
+        this.changeLogService = changeLogService;
+        this.nodeIdProvider = nodeIdProvider;
     }
 
     @Override
@@ -110,6 +119,7 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
             return ConfigOperationResult.failed(constants.getMessage().getCommonUpdateFailed());
         }
         cacheService.evict(group, key);
+        recordChange(null, config, null, stored, ConfigChangeLogService.TYPE_CREATE);
         publishIfHot(null, config, normalized.value);
         return ConfigOperationResult.success(config);
     }
@@ -169,6 +179,7 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
         }
         cacheService.evict(existing.getConfigGroup(), existing.getConfigKey());
         cacheService.evict(group, key);
+        recordChange(existing, update, existing.getConfigValue(), stored, ConfigChangeLogService.TYPE_UPDATE);
         String oldValue = cryptoService.decryptIfNeeded(existing.getConfigSensitive() != null && existing.getConfigSensitive() == 1, existing.getConfigValue());
         boolean oldEnabled = existing.getStatus() != null && existing.getStatus() == constants.getStatus().getEnabled();
         boolean newEnabled = status != null && status == constants.getStatus().getEnabled();
@@ -198,6 +209,7 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
         boolean removed = this.removeById(id);
         if (removed) {
             cacheService.evict(existing.getConfigGroup(), existing.getConfigKey());
+            recordChange(existing, null, existing.getConfigValue(), null, ConfigChangeLogService.TYPE_DELETE);
             String oldValue = cryptoService.decryptIfNeeded(existing.getConfigSensitive() != null && existing.getConfigSensitive() == 1, existing.getConfigValue());
             publishDisable(existing, oldValue);
         }
@@ -332,6 +344,9 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
                 true
         );
         changePublisher.publish(event);
+        if (changeBroadcaster != null) {
+            changeBroadcaster.broadcast(event);
+        }
     }
 
     private void publishDisable(SysConfig config, String oldValue) {
@@ -352,6 +367,21 @@ public class ConfigManagerServiceImpl extends ServiceImpl<SysConfigMapper, SysCo
                 true
         );
         changePublisher.publish(event);
+        if (changeBroadcaster != null) {
+            changeBroadcaster.broadcast(event);
+        }
+    }
+
+    private void recordChange(SysConfig before,
+                              SysConfig after,
+                              String oldStoredValue,
+                              String newStoredValue,
+                              String type) {
+        if (changeLogService == null) {
+            return;
+        }
+        String nodeId = nodeIdProvider == null ? null : nodeIdProvider.get();
+        changeLogService.record(before, after, oldStoredValue, newStoredValue, type, nodeId);
     }
 
     private SysConfig merge(SysConfig existing, SysConfig update) {

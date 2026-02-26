@@ -1,6 +1,7 @@
 package com.example.demo.dict.web;
 
 import com.example.demo.dict.annotation.DictLabel;
+import com.example.demo.dict.config.DictConstants;
 import com.example.demo.dict.support.DictTool;
 import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -17,7 +18,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * 在响应序列化前批量预取字典类型，避免 DictLabel 逐条触发翻译查询。
@@ -31,8 +32,16 @@ public class DictLabelPreloadAdvice implements ResponseBodyAdvice<Object> {
     private static final int MAX_SCAN_DEPTH = 8;
     private static final int MAX_SCAN_NODES = 10000;
 
-    private final Map<Class<?>, Set<String>> classDictTypeCache = new ConcurrentHashMap<>();
-    private final Map<Class<?>, List<Field>> classFieldCache = new ConcurrentHashMap<>();
+    private final DictConstants dictConstants;
+    private final LruCache<Class<?>, Set<String>> classDictTypeCache;
+    private final LruCache<Class<?>, List<Field>> classFieldCache;
+
+    public DictLabelPreloadAdvice(DictConstants dictConstants) {
+        this.dictConstants = dictConstants;
+        int maxSize = resolveClassCacheMaxSize();
+        this.classDictTypeCache = new LruCache<>(maxSize);
+        this.classFieldCache = new LruCache<>(maxSize);
+    }
 
     @Override
     public boolean supports(@NonNull MethodParameter returnType, @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
@@ -117,9 +126,9 @@ public class DictLabelPreloadAdvice implements ResponseBodyAdvice<Object> {
     }
 
     private Set<String> resolveClassDictTypes(Class<?> clazz) {
-        return classDictTypeCache.computeIfAbsent(clazz, key -> {
+        return classDictTypeCache.getOrCompute(clazz, () -> {
             Set<String> types = new LinkedHashSet<>();
-            for (Field field : resolveClassFields(key)) {
+            for (Field field : resolveClassFields(clazz)) {
                 DictLabel annotation = field.getAnnotation(DictLabel.class);
                 if (annotation == null) {
                     continue;
@@ -145,9 +154,9 @@ public class DictLabelPreloadAdvice implements ResponseBodyAdvice<Object> {
     }
 
     private List<Field> resolveClassFields(Class<?> clazz) {
-        return classFieldCache.computeIfAbsent(clazz, key -> {
+        return classFieldCache.getOrCompute(clazz, () -> {
             List<Field> fields = new ArrayList<>();
-            Class<?> cursor = key;
+            Class<?> cursor = clazz;
             while (cursor != null && cursor != Object.class && !isJdkClass(cursor)) {
                 for (Field field : cursor.getDeclaredFields()) {
                     if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
@@ -185,5 +194,47 @@ public class DictLabelPreloadAdvice implements ResponseBodyAdvice<Object> {
                 || name.startsWith("javax.")
                 || name.startsWith("sun.")
                 || name.startsWith("jdk.");
+    }
+
+    private int resolveClassCacheMaxSize() {
+        if (dictConstants == null || dictConstants.getPreload() == null) {
+            return DictConstants.Preload.DEFAULT_CLASS_CACHE_MAX_SIZE;
+        }
+        int configured = dictConstants.getPreload().getClassCacheMaxSize();
+        return configured <= 0 ? DictConstants.Preload.DEFAULT_CLASS_CACHE_MAX_SIZE : configured;
+    }
+
+    private static final class LruCache<K, V> {
+        private final int maxSize;
+        private final LinkedHashMap<K, V> store;
+
+        private LruCache(int maxSize) {
+            this.maxSize = Math.max(1, maxSize);
+            this.store = new LinkedHashMap<K, V>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+                    return size() > LruCache.this.maxSize;
+                }
+            };
+        }
+
+        private V getOrCompute(K key, Supplier<V> supplier) {
+            V cached;
+            synchronized (store) {
+                cached = store.get(key);
+            }
+            if (cached != null) {
+                return cached;
+            }
+            V computed = supplier.get();
+            synchronized (store) {
+                V second = store.get(key);
+                if (second != null) {
+                    return second;
+                }
+                store.put(key, computed);
+                return computed;
+            }
+        }
     }
 }

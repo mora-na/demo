@@ -3,11 +3,13 @@ package com.example.demo.common.cache;
 import com.example.demo.common.cache.mapper.CacheMapper;
 import com.example.demo.common.config.CommonConstants;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 缓存存储配置。
@@ -36,10 +38,12 @@ public class CacheStoreConfig {
     public CacheStore dbCacheStore(CacheMapper cacheMapper,
                                    ObjectMapper objectMapper,
                                    CacheProperties cacheProperties,
-                                   CommonConstants systemConstants) {
+                                   CommonConstants systemConstants,
+                                   ObjectProvider<TransactionTemplate> transactionTemplateProvider) {
         CacheProperties.Db db = cacheProperties == null ? null : cacheProperties.getDb();
         CacheSerializer serializer = new CacheSerializer(objectMapper,
                 db == null ? null : db.getAllowedValueClassPrefixes());
-        return new DbCacheStore(cacheMapper, serializer, db, systemConstants);
+        return new DbCacheStore(cacheMapper, serializer, db, systemConstants,
+                transactionTemplateProvider.getIfAvailable());
     }
 }

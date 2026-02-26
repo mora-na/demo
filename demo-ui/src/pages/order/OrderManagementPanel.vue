@@ -11,6 +11,7 @@
             :min="1"
             :placeholder="t('order.filter.userIdPlaceholder')"
             controls-position="right"
+            size="small"
         />
         <el-input-number
             v-model="filters.minAmount"
@@ -19,6 +20,7 @@
             :step="10"
             :placeholder="t('order.filter.minAmountPlaceholder')"
             controls-position="right"
+            size="small"
         />
         <el-input-number
             v-model="filters.maxAmount"
@@ -27,8 +29,9 @@
             :step="10"
             :placeholder="t('order.filter.maxAmountPlaceholder')"
             controls-position="right"
+            size="small"
         />
-        <el-button @click="handleSearch">{{ t("order.filter.search") }}</el-button>
+        <el-button size="small" @click="handleSearch">{{ t("order.filter.search") }}</el-button>
       </div>
     </div>
 

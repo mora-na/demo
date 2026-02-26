@@ -6,8 +6,12 @@
         <div class="module-sub">{{ t("post.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-button v-permission="'post:create'" type="primary" @click="openCreate">{{ t("post.create") }}</el-button>
-        <el-button v-permission="'post:delete'" v-if="selectedPostIds.length" type="danger" @click="removePosts">
+        <el-button v-permission="'post:create'" size="small" type="primary" @click="openCreate">{{
+            t("post.create")
+          }}
+        </el-button>
+        <el-button v-if="selectedPostIds.length" v-permission="'post:delete'" size="small" type="danger"
+                   @click="removePosts">
           {{ t("post.filter.delete") }}
         </el-button>
       </div>

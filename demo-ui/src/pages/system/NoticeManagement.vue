@@ -6,16 +6,21 @@
         <div class="module-sub">{{ t("notice.subtitle") }}</div>
       </div>
       <div class="module-actions" @keyup.enter="handleSearch">
-        <el-input v-model.trim="filters.keyword" clearable :placeholder="t('notice.filter.keywordPlaceholder')"/>
-        <el-select v-model="filters.scopeType" clearable :placeholder="t('notice.filter.scopePlaceholder')" style="width: 140px">
+        <el-input v-model.trim="filters.keyword" :placeholder="t('notice.filter.keywordPlaceholder')" clearable
+                  size="small"/>
+        <el-select v-model="filters.scopeType" :placeholder="t('notice.filter.scopePlaceholder')" class="filter-select-wide"
+                   clearable size="small">
           <el-option :label="t('notice.scope.all')" value="ALL"/>
           <el-option :label="t('notice.scope.dept')" value="DEPT"/>
           <el-option :label="t('notice.scope.role')" value="ROLE"/>
           <el-option :label="t('notice.scope.user')" value="USER"/>
         </el-select>
-        <el-button @click="handleSearch">{{ t("notice.filter.search") }}</el-button>
-        <el-button v-permission="'notice:publish'" type="primary" @click="openPublish">{{ t("notice.filter.publish") }}</el-button>
-        <el-button v-permission="'notice:delete'" v-if="selectedNoticeIds.length" type="danger" @click="removeNotices">
+        <el-button size="small" @click="handleSearch">{{ t("notice.filter.search") }}</el-button>
+        <el-button v-permission="'notice:publish'" size="small" type="primary" @click="openPublish">
+          {{ t("notice.filter.publish") }}
+        </el-button>
+        <el-button v-if="selectedNoticeIds.length" v-permission="'notice:delete'" size="small" type="danger"
+                   @click="removeNotices">
           {{ t("notice.filter.delete") }}
         </el-button>
       </div>
@@ -554,6 +559,11 @@ onMounted(async () => {
   overflow-x: auto;
   gap: 8px;
   align-items: center;
+}
+
+.filter-select-wide {
+  width: 150px;
+  min-width: 120px;
 }
 
 .module-footer {

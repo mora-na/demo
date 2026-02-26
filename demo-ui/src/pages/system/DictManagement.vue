@@ -15,7 +15,9 @@
     <div class="dict-layout">
       <section class="dict-panel">
         <div class="panel-head">
-          <div class="panel-title">{{ t("dict.type.title") }}</div>
+          <div class="panel-title-row">
+            <div class="panel-title">{{ t("dict.type.title") }}</div>
+          </div>
           <div class="panel-actions" @keyup.enter="handleTypeSearch">
             <div class="filter-fields">
               <el-input v-model.trim="typeFilters.dictType" :placeholder="t('dict.type.filterType')" class="filter-input" clearable
@@ -81,9 +83,11 @@
 
       <section class="dict-panel">
         <div class="panel-head">
-          <div class="panel-title">
-            {{ t("dict.data.title") }}
-            <span v-if="activeType" class="panel-sub">({{ activeType.dictType }} - {{ activeType.dictName }})</span>
+          <div class="panel-title-row">
+            <div class="panel-title">
+              {{ t("dict.data.title") }}
+              <span v-if="activeType" class="panel-sub">({{ activeType.dictType }} - {{ activeType.dictName }})</span>
+            </div>
           </div>
           <div class="panel-actions" @keyup.enter="handleDataSearch">
             <div class="filter-fields">
@@ -617,10 +621,16 @@ onMounted(() => {
 }
 
 .panel-head {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.panel-title-row {
+  display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .panel-title {
@@ -637,13 +647,17 @@ onMounted(() => {
 .panel-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 8px;
+  width: 100%;
+  flex-wrap: nowrap;
 }
 
 .filter-fields {
   display: flex;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
   flex-wrap: nowrap;
 }
 
@@ -673,11 +687,6 @@ onMounted(() => {
 }
 
 @media (max-width: 900px) {
-  .panel-head {
-    grid-template-columns: 1fr;
-    align-items: flex-start;
-  }
-
   .panel-actions {
     flex-wrap: wrap;
     justify-content: flex-start;

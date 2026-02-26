@@ -1,6 +1,9 @@
 # 字典缓存配置
 dict:
   constants:
+    preload:
+      # DictLabel 预加载反射缓存最大条数
+      class-cache-max-size: 1024
     cache:
       # 字典缓存时长（秒），<=0 表示不缓存
       ttl-seconds: 600

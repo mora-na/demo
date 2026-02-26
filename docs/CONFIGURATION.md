@@ -241,6 +241,12 @@
 | `dict.constants.cache.all-key` | `dict:data:all` | 全量字典缓存 key。 |
 | `dict.constants.cache.ttl-seconds` | `600` | 字典缓存 TTL（秒），`<=0` 表示不缓存。 |
 
+**Preload 组（DictLabel 预加载）**
+
+| 配置键                                           | 默认值    | 说明                     |
+|-----------------------------------------------|--------|------------------------|
+| `dict.constants.preload.class-cache-max-size` | `1024` | DictLabel 预加载反射缓存最大条数。 |
+
 **Serializer 组（字典标签序列化）**
 
 | 配置键 | 默认值 | 说明 |
@@ -344,23 +350,25 @@
 
 **Stream 组（SSE 推送）**
 
-| 配置键                                                        | 默认值                                                          | 说明                     |
-|------------------------------------------------------------|--------------------------------------------------------------|------------------------|
-| `notice.constants.stream.anonymous-emitter-timeout-millis` | `0`                                                          | 匿名用户 SSE 连接超时（毫秒）。     |
-| `notice.constants.stream.emitter-timeout-millis`           | `0`                                                          | 登录用户 SSE 连接超时（毫秒）。     |
-| `notice.constants.stream.heartbeat-interval-millis`        | `30000`                                                      | 心跳间隔（毫秒），`<=0` 表示禁用。   |
-| `notice.constants.stream.heartbeat-timeout-millis`         | `90000`                                                      | 前端断线判定超时（毫秒）。          |
-| `notice.constants.stream.retry-after-millis`               | `5000`                                                       | 建议前端重连间隔（毫秒）。          |
-| `notice.constants.stream.latest-limit`                     | `5`                                                          | SSE 初始化/推送携带的最新通知缓存长度。 |
-| `notice.constants.stream.event-notice-name`                | `notice`                                                     | 新通知或未读变化事件名。           |
-| `notice.constants.stream.event-init-name`                  | `init`                                                       | 初始化事件名。                |
-| `notice.constants.stream.event-ping-name`                  | `ping`                                                       | 心跳事件名。                 |
-| `notice.constants.stream.heartbeat-thread-name`            | `notice-sse-heartbeat`                                       | 心跳线程名。                 |
-| `notice.constants.stream.log-heartbeat-disabled`           | `Notice SSE heartbeat disabled (interval={}ms).`             | 心跳禁用日志模板。              |
-| `notice.constants.stream.log-push-failed`                  | `Failed to push notice to user {}, removing emitter.`        | 新通知推送失败日志模板。           |
-| `notice.constants.stream.log-push-update-failed`           | `Failed to push notice update to user {}, removing emitter.` | 未读数推送失败日志模板。           |
-| `notice.constants.stream.log-init-failed`                  | `Failed to send init payload to user {}, removing emitter.`  | 初始化推送失败日志模板。           |
-| `notice.constants.stream.log-heartbeat-failed`             | `Heartbeat failed for user {}, removing emitter: {}`         | 心跳推送失败日志模板。            |
+| 配置键                                                        | 默认值                                                          | 说明                                            |
+|------------------------------------------------------------|--------------------------------------------------------------|-----------------------------------------------|
+| `notice.constants.stream.anonymous-emitter-timeout-millis` | `0`                                                          | 匿名用户 SSE 连接超时（毫秒）。                            |
+| `notice.constants.stream.emitter-timeout-millis`           | `0`                                                          | 登录用户 SSE 连接超时（毫秒）。                            |
+| `notice.constants.stream.heartbeat-interval-millis`        | `30000`                                                      | 心跳间隔（毫秒），`<=0` 表示禁用。                          |
+| `notice.constants.stream.heartbeat-timeout-millis`         | `90000`                                                      | 前端断线判定超时（毫秒）。                                 |
+| `notice.constants.stream.retry-after-millis`               | `5000`                                                       | 建议前端重连间隔（毫秒）。                                 |
+| `notice.constants.stream.emitter-cleanup-timeout-millis`   | `0`                                                          | SSE emitter 空闲清理超时（毫秒），`<=0` 则使用心跳/连接超时。      |
+| `notice.constants.stream.emitter-cleanup-interval-millis`  | `0`                                                          | SSE emitter 空闲清理间隔（毫秒），`<=0` 则使用超时一半（1s~60s）。 |
+| `notice.constants.stream.latest-limit`                     | `5`                                                          | SSE 初始化/推送携带的最新通知缓存长度。                        |
+| `notice.constants.stream.event-notice-name`                | `notice`                                                     | 新通知或未读变化事件名。                                  |
+| `notice.constants.stream.event-init-name`                  | `init`                                                       | 初始化事件名。                                       |
+| `notice.constants.stream.event-ping-name`                  | `ping`                                                       | 心跳事件名。                                        |
+| `notice.constants.stream.heartbeat-thread-name`            | `notice-sse-heartbeat`                                       | 心跳线程名。                                        |
+| `notice.constants.stream.log-heartbeat-disabled`           | `Notice SSE heartbeat disabled (interval={}ms).`             | 心跳禁用日志模板。                                     |
+| `notice.constants.stream.log-push-failed`                  | `Failed to push notice to user {}, removing emitter.`        | 新通知推送失败日志模板。                                  |
+| `notice.constants.stream.log-push-update-failed`           | `Failed to push notice update to user {}, removing emitter.` | 未读数推送失败日志模板。                                  |
+| `notice.constants.stream.log-init-failed`                  | `Failed to send init payload to user {}, removing emitter.`  | 初始化推送失败日志模板。                                  |
+| `notice.constants.stream.log-heartbeat-failed`             | `Heartbeat failed for user {}, removing emitter: {}`         | 心跳推送失败日志模板。                                   |
 
 ### Permission 模块常量覆盖（permission.constants）
 
@@ -544,6 +552,21 @@
 ### 通知（SSE 推送）
 
 - 配置：`notice.constants.stream.*`。
+
+### 配置变更同步（config.change-sync）
+
+| 配置键                                                    | 默认值                     | 说明                          |
+|--------------------------------------------------------|-------------------------|-----------------------------|
+| `config.change-sync.enabled`                           | `true`                  | 是否启用跨节点配置变更同步。              |
+| `config.change-sync.pull-enabled`                      | `true`                  | 是否启用变更流水拉取模式。               |
+| `config.change-sync.queue-key`                         | `config:change:queue`   | 变更事件队列 Key。                 |
+| `config.change-sync.poll-interval-millis`              | `1000`                  | 轮询间隔（毫秒）。                   |
+| `config.change-sync.max-batch-size`                    | `200`                   | 单次拉取/处理最大条数。                |
+| `config.change-sync.queue-ttl-seconds`                 | `300`                   | 队列 Key 过期时间（秒），`<=0` 表示不设置。 |
+| `config.change-sync.cursor-key-prefix`                 | `config:change:cursor:` | 变更流水游标 Key 前缀。              |
+| `config.change-sync.cursor-ttl-seconds`                | `86400`                 | 游标 Key 过期时间（秒），`<=0` 表示不设置。 |
+| `config.change-sync.fallback-refresh-interval-seconds` | `0`                     | 兜底全量刷新间隔（秒），`<=0` 表示关闭。     |
+| `config.change-sync.processed-cache-max-size`          | `10000`                 | 已处理变更缓存最大条数，防止本地缓存无限增长。     |
 
 ### 定时任务（Quartz）
 

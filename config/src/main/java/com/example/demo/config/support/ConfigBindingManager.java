@@ -105,6 +105,34 @@ public class ConfigBindingManager implements SmartInitializingSingleton {
         }
     }
 
+    /**
+     * 兜底全量刷新热更新配置。
+     */
+    public void refreshAllHotUpdate(boolean evictCache) {
+        if (groupTargets.isEmpty()) {
+            return;
+        }
+        for (List<BindingTarget> targets : groupTargets.values()) {
+            if (targets == null || targets.isEmpty()) {
+                continue;
+            }
+            for (BindingTarget target : targets) {
+                if (target == null || target.properties == null || target.properties.isEmpty()) {
+                    continue;
+                }
+                for (PropertyMeta meta : target.properties.values()) {
+                    if (meta == null || !meta.hotUpdateEnabled) {
+                        continue;
+                    }
+                    if (evictCache) {
+                        cacheService.evict(target.group, target.prefix + meta.path);
+                    }
+                    refreshProperty(target, meta);
+                }
+            }
+        }
+    }
+
     @EventListener
     public void onConfigChange(ConfigChangeEvent event) {
         if (event == null) {

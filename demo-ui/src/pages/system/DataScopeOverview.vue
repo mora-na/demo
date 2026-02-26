@@ -9,6 +9,7 @@
           filterable
           remote
           clearable
+          size="small"
           :remote-method="handleUserSearch"
           @visible-change="handleUserDropdown"
       >
@@ -25,6 +26,7 @@
           :placeholder="t('dataScope.overview.menuPlaceholder')"
           clearable
           filterable
+          size="small"
       >
         <el-option
             v-for="menu in permissionOptions"
@@ -33,7 +35,8 @@
             :value="menu.permission"
         />
       </el-select>
-      <el-button v-permission="'data-scope:resolve'" :loading="loading" class="filter-button" type="primary"
+      <el-button v-permission="'data-scope:resolve'" :loading="loading" class="filter-button" size="small"
+                 type="primary"
                  @click="handleResolve">
         {{ t("dataScope.overview.search") }}
       </el-button>

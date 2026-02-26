@@ -504,6 +504,18 @@ CREATE TABLE IF NOT EXISTS sys_notice_recipient
     COMMENT
         ='系统通知接收表';
 
+CREATE TABLE IF NOT EXISTS sys_notice_stream_node
+(
+    node_id          VARCHAR(128) NOT NULL COMMENT '节点ID',
+    connection_count BIGINT       NOT NULL DEFAULT 0 COMMENT '连接数',
+    heartbeat_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '心跳时间',
+    PRIMARY KEY (node_id),
+    KEY idx_sys_notice_stream_node_heartbeat (heartbeat_at)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='SSE节点连接计数';
+
 USE demo_job;
 
 CREATE TABLE IF NOT EXISTS sys_job
@@ -1332,3 +1344,28 @@ CREATE TABLE IF NOT EXISTS demo_config.sys_config
   DEFAULT CHARSET = utf8mb4
     COMMENT
         ='系统配置表';
+
+CREATE TABLE IF NOT EXISTS demo_config.sys_config_change_log
+(
+    id               BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    config_id        BIGINT                DEFAULT NULL COMMENT '配置ID',
+    config_key       VARCHAR(128) NOT NULL COMMENT '配置键',
+    config_group     VARCHAR(64)  NOT NULL DEFAULT 'default' COMMENT '配置分组',
+    config_value_old TEXT COMMENT '旧配置值（存储值）',
+    config_value_new TEXT COMMENT '新配置值（存储值）',
+    config_type      VARCHAR(32)  NOT NULL DEFAULT 'STRING' COMMENT '配置类型',
+    config_version   INT          NOT NULL DEFAULT 1 COMMENT '配置版本号',
+    hot_update       TINYINT      NOT NULL DEFAULT 0 COMMENT '是否支持热更新：1-是，0-否',
+    config_sensitive TINYINT      NOT NULL DEFAULT 0 COMMENT '是否敏感配置：1-是，0-否',
+    change_type      VARCHAR(16)  NOT NULL COMMENT '变更类型：CREATE/UPDATE/DELETE',
+    change_time      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
+    node_id          VARCHAR(128)          DEFAULT NULL COMMENT '节点ID',
+    operator_id      BIGINT                DEFAULT NULL COMMENT '操作人',
+    PRIMARY KEY (id),
+    KEY idx_sys_config_change_group_key (config_group, config_key),
+    KEY idx_sys_config_change_time (change_time),
+    KEY idx_sys_config_change_config (config_id, config_version)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='系统配置变更流水';

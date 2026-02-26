@@ -1,5 +1,26 @@
 # 配置模块默认设置
 config:
+  change-sync:
+    # 是否启用跨节点同步
+    enabled: true
+    # 是否启用变更流水拉取（数据库查询拉取）
+    pull-enabled: false
+    # 事件队列 key
+    queue-key: "config:change:queue"
+    # 轮询间隔（毫秒）
+    poll-interval-millis: 1000
+    # 单次最大处理数量
+    max-batch-size: 200
+    # 队列 key 过期时间（秒）
+    queue-ttl-seconds: 300
+    # 游标 key 前缀
+    cursor-key-prefix: "config:change:cursor:"
+    # 游标过期时间（秒）
+    cursor-ttl-seconds: 86400
+    # 兜底全量刷新间隔（秒），<=0 关闭
+    fallback-refresh-interval-seconds: 0
+    # 已处理变更缓存最大条数（防止本地缓存无限增长）
+    processed-cache-max-size: 10000
   constants:
     cache:
       # 配置缓存时长（秒），<=0 表示不缓存

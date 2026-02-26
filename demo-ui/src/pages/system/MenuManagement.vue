@@ -6,8 +6,12 @@
         <div class="module-sub">{{ t("menu.subtitle") }}</div>
       </div>
       <div class="module-actions">
-        <el-button v-permission="'menu:create'" type="primary" @click="openCreate">{{ t("menu.create") }}</el-button>
-        <el-button v-permission="'menu:delete'" v-if="selectedMenuIds.length" type="danger" @click="removeMenus">
+        <el-button v-permission="'menu:create'" size="small" type="primary" @click="openCreate">{{
+            t("menu.create")
+          }}
+        </el-button>
+        <el-button v-if="selectedMenuIds.length" v-permission="'menu:delete'" size="small" type="danger"
+                   @click="removeMenus">
           {{ t("menu.filter.delete") }}
         </el-button>
       </div>

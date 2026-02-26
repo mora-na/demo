@@ -3,16 +3,22 @@
     <div class="override-head">
       <div class="filters" @keyup.enter="handleSearch">
         <el-input v-model.trim="filters.userName" :placeholder="t('dataScope.user.userName')" class="filter-input"
-                  clearable/>
+                  clearable size="small"/>
         <el-input v-model.trim="filters.menuKeyword" :placeholder="t('dataScope.user.menuKeyword')" class="filter-input"
-                  clearable/>
-        <el-select v-model="filters.status" clearable :placeholder="t('dataScope.user.statusPlaceholder')" style="width: 120px">
+                  clearable size="small"/>
+        <el-select v-model="filters.status" :placeholder="t('dataScope.user.statusPlaceholder')" clearable
+                   size="small" style="width: 120px">
           <el-option :label="t('common.enabled')" :value="1"/>
           <el-option :label="t('common.disabled')" :value="0"/>
         </el-select>
-        <el-button v-permission="'data-scope:user:query'" @click="handleSearch">{{ t("common.search") }}</el-button>
+        <el-button v-permission="'data-scope:user:query'" size="small" @click="handleSearch">{{
+            t("common.search")
+          }}
+        </el-button>
       </div>
-      <el-button v-permission="'data-scope:user:manage'" type="primary" @click="openCreate">{{ t("dataScope.user.create") }}</el-button>
+      <el-button v-permission="'data-scope:user:manage'" size="small" type="primary" @click="openCreate">
+        {{ t("dataScope.user.create") }}
+      </el-button>
     </div>
 
     <el-table v-loading="loading" :data="rows" size="small">

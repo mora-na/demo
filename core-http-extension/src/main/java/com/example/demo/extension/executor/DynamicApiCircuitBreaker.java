@@ -1,14 +1,15 @@
 package com.example.demo.extension.executor;
 
+import com.example.demo.common.cache.CacheTool;
 import com.example.demo.extension.api.executor.DynamicApiTerminationReason;
 import com.example.demo.extension.config.DynamicApiProperties;
 import com.example.demo.extension.registry.DynamicApiMeta;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import lombok.Data;
 import org.springframework.stereotype.Component;
 
+import java.io.Serializable;
 import java.time.Duration;
-import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * 简易动态接口熔断器。
@@ -16,12 +17,14 @@ import java.util.Objects;
 @Component
 public class DynamicApiCircuitBreaker {
 
-    private final DynamicApiProperties properties;
-    private final Cache<Long, CircuitState> states;
+    private static final String STATE_KEY_PREFIX = "dynamic.api:circuit:";
 
-    public DynamicApiCircuitBreaker(DynamicApiProperties properties) {
+    private final DynamicApiProperties properties;
+    private final CacheTool cacheTool;
+
+    public DynamicApiCircuitBreaker(DynamicApiProperties properties, CacheTool cacheTool) {
         this.properties = properties;
-        this.states = buildStateCache();
+        this.cacheTool = cacheTool;
     }
 
     public boolean allow(DynamicApiMeta meta) {
@@ -30,19 +33,23 @@ public class DynamicApiCircuitBreaker {
         }
         long apiId = meta.getApi().getId();
         long now = System.currentTimeMillis();
-        CircuitState state = states.get(apiId, id -> new CircuitState());
-        synchronized (Objects.requireNonNull(state)) {
+        Boolean result = withStateLock(apiId, () -> {
+            CircuitState state = loadState(apiId);
+            boolean allow = true;
             if (state.openUntil > 0 && now < state.openUntil) {
-                return false;
+                allow = false;
+            } else {
+                if (state.openUntil > 0 && now >= state.openUntil) {
+                    state.reset(now);
+                }
+                if (now - state.windowStart >= getWindowMs()) {
+                    state.reset(now);
+                }
             }
-            if (state.openUntil > 0 && now >= state.openUntil) {
-                state.reset(now);
-            }
-            if (now - state.windowStart >= getWindowMs()) {
-                state.reset(now);
-            }
-            return true;
-        }
+            saveState(apiId, state);
+            return allow;
+        });
+        return result == null ? true : result;
     }
 
     public void record(DynamicApiMeta meta, boolean success, DynamicApiTerminationReason reason) {
@@ -54,10 +61,10 @@ public class DynamicApiCircuitBreaker {
         }
         long apiId = meta.getApi().getId();
         long now = System.currentTimeMillis();
-        CircuitState state = states.get(apiId, id -> new CircuitState());
-        synchronized (Objects.requireNonNull(state)) {
+        withStateLock(apiId, () -> {
+            CircuitState state = loadState(apiId);
             if (state.openUntil > 0 && now < state.openUntil) {
-                return;
+                return null;
             }
             if (now - state.windowStart >= getWindowMs()) {
                 state.reset(now);
@@ -68,14 +75,15 @@ public class DynamicApiCircuitBreaker {
                 state.failure++;
             }
             int total = state.success + state.failure;
-            if (total < getMinimumCalls()) {
-                return;
+            if (total >= getMinimumCalls()) {
+                double failureRate = total == 0 ? 0d : (state.failure * 1.0d / total);
+                if (failureRate >= getFailureRate()) {
+                    state.openUntil = now + getOpenDurationMs();
+                }
             }
-            double failureRate = total == 0 ? 0d : (state.failure * 1.0d / total);
-            if (failureRate >= getFailureRate()) {
-                state.openUntil = now + getOpenDurationMs();
-            }
-        }
+            saveState(apiId, state);
+            return null;
+        });
     }
 
     private boolean isEnabled() {
@@ -103,22 +111,6 @@ public class DynamicApiCircuitBreaker {
         return Math.max(1000L, properties.getCircuitBreaker().getOpenDurationMs());
     }
 
-    private Cache<Long, CircuitState> buildStateCache() {
-        int maxEntries = resolveMaxEntries();
-        int expireSeconds = resolveExpireSeconds();
-        return Caffeine.newBuilder()
-                .maximumSize(maxEntries)
-                .expireAfterAccess(Duration.ofSeconds(expireSeconds))
-                .build();
-    }
-
-    private int resolveMaxEntries() {
-        if (properties == null || properties.getCircuitBreaker() == null) {
-            return 10000;
-        }
-        return Math.max(1, properties.getCircuitBreaker().getMaxEntries());
-    }
-
     private int resolveExpireSeconds() {
         if (properties == null || properties.getCircuitBreaker() == null) {
             return 1800;
@@ -126,7 +118,45 @@ public class DynamicApiCircuitBreaker {
         return Math.max(60, properties.getCircuitBreaker().getExpireAfterAccessSeconds());
     }
 
-    private static class CircuitState {
+    private String buildStateKey(long apiId) {
+        return STATE_KEY_PREFIX + apiId;
+    }
+
+    private String buildLockKey(long apiId) {
+        return buildStateKey(apiId) + ":lock";
+    }
+
+    private <T> T withStateLock(long apiId, Supplier<T> action) {
+        if (action == null) {
+            return null;
+        }
+        String lockKey = buildLockKey(apiId);
+        String token = cacheTool.tryLock(lockKey, Duration.ofSeconds(2));
+        if (token == null) {
+            return null;
+        }
+        try {
+            return action.get();
+        } finally {
+            cacheTool.releaseLock(lockKey, token);
+        }
+    }
+
+    private CircuitState loadState(long apiId) {
+        Object value = cacheTool.get(buildStateKey(apiId));
+        if (value instanceof CircuitState) {
+            return (CircuitState) value;
+        }
+        return new CircuitState();
+    }
+
+    private void saveState(long apiId, CircuitState state) {
+        cacheTool.set(buildStateKey(apiId), state, Duration.ofSeconds(resolveExpireSeconds()));
+    }
+
+    @Data
+    private static class CircuitState implements Serializable {
+        private static final long serialVersionUID = 1L;
         private long windowStart = System.currentTimeMillis();
         private long openUntil = 0;
         private int success = 0;

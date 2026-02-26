@@ -6,14 +6,19 @@
         <div class="module-sub">{{ t("job.subtitle") }}</div>
       </div>
       <div class="module-actions" @keyup.enter="handleSearch">
-        <el-input v-model.trim="filters.name" clearable :placeholder="t('job.filter.namePlaceholder')"/>
-        <el-input v-model.trim="filters.handlerName" clearable :placeholder="t('job.filter.handlerPlaceholder')"/>
-        <el-select v-model="filters.status" clearable :placeholder="t('job.filter.statusPlaceholder')" style="width: 120px">
+        <el-input v-model.trim="filters.name" :placeholder="t('job.filter.namePlaceholder')" clearable size="small"/>
+        <el-input v-model.trim="filters.handlerName" :placeholder="t('job.filter.handlerPlaceholder')" clearable
+                  size="small"/>
+        <el-select v-model="filters.status" :placeholder="t('job.filter.statusPlaceholder')" class="filter-select-wide"
+                   clearable size="small">
           <el-option :value="1" :label="t('job.dialog.statusEnabled')"/>
           <el-option :value="0" :label="t('job.dialog.statusDisabled')"/>
         </el-select>
-        <el-button @click="handleSearch">{{ t("job.filter.search") }}</el-button>
-        <el-button v-permission="'job:create'" type="primary" @click="openCreate">{{ t("job.filter.create") }}</el-button>
+        <el-button size="small" @click="handleSearch">{{ t("job.filter.search") }}</el-button>
+        <el-button v-permission="'job:create'" size="small" type="primary" @click="openCreate">{{
+            t("job.filter.create")
+          }}
+        </el-button>
       </div>
     </div>
 
@@ -1343,6 +1348,11 @@ onUnmounted(() => {
   overflow-x: auto;
   gap: 8px;
   align-items: center;
+}
+
+.filter-select-wide {
+  width: 120px;
+  min-width: 100px;
 }
 
 .module-footer {

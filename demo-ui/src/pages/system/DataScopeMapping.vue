@@ -3,12 +3,17 @@
     <div class="mapping-head">
       <div class="filters" @keyup.enter="handleSearch">
         <el-input v-model.trim="filters.scopeKey" :placeholder="t('dataScope.mapping.scopeKey')" class="filter-input"
-                  clearable/>
+                  clearable size="small"/>
         <el-input v-model.trim="filters.tableName" :placeholder="t('dataScope.mapping.tableName')" class="filter-input"
-                  clearable/>
-        <el-button v-permission="'data-scope:rule:query'" @click="handleSearch">{{ t("common.search") }}</el-button>
+                  clearable size="small"/>
+        <el-button v-permission="'data-scope:rule:query'" size="small" @click="handleSearch">{{
+            t("common.search")
+          }}
+        </el-button>
       </div>
-      <el-button v-permission="'data-scope:rule:create'" type="primary" @click="openCreate">{{ t("dataScope.mapping.create") }}</el-button>
+      <el-button v-permission="'data-scope:rule:create'" size="small" type="primary" @click="openCreate">
+        {{ t("dataScope.mapping.create") }}
+      </el-button>
     </div>
 
     <el-table v-loading="loading" :data="rows" size="small">
