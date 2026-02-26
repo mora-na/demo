@@ -29,8 +29,16 @@ public class CacheTool {
         cacheStore.set(key, value, ttl);
     }
 
+    public void setString(String key, String value, Duration ttl) {
+        cacheStore.setString(key, value, ttl);
+    }
+
     public Boolean set(String key, Object value) {
         return cacheStore.set(key, value);
+    }
+
+    public Boolean setString(String key, String value) {
+        return cacheStore.setString(key, value);
     }
 
     public Boolean setNx(String key, Object value) {
@@ -50,6 +58,18 @@ public class CacheTool {
 
     public Object get(String key) {
         return cacheStore.get(key);
+    }
+
+    public String getString(String key) {
+        return cacheStore.getString(key);
+    }
+
+    public Object getAndDelete(String key) {
+        return cacheStore.getAndDelete(key);
+    }
+
+    public String getAndDeleteString(String key) {
+        return cacheStore.getAndDeleteString(key);
     }
 
     public Object getSet(String key, Object value) {

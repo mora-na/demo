@@ -125,15 +125,10 @@ public class PermissionConstants {
     @Data
     public static class MenuDataScope {
         public static final String DEFAULT_INHERIT = "INHERIT";
-        public static final String DEFAULT_DEFAULT_TYPE = "DEFAULT";
 
         /**
          * 角色菜单数据范围继承标识（表示清空菜单级覆盖，回退到角色默认范围）。
          */
         private String inherit = DEFAULT_INHERIT;
-        /**
-         * 角色菜单数据范围默认标识（同 inherit，保留用于兼容前端表达）。
-         */
-        private String defaultType = DEFAULT_DEFAULT_TYPE;
     }
 }

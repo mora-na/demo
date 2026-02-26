@@ -84,9 +84,9 @@ public class OperationConfirmService {
             return SendCodeResult.fail(authConstants.getController().getInternalServerErrorCode(),
                     "auth.operation.confirm.send.failed", 0);
         }
-        cacheTool.set(buildCodeKey(userId, normalizedActionKey), code, Duration.ofSeconds(codeTtlSeconds));
-        cacheTool.delete(buildAttemptKey(userId, normalizedActionKey));
-        cacheTool.set(cooldownKey, "1", Duration.ofSeconds(resendIntervalSeconds));
+        cacheTool.setString(buildCodeKey(userId, normalizedActionKey), code, Duration.ofSeconds(codeTtlSeconds));
+        cacheTool.setString(buildAttemptKey(userId, normalizedActionKey), "0", Duration.ofSeconds(codeTtlSeconds));
+        cacheTool.setString(cooldownKey, "1", Duration.ofSeconds(resendIntervalSeconds));
         return SendCodeResult.success();
     }
 
@@ -118,14 +118,14 @@ public class OperationConfirmService {
                     "auth.operation.confirm.code.invalid");
         }
         String codeKey = buildCodeKey(userId, normalizedActionKey);
-        String cachedCode = toStringValue(cacheTool.get(codeKey));
+        String cachedCode = cacheTool.getString(codeKey);
         if (StringUtils.isBlank(cachedCode)) {
             return VerifyCodeResult.fail(authConstants.getController().getBadRequestCode(),
                     "auth.operation.confirm.code.expired");
         }
         if (!Strings.CS.equals(cachedCode, inputCode)) {
             String attemptKey = buildAttemptKey(userId, normalizedActionKey);
-            long attempts = incrementAttempts(attemptKey, codeKey);
+            long attempts = incrementAttempts(attemptKey, resolveCodeTtlSeconds());
             if (attempts >= resolveMaxVerifyAttempts()) {
                 cacheTool.delete(codeKey);
                 cacheTool.delete(attemptKey);
@@ -140,7 +140,7 @@ public class OperationConfirmService {
         cacheTool.delete(buildAttemptKey(userId, normalizedActionKey));
         int ticketTtlSeconds = resolveTicketTtlSeconds();
         String ticket = UUID.randomUUID().toString().replace("-", "");
-        cacheTool.set(buildTicketKey(userId, normalizedActionKey), ticket, Duration.ofSeconds(ticketTtlSeconds));
+        cacheTool.setString(buildTicketKey(userId, normalizedActionKey), ticket, Duration.ofSeconds(ticketTtlSeconds));
         long expiresAt = Instant.now().getEpochSecond() + ticketTtlSeconds;
         return VerifyCodeResult.success(ticket, expiresAt);
     }
@@ -166,7 +166,7 @@ public class OperationConfirmService {
             return false;
         }
         String ticketKey = buildTicketKey(userId, normalizedActionKey);
-        String cachedTicket = toStringValue(cacheTool.get(ticketKey));
+        String cachedTicket = cacheTool.getString(ticketKey);
         if (!Strings.CS.equals(cachedTicket, ticket.trim())) {
             return false;
         }
@@ -258,12 +258,11 @@ public class OperationConfirmService {
         return builder;
     }
 
-    private long incrementAttempts(String attemptKey, String codeKey) {
+    private long incrementAttempts(String attemptKey, int ttlSeconds) {
         Long attempts = cacheTool.increment(attemptKey);
         long value = attempts == null ? 1L : attempts;
-        long remain = cacheTool.getExpire(codeKey, java.util.concurrent.TimeUnit.SECONDS);
-        if (remain > 0) {
-            cacheTool.expire(attemptKey, Duration.ofSeconds(remain));
+        if (ttlSeconds > 0 && value <= 1L) {
+            cacheTool.expire(attemptKey, Duration.ofSeconds(ttlSeconds));
         }
         return value;
     }
@@ -300,13 +299,6 @@ public class OperationConfirmService {
         String separator = authConstants.getSecurity().getOperationConfirm().getKeySeparator();
         String sep = StringUtils.defaultIfBlank(separator, ":");
         return basePrefix + userId + sep + actionKey;
-    }
-
-    private String toStringValue(Object value) {
-        if (value == null) {
-            return null;
-        }
-        return String.valueOf(value);
     }
 
     @Data

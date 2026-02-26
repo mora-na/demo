@@ -41,7 +41,7 @@ public class CaptchaStore {
             return;
         }
         long ttlSeconds = Math.max(1, expireAtSeconds - Instant.now().getEpochSecond());
-        cacheTool.set(buildKey(captchaId), code, Duration.ofSeconds(ttlSeconds));
+        cacheTool.setString(buildKey(captchaId), code, Duration.ofSeconds(ttlSeconds));
     }
 
     /**
@@ -59,11 +59,10 @@ public class CaptchaStore {
             return false;
         }
         String key = buildKey(captchaId);
-        String stored = cacheTool.get(key, String.class);
+        String stored = cacheTool.getAndDeleteString(key);
         if (stored == null) {
             return false;
         }
-        cacheTool.delete(key);
         return stored.equalsIgnoreCase(code);
     }
 

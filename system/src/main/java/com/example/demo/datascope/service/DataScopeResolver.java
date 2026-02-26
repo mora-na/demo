@@ -142,9 +142,8 @@ public class DataScopeResolver {
     }
 
     private DataScopeResult fallbackToUser(SysUser user, String fallback) {
-        String type = normalizeType(user == null ? null : user.getDataScopeType(), fallback);
-        String value = user == null ? null : user.getDataScopeValue();
-        return new DataScopeResult(type, value);
+        String type = normalizeType(null, fallback);
+        return new DataScopeResult(type, null);
     }
 
     private List<Long> resolveDeptTreeIds(Long rootId) {

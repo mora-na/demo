@@ -16,7 +16,15 @@ public interface CacheStore {
 
     void set(String key, Object value, Duration ttl);
 
+    void setString(String key, String value, Duration ttl);
+
     Object get(String key);
+
+    String getString(String key);
+
+    Object getAndDelete(String key);
+
+    String getAndDeleteString(String key);
 
     Boolean setIfAbsent(String key, Object value, Duration ttl);
 
@@ -31,6 +39,8 @@ public interface CacheStore {
     long getExpire(String key, TimeUnit unit);
 
     Boolean set(String key, Object value);
+
+    Boolean setString(String key, String value);
 
     Boolean setNx(String key, Object value);
 

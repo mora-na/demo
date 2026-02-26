@@ -33,8 +33,6 @@ public class AuthConstants {
     @Data
     public static class Token {
         public static final String DEFAULT_AUTHORIZATION_HEADER = "Authorization";
-        public static final String DEFAULT_FALLBACK_TOKEN_HEADER = "X-Auth-Token";
-        public static final String DEFAULT_QUERY_TOKEN_PARAMETER = "token";
         public static final String DEFAULT_BEARER_PREFIX = "Bearer ";
         public static final String DEFAULT_TOKEN_TYPE = "Bearer";
         public static final String DEFAULT_JWT_HEADER_ALG_KEY = "alg";
@@ -51,8 +49,6 @@ public class AuthConstants {
         public static final String DEFAULT_STORE_KEY_PREFIX = "auth:token:";
 
         private String authorizationHeader = DEFAULT_AUTHORIZATION_HEADER;
-        private String fallbackTokenHeader = DEFAULT_FALLBACK_TOKEN_HEADER;
-        private String queryTokenParameter = DEFAULT_QUERY_TOKEN_PARAMETER;
         private String bearerPrefix = DEFAULT_BEARER_PREFIX;
         private String tokenType = DEFAULT_TOKEN_TYPE;
         private String jwtHeaderAlgKey = DEFAULT_JWT_HEADER_ALG_KEY;

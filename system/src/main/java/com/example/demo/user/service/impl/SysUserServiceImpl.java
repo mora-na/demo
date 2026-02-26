@@ -324,13 +324,6 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (getById(id) == null) {
             return false;
         }
-        // 兼容旧字段：同步保存到 sys_user
-        SysUser user = new SysUser();
-        user.setId(id);
-        user.setDataScopeType(dataScopeType);
-        user.setDataScopeValue(dataScopeValue);
-        boolean updated = updateById(user);
-
         String normalizedKey = (scopeKey == null || scopeKey.trim().isEmpty())
                 ? userConstants.getScope().getGlobalScopeKey()
                 : scopeKey.trim();
@@ -348,9 +341,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         record.setDataScopeType(dataScopeType);
         record.setDataScopeValue(dataScopeValue);
         if (record.getId() == null) {
-            return updated && userDataScopeService.save(record);
+            return userDataScopeService.save(record);
         }
-        return updated && userDataScopeService.updateById(record);
+        return userDataScopeService.updateById(record);
     }
 
     @Override

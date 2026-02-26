@@ -60,6 +60,11 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
     }
 
     @Override
+    public void setString(String key, String value, Duration ttl) {
+        set(key, value, ttl);
+    }
+
+    @Override
     public Object get(String key) {
         if (key == null) {
             return null;
@@ -73,6 +78,38 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
             return null;
         }
         return serializer.deserialize(entry.getCacheValue(), entry.getValueClass());
+    }
+
+    @Override
+    public String getString(String key) {
+        Object value = get(key);
+        return value instanceof String ? (String) value : null;
+    }
+
+    @Override
+    @Transactional
+    public Object getAndDelete(String key) {
+        if (key == null) {
+            return null;
+        }
+        CacheEntry entry = cacheMapper.selectById(key);
+        if (entry == null) {
+            return null;
+        }
+        if (isExpired(entry)) {
+            cacheMapper.deleteById(key);
+            return null;
+        }
+        Object value = serializer.deserialize(entry.getCacheValue(), entry.getValueClass());
+        cacheMapper.deleteById(key);
+        return value;
+    }
+
+    @Override
+    @Transactional
+    public String getAndDeleteString(String key) {
+        Object value = getAndDelete(key);
+        return value instanceof String ? (String) value : null;
     }
 
     @Override
@@ -215,6 +252,15 @@ public class DbCacheStore implements CacheStore, AutoCloseable {
 
     @Override
     public Boolean set(String key, Object value) {
+        if (key == null) {
+            return false;
+        }
+        set(key, value, null);
+        return true;
+    }
+
+    @Override
+    public Boolean setString(String key, String value) {
         if (key == null) {
             return false;
         }

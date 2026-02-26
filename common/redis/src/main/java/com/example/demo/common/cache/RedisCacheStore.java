@@ -5,7 +5,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
-import org.springframework.data.redis.serializer.SerializationException;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -55,19 +54,47 @@ public class RedisCacheStore implements CacheStore {
     }
 
     @Override
+    public void setString(String key, String value, Duration ttl) {
+        if (key == null) {
+            return;
+        }
+        if (ttl == null || ttl.isZero() || ttl.isNegative()) {
+            setString(key, value);
+            return;
+        }
+        stringRedisTemplate.opsForValue().set(key, value, ttl);
+    }
+
+    @Override
     public Object get(String key) {
         if (key == null) {
             return null;
         }
-        try {
-            Object value = redisTemplate.opsForValue().get(key);
-            if (value != null) {
-                return value;
-            }
-        } catch (SerializationException ex) {
-            // Fall back to string storage for legacy/simple string values.
+        return redisTemplate.opsForValue().get(key);
+    }
+
+    @Override
+    public String getString(String key) {
+        if (key == null) {
+            return null;
         }
         return stringRedisTemplate.opsForValue().get(key);
+    }
+
+    @Override
+    public Object getAndDelete(String key) {
+        if (key == null) {
+            return null;
+        }
+        return redisTemplate.opsForValue().getAndDelete(key);
+    }
+
+    @Override
+    public String getAndDeleteString(String key) {
+        if (key == null) {
+            return null;
+        }
+        return stringRedisTemplate.opsForValue().getAndDelete(key);
     }
 
     @Override
@@ -135,6 +162,15 @@ public class RedisCacheStore implements CacheStore {
         } else {
             redisTemplate.opsForValue().set(key, value);
         }
+        return true;
+    }
+
+    @Override
+    public Boolean setString(String key, String value) {
+        if (key == null) {
+            return false;
+        }
+        stringRedisTemplate.opsForValue().set(key, value);
         return true;
     }
 

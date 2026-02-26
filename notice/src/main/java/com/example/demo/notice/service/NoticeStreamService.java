@@ -252,7 +252,7 @@ public class NoticeStreamService {
     }
 
     private void pollDispatchEvents() {
-        Long current = parseLong(cacheTool.get(DISPATCH_SEQ_KEY));
+        Long current = parseLong(cacheTool.getString(DISPATCH_SEQ_KEY));
         if (current == null || current <= 0L) {
             return;
         }
@@ -849,10 +849,7 @@ public class NoticeStreamService {
     private long nextDispatchSeq() {
         Long next = cacheTool.increment(DISPATCH_SEQ_KEY);
         if (next == null) {
-            Long current = parseLong(cacheTool.get(DISPATCH_SEQ_KEY));
-            next = current == null ? 1L : current + 1L;
-            cacheTool.set(DISPATCH_SEQ_KEY, next, dispatchEventTtl());
-            return next;
+            return 1L;
         }
         cacheTool.expire(DISPATCH_SEQ_KEY, dispatchEventTtl());
         return next;
@@ -970,7 +967,7 @@ public class NoticeStreamService {
 
     private long resolveTotalFromNodes() {
         if (streamNodeMapper == null) {
-            Long value = parseLong(cacheTool.get(buildTotalConnectionKey()));
+            Long value = parseLong(cacheTool.getString(buildTotalConnectionKey()));
             return value == null ? Math.max(0, totalConnections.get()) : value;
         }
         LocalDateTime minHeartbeat = LocalDateTime.now().minusSeconds(resolveNodeHeartbeatExpireSeconds());
@@ -988,7 +985,7 @@ public class NoticeStreamService {
             return;
         }
         String nodeKey = buildNodeConnectionKey(nodeId);
-        Long local = parseLong(cacheTool.get(nodeKey));
+        Long local = parseLong(cacheTool.getString(nodeKey));
         if (local != null && local > 0) {
             Long total = cacheTool.incrBy(buildTotalConnectionKey(), -local);
             if (total == null || total <= 0L) {

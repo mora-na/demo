@@ -76,6 +76,11 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
     }
 
     @Override
+    public void setString(String key, String value, Duration ttl) {
+        set(key, value, ttl);
+    }
+
+    @Override
     public Object get(String key) {
         if (key == null) {
             return null;
@@ -85,6 +90,31 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
             return null;
         }
         return item.value;
+    }
+
+    @Override
+    public String getString(String key) {
+        Object value = get(key);
+        return value instanceof String ? (String) value : null;
+    }
+
+    @Override
+    public Object getAndDelete(String key) {
+        if (key == null) {
+            return null;
+        }
+        CacheItem item = cache.getIfPresent(key);
+        if (item == null) {
+            return null;
+        }
+        delete(key);
+        return item.value;
+    }
+
+    @Override
+    public String getAndDeleteString(String key) {
+        Object value = getAndDelete(key);
+        return value instanceof String ? (String) value : null;
     }
 
     @Override
@@ -190,6 +220,15 @@ public class MemoryCacheStore implements CacheStore, AutoCloseable {
 
     @Override
     public Boolean set(String key, Object value) {
+        if (key == null) {
+            return false;
+        }
+        set(key, value, null);
+        return true;
+    }
+
+    @Override
+    public Boolean setString(String key, String value) {
         if (key == null) {
             return false;
         }

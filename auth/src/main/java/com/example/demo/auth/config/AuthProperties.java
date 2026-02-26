@@ -7,7 +7,6 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
 import java.util.*;
 
 /**
@@ -81,51 +80,6 @@ public class AuthProperties {
         @Min(0)
         private long tokenVersionTtlSeconds = 0;
 
-        @javax.validation.Valid
-        private Cookie cookie = new Cookie();
-
-        /**
-         * JWT Cookie 配置，适用于 SSE/下载等无法设置 Header 的场景。
-         */
-        @Data
-        public static class Cookie {
-            /**
-             * 是否启用 JWT Cookie。
-             */
-            private boolean enabled = false;
-            /**
-             * Cookie 名称。
-             */
-            @NotBlank
-            private String name = "AUTH_TOKEN";
-            /**
-             * Cookie Path。
-             */
-            private String path = "/";
-            /**
-             * Cookie Domain（为空则不设置）。
-             */
-            private String domain = "";
-            /**
-             * 是否 HttpOnly。
-             */
-            private boolean httpOnly = true;
-            /**
-             * 是否 Secure（HTTPS 环境建议开启）。
-             */
-            private boolean secure = false;
-            /**
-             * SameSite 策略：Lax / Strict / None。
-             */
-            @Pattern(regexp = "(?i)^(Lax|Strict|None)$")
-            private String sameSite = "Lax";
-            /**
-             * Cookie Max-Age（秒）。
-             * <0 表示使用 JWT TTL；=0 表示会话 Cookie；>0 使用自定义值。
-             */
-            @Min(-1)
-            private long maxAgeSeconds = -1;
-        }
     }
 
     /**

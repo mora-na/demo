@@ -5,7 +5,6 @@ import com.example.demo.auth.dto.*;
 import com.example.demo.auth.model.AuthContext;
 import com.example.demo.auth.model.AuthUser;
 import com.example.demo.auth.service.*;
-import com.example.demo.auth.support.AuthCookieService;
 import com.example.demo.auth.support.AuthTokenResolver;
 import com.example.demo.auth.support.ClientIpResolver;
 import com.example.demo.common.model.CommonResult;
@@ -54,7 +53,6 @@ public class AuthController extends BaseController {
     private final UserProfileService userProfileService;
     private final ApplicationEventPublisher eventPublisher;
     private final AuthTokenResolver authTokenResolver;
-    private final AuthCookieService authCookieService;
     private final CaptchaRateLimitKeyResolver captchaRateLimitKeyResolver;
     private final ClientIpResolver clientIpResolver;
     private final AuthConstants systemConstants;
@@ -171,7 +169,6 @@ public class AuthController extends BaseController {
         loginResponse.setPasswordExpireDays(passwordPolicyService.getExpireDays());
         AuthConstants.Token tokenConstants = systemConstants.getToken();
         response.setHeader(tokenConstants.getAuthorizationHeader(), tokenConstants.getBearerPrefix() + loginResponse.getToken());
-        authCookieService.writeTokenCookie(response, loginResponse.getToken());
         String loginIp = resolveClientIp(httpRequest);
         String loginUserAgent = httpRequest == null ? null : httpRequest.getHeader(systemConstants.getProfile().getUserAgentHeader());
         loginAnomalyAlertService.checkAndNotify(user, loginIp, loginUserAgent, LocalDateTime.now());
@@ -196,12 +193,10 @@ public class AuthController extends BaseController {
             token = body.getToken();
         }
         if (StringUtils.isBlank(token)) {
-            authCookieService.clearTokenCookie(response);
             return error(systemConstants.getController().getBadRequestCode(), i18n("auth.logout.token.empty"));
         }
         AuthUser loginUser = tokenService.verifyToken(token);
         tokenService.revoke(loginUser == null ? null : loginUser.getId(), token);
-        authCookieService.clearTokenCookie(response);
         int logoutType = systemConstants.getLoginLog().getTypeLogout();
         int successStatus = systemConstants.getLoginLog().getStatusSuccess();
         publishLoginLog(loginUser == null ? null : loginUser.getUserName(),

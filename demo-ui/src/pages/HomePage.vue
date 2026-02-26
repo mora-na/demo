@@ -1015,7 +1015,7 @@ function startNoticeStream() {
     return;
   }
   const baseUrl = (import.meta.env.VITE_API_BASE_URL || "/prod-api").replace(/\/$/, "");
-  const url = `${baseUrl}/notices/stream`;
+  const url = `${baseUrl}/notices/stream?token=${encodeURIComponent(token)}`;
   const withCredentials = String(import.meta.env.VITE_API_WITH_CREDENTIALS || "").toLowerCase() === "true";
   const source = new EventSource(url, {withCredentials});
   noticeStream = source;

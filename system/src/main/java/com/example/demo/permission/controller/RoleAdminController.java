@@ -536,10 +536,7 @@ public class RoleAdminController extends BaseController {
         String inherit = StringUtils.defaultString(permissionConstants.getMenuDataScope().getInherit())
                 .trim()
                 .toUpperCase(Locale.ROOT);
-        String defaultType = StringUtils.defaultString(permissionConstants.getMenuDataScope().getDefaultType())
-                .trim()
-                .toUpperCase(Locale.ROOT);
-        if (normalized.equals(inherit) || normalized.equals(defaultType)) {
+        if (normalized.equals(inherit)) {
             return null;
         }
         switch (normalized) {

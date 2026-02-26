@@ -30,6 +30,12 @@ public class DataScopeProperties {
     @Min(0)
     private long cacheSeconds = 0;
 
+    /**
+     * 本地二级缓存时长（毫秒），用于减少分布式缓存读取。
+     */
+    @Min(0)
+    private long localCacheMillis = 1000;
+
     private Map<String, String> tableColumnMap = new LinkedHashMap<>();
 
     /**

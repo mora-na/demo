@@ -132,7 +132,7 @@ public class LoginAttemptService {
             count = updated == null ? 0 : updated;
         }
         if (count >= maxErrors) {
-            cacheTool.set(lockKey, "1", Duration.ofSeconds(lockSeconds));
+            cacheTool.setString(lockKey, "1", Duration.ofSeconds(lockSeconds));
             cacheTool.delete(failKey);
             return;
         }
