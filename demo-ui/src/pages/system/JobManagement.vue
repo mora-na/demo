@@ -176,7 +176,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="logDetailVisible" :title="t('job.logs.detailTitle')" align-center width="840px">
+    <el-dialog v-model="logDetailVisible" :title="t('job.logs.detailTitle')" align-center class="log-detail-dialog">
       <div class="log-detail-body" v-loading="logDetailLoading">
         <div class="log-detail-meta">
           <span>{{ logDetail?.jobName || "-" }}</span>
@@ -1366,6 +1366,15 @@ onUnmounted(() => {
   gap: 10px;
 }
 
+:deep(.log-detail-dialog) {
+  width: min(96vw, 1000px);
+}
+
+:deep(.log-detail-dialog .el-dialog__body) {
+  max-height: 80vh;
+  overflow: auto;
+}
+
 .log-detail-meta {
   display: flex;
   flex-wrap: wrap;
@@ -1378,7 +1387,7 @@ onUnmounted(() => {
   margin: 0;
   padding: 12px;
   min-height: 220px;
-  max-height: 420px;
+  max-height: 68vh;
   overflow-x: hidden;
   overflow-y: auto;
   border-radius: 12px;
