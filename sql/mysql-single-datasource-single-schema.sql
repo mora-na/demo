@@ -1036,7 +1036,7 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (202, 'URI监控', 'druid-monitor-weburi', 195, '/monitor/druid/weburi', 'DruidMonitorPage', 'druid:monitor', 1,
         60, '数据源监控-URI监控'),
        (203, 'Session监控', 'druid-monitor-session', 195, '/monitor/druid/session', 'DruidMonitorPage',
-        'druid:monitor', 1, 70, '数据源监控-Session监控'),
+        'druid:monitor', 0, 70, '数据源监控-Session监控'),
        (204, 'Spring监控', 'druid-monitor-spring', 195, '/monitor/druid/spring', 'DruidMonitorPage', 'druid:monitor', 1,
         80, '数据源监控-Spring监控'),
        (205, 'JSON API', 'druid-monitor-json', 195, '/monitor/druid/json', 'DruidMonitorPage', 'druid:monitor', 1, 90,
