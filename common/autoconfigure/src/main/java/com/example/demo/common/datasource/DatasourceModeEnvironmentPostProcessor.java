@@ -1,7 +1,9 @@
 package com.example.demo.common.datasource;
 
+import org.apache.commons.logging.Log;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
+import org.springframework.boot.logging.DeferredLogFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
@@ -15,6 +17,11 @@ import java.util.Map;
 public class DatasourceModeEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
     private static final String PROPERTY_SOURCE_NAME = "appDatasourceModeDerivedProperties";
+    private final Log log;
+
+    public DatasourceModeEnvironmentPostProcessor(DeferredLogFactory logFactory) {
+        this.log = logFactory.getLog(getClass());
+    }
 
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
@@ -47,6 +54,11 @@ public class DatasourceModeEnvironmentPostProcessor implements EnvironmentPostPr
 
         if (!derived.isEmpty()) {
             environment.getPropertySources().addFirst(new MapPropertySource(PROPERTY_SOURCE_NAME, derived));
+            log.info("EnvironmentPostProcessor loaded: " + PROPERTY_SOURCE_NAME
+                    + ", added " + derived.size() + " derived property(ies)");
+        } else {
+            log.info("EnvironmentPostProcessor loaded: " + PROPERTY_SOURCE_NAME
+                    + ", no derived properties added");
         }
     }
 

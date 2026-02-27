@@ -2,6 +2,32 @@
 
 本文档从 `README.md` 拆分，集中维护所有配置项说明。
 
+### 多节点集群覆盖（server.is-clustered）
+
+- 作用：通过一个总开关统一覆盖“多节点部署必须一致/必须启用”的配置，避免手工逐项修改。
+- 生效规则：
+    - `server.is-clustered=false`：不生效，用户配置完全按原值执行。
+    - `server.is-clustered=true`：将 `server.clustered-cover-config` 中的所有键以最高优先级强制覆盖。
+- 约定：`server.clustered-cover-config` 使用“点号 key”形式，支持任意类型值（布尔/数字/字符串/列表等）。
+
+**配置键**
+
+| 配置键                             | 默认值     | 说明                                   |
+|---------------------------------|---------|--------------------------------------|
+| `server.is-clustered`           | `false` | 是否启用多节点强制覆盖模式。                       |
+| `server.clustered-cover-config` | `{...}` | 多节点强制覆盖配置表（见 `application.yml` 预置项）。 |
+
+**示例**
+
+```yml
+server:
+  is-clustered: true
+  clustered-cover-config:
+    spring.quartz.properties.org.quartz.jobStore.isClustered: true
+    cache.location: redis
+    config.change-sync.enabled: true
+```
+
 ### 邮件通知能力（notify.mail + spring.mail）
 
 - 默认实现放在 `src/main/java/com/example/demo/common/notify/mail`，供 `auth/notice` 等模块复用。

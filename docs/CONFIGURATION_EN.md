@@ -2,6 +2,33 @@
 
 This document is split from `README_EN.md` and centralizes all configuration references.
 
+### Cluster Overrides (`server.is-clustered`)
+
+- Purpose: use a single switch to force multi-node-safe settings, avoiding manual per-key changes.
+- Behavior:
+    - `server.is-clustered=false`: no effect; user configurations apply as-is.
+    - `server.is-clustered=true`: all entries under `server.clustered-cover-config` are applied with highest precedence.
+- Convention: `server.clustered-cover-config` uses dotted keys and supports any value types (
+  boolean/number/string/list).
+
+**Keys**
+
+| Key                             | Default | Description                                           |
+|---------------------------------|---------|-------------------------------------------------------|
+| `server.is-clustered`           | `false` | Enable cluster override mode.                         |
+| `server.clustered-cover-config` | `{...}` | Cluster override map (see `application.yml` presets). |
+
+**Example**
+
+```yml
+server:
+  is-clustered: true
+  clustered-cover-config:
+    spring.quartz.properties.org.quartz.jobStore.isClustered: true
+    cache.location: redis
+    config.change-sync.enabled: true
+```
+
 ### Mail Notification Capability (`notify.mail` + `spring.mail`)
 
 - Default implementation is under `src/main/java/com/example/demo/common/notify/mail`, reusable by modules like `auth`
