@@ -13,7 +13,6 @@
 
     <div class="system-body">
       <DynamicApiManagement v-if="activeMenuCode === 'dynamic-api'"/>
-      <DynamicApiLogTable v-else-if="activeMenuCode === 'dynamic-api-log'"/>
       <div v-else class="system-placeholder">{{ t("extensionPanel.placeholder") }}</div>
     </div>
   </section>
@@ -24,7 +23,6 @@ import {computed, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import type {MenuTree} from "../../api/auth";
 import DynamicApiManagement from "./DynamicApiManagement.vue";
-import DynamicApiLogTable from "./DynamicApiLogTable.vue";
 
 const props = defineProps<{
   menus: MenuTree[];
@@ -53,8 +51,6 @@ function menuLabel(menu: MenuTree) {
   switch (menu.code) {
     case "dynamic-api":
       return t("extensionPanel.tabs.dynamicApi");
-    case "dynamic-api-log":
-      return t("extensionPanel.tabs.dynamicApiLog");
     default:
       return menu.name;
   }

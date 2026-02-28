@@ -600,15 +600,7 @@ server:
 
 - Persistent scheduling: `spring.quartz.*`.
 - Handlers implement `com.example.demo.job.api.JobHandler` and are Spring beans.
-- If a handler lives in another module, depend on `job-api` (contract package `com.example.demo.job.api`).
-- Logs in `sys_job_log` with detail in `log_detail`.
-
-### Job Log Auto Collection
-
-- Switch/scope: `job.constants.log-collect.enabled`, `job.constants.log-collect.scope`.
-- Level/size: `job.constants.log-collect.min-level`, `job.constants.log-collect.max-length`.
-- Merge: `job.constants.log-collect.merge-delay-millis`, `job.constants.log-collect.max-hold-millis`.
-- Thread context: `job.constants.log-collect.inherit-thread-context`.
+- If a handler lives in another module, depend on `job` (contract package `com.example.demo.job.api`).
 
 ### Job Constants Override (`job.constants`)
 
@@ -618,24 +610,22 @@ server:
 
 **Controller Group**
 
-| Key | Default | Description |
-|---|---|---|
-| `job.constants.controller.bad-request-code` | `400` | Error code for validation failures (cron/handler/misfire). |
-| `job.constants.controller.not-found-code` | `404` | Error code for missing jobs or job logs. |
-| `job.constants.controller.internal-server-error-code` | `500` | Error code for create/update/delete/run failures. |
+| Key                                                   | Default | Description                                                |
+|-------------------------------------------------------|---------|------------------------------------------------------------|
+| `job.constants.controller.bad-request-code`           | `400`   | Error code for validation failures (cron/handler/misfire). |
+| `job.constants.controller.not-found-code`             | `404`   | Error code for missing jobs.                               |
+| `job.constants.controller.internal-server-error-code` | `500`   | Error code for create/update/delete/run failures.          |
 
 **Message Group**
 
 | Key                                                   | Default                         | Description                             |
 |-------------------------------------------------------|---------------------------------|-----------------------------------------|
 | `job.constants.message.job-not-found`                 | `job.not.found`                 | i18n key for missing job.               |
-| `job.constants.message.job-log-not-found`             | `job.log.not.found`             | i18n key for missing job log.           |
 | `job.constants.message.job-cron-invalid`              | `job.cron.invalid`              | i18n key for invalid cron expression.   |
 | `job.constants.message.job-handler-invalid`           | `job.handler.invalid`           | i18n key for invalid handler name.      |
 | `job.constants.message.job-misfire-invalid`           | `job.misfire.invalid`           | i18n key for invalid misfire policy.    |
 | `job.constants.message.job-status-invalid`            | `job.status.invalid`            | i18n key for invalid job status.        |
 | `job.constants.message.job-concurrent-invalid`        | `job.concurrent.invalid`        | i18n key for invalid concurrency flag.  |
-| `job.constants.message.job-log-collect-level-invalid` | `job.log.collect.level.invalid` | i18n key for invalid log collect level. |
 | `job.constants.message.job-create-failed`             | `job.create.failed`             | i18n key for job creation failure.      |
 | `job.constants.message.job-update-failed`             | `job.update.failed`             | i18n key for job update failure.        |
 | `job.constants.message.job-delete-failed`             | `job.delete.failed`             | i18n key for job delete failure.        |
@@ -655,8 +645,6 @@ server:
 |---|---|---|
 | `job.constants.status.job-enabled` | `1` | Status value for enabled jobs. |
 | `job.constants.status.job-disabled` | `0` | Status value for disabled jobs. |
-| `job.constants.status.log-success` | `1` | Status value for successful execution logs. |
-| `job.constants.status.log-failed` | `0` | Status value for failed execution logs. |
 
 **Concurrent Group**
 
@@ -683,59 +671,6 @@ server:
 | `job.constants.data-map.handler-name-key`      | `handlerName`     | JobDataMap key for handler name.      |
 | `job.constants.data-map.cron-expression-key`   | `cronExpression`  | JobDataMap key for cron expression.   |
 | `job.constants.data-map.params-key`            | `params`          | JobDataMap key for params.            |
-| `job.constants.data-map.log-collect-level-key` | `logCollectLevel` | JobDataMap key for log collect level. |
-
-**Execution Group**
-
-| Key | Default | Description |
-|---|---|---|
-| `job.constants.execution.execute-start-prefix` | `开始执行: ` | Prefix for execution start line in manual logs. |
-| `job.constants.execution.params-prefix` | `参数: ` | Prefix for params line in manual logs. |
-| `job.constants.execution.handler-not-found-message` | `handler not found` | Message persisted when handler is missing. |
-| `job.constants.execution.handler-not-found-log-prefix` | `处理器不存在: ` | Manual-log prefix when handler is missing. |
-| `job.constants.execution.execute-success-log` | `执行成功` | Manual-log text for successful execution. |
-| `job.constants.execution.execute-error-prefix` | `执行异常: ` | Prefix for execution error manual logs. |
-| `job.constants.execution.log-merge-separator` | `\n----\n` | Separator between manual logs and collected logs. |
-| `job.constants.execution.message-max-length` | `500` | Max length for `sys_job_log.message`. |
-| `job.constants.execution.log-detail-max-length` | `8000` | Max length for `sys_job_log.log_detail`. |
-
-**Handler Demo Group**
-
-| Key | Default | Description |
-|---|---|---|
-| `job.constants.handler-demo.manual-log-start` | `手动记录定时任务日志` | Demo handler start log text. |
-| `job.constants.handler-demo.manual-log-end` | `手动记录日志任务结束` | Demo handler end log text. |
-| `job.constants.handler-demo.new-thread-log` | `new Thread 未显式透传也可收集日志` | Demo log text for plain thread branch. |
-| `job.constants.handler-demo.async-thread-log` | `异步线程日志手动记录` | Demo log text for async wrapped thread branch. |
-| `job.constants.handler-demo.plain-thread-name` | `job-log-plain` | Thread name for plain thread branch. |
-| `job.constants.handler-demo.async-thread-name` | `job-log-demo` | Thread name for wrapped async thread branch. |
-| `job.constants.handler-demo.raw-executor-pool-size` | `1` | Pool size for plain executor demo. |
-| `job.constants.handler-demo.wrapped-executor-pool-size` | `1` | Pool size for wrapped executor demo. |
-| `job.constants.handler-demo.schedule-delay-millis` | `100` | Delay for scheduled executor demo task. |
-
-**Log Collect Group**
-
-| Key                                                      | Default             | Description                                                |
-|----------------------------------------------------------|---------------------|------------------------------------------------------------|
-| `job.constants.log-collect.enabled`                      | `true`              | Whether automatic job-log collection is enabled.           |
-| `job.constants.log-collect.scope`                        | `MDC`               | Collection scope: `MDC` or `THREAD`.                       |
-| `job.constants.log-collect.min-level`                    | `INFO`              | Default log collect level when a job does not specify one. |
-| `job.constants.log-collect.max-length`                   | `65536`             | Max collected log length per run (chars).                  |
-| `job.constants.log-collect.merge-delay-millis`           | `3000`              | Delay before merge/update after run completion.            |
-| `job.constants.log-collect.max-hold-millis`              | `60000`             | Max in-memory hold time for a run buffer.                  |
-| `job.constants.log-collect.inherit-thread-context`       | `true`              | Whether inheritable thread context fallback is enabled.    |
-| `job.constants.log-collect.mdc-key`                      | `jobLogId`          | MDC key storing run id.                                    |
-| `job.constants.log-collect.thread-key`                   | `jobLogThread`      | MDC key storing thread name (used when `scope=THREAD`).    |
-| `job.constants.log-collect.collector-thread-name`        | `job-log-collector` | Background collector thread name.                          |
-| `job.constants.log-collect.cleanup-initial-delay-millis` | `60000`             | Initial delay before cleanup task starts.                  |
-| `job.constants.log-collect.cleanup-interval-millis`      | `60000`             | Cleanup task fixed-rate interval.                          |
-
-**Appender Group**
-
-| Key                                    | Default                                                                            | Description                                   |
-|----------------------------------------|------------------------------------------------------------------------------------|-----------------------------------------------|
-| `job.constants.appender.appender-name` | `JOB_LOG_COLLECTOR`                                                                | Name of the appender attached to root logger. |
-| `job.constants.appender.pattern`       | `%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %X{traceId} [%thread] %logger{36} - %msg%ex` | Logback pattern used for collected job logs.  |
 
 ### Security Protections
 
@@ -948,121 +883,6 @@ server:
 {"url":"https://internal/api","method":"POST","passHeaders":true,"passQuery":true,"headers":{"X-Token":"secret"}}
 ```
 
-### Log Constants Override (`log.constants`)
-
-- Defaults are centralized in `src/main/java/com/example/demo/log/config/LogConstants.java`.
-- Override behavior with `log.constants.*`; missing keys keep defaults.
-- For `List/Map` keys, use standard Spring Boot binding:
-- `log.constants.aspect.default-exclude-params[0]=password`
-- `log.constants.aspect.title-mappings.user=User Management`
-- `log.constants.ip.headers[0]=X-Forwarded-For`
-
-**Controller Group**
-
-| Key | Default | Description |
-|---|---|---|
-| `log.constants.controller.bad-request-code` | `400` | HTTP code used for invalid-parameter cases. |
-| `log.constants.controller.not-found-code` | `404` | HTTP code used when resource is not found. |
-| `log.constants.controller.internal-server-error-code` | `500` | HTTP code used for internal execution failures. |
-
-**Message Group**
-
-| Key | Default | Description |
-|---|---|---|
-| `log.constants.message.common-delete-failed` | `common.delete.failed` | i18n key for delete-failed responses. |
-| `log.constants.message.login-log-persist-failed` | `登录日志入库失败` | Log template for async login-log persistence failures. |
-| `log.constants.message.oper-log-persist-failed` | `操作日志入库失败` | Log template for async operation-log persistence failures. |
-| `log.constants.message.spel-parse-failed` | `解析操作日志SpEL失败: {}` | Log template for SpEL parsing failures (first placeholder is template text). |
-
-**Page / Query / Status Group**
-
-| Key | Default | Description |
-|---|---|---|
-| `log.constants.page.default-page-num` | `1` | Default page number when paging object is null. |
-| `log.constants.page.default-page-size` | `10` | Default page size when paging object is null. |
-| `log.constants.query.date-time-pattern` | `yyyy-MM-dd HH:mm:ss` | Default formatter pattern for query time parsing. |
-| `log.constants.status.oper-success` | `1` | Status value for successful operation logs. |
-| `log.constants.status.oper-failed` | `0` | Status value for failed operation logs. |
-
-**HTTP Group**
-
-| Key | Default | Description |
-|---|---|---|
-| `log.constants.http.get-method` | `GET` | GET method token. |
-| `log.constants.http.options-method` | `OPTIONS` | OPTIONS method token. |
-| `log.constants.http.post-method` | `POST` | POST method token. |
-| `log.constants.http.put-method` | `PUT` | PUT method token. |
-| `log.constants.http.patch-method` | `PATCH` | PATCH method token. |
-| `log.constants.http.delete-method` | `DELETE` | DELETE method token. |
-| `log.constants.http.permission-separator` | `:` | Separator used to extract module prefix from permission strings. |
-| `log.constants.http.method-url-separator` | ` ` | Separator used by `method + separator + url` fallback operation text. |
-
-**Aspect Group**
-
-| Key | Default | Description |
-|---|---|---|
-| `log.constants.aspect.max-text-length` | `2000` | Truncation limit for params/result/error text. |
-| `log.constants.aspect.default-exclude-params` | `password,oldPassword,newPassword,token` | Default sensitive fields when `excludeParams` is not explicitly set. |
-| `log.constants.aspect.title-mappings.user` | `用户管理` | Example mapping entry from permission prefix to title (same pattern for other keys). |
-| `log.constants.aspect.spel-pattern` | `#\{(.+?)}` | Regex used to match SpEL placeholders. |
-| `log.constants.aspect.spel-null-literal` | `null` | Replacement text when SpEL result is null. |
-| `log.constants.aspect.mask-value` | `******` | Replacement text for masked values. |
-| `log.constants.aspect.spring-validation-package-prefix` | `org.springframework.validation.` | Ignored argument package prefix for Spring validation objects. |
-| `log.constants.aspect.spring-multipart-package-prefix` | `org.springframework.web.multipart.` | Ignored argument package prefix for multipart objects. |
-
-**IP Group**
-
-| Key | Default | Description |
-|---|---|---|
-| `log.constants.ip.headers` | `X-Forwarded-For,X-Real-IP,Proxy-Client-IP,WL-Proxy-Client-IP,HTTP_CLIENT_IP,HTTP_X_FORWARDED_FOR` | Header chain used to resolve client IP. |
-| `log.constants.ip.unknown-token` | `unknown` | Placeholder token that means header IP is invalid. |
-| `log.constants.ip.multi-ip-separator` | `,` | Separator for multi-proxy IP list. |
-| `log.constants.ip.internal-ip-text` | `内网IP` | Text returned for internal-network IPs. |
-| `log.constants.ip.unknown-location-text` | `未知` | Text returned when location cannot be resolved. |
-| `log.constants.ip.ipv4-segment-separator-regex` | `\.` | Regex separator used for IPv4 octet split. |
-| `log.constants.ip.ipv4-loopback-prefix` | `127.` | IPv4 loopback prefix. |
-| `log.constants.ip.ipv6-loopback-full` | `0:0:0:0:0:0:0:1` | Full IPv6 loopback address. |
-| `log.constants.ip.ipv6-loopback-short` | `::1` | Short IPv6 loopback address. |
-| `log.constants.ip.private-a-prefix` | `10.` | Class A private-network prefix. |
-| `log.constants.ip.private-c-prefix` | `192.168.` | Class C private-network prefix. |
-| `log.constants.ip.private-b-prefix` | `172.` | Class B private-network prefix. |
-| `log.constants.ip.private-b-second-octet-min` | `16` | Min second octet for private Class B range. |
-| `log.constants.ip.private-b-second-octet-max` | `31` | Max second octet for private Class B range. |
-
-**User-Agent Group**
-
-| Key | Default | Description |
-|---|---|---|
-| `log.constants.user-agent.unknown` | `Unknown` | Fallback name when value cannot be detected. |
-| `log.constants.user-agent.pc` | `PC` | Default desktop device name. |
-| `log.constants.user-agent.browser-edge-token` | `edg/` | Token for Edge browser detection. |
-| `log.constants.user-agent.browser-chrome-token` | `chrome/` | Token for Chrome browser detection. |
-| `log.constants.user-agent.browser-firefox-token` | `firefox/` | Token for Firefox browser detection. |
-| `log.constants.user-agent.browser-safari-token` | `safari/` | Token for Safari browser detection. |
-| `log.constants.user-agent.browser-ie-token` | `msie` | Token for legacy IE detection. |
-| `log.constants.user-agent.browser-trident-token` | `trident/` | Token for Trident-based IE detection. |
-| `log.constants.user-agent.browser-edge-name` | `Edge` | Browser name after Edge match. |
-| `log.constants.user-agent.browser-chrome-name` | `Chrome` | Browser name after Chrome match. |
-| `log.constants.user-agent.browser-firefox-name` | `Firefox` | Browser name after Firefox match. |
-| `log.constants.user-agent.browser-safari-name` | `Safari` | Browser name after Safari match. |
-| `log.constants.user-agent.browser-ie-name` | `IE` | Browser name after IE match. |
-| `log.constants.user-agent.os-windows-token` | `windows` | Token for Windows detection. |
-| `log.constants.user-agent.os-mac-token` | `mac os x` | Token for macOS detection. |
-| `log.constants.user-agent.os-android-token` | `android` | Token for Android detection. |
-| `log.constants.user-agent.os-iphone-token` | `iphone` | Token for iPhone detection. |
-| `log.constants.user-agent.os-ipad-token` | `ipad` | Token for iPad detection. |
-| `log.constants.user-agent.os-ios-token` | `ios` | Token for iOS detection. |
-| `log.constants.user-agent.os-linux-token` | `linux` | Token for Linux detection. |
-| `log.constants.user-agent.os-windows-name` | `Windows` | OS name after Windows match. |
-| `log.constants.user-agent.os-mac-name` | `macOS` | OS name after macOS match. |
-| `log.constants.user-agent.os-android-name` | `Android` | OS name after Android match. |
-| `log.constants.user-agent.os-ios-name` | `iOS` | OS name after iOS match. |
-| `log.constants.user-agent.os-linux-name` | `Linux` | OS name after Linux match. |
-| `log.constants.user-agent.device-tablet-token` | `tablet` | Token for tablet detection. |
-| `log.constants.user-agent.device-mobile-token` | `mobile` | Token for mobile-phone detection. |
-| `log.constants.user-agent.device-tablet-name` | `Tablet` | Device type name after tablet match. |
-| `log.constants.user-agent.device-mobile-name` | `Mobile` | Device type name after mobile match. |
-
 ### Common Constants Override (`common.constants`)
 
 - Default values are centralized in `src/main/java/com/example/demo/common/config/CommonConstants.java`.
@@ -1199,11 +1019,6 @@ server:
 | `auth.constants.password.aes-transformation` | `AES/GCM/NoPadding` | AES transformation string. |
 | `auth.constants.password.aes-gcm-tag-length-bits` | `128` | AES-GCM tag length (bits). |
 | `auth.constants.profile.new-password-min-length` | `6` | Minimum new password length in profile update API. |
-| `auth.constants.profile.user-agent-header` | `User-Agent` | Request header used to capture user agent in login logs. |
-| `auth.constants.login-log.type-login` | `1` | Login log type code for login events. |
-| `auth.constants.login-log.type-logout` | `2` | Login log type code for logout events. |
-| `auth.constants.login-log.status-fail` | `0` | Login log status code for failure. |
-| `auth.constants.login-log.status-success` | `1` | Login log status code for success. |
 | `auth.constants.controller.bad-request-code` | `400` | HTTP code for bad request in auth controller flows. |
 | `auth.constants.controller.unauthorized-code` | `401` | HTTP code for unauthorized in auth flows. |
 | `auth.constants.controller.forbidden-code` | `403` | HTTP code for forbidden in auth filter flows. |

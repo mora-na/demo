@@ -28,14 +28,6 @@
             <groupId>com.example</groupId>
             <artifactId>cache</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>log-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>config-api</artifactId>
-        </dependency>
 
         <dependency>
             <groupId>com.baomidou</groupId>

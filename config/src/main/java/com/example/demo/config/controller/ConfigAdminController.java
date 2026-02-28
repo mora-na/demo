@@ -12,8 +12,6 @@ import com.example.demo.config.dto.ConfigVO;
 import com.example.demo.config.entity.SysConfig;
 import com.example.demo.config.service.ConfigManagerService;
 import com.example.demo.config.support.ConfigOperationResult;
-import com.example.demo.log.annotation.OperLog;
-import com.example.demo.log.enums.BusinessType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -54,7 +52,6 @@ public class ConfigAdminController extends BaseController {
 
     @PostMapping
     @RequirePermission("config:create")
-    @OperLog(title = "配置管理", operation = "新增配置", businessType = BusinessType.INSERT)
     public CommonResult<ConfigVO> create(@Valid @RequestBody ConfigCreateRequest request) {
         ConfigOperationResult result = configManagerService.create(request);
         if (!result.isSuccess()) {
@@ -70,7 +67,6 @@ public class ConfigAdminController extends BaseController {
 
     @PutMapping("/{id}")
     @RequirePermission("config:update")
-    @OperLog(title = "配置管理", operation = "更新配置", businessType = BusinessType.UPDATE)
     public CommonResult<ConfigVO> update(@PathVariable Long id, @Valid @RequestBody ConfigUpdateRequest request) {
         ConfigOperationResult result = configManagerService.update(id, request);
         if (!result.isSuccess()) {
@@ -88,7 +84,6 @@ public class ConfigAdminController extends BaseController {
 
     @DeleteMapping("/{id}")
     @RequirePermission("config:delete")
-    @OperLog(title = "配置管理", operation = "删除配置", businessType = BusinessType.DELETE)
     public CommonResult<Void> delete(@PathVariable Long id) {
         SysConfig existing = configManagerService.getById(id);
         if (existing == null) {
@@ -102,7 +97,6 @@ public class ConfigAdminController extends BaseController {
 
     @PostMapping("/cache/refresh")
     @RequirePermission("config:cache:refresh")
-    @OperLog(title = "配置管理", operation = "刷新配置缓存", businessType = BusinessType.CLEAN)
     public CommonResult<Void> refreshCache(@RequestParam(value = "group", required = false) String group,
                                            @RequestParam(value = "key", required = false) String key) {
         if (key == null || key.trim().isEmpty()) {

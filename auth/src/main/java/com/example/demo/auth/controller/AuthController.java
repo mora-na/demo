@@ -16,10 +16,8 @@ import com.example.demo.identity.api.dto.*;
 import com.example.demo.identity.api.facade.IdentityCredentialApi;
 import com.example.demo.identity.api.facade.IdentityProfileCommandApi;
 import com.example.demo.identity.api.facade.IdentityReadFacade;
-import com.example.demo.log.api.event.LoginLogEvent;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -51,7 +49,6 @@ public class AuthController extends BaseController {
     private final LoginAnomalyAlertService loginAnomalyAlertService;
     private final OperationConfirmService operationConfirmService;
     private final UserProfileService userProfileService;
-    private final ApplicationEventPublisher eventPublisher;
     private final AuthTokenResolver authTokenResolver;
     private final CaptchaRateLimitKeyResolver captchaRateLimitKeyResolver;
     private final ClientIpResolver clientIpResolver;
@@ -85,61 +82,40 @@ public class AuthController extends BaseController {
                                              HttpServletResponse response) {
         final String credentialError = i18n("auth.login.credential.error");
         AuthConstants.Controller controllerConstants = systemConstants.getController();
-        int loginType = systemConstants.getLoginLog().getTypeLogin();
-        int loginSuccessStatus = systemConstants.getLoginLog().getStatusSuccess();
-        int loginFailStatus = systemConstants.getLoginLog().getStatusFail();
         if (request == null) {
-            publishLoginLog(null, null, loginType, loginFailStatus,
-                    i18n("auth.login.request.empty"), httpRequest);
             return error(controllerConstants.getBadRequestCode(), i18n("auth.login.request.empty"));
         }
         if (StringUtils.isBlank(request.getUserName()) || StringUtils.isBlank(request.getPassword())) {
-            publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
-                    credentialError, httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
         long remaining = loginAttemptService.getRemainingLockSeconds(request.getUserName(), httpRequest);
         if (remaining > 0) {
-            publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
-                    i18n("auth.login.locked", remaining), httpRequest);
             return error(controllerConstants.getTooManyRequestsCode(), i18n("auth.login.locked", remaining));
         }
         if (StringUtils.isBlank(request.getCaptchaId()) || StringUtils.isBlank(request.getCaptchaCode())) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
-            publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
-                    i18n("auth.login.captcha.empty"), httpRequest);
             return error(controllerConstants.getBadRequestCode(), i18n("auth.login.captcha.empty"));
         }
         if (!captchaService.verify(request.getCaptchaId(), request.getCaptchaCode())) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
-            publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
-                    i18n("auth.login.captcha.invalid"), httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), i18n("auth.login.captcha.invalid"));
         }
         IdentityUserDTO user = identityReadFacade.getUserByUserName(request.getUserName());
         if (user == null) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
-            publishLoginLog(request.getUserName(), null, loginType, loginFailStatus,
-                    credentialError, httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
         if (user.getStatus() != null && user.getStatus().equals(0)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
-            publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
-                    credentialError, httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
         String rawPassword = passwordService.decodeTransportPassword(request.getPassword());
         if (StringUtils.isBlank(rawPassword)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
-            publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
-                    credentialError, httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
         if (!identityCredentialApi.matchesPasswordById(user.getId(), rawPassword)) {
             loginAttemptService.recordFailure(request.getUserName(), httpRequest);
-            publishLoginLog(request.getUserName(), user.getId(), loginType, loginFailStatus,
-                    credentialError, httpRequest);
             return error(controllerConstants.getUnauthorizedCode(), credentialError);
         }
         loginAttemptService.clearFailures(request.getUserName(), httpRequest);
@@ -172,8 +148,6 @@ public class AuthController extends BaseController {
         String loginIp = resolveClientIp(httpRequest);
         String loginUserAgent = httpRequest == null ? null : httpRequest.getHeader(systemConstants.getProfile().getUserAgentHeader());
         loginAnomalyAlertService.checkAndNotify(user, loginIp, loginUserAgent, LocalDateTime.now());
-        publishLoginLog(user.getUserName(), user.getId(), loginType, loginSuccessStatus,
-                i18n("auth.login.success"), httpRequest);
         return success(loginResponse);
     }
 
@@ -197,14 +171,6 @@ public class AuthController extends BaseController {
         }
         AuthUser loginUser = tokenService.verifyToken(token);
         tokenService.revoke(loginUser == null ? null : loginUser.getId(), token);
-        int logoutType = systemConstants.getLoginLog().getTypeLogout();
-        int successStatus = systemConstants.getLoginLog().getStatusSuccess();
-        publishLoginLog(loginUser == null ? null : loginUser.getUserName(),
-                loginUser == null ? null : loginUser.getId(),
-                logoutType,
-                successStatus,
-                i18n("auth.logout.success"),
-                request);
         return success(i18n("auth.logout.success"));
     }
 
@@ -324,29 +290,6 @@ public class AuthController extends BaseController {
         response.setTicket(result.getTicket());
         response.setExpiresAt(result.getExpiresAt());
         return success(i18n(result.getMessageKey()), response);
-    }
-
-    private void publishLoginLog(String userName,
-                                 Long userId,
-                                 int loginType,
-                                 int status,
-                                 String message,
-                                 HttpServletRequest request) {
-        if (eventPublisher == null) {
-            return;
-        }
-        String ip = resolveClientIp(request);
-        String ua = request == null ? null : request.getHeader(systemConstants.getProfile().getUserAgentHeader());
-        eventPublisher.publishEvent(new LoginLogEvent(
-                userName,
-                userId,
-                loginType,
-                status,
-                message,
-                ip,
-                ua,
-                LocalDateTime.now()
-        ));
     }
 
     private String resolveClientIp(HttpServletRequest request) {

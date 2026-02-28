@@ -729,7 +729,6 @@ CREATE TABLE IF NOT EXISTS sys_job
     allow_concurrent SMALLINT     NOT NULL DEFAULT 1,
     misfire_policy   VARCHAR(32)           DEFAULT 'DEFAULT',
     params           TEXT,
-    log_collect_level VARCHAR(16) DEFAULT 'ERROR',
     created_by       BIGINT,
     created_name     VARCHAR(64),
     created_at       TIMESTAMP    NOT NULL,
@@ -748,196 +747,11 @@ COMMENT ON COLUMN sys_job.status IS '状态：1-启用，0-停用';
 COMMENT ON COLUMN sys_job.allow_concurrent IS '是否允许并发：1-允许，0-禁止';
 COMMENT ON COLUMN sys_job.misfire_policy IS '误触发策略';
 COMMENT ON COLUMN sys_job.params IS '任务参数';
-COMMENT ON COLUMN sys_job.log_collect_level IS '日志收集级别';
 COMMENT ON COLUMN sys_job.remark IS '备注';
 COMMENT ON COLUMN sys_job.created_by IS '创建人ID';
 COMMENT ON COLUMN sys_job.created_name IS '创建人名称';
 COMMENT ON COLUMN sys_job.created_at IS '创建时间';
 COMMENT ON COLUMN sys_job.updated_at IS '更新时间';
-
-CREATE SEQUENCE IF NOT EXISTS sys_job_log_id_seq START WITH 1 INCREMENT BY 1;
-CREATE TABLE IF NOT EXISTS sys_job_log
-(
-    id           BIGINT PRIMARY KEY DEFAULT nextval('sys_job_log_id_seq'),
-    job_id       BIGINT       NOT NULL,
-    job_name     VARCHAR(128) NOT NULL,
-    handler_name VARCHAR(128) NOT NULL,
-    status       SMALLINT     NOT NULL,
-    message      VARCHAR(512),
-    log_detail   TEXT,
-    start_time   TIMESTAMP    NOT NULL,
-    end_time     TIMESTAMP,
-    duration_ms  BIGINT
-);
-CREATE INDEX IF NOT EXISTS idx_sys_job_log_job ON sys_job_log (job_id);
-CREATE INDEX IF NOT EXISTS idx_sys_job_log_start ON sys_job_log (start_time);
-CREATE INDEX IF NOT EXISTS idx_sys_job_log_job_start_id ON sys_job_log (job_id, start_time, id);
-COMMENT ON TABLE sys_job_log IS '定时任务日志表';
-COMMENT ON COLUMN sys_job_log.id IS '主键ID';
-COMMENT ON COLUMN sys_job_log.job_id IS '任务ID';
-COMMENT ON COLUMN sys_job_log.job_name IS '任务名称';
-COMMENT ON COLUMN sys_job_log.handler_name IS '处理器名称';
-COMMENT ON COLUMN sys_job_log.status IS '执行状态：1-成功，0-失败';
-COMMENT ON COLUMN sys_job_log.message IS '执行信息';
-COMMENT ON COLUMN sys_job_log.log_detail IS '执行日志';
-COMMENT ON COLUMN sys_job_log.start_time IS '开始时间';
-COMMENT ON COLUMN sys_job_log.end_time IS '结束时间';
-COMMENT ON COLUMN sys_job_log.duration_ms IS '耗时毫秒';
-
-CREATE SEQUENCE IF NOT EXISTS sys_job_log_detail_id_seq START WITH 1 INCREMENT BY 1;
-CREATE TABLE IF NOT EXISTS sys_job_log_detail
-(
-    id         BIGINT PRIMARY KEY   DEFAULT nextval('sys_job_log_detail_id_seq'),
-    log_id     BIGINT      NOT NULL,
-    part_type  VARCHAR(16) NOT NULL,
-    log_detail TEXT,
-    created_at TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE UNIQUE INDEX IF NOT EXISTS uk_sys_job_log_detail_log_type ON sys_job_log_detail (log_id, part_type);
-CREATE INDEX IF NOT EXISTS idx_sys_job_log_detail_log ON sys_job_log_detail (log_id);
-COMMENT ON TABLE sys_job_log_detail IS '定时任务日志明细表';
-COMMENT ON COLUMN sys_job_log_detail.id IS '主键ID';
-COMMENT ON COLUMN sys_job_log_detail.log_id IS '日志ID';
-COMMENT ON COLUMN sys_job_log_detail.part_type IS '日志片段类型: MANUAL/AUTO';
-COMMENT ON COLUMN sys_job_log_detail.log_detail IS '日志内容';
-COMMENT ON COLUMN sys_job_log_detail.created_at IS '创建时间';
-
-SET search_path TO demo, public;
-
-CREATE SEQUENCE IF NOT EXISTS sys_oper_log_id_seq START WITH 1 INCREMENT BY 1;
-CREATE TABLE IF NOT EXISTS sys_oper_log
-(
-    id             BIGINT PRIMARY KEY DEFAULT nextval('sys_oper_log_id_seq'),
-    user_id        BIGINT,
-    user_name      VARCHAR(64),
-    dept_id        BIGINT,
-    dept_name      VARCHAR(128),
-    title          VARCHAR(128),
-    operation      VARCHAR(256),
-    business_type  SMALLINT  NOT NULL DEFAULT 0,
-    method         VARCHAR(255),
-    request_method VARCHAR(16),
-    oper_url       VARCHAR(512),
-    oper_ip        VARCHAR(128),
-    oper_location  VARCHAR(255),
-    oper_param     TEXT,
-    oper_result    TEXT,
-    before_data    TEXT,
-    after_data     TEXT,
-    status         SMALLINT  NOT NULL DEFAULT 1,
-    error_msg      VARCHAR(2000),
-    cost_time      BIGINT    NOT NULL DEFAULT 0,
-    oper_time      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX IF NOT EXISTS idx_sys_oper_log_user ON sys_oper_log (user_id);
-CREATE INDEX IF NOT EXISTS idx_sys_oper_log_type ON sys_oper_log (business_type);
-CREATE INDEX IF NOT EXISTS idx_sys_oper_log_status ON sys_oper_log (status);
-CREATE INDEX IF NOT EXISTS idx_sys_oper_log_time ON sys_oper_log (oper_time);
-CREATE INDEX IF NOT EXISTS idx_sys_oper_log_status_type_time ON sys_oper_log (status, business_type, oper_time, id);
-COMMENT ON TABLE sys_oper_log IS '操作日志表';
-COMMENT ON COLUMN sys_oper_log.id IS '主键ID';
-COMMENT ON COLUMN sys_oper_log.user_id IS '操作人ID';
-COMMENT ON COLUMN sys_oper_log.user_name IS '操作人账号';
-COMMENT ON COLUMN sys_oper_log.dept_id IS '部门ID';
-COMMENT ON COLUMN sys_oper_log.dept_name IS '部门名称';
-COMMENT ON COLUMN sys_oper_log.title IS '模块标题';
-COMMENT ON COLUMN sys_oper_log.operation IS '操作描述';
-COMMENT ON COLUMN sys_oper_log.business_type IS '业务类型';
-COMMENT ON COLUMN sys_oper_log.method IS '请求方法';
-COMMENT ON COLUMN sys_oper_log.request_method IS 'HTTP方法';
-COMMENT ON COLUMN sys_oper_log.oper_url IS '请求URL';
-COMMENT ON COLUMN sys_oper_log.oper_ip IS '操作IP';
-COMMENT ON COLUMN sys_oper_log.oper_location IS 'IP归属地';
-COMMENT ON COLUMN sys_oper_log.oper_param IS '请求参数';
-COMMENT ON COLUMN sys_oper_log.oper_result IS '返回结果';
-COMMENT ON COLUMN sys_oper_log.before_data IS '操作前数据';
-COMMENT ON COLUMN sys_oper_log.after_data IS '操作后数据';
-COMMENT ON COLUMN sys_oper_log.status IS '操作状态';
-COMMENT ON COLUMN sys_oper_log.error_msg IS '错误信息';
-COMMENT ON COLUMN sys_oper_log.cost_time IS '耗时毫秒';
-COMMENT ON COLUMN sys_oper_log.oper_time IS '操作时间';
-
-CREATE SEQUENCE IF NOT EXISTS sys_login_log_id_seq START WITH 1 INCREMENT BY 1;
-CREATE TABLE IF NOT EXISTS sys_login_log
-(
-    id             BIGINT PRIMARY KEY DEFAULT nextval('sys_login_log_id_seq'),
-    user_id        BIGINT,
-    user_name      VARCHAR(64),
-    login_ip       VARCHAR(128),
-    login_location VARCHAR(255),
-    browser        VARCHAR(128),
-    os             VARCHAR(128),
-    device_type    VARCHAR(64),
-    login_type     SMALLINT  NOT NULL DEFAULT 1,
-    status         SMALLINT  NOT NULL DEFAULT 1,
-    msg            VARCHAR(500),
-    login_time     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX IF NOT EXISTS idx_sys_login_log_user ON sys_login_log (user_name);
-CREATE INDEX IF NOT EXISTS idx_sys_login_log_time ON sys_login_log (login_time);
-CREATE INDEX IF NOT EXISTS idx_sys_login_log_ip ON sys_login_log (login_ip);
-CREATE INDEX IF NOT EXISTS idx_sys_login_log_status ON sys_login_log (status);
-CREATE INDEX IF NOT EXISTS idx_sys_login_log_status_type_time ON sys_login_log (status, login_type, login_time, id);
-CREATE INDEX IF NOT EXISTS idx_sys_login_log_user_type_status_time ON sys_login_log (user_id, login_type, status, login_time, id);
-COMMENT ON TABLE sys_login_log IS '登录日志表';
-COMMENT ON COLUMN sys_login_log.id IS '主键ID';
-COMMENT ON COLUMN sys_login_log.user_id IS '用户ID';
-COMMENT ON COLUMN sys_login_log.user_name IS '登录账号';
-COMMENT ON COLUMN sys_login_log.login_ip IS '登录IP';
-COMMENT ON COLUMN sys_login_log.login_location IS 'IP归属地';
-COMMENT ON COLUMN sys_login_log.browser IS '浏览器';
-COMMENT ON COLUMN sys_login_log.os IS '操作系统';
-COMMENT ON COLUMN sys_login_log.device_type IS '设备类型';
-COMMENT ON COLUMN sys_login_log.login_type IS '类型 1=登录 2=登出';
-COMMENT ON COLUMN sys_login_log.status IS '状态 0=失败 1=成功';
-COMMENT ON COLUMN sys_login_log.msg IS '提示消息';
-COMMENT ON COLUMN sys_login_log.login_time IS '登录时间';
-
-CREATE SEQUENCE IF NOT EXISTS sys_dynamic_api_log_id_seq START WITH 1 INCREMENT BY 1;
-CREATE TABLE IF NOT EXISTS sys_dynamic_api_log
-(
-    id            BIGINT PRIMARY KEY DEFAULT nextval('sys_dynamic_api_log_id_seq'),
-    api_id        BIGINT,
-    api_path      VARCHAR(256),
-    api_method    VARCHAR(16),
-    api_type      VARCHAR(16),
-    auth_mode     VARCHAR(16),
-    status        SMALLINT  NOT NULL DEFAULT 1,
-    response_code INT,
-    error_msg     VARCHAR(2000),
-    error_details TEXT,
-    meta          TEXT,
-    trace_id      VARCHAR(128),
-    user_id       BIGINT,
-    user_name     VARCHAR(64),
-    request_ip    VARCHAR(128),
-    request_param TEXT,
-    duration_ms   BIGINT,
-    request_time  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX IF NOT EXISTS idx_sys_dynamic_api_log_api ON sys_dynamic_api_log (api_id);
-CREATE INDEX IF NOT EXISTS idx_sys_dynamic_api_log_status ON sys_dynamic_api_log (status);
-CREATE INDEX IF NOT EXISTS idx_sys_dynamic_api_log_time ON sys_dynamic_api_log (request_time);
-CREATE INDEX IF NOT EXISTS idx_sys_dynamic_api_log_method_status_time ON sys_dynamic_api_log (api_method, status, request_time, id);
-COMMENT ON TABLE sys_dynamic_api_log IS '动态接口日志表';
-COMMENT ON COLUMN sys_dynamic_api_log.id IS '主键ID';
-COMMENT ON COLUMN sys_dynamic_api_log.api_id IS '接口ID';
-COMMENT ON COLUMN sys_dynamic_api_log.api_path IS '接口路径';
-COMMENT ON COLUMN sys_dynamic_api_log.api_method IS 'HTTP方法';
-COMMENT ON COLUMN sys_dynamic_api_log.api_type IS '类型';
-COMMENT ON COLUMN sys_dynamic_api_log.auth_mode IS '认证模式';
-COMMENT ON COLUMN sys_dynamic_api_log.status IS '状态 0=失败 1=成功';
-COMMENT ON COLUMN sys_dynamic_api_log.response_code IS '响应码';
-COMMENT ON COLUMN sys_dynamic_api_log.error_msg IS '错误信息';
-COMMENT ON COLUMN sys_dynamic_api_log.error_details IS '错误详情';
-COMMENT ON COLUMN sys_dynamic_api_log.meta IS '元数据';
-COMMENT ON COLUMN sys_dynamic_api_log.trace_id IS 'TraceId';
-COMMENT ON COLUMN sys_dynamic_api_log.user_id IS '用户ID';
-COMMENT ON COLUMN sys_dynamic_api_log.user_name IS '用户账号';
-COMMENT ON COLUMN sys_dynamic_api_log.request_ip IS '请求IP';
-COMMENT ON COLUMN sys_dynamic_api_log.request_param IS '请求参数';
-COMMENT ON COLUMN sys_dynamic_api_log.duration_ms IS '耗时毫秒';
-COMMENT ON COLUMN sys_dynamic_api_log.request_time IS '请求时间';
 
 CREATE SEQUENCE IF NOT EXISTS dynamic_api_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS dynamic_api
@@ -1352,11 +1166,6 @@ VALUES (1, 'user:query', '用户查询', 1),
        (62, 'notice:create', '通知创建', 1),
        (63, 'notice:update', '通知编辑', 1),
        (64, 'notice:disable', '通知撤回', 1),
-       (65, 'log:query', '操作日志查询', 1),
-       (66, 'log:export', '操作日志导出', 1),
-       (67, 'log:delete', '操作日志清理', 1),
-       (68, 'login-log:query', '登录日志查询', 1),
-       (69, 'login-log:delete', '登录日志清理', 1),
        (70, 'dict:query', '字典查询', 1),
        (71, 'dict:create', '字典创建', 1),
        (72, 'dict:update', '字典修改', 1),
@@ -1368,10 +1177,7 @@ VALUES (1, 'user:query', '用户查询', 1),
        (78, 'dynamic-api:status', '动态接口状态', 1),
        (79, 'dynamic-api:delete', '动态接口删除', 1),
        (80, 'dynamic-api:reload', '动态接口重载', 1),
-       (81, 'dynamic-api-log:query', '动态接口日志查询', 1),
-       (82, 'dynamic-api-log:delete', '动态接口日志删除', 1),
        (83, 'notice:stream:metrics', '通知流监控', 1),
-       (84, 'job:log:metrics', '任务日志监控', 1),
        (85, 'druid:monitor', '数据源监控', 1),
        (86, 'config:query', '配置查询', 1),
        (87, 'config:create', '配置创建', 1),
@@ -1401,12 +1207,8 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (183, '用户特例授权', 'data-scope-user', 180, '/data-scope/user', 'DataScopeUserPage',
         'data-scope:user:query', 1, 30, '用户特例授权'),
        (190, '系统监控', 'monitor', NULL, '/monitor', 'Layout', NULL, 1, 40, '系统监控'),
-       (191, '操作日志', 'oper-log', 190, '/monitor/oper-log', 'OperLogPage', 'log:query', 1, 10, '操作日志'),
-       (192, '登录日志', 'login-log', 190, '/monitor/login-log', 'LoginLogPage', 'login-log:query', 1, 20, '登录日志'),
        (193, '通知流监控', 'notice-stream-metrics', 190, '/monitor/notice-stream', 'NoticeStreamMetricsPage',
         'notice:stream:metrics', 1, 30, '通知流监控'),
-       (194, '任务日志监控', 'job-log-metrics', 190, '/monitor/job-log', 'JobLogMetricsPage', 'job:log:metrics', 1, 40,
-        '任务日志监控'),
        (195, '数据源监控', 'druid-monitor', 190, '/monitor/druid', 'DruidMonitorPage', 'druid:monitor', 1, 50,
         '数据源监控'),
        (196, '首页', 'druid-monitor-home', 195, '/monitor/druid/home', 'DruidMonitorPage', 'druid:monitor', 1, 10,
@@ -1430,9 +1232,7 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (200, '订单管理', 'order', NULL, '/orders', 'OrderPage', 'order:query', 1, 20, '订单管理'),
        (210, '接口扩展', 'extension', NULL, '/extension', 'Layout', NULL, 1, 50, '接口扩展'),
        (211, '动态接口', 'dynamic-api', 210, '/extension/dynamic-api', 'DynamicApiPage', 'dynamic-api:query', 1, 10,
-        '动态接口管理'),
-       (212, '调用日志', 'dynamic-api-log', 210, '/extension/dynamic-api-log', 'DynamicApiLogPage',
-        'dynamic-api-log:query', 1, 20, '动态接口日志')
+        '动态接口管理')
 ;
 
 SET search_path TO demo, public;
@@ -1680,11 +1480,6 @@ SELECT setval('demo.sys_order_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo.sy
 SELECT setval('demo.sys_notice_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo.sys_notice));
 SELECT setval('demo.sys_notice_recipient_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo.sys_notice_recipient));
 SELECT setval('demo.sys_job_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo.sys_job));
-SELECT setval('demo.sys_job_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo.sys_job_log));
-SELECT setval('demo.sys_job_log_detail_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo.sys_job_log_detail));
-SELECT setval('demo.sys_oper_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo.sys_oper_log));
-SELECT setval('demo.sys_login_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo.sys_login_log));
-SELECT setval('demo.sys_dynamic_api_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo.sys_dynamic_api_log));
 SELECT setval('demo.dynamic_api_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo.dynamic_api));
 
 

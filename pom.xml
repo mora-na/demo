@@ -21,14 +21,10 @@
     <modules>
         <module>common</module>
         <module>identity-api</module>
-        <module>log-api</module>
         <module>extension-api</module>
-        <module>job-api</module>
-        <module>config-api</module>
         <module>core-http-extension</module>
         <module>config</module>
         <module>system</module>
-        <module>log</module>
         <module>auth</module>
         <module>job</module>
         <module>notice</module>
@@ -199,27 +195,12 @@
             </dependency>
             <dependency>
                 <groupId>com.example</groupId>
-                <artifactId>redis</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.example</groupId>
                 <artifactId>security</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.example</groupId>
-                <artifactId>mybatis</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.example</groupId>
-                <artifactId>datascope</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.example</groupId>
-                <artifactId>log-core</artifactId>
+                <artifactId>data</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -244,32 +225,12 @@
             </dependency>
             <dependency>
                 <groupId>com.example</groupId>
-                <artifactId>i18n</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.example</groupId>
                 <artifactId>identity-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.example</groupId>
-                <artifactId>log-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.example</groupId>
                 <artifactId>extension-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.example</groupId>
-                <artifactId>job-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.example</groupId>
-                <artifactId>config-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

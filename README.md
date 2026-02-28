@@ -84,12 +84,10 @@ npm run dev
 - `app/` 应用装配与启动入口
 - `common/` 公共基础能力（多子模块）
 - `identity-api/` 身份域对外契约
-- `log-api/` 日志域对外契约
 - `extension-api/` 扩展能力对外契约
 - `core-http-extension/` 动态接口扩展实现
 - `system/` 系统管理域
 - `auth/` 认证鉴权域
-- `log/` 审计日志域
 - `job/` 任务调度域
 - `notice/` 通知中心域
 - `order/` 业务示例域
@@ -105,12 +103,10 @@ npm run dev
 
 - `common`（聚合模块）
 - `identity-api`
-- `log-api`
 - `extension-api`
 - `core-http-extension`
 - `system`
 - `auth`
-- `log`
 - `job`
 - `notice`
 - `order`
@@ -118,8 +114,8 @@ npm run dev
 
 `common` 内部子模块：
 
-- `common/core`、`common/redis`、`common/security`、`common/mybatis`、`common/datascope`
-- `common/dict`、`common/web`、`common/cache`、`common/autoconfigure`、`common/i18n`、`common/log`
+- `common/core`、`common/cache`、`common/data`、`common/security`
+- `common/dict`、`common/web`、`common/autoconfigure`
 
 ### 依赖方向（高层）
 
@@ -130,17 +126,16 @@ common/*  ->  *-api  ->  业务实现/扩展实现  ->  app
 依赖要点：
 
 - `*-api` 模块只暴露契约，依赖基础能力（`common/core` 等）。
-- `core-http-extension` 依赖 `extension-api` 与 `log-api`，并复用 `common` 能力。
-- 业务实现模块（`system/auth/log/job/notice/order`）依赖 `common` 与对应 `*-api`。
+- `core-http-extension` 依赖 `extension-api`，并复用 `common` 能力。
+- 业务实现模块（`system/auth/job/notice/order`）依赖 `common` 与对应 `*-api`。
 - `app` 作为组装与启动入口，依赖全部业务与扩展模块。
 
 ### 隔离与禁止依赖（maven-enforcer 约束）
 
-- `identity-api`、`log-api`、`extension-api` 禁止依赖 `system`/`auth`/`order`/`notice`/`job`/`log`/`core-http-extension`/
-  `app`。
-- `core-http-extension` 禁止依赖 `system`/`auth`/`order`/`notice`/`job`/`log`/`app`。
-- `system` 禁止依赖 `auth`/`order`/`notice`/`job`/`log`/`core-http-extension`/`app`。
-- `auth`、`order`、`notice`、`job`、`log` 禁止依赖 `system` 及其他业务实现模块（同时禁止 `core-http-extension`、`app`）。
+- `identity-api`、`extension-api` 禁止依赖 `system`/`auth`/`order`/`notice`/`job`/`core-http-extension`/`app`。
+- `core-http-extension` 禁止依赖 `system`/`auth`/`order`/`notice`/`job`/`app`。
+- `system` 禁止依赖 `auth`/`order`/`notice`/`job`/`core-http-extension`/`app`。
+- `auth`、`order`、`notice`、`job` 禁止依赖 `system` 及其他业务实现模块（同时禁止 `core-http-extension`、`app`）。
 - `app` 仅用于最终装配，设计上不作为其他模块的依赖来源。
 
 这些规则体现了：
@@ -164,13 +159,11 @@ common/*  ->  *-api  ->  业务实现/扩展实现  ->  app
 |-----------------------|-------|------------------------------------------|
 | `common/*`            | 基础设施  | 统一返回、异常处理、缓存抽象、安全、数据权限、工具与通用配置           |
 | `identity-api`        | 契约层   | 身份域对外接口定义                                |
-| `log-api`             | 契约层   | 日志域对外接口定义                                |
 | `extension-api`       | 契约层   | 扩展能力对外接口定义（如执行策略 SPI）                    |
 | `core-http-extension` | 扩展实现层 | 动态接口管理与运行时执行（Bean / SQL / HTTP / 自定义执行器） |
 | `system`              | 业务实现层 | 系统管理域能力                                  |
 | `auth`                | 业务实现层 | 认证与会话、登录安全、二次确认                          |
-| `log`                 | 业务实现层 | 登录日志、操作日志、审计事件落库                         |
-| `job`                 | 业务实现层 | Quartz 任务管理、执行日志与结果追踪                    |
+| `job`                 | 业务实现层 | Quartz 任务管理与执行调度                         |
 | `notice`              | 业务实现层 | 通知发布与阅读状态、SSE 实时推送                       |
 | `order`               | 业务实现层 | 订单示例模块（用于展示业务层 CRUD + 权限/数据范围接入）         |
 | `app`                 | 装配层   | 聚合启动、统一配置与运行                             |

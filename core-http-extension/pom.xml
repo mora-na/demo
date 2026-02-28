@@ -26,7 +26,7 @@
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
-            <artifactId>mybatis</artifactId>
+            <artifactId>data</artifactId>
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
@@ -35,10 +35,6 @@
         <dependency>
             <groupId>com.example</groupId>
             <artifactId>cache</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>log-api</artifactId>
         </dependency>
         <dependency>
             <groupId>com.example</groupId>

@@ -3,7 +3,6 @@ DROP DATABASE IF EXISTS demo_config;
 DROP DATABASE IF EXISTS demo_order;
 DROP DATABASE IF EXISTS demo_notice;
 DROP DATABASE IF EXISTS demo_job;
-DROP DATABASE IF EXISTS demo_log;
 DROP DATABASE IF EXISTS demo_dict;
 DROP DATABASE IF EXISTS demo_cache;
 DROP DATABASE IF EXISTS demo_extension;
@@ -13,7 +12,6 @@ CREATE DATABASE demo_config DEFAULT CHARACTER SET utf8mb4;
 CREATE DATABASE demo_order DEFAULT CHARACTER SET utf8mb4;
 CREATE DATABASE demo_notice DEFAULT CHARACTER SET utf8mb4;
 CREATE DATABASE demo_job DEFAULT CHARACTER SET utf8mb4;
-CREATE DATABASE demo_log DEFAULT CHARACTER SET utf8mb4;
 CREATE DATABASE demo_dict DEFAULT CHARACTER SET utf8mb4;
 CREATE DATABASE demo_cache DEFAULT CHARACTER SET utf8mb4;
 CREATE DATABASE demo_extension DEFAULT CHARACTER SET utf8mb4;
@@ -528,7 +526,6 @@ CREATE TABLE IF NOT EXISTS sys_job
     allow_concurrent TINYINT      NOT NULL DEFAULT 1 COMMENT '是否允许并发：1-允许，0-禁止',
     misfire_policy   VARCHAR(32)           DEFAULT 'DEFAULT' COMMENT '误触发策略',
     params           TEXT COMMENT '任务参数',
-    log_collect_level VARCHAR(16) DEFAULT 'ERROR' COMMENT '日志收集级别',
     created_by       BIGINT COMMENT '创建人ID',
     created_name     VARCHAR(64) COMMENT '创建人名称',
     created_at       DATETIME     NOT NULL COMMENT '创建时间',
@@ -542,134 +539,6 @@ CREATE TABLE IF NOT EXISTS sys_job
   DEFAULT CHARSET = utf8mb4
     COMMENT
         ='定时任务表';
-
-CREATE TABLE IF NOT EXISTS sys_job_log
-(
-    id           BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    job_id       BIGINT       NOT NULL COMMENT '任务ID',
-    job_name     VARCHAR(128) NOT NULL COMMENT '任务名称',
-    handler_name VARCHAR(128) NOT NULL COMMENT '处理器名称',
-    status       TINYINT      NOT NULL COMMENT '执行状态：1-成功，0-失败',
-    message      VARCHAR(512) COMMENT '执行信息',
-    log_detail   TEXT COMMENT '执行日志',
-    start_time   DATETIME     NOT NULL COMMENT '开始时间',
-    end_time     DATETIME COMMENT '结束时间',
-    duration_ms  BIGINT COMMENT '耗时毫秒',
-    PRIMARY KEY (id),
-    KEY idx_sys_job_log_job (job_id),
-    KEY idx_sys_job_log_start (start_time),
-    KEY idx_sys_job_log_job_start_id (job_id, start_time, id)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-    COMMENT
-        ='定时任务日志表';
-
-CREATE TABLE IF NOT EXISTS sys_job_log_detail
-(
-    id         BIGINT      NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    log_id     BIGINT      NOT NULL COMMENT '日志ID',
-    part_type  VARCHAR(16) NOT NULL COMMENT '日志片段类型: MANUAL/AUTO',
-    log_detail TEXT COMMENT '日志内容',
-    created_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_sys_job_log_detail_log_type (log_id, part_type),
-    KEY idx_sys_job_log_detail_log (log_id)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-    COMMENT
-        ='定时任务日志明细表';
-
-USE demo_log;
-
-CREATE TABLE IF NOT EXISTS sys_oper_log
-(
-    id             BIGINT   NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    user_id        BIGINT COMMENT '操作人ID',
-    user_name      VARCHAR(64) COMMENT '操作人账号',
-    dept_id        BIGINT COMMENT '部门ID',
-    dept_name      VARCHAR(128) COMMENT '部门名称',
-    title          VARCHAR(128) COMMENT '模块标题',
-    operation      VARCHAR(256) COMMENT '操作描述',
-    business_type  TINYINT  NOT NULL DEFAULT 0 COMMENT '业务类型',
-    method         VARCHAR(255) COMMENT '请求方法',
-    request_method VARCHAR(16) COMMENT 'HTTP方法',
-    oper_url       VARCHAR(512) COMMENT '请求URL',
-    oper_ip        VARCHAR(128) COMMENT '操作IP',
-    oper_location  VARCHAR(255) COMMENT 'IP归属地',
-    oper_param     TEXT COMMENT '请求参数',
-    oper_result    TEXT COMMENT '返回结果',
-    before_data    TEXT COMMENT '操作前数据',
-    after_data     TEXT COMMENT '操作后数据',
-    status         TINYINT  NOT NULL DEFAULT 1 COMMENT '操作状态',
-    error_msg      VARCHAR(2000) COMMENT '错误信息',
-    cost_time      BIGINT   NOT NULL DEFAULT 0 COMMENT '耗时毫秒',
-    oper_time      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
-    PRIMARY KEY (id),
-    KEY idx_sys_oper_log_user (user_id),
-    KEY idx_sys_oper_log_type (business_type),
-    KEY idx_sys_oper_log_status (status),
-    KEY idx_sys_oper_log_time (oper_time),
-    KEY idx_sys_oper_log_status_type_time (status, business_type, oper_time, id)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-    COMMENT
-        ='操作日志表';
-
-CREATE TABLE IF NOT EXISTS sys_login_log
-(
-    id             BIGINT   NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    user_id        BIGINT COMMENT '用户ID',
-    user_name      VARCHAR(64) COMMENT '登录账号',
-    login_ip       VARCHAR(128) COMMENT '登录IP',
-    login_location VARCHAR(255) COMMENT 'IP归属地',
-    browser        VARCHAR(128) COMMENT '浏览器',
-    os             VARCHAR(128) COMMENT '操作系统',
-    device_type    VARCHAR(64) COMMENT '设备类型',
-    login_type     TINYINT  NOT NULL DEFAULT 1 COMMENT '类型 1=登录 2=登出',
-    status         TINYINT  NOT NULL DEFAULT 1 COMMENT '状态 0=失败 1=成功',
-    msg            VARCHAR(500) COMMENT '提示消息',
-    login_time     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '登录时间',
-    PRIMARY KEY (id),
-    KEY idx_sys_login_log_user (user_name),
-    KEY idx_sys_login_log_time (login_time),
-    KEY idx_sys_login_log_ip (login_ip),
-    KEY idx_sys_login_log_status (status),
-    KEY idx_sys_login_log_status_type_time (status, login_type, login_time, id),
-    KEY idx_sys_login_log_user_type_status_time (user_id, login_type, status, login_time, id)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-    COMMENT
-        ='登录日志表';
-
-CREATE TABLE IF NOT EXISTS sys_dynamic_api_log
-(
-    id            BIGINT   NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    api_id        BIGINT COMMENT '接口ID',
-    api_path      VARCHAR(256) COMMENT '接口路径',
-    api_method    VARCHAR(16) COMMENT 'HTTP方法',
-    api_type      VARCHAR(16) COMMENT '类型',
-    auth_mode     VARCHAR(16) COMMENT '认证模式',
-    status        TINYINT  NOT NULL DEFAULT 1 COMMENT '状态 0=失败 1=成功',
-    response_code INT COMMENT '响应码',
-    error_msg     VARCHAR(2000) COMMENT '错误信息',
-    error_details TEXT COMMENT '错误详情',
-    meta          TEXT COMMENT '元数据',
-    trace_id      VARCHAR(128) COMMENT 'TraceId',
-    user_id       BIGINT COMMENT '用户ID',
-    user_name     VARCHAR(64) COMMENT '用户账号',
-    request_ip    VARCHAR(128) COMMENT '请求IP',
-    request_param TEXT COMMENT '请求参数',
-    duration_ms   BIGINT COMMENT '耗时毫秒',
-    request_time  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '请求时间',
-    PRIMARY KEY (id),
-    KEY idx_dynamic_api_log_api (api_id),
-    KEY idx_dynamic_api_log_status (status),
-    KEY idx_dynamic_api_log_time (request_time),
-    KEY idx_dynamic_api_log_method_status_time (api_method, status, request_time, id)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-    COMMENT
-        ='动态接口日志表';
 
 USE demo_extension;
 
@@ -985,11 +854,6 @@ VALUES (1, 'user:query', '用户查询', 1),
        (62, 'notice:create', '通知创建', 1),
        (63, 'notice:update', '通知编辑', 1),
        (64, 'notice:disable', '通知撤回', 1),
-       (65, 'log:query', '操作日志查询', 1),
-       (66, 'log:export', '操作日志导出', 1),
-       (67, 'log:delete', '操作日志清理', 1),
-       (68, 'login-log:query', '登录日志查询', 1),
-       (69, 'login-log:delete', '登录日志清理', 1),
        (70, 'dict:query', '字典查询', 1),
        (71, 'dict:create', '字典创建', 1),
        (72, 'dict:update', '字典修改', 1),
@@ -1001,10 +865,7 @@ VALUES (1, 'user:query', '用户查询', 1),
        (78, 'dynamic-api:status', '动态接口状态', 1),
        (79, 'dynamic-api:delete', '动态接口删除', 1),
        (80, 'dynamic-api:reload', '动态接口重载', 1),
-       (81, 'dynamic-api-log:query', '动态接口日志查询', 1),
-       (82, 'dynamic-api-log:delete', '动态接口日志删除', 1),
        (83, 'notice:stream:metrics', '通知流监控', 1),
-       (84, 'job:log:metrics', '任务日志监控', 1),
        (85, 'druid:monitor', '数据源监控', 1),
        (86, 'config:query', '配置查询', 1),
        (87, 'config:create', '配置创建', 1),
@@ -1034,12 +895,8 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (183, '用户特例授权', 'data-scope-user', 180, '/data-scope/user', 'DataScopeUserPage',
         'data-scope:user:query', 1, 30, '用户特例授权'),
        (190, '系统监控', 'monitor', NULL, '/monitor', 'Layout', NULL, 1, 40, '系统监控'),
-       (191, '操作日志', 'oper-log', 190, '/monitor/oper-log', 'OperLogPage', 'log:query', 1, 10, '操作日志'),
-       (192, '登录日志', 'login-log', 190, '/monitor/login-log', 'LoginLogPage', 'login-log:query', 1, 20, '登录日志'),
        (193, '通知流监控', 'notice-stream-metrics', 190, '/monitor/notice-stream', 'NoticeStreamMetricsPage',
         'notice:stream:metrics', 1, 30, '通知流监控'),
-       (194, '任务日志监控', 'job-log-metrics', 190, '/monitor/job-log', 'JobLogMetricsPage', 'job:log:metrics', 1, 40,
-        '任务日志监控'),
        (195, '数据源监控', 'druid-monitor', 190, '/monitor/druid', 'DruidMonitorPage', 'druid:monitor', 1, 50,
         '数据源监控'),
        (196, '首页', 'druid-monitor-home', 195, '/monitor/druid/home', 'DruidMonitorPage', 'druid:monitor', 1, 10,
@@ -1063,9 +920,7 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (200, '订单管理', 'order', NULL, '/orders', 'OrderPage', 'order:query', 1, 20, '订单管理'),
        (210, '接口扩展', 'extension', NULL, '/extension', 'Layout', NULL, 1, 50, '接口扩展'),
        (211, '动态接口', 'dynamic-api', 210, '/extension/dynamic-api', 'DynamicApiPage', 'dynamic-api:query', 1, 10,
-        '动态接口管理'),
-       (212, '调用日志', 'dynamic-api-log', 210, '/extension/dynamic-api-log', 'DynamicApiLogPage',
-        'dynamic-api-log:query', 1, 20, '动态接口日志')
+        '动态接口管理')
 ;
 
 USE demo_dict;
@@ -1298,7 +1153,7 @@ VALUES (1, 2, 1999.00, '2026-02-01 09:12:00', '2026-02-01 09:12:00', 2, 100, 2, 
 
 -- =========================
 -- 单数据源账号与权限（需 root/DBA 执行）
--- 单账号覆盖全部模块 database（demo_system/demo_config/demo_order/demo_notice/demo_job/demo_log/demo_dict/demo_cache/demo_extension）
+-- 单账号覆盖全部模块 database（demo_system/demo_config/demo_order/demo_notice/demo_job/demo_dict/demo_cache/demo_extension）
 -- 默认账号与 application-dev.yml 的单数据源默认值一致：demo_system_rw
 -- =========================
 CREATE USER IF NOT EXISTS 'demo_system_rw'@'%' IDENTIFIED BY 'demo_system_rw';
@@ -1310,7 +1165,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON `demo_config`.* TO 'demo_system_rw'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON `demo_order`.* TO 'demo_system_rw'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON demo_notice.* TO 'demo_system_rw'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON demo_job.* TO 'demo_system_rw'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE ON demo_log.* TO 'demo_system_rw'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON demo_dict.* TO 'demo_system_rw'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON demo_cache.* TO 'demo_system_rw'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON demo_extension.* TO 'demo_system_rw'@'%';

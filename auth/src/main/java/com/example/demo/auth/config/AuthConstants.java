@@ -25,7 +25,6 @@ public class AuthConstants {
     private Password password = new Password();
     @ConfigField(seed = true, hotUpdate = true)
     private Profile profile = new Profile();
-    private LoginLog loginLog = new LoginLog();
     @ConfigField(seed = true, hotUpdate = true)
     private Security security = new Security();
     private Controller controller = new Controller();
@@ -180,19 +179,6 @@ public class AuthConstants {
 
         private int newPasswordMinLength = DEFAULT_NEW_PASSWORD_MIN_LENGTH;
         private String userAgentHeader = DEFAULT_USER_AGENT_HEADER;
-    }
-
-    @Data
-    public static class LoginLog {
-        public static final int DEFAULT_TYPE_LOGIN = 1;
-        public static final int DEFAULT_TYPE_LOGOUT = 2;
-        public static final int DEFAULT_STATUS_FAIL = 0;
-        public static final int DEFAULT_STATUS_SUCCESS = 1;
-
-        private int typeLogin = DEFAULT_TYPE_LOGIN;
-        private int typeLogout = DEFAULT_TYPE_LOGOUT;
-        private int statusFail = DEFAULT_STATUS_FAIL;
-        private int statusSuccess = DEFAULT_STATUS_SUCCESS;
     }
 
     @Data

@@ -35,9 +35,6 @@ public class JobCreateRequest {
 
     private String params;
 
-    @Size(max = 16)
-    private String logCollectLevel;
-
     @Size(max = 255)
     private String remark;
 }

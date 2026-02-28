@@ -51,38 +51,3 @@ spring:
             useProperties: false
             # 获取触发器时加锁（高并发 DB 建议开启）
             acquireTriggersWithinLock: true
-
-# 定时任务日志收集配置
-job:
-  constants:
-    log-collect:
-      # 是否启用自动收集
-      enabled: true
-      # 收集范围：MDC | THREAD
-      scope: MDC
-      # 默认日志收集级别（任务未指定时使用）：TRACE/DEBUG/INFO/WARN/ERROR
-      min-level: INFO
-      # 单次执行最大日志长度（字符）
-      max-length: 8192
-      # 最大缓冲实例数量
-      max-buffers: 200
-      # 是否启用自动降级
-      auto-degrade-enabled: true
-      # 缓冲占用降级阈值比例（0-1）
-      degrade-buffer-ratio: 0.9
-      # 延迟合并时间（毫秒）
-      merge-delay-millis: 3000
-      # 最大缓冲保留时间（毫秒）
-      max-hold-millis: 30000
-      # 是否启用 InheritableThreadLocal 兜底透传
-      inherit-thread-context: true
-      # MDC 关联键
-      mdc-key: jobLogId
-      # 线程名 MDC 键（scope=THREAD 生效）
-      thread-key: jobLogThread
-    execution:
-      # sys_job_log.log_detail 字段最大长度
-      log-detail-max-length: 8000
-    appender:
-      # Job 日志收集输出格式（logback pattern）
-      pattern: '%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %X{traceId} [%thread] %logger{36} - %msg%ex'

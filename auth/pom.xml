@@ -29,15 +29,7 @@
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
-            <artifactId>log-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
             <artifactId>identity-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>log-api</artifactId>
         </dependency>
 
         <dependency>

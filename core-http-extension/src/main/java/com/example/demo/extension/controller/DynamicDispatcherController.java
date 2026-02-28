@@ -22,14 +22,11 @@ import com.example.demo.extension.model.DynamicApiStatus;
 import com.example.demo.extension.registry.DynamicApiMatch;
 import com.example.demo.extension.registry.DynamicApiRegistry;
 import com.example.demo.extension.support.DynamicApiRequestExtractor;
-import com.example.demo.log.api.event.DynamicApiLogEvent;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,8 +34,8 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * 动态接口统一入口。
@@ -58,7 +55,6 @@ public class DynamicDispatcherController {
     private final RateLimitAdapter rateLimitAdapter;
     private final I18nService i18nService;
     private final CommonConstants commonConstants;
-    private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
 
     @RequestMapping("/ext/**")
@@ -90,7 +86,6 @@ public class DynamicDispatcherController {
         DynamicApiRequest apiRequest = requestExtractor.extract(request, match.getPathVariables(), paramMode);
         if (DynamicApiAuthMode.INHERIT.equals(match.getMeta().getAuthMode()) && AuthContext.get() == null) {
             DynamicApiResponse<Object> response = buildError(request, 401, "auth.permission.required", start);
-            publishLog(match, apiRequest, null, response.getDurationMs(), request, "unauthorized");
             return immediate(response, resolveTimeout(null), 401);
         }
         RateLimitDecision decision = rateLimitAdapter.tryAcquire(request, match.getMeta().getApi().getRateLimitPolicy());
@@ -99,7 +94,6 @@ public class DynamicDispatcherController {
                     constants.getController().getRateLimitCode(),
                     decision.getMessageKey(),
                     start);
-            publishLog(match, apiRequest, null, response.getDurationMs(), request, "rate_limit");
             return immediate(response, resolveTimeout(null), constants.getController().getRateLimitCode());
         }
         long timeoutMs = resolveTimeout(match.getMeta().getApi().getTimeoutMs());
@@ -146,7 +140,6 @@ public class DynamicDispatcherController {
                     : executeResult;
             payload = enforceResponseSize(payload);
             ResponseEntity<DynamicApiResponse<Object>> response = buildResponseEntity(request, payload, finalStart);
-            publishLog(match, apiRequest, payload, response.getBody() == null ? null : response.getBody().getDurationMs(), request, null);
             result.setResult(response);
         });
         result.onError(throwable -> {
@@ -167,8 +160,6 @@ public class DynamicDispatcherController {
                     constants.getMessage().getTimeout(),
                     DynamicApiTerminationReason.TIMEOUT);
             ResponseEntity<DynamicApiResponse<Object>> response = buildResponseEntity(request, timeoutResult, finalStart);
-            publishLog(match, apiRequest, timeoutResult, response.getBody() == null ? null : response.getBody().getDurationMs(),
-                    request, "timeout");
             if (!result.isSetOrExpired()) {
                 result.setResult(response);
             }
@@ -255,79 +246,6 @@ public class DynamicDispatcherController {
         return payload;
     }
 
-    private void publishLog(DynamicApiMatch match,
-                            DynamicApiRequest apiRequest,
-                            DynamicApiExecuteResult result,
-                            Long durationMs,
-                            HttpServletRequest request,
-                            String errorOverride) {
-        if (eventPublisher == null || match == null || match.getMeta() == null) {
-            return;
-        }
-        try {
-            String traceId = MDC.get(commonConstants.getTrace().getMdcKey());
-            String ip = resolveClientIp(request);
-            String param = resolveParam(apiRequest);
-            boolean success = result != null && result.isSuccess();
-            int code = result == null ? constants.getController().getInternalServerErrorCode() : result.getCode();
-            String errorMsg = success ? null : (errorOverride != null ? errorOverride : result == null ? null : result.getMessage());
-            String errorDetails = result == null ? null : safeJson(result.getErrorDetails());
-            String meta = result == null ? null : safeJson(result.getMeta());
-            if (log.isDebugEnabled() && result != null && (!success)
-                    && (result.getErrorDetails() != null || result.getMeta() != null)) {
-                log.debug("Dynamic api error details: apiId={}, details={}, meta={}",
-                        match.getMeta().getApi().getId(),
-                        errorDetails,
-                        meta);
-            }
-            DynamicApiLogEvent event = new DynamicApiLogEvent(
-                    match.getMeta().getApi().getId(),
-                    match.getMeta().getApi().getPath(),
-                    match.getMeta().getApi().getMethod(),
-                    match.getMeta().getApi().getType(),
-                    match.getMeta().getApi().getAuthMode(),
-                    success ? 1 : 0,
-                    code,
-                    errorMsg,
-                    errorDetails,
-                    meta,
-                    traceId,
-                    AuthContext.get() == null ? null : AuthContext.get().getId(),
-                    AuthContext.get() == null ? null : AuthContext.get().getUserName(),
-                    ip,
-                    param,
-                    durationMs,
-                    LocalDateTime.now()
-            );
-            eventPublisher.publishEvent(event);
-        } catch (Exception ex) {
-            log.warn("Publish dynamic api log failed", ex);
-        }
-    }
-
-    private String safeJson(Object value) {
-        if (value == null) {
-            return null;
-        }
-        try {
-            String json = objectMapper.writeValueAsString(value);
-            return truncate(json);
-        } catch (Exception ex) {
-            return truncate(String.valueOf(value));
-        }
-    }
-
-    private String truncate(String value) {
-        if (value == null) {
-            return null;
-        }
-        int maxLength = constants.getExecute().getLogMaxLength();
-        if (maxLength <= 0 || value.length() <= maxLength) {
-            return value;
-        }
-        return value.substring(0, maxLength) + "...";
-    }
-
     private DeferredResult<ResponseEntity<DynamicApiResponse<Object>>> immediate(DynamicApiResponse<Object> response,
                                                                                  long timeoutMs,
                                                                                  int status) {
@@ -348,132 +266,6 @@ public class DynamicDispatcherController {
         return Math.max(1, timeoutMs);
     }
 
-    private String resolveParam(DynamicApiRequest apiRequest) {
-        if (apiRequest == null) {
-            return null;
-        }
-        Map<String, Object> payload = new LinkedHashMap<>();
-        if (StringUtils.isNotBlank(apiRequest.getMethod())) {
-            payload.put("method", apiRequest.getMethod());
-        }
-        if (StringUtils.isNotBlank(apiRequest.getPath())) {
-            payload.put("path", apiRequest.getPath());
-        }
-        if (apiRequest.getParamMode() != null) {
-            payload.put("paramMode", apiRequest.getParamMode().name());
-        }
-        if (!apiRequest.getPathVariables().isEmpty()) {
-            payload.put("pathVariables", maskSensitive(apiRequest.getPathVariables()));
-        }
-        if (!apiRequest.getQueryParams().isEmpty()) {
-            payload.put("queryParams", maskSensitive(apiRequest.getQueryParams()));
-        }
-        if (!apiRequest.getParams().isEmpty()) {
-            payload.put("params", maskSensitive(apiRequest.getParams()));
-        }
-        if (StringUtils.isNotBlank(apiRequest.getRawBody())) {
-            payload.put("rawBody", maskRawBody(apiRequest.getRawBody()));
-        }
-        if (!apiRequest.getHeaders().isEmpty()) {
-            payload.put("headers", maskSensitive(apiRequest.getHeaders()));
-        }
-        if (apiRequest.hasFiles()) {
-            payload.put("files", apiRequest.getFileSummary());
-        }
-        try {
-            String json = objectMapper.writeValueAsString(payload);
-            return truncate(json);
-        } catch (Exception ex) {
-            return truncate(String.valueOf(payload));
-        }
-    }
-
-    private String maskRawBody(String rawBody) {
-        if (rawBody == null) {
-            return null;
-        }
-        try {
-            Object parsed = objectMapper.readValue(rawBody, Object.class);
-            Object masked = maskSensitive(parsed);
-            String json = objectMapper.writeValueAsString(masked);
-            if (json.length() > constants.getExecute().getLogMaxLength()) {
-                return json.substring(0, constants.getExecute().getLogMaxLength()) + "...";
-            }
-            return json;
-        } catch (Exception ex) {
-            if (rawBody.length() > constants.getExecute().getLogMaxLength()) {
-                return rawBody.substring(0, constants.getExecute().getLogMaxLength()) + "...";
-            }
-            return rawBody;
-        }
-    }
-
-    private Object maskSensitive(Object value) {
-        if (value == null) {
-            return null;
-        }
-        Set<String> maskedKeys = buildMaskedKeys();
-        return maskValue(value, maskedKeys);
-    }
-
-    private Object maskValue(Object value, Set<String> maskedKeys) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof Map) {
-            return maskMap((Map<?, ?>) value, maskedKeys);
-        }
-        if (value instanceof Iterable) {
-            List<Object> list = new ArrayList<>();
-            for (Object item : (Iterable<?>) value) {
-                list.add(maskValue(item, maskedKeys));
-            }
-            return list;
-        }
-        if (value instanceof String) {
-            return value;
-        }
-        try {
-            Map<String, Object> map = objectMapper.convertValue(value, new TypeReference<Map<String, Object>>() {
-            });
-            return maskMap(map, maskedKeys);
-        } catch (Exception ex) {
-            return value;
-        }
-    }
-
-    private Map<String, Object> maskMap(Map<?, ?> input, Set<String> maskedKeys) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        if (input == null) {
-            return result;
-        }
-        for (Map.Entry<?, ?> entry : input.entrySet()) {
-            String key = entry.getKey() == null ? null : String.valueOf(entry.getKey());
-            if (key == null) {
-                continue;
-            }
-            if (maskedKeys.contains(key.toLowerCase(Locale.ROOT))) {
-                result.put(key, "***");
-            } else {
-                result.put(key, maskValue(entry.getValue(), maskedKeys));
-            }
-        }
-        return result;
-    }
-
-    private Set<String> buildMaskedKeys() {
-        Set<String> result = new HashSet<>();
-        if (constants == null || constants.getExecute() == null || constants.getExecute().getMaskedKeys() == null) {
-            return result;
-        }
-        for (String key : constants.getExecute().getMaskedKeys()) {
-            if (key != null && !key.trim().isEmpty()) {
-                result.add(key.trim().toLowerCase(Locale.ROOT));
-            }
-        }
-        return result;
-    }
-
     private DynamicApiParamMode resolveParamMode(DynamicApiMatch match) {
         if (match == null || match.getMeta() == null) {
             return DynamicApiParamMode.AUTO;
@@ -487,19 +279,4 @@ public class DynamicDispatcherController {
         return DynamicApiParamMode.AUTO;
     }
 
-    private String resolveClientIp(HttpServletRequest request) {
-        if (request == null) {
-            return null;
-        }
-        String forwarded = request.getHeader(commonConstants.getHttp().getForwardedForHeader());
-        if (StringUtils.isNotBlank(forwarded)) {
-            int comma = forwarded.indexOf(',');
-            return comma > 0 ? forwarded.substring(0, comma).trim() : forwarded.trim();
-        }
-        String realIp = request.getHeader(commonConstants.getHttp().getRealIpHeader());
-        if (StringUtils.isNotBlank(realIp)) {
-            return realIp.trim();
-        }
-        return request.getRemoteAddr();
-    }
 }

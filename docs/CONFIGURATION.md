@@ -598,15 +598,7 @@ server:
 
 - 持久化调度配置：`spring.quartz.*`。
 - 任务处理器需实现 `com.example.demo.job.api.JobHandler` 并注册为 Spring Bean。
-- 其他模块实现处理器时请依赖 `job-api` 模块（契约包为 `com.example.demo.job.api`）。
-- 记录存储：`sys_job_log`，详情日志使用 `log_detail` 字段。
-
-### 执行日志自动收集（Job Log Collect）
-
-- 开关与范围：`job.constants.log-collect.enabled`、`job.constants.log-collect.scope`。
-- 级别与长度：`job.constants.log-collect.min-level`、`job.constants.log-collect.max-length`。
-- 异步合并：`job.constants.log-collect.merge-delay-millis`、`job.constants.log-collect.max-hold-millis`。
-- 线程上下文兜底：`job.constants.log-collect.inherit-thread-context`。
+- 其他模块实现处理器时请依赖 `job` 模块（契约包为 `com.example.demo.job.api`）。
 
 ### Job 模块常量覆盖（job.constants）
 
@@ -616,24 +608,22 @@ server:
 
 **Controller 组（接口错误码）**
 
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `job.constants.controller.bad-request-code` | `400` | 参数非法、Cron/处理器/misfire 校验失败等错误码。 |
-| `job.constants.controller.not-found-code` | `404` | 任务或任务日志不存在时错误码。 |
-| `job.constants.controller.internal-server-error-code` | `500` | 创建/更新/删除/运行失败时错误码。 |
+| 配置键                                                   | 默认值   | 说明                              |
+|-------------------------------------------------------|-------|---------------------------------|
+| `job.constants.controller.bad-request-code`           | `400` | 参数非法、Cron/处理器/misfire 校验失败等错误码。 |
+| `job.constants.controller.not-found-code`             | `404` | 任务不存在时错误码。                      |
+| `job.constants.controller.internal-server-error-code` | `500` | 创建/更新/删除/运行失败时错误码。              |
 
 **Message 组（i18n 消息键）**
 
 | 配置键                                                   | 默认值                             | 说明               |
 |-------------------------------------------------------|---------------------------------|------------------|
 | `job.constants.message.job-not-found`                 | `job.not.found`                 | 任务不存在消息键。        |
-| `job.constants.message.job-log-not-found`             | `job.log.not.found`             | 任务日志不存在消息键。      |
 | `job.constants.message.job-cron-invalid`              | `job.cron.invalid`              | Cron 表达式非法消息键。   |
 | `job.constants.message.job-handler-invalid`           | `job.handler.invalid`           | 任务处理器非法消息键。      |
 | `job.constants.message.job-misfire-invalid`           | `job.misfire.invalid`           | Misfire 策略非法消息键。 |
 | `job.constants.message.job-status-invalid`            | `job.status.invalid`            | 任务状态非法消息键。       |
 | `job.constants.message.job-concurrent-invalid`        | `job.concurrent.invalid`        | 任务并发配置非法消息键。     |
-| `job.constants.message.job-log-collect-level-invalid` | `job.log.collect.level.invalid` | 日志收集级别非法消息键。     |
 | `job.constants.message.job-create-failed`             | `job.create.failed`             | 创建任务失败消息键。       |
 | `job.constants.message.job-update-failed`             | `job.update.failed`             | 更新任务失败消息键。       |
 | `job.constants.message.job-delete-failed`             | `job.delete.failed`             | 删除任务失败消息键。       |
@@ -653,8 +643,6 @@ server:
 |---|---|---|
 | `job.constants.status.job-enabled` | `1` | 任务启用状态值。 |
 | `job.constants.status.job-disabled` | `0` | 任务禁用状态值。 |
-| `job.constants.status.log-success` | `1` | 执行日志成功状态值。 |
-| `job.constants.status.log-failed` | `0` | 执行日志失败状态值。 |
 
 **Concurrent 组（并发开关值）**
 
@@ -681,59 +669,6 @@ server:
 | `job.constants.data-map.handler-name-key`      | `handlerName`     | 处理器名的 JobDataMap 键。     |
 | `job.constants.data-map.cron-expression-key`   | `cronExpression`  | Cron 表达式的 JobDataMap 键。 |
 | `job.constants.data-map.params-key`            | `params`          | 参数字符串的 JobDataMap 键。    |
-| `job.constants.data-map.log-collect-level-key` | `logCollectLevel` | 日志收集级别的 JobDataMap 键。   |
-
-**Execution 组（执行日志拼装）**
-
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `job.constants.execution.execute-start-prefix` | `开始执行: ` | 手动日志中执行开始前缀。 |
-| `job.constants.execution.params-prefix` | `参数: ` | 手动日志中参数行前缀。 |
-| `job.constants.execution.handler-not-found-message` | `handler not found` | 处理器缺失时写入 `message` 的文本。 |
-| `job.constants.execution.handler-not-found-log-prefix` | `处理器不存在: ` | 处理器缺失时写入手动日志的前缀。 |
-| `job.constants.execution.execute-success-log` | `执行成功` | 执行成功手动日志文本。 |
-| `job.constants.execution.execute-error-prefix` | `执行异常: ` | 执行异常手动日志前缀。 |
-| `job.constants.execution.log-merge-separator` | `\n----\n` | 手动日志与自动采集日志合并分隔符。 |
-| `job.constants.execution.message-max-length` | `500` | `sys_job_log.message` 最大截断长度。 |
-| `job.constants.execution.log-detail-max-length` | `8000` | `sys_job_log.log_detail` 最大截断长度。 |
-
-**Handler Demo 组（示例处理器）**
-
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `job.constants.handler-demo.manual-log-start` | `手动记录定时任务日志` | 示例处理器起始手动日志文本。 |
-| `job.constants.handler-demo.manual-log-end` | `手动记录日志任务结束` | 示例处理器结束手动日志文本。 |
-| `job.constants.handler-demo.new-thread-log` | `new Thread 未显式透传也可收集日志` | 示例中普通线程日志文本。 |
-| `job.constants.handler-demo.async-thread-log` | `异步线程日志手动记录` | 示例中异步线程日志文本。 |
-| `job.constants.handler-demo.plain-thread-name` | `job-log-plain` | 示例普通线程名称。 |
-| `job.constants.handler-demo.async-thread-name` | `job-log-demo` | 示例异步线程名称。 |
-| `job.constants.handler-demo.raw-executor-pool-size` | `1` | 示例未包装线程池大小。 |
-| `job.constants.handler-demo.wrapped-executor-pool-size` | `1` | 示例包装线程池大小。 |
-| `job.constants.handler-demo.schedule-delay-millis` | `100` | 示例延迟任务触发毫秒数。 |
-
-**Log Collect 组（自动日志收集）**
-
-| 配置键                                                      | 默认值                 | 说明                               |
-|----------------------------------------------------------|---------------------|----------------------------------|
-| `job.constants.log-collect.enabled`                      | `true`              | 是否启用任务自动日志收集。                    |
-| `job.constants.log-collect.scope`                        | `MDC`               | 收集范围：`MDC` 或 `THREAD`。           |
-| `job.constants.log-collect.min-level`                    | `INFO`              | 默认日志收集级别（任务未指定时使用）。              |
-| `job.constants.log-collect.max-length`                   | `65536`             | 单次执行自动日志最大长度（字符）。                |
-| `job.constants.log-collect.merge-delay-millis`           | `3000`              | 延迟合并日志毫秒数。                       |
-| `job.constants.log-collect.max-hold-millis`              | `60000`             | 运行实例日志缓冲最大保留毫秒数。                 |
-| `job.constants.log-collect.inherit-thread-context`       | `true`              | 是否允许线程上下文兜底透传 runId。             |
-| `job.constants.log-collect.mdc-key`                      | `jobLogId`          | runId 在 MDC 的键名。                 |
-| `job.constants.log-collect.thread-key`                   | `jobLogThread`      | 线程名在 MDC 的键名（`scope=THREAD` 生效）。 |
-| `job.constants.log-collect.collector-thread-name`        | `job-log-collector` | 收集器后台线程名。                        |
-| `job.constants.log-collect.cleanup-initial-delay-millis` | `60000`             | 缓冲清理任务首次执行延迟。                    |
-| `job.constants.log-collect.cleanup-interval-millis`      | `60000`             | 缓冲清理任务执行周期。                      |
-
-**Appender 组（Logback 收集器）**
-
-| 配置键                                    | 默认值                                                                                | 说明                             |
-|----------------------------------------|------------------------------------------------------------------------------------|--------------------------------|
-| `job.constants.appender.appender-name` | `JOB_LOG_COLLECTOR`                                                                | 注入 Root Logger 的 appender 名称。  |
-| `job.constants.appender.pattern`       | `%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %X{traceId} [%thread] %logger{36} - %msg%ex` | Job 日志收集输出格式（Logback Pattern）。 |
 
 ### 安全防护
 
@@ -957,121 +892,6 @@ server:
 }
 ```
 
-### Log 模块常量覆盖（log.constants）
-
-- 默认值集中定义在 `src/main/java/com/example/demo/log/config/LogConstants.java`。
-- 可通过配置文件 `log.constants.*` 覆盖默认行为；未配置项自动使用默认值。
-- `List/Map` 类型建议按 Spring Boot 标准方式覆盖：
-- `log.constants.aspect.default-exclude-params[0]=password`
-- `log.constants.aspect.title-mappings.user=用户管理`
-- `log.constants.ip.headers[0]=X-Forwarded-For`
-
-**Controller 组**
-
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `log.constants.controller.bad-request-code` | `400` | 参数非法场景错误码。 |
-| `log.constants.controller.not-found-code` | `404` | 资源不存在场景错误码。 |
-| `log.constants.controller.internal-server-error-code` | `500` | 服务执行失败场景错误码。 |
-
-**Message 组**
-
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `log.constants.message.common-delete-failed` | `common.delete.failed` | 删除失败时使用的 i18n 消息键。 |
-| `log.constants.message.login-log-persist-failed` | `登录日志入库失败` | 登录日志异步入库异常日志模板。 |
-| `log.constants.message.oper-log-persist-failed` | `操作日志入库失败` | 操作日志异步入库异常日志模板。 |
-| `log.constants.message.spel-parse-failed` | `解析操作日志SpEL失败: {}` | SpEL 解析失败日志模板（第一个占位符为模板字符串）。 |
-
-**Page / Query / Status 组**
-
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `log.constants.page.default-page-num` | `1` | 查询分页对象为空时默认页码。 |
-| `log.constants.page.default-page-size` | `10` | 查询分页对象为空时默认页大小。 |
-| `log.constants.query.date-time-pattern` | `yyyy-MM-dd HH:mm:ss` | 查询时间字符串默认解析格式。 |
-| `log.constants.status.oper-success` | `1` | 操作日志成功状态值。 |
-| `log.constants.status.oper-failed` | `0` | 操作日志失败状态值。 |
-
-**HTTP 组**
-
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `log.constants.http.get-method` | `GET` | GET 方法名。 |
-| `log.constants.http.options-method` | `OPTIONS` | OPTIONS 方法名。 |
-| `log.constants.http.post-method` | `POST` | POST 方法名。 |
-| `log.constants.http.put-method` | `PUT` | PUT 方法名。 |
-| `log.constants.http.patch-method` | `PATCH` | PATCH 方法名。 |
-| `log.constants.http.delete-method` | `DELETE` | DELETE 方法名。 |
-| `log.constants.http.permission-separator` | `:` | 权限字符串分隔符（用于提取模块前缀）。 |
-| `log.constants.http.method-url-separator` | ` ` | 无权限标识时，`method + separator + url` 的拼接分隔符。 |
-
-**Aspect 组**
-
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `log.constants.aspect.max-text-length` | `2000` | 操作参数/结果/错误文本统一截断长度。 |
-| `log.constants.aspect.default-exclude-params` | `password,oldPassword,newPassword,token` | 注解未显式声明 `excludeParams` 时使用的脱敏字段列表。 |
-| `log.constants.aspect.title-mappings.user` | `用户管理` | 权限前缀到 title 的映射项示例（其余键同理）。 |
-| `log.constants.aspect.spel-pattern` | `#\{(.+?)}` | SpEL 占位符匹配正则。 |
-| `log.constants.aspect.spel-null-literal` | `null` | SpEL 表达式值为 null 时的替换文本。 |
-| `log.constants.aspect.mask-value` | `******` | 脱敏替换值。 |
-| `log.constants.aspect.spring-validation-package-prefix` | `org.springframework.validation.` | 参数过滤时忽略的 Spring Validation 包前缀。 |
-| `log.constants.aspect.spring-multipart-package-prefix` | `org.springframework.web.multipart.` | 参数过滤时忽略的 Spring Multipart 包前缀。 |
-
-**IP 组**
-
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `log.constants.ip.headers` | `X-Forwarded-For,X-Real-IP,Proxy-Client-IP,WL-Proxy-Client-IP,HTTP_CLIENT_IP,HTTP_X_FORWARDED_FOR` | 解析客户端 IP 时依次检查的代理头列表。 |
-| `log.constants.ip.unknown-token` | `unknown` | 代理头中表示无效 IP 的占位值。 |
-| `log.constants.ip.multi-ip-separator` | `,` | 多级代理 IP 串分隔符。 |
-| `log.constants.ip.internal-ip-text` | `内网IP` | 内网地址解析结果文本。 |
-| `log.constants.ip.unknown-location-text` | `未知` | 外网地址无法解析时返回文本。 |
-| `log.constants.ip.ipv4-segment-separator-regex` | `\.` | IPv4 分段正则分隔符。 |
-| `log.constants.ip.ipv4-loopback-prefix` | `127.` | IPv4 回环前缀。 |
-| `log.constants.ip.ipv6-loopback-full` | `0:0:0:0:0:0:0:1` | IPv6 完整回环地址。 |
-| `log.constants.ip.ipv6-loopback-short` | `::1` | IPv6 简写回环地址。 |
-| `log.constants.ip.private-a-prefix` | `10.` | A 类私网前缀。 |
-| `log.constants.ip.private-c-prefix` | `192.168.` | C 类私网前缀。 |
-| `log.constants.ip.private-b-prefix` | `172.` | B 类私网前缀。 |
-| `log.constants.ip.private-b-second-octet-min` | `16` | B 类私网第二段最小值。 |
-| `log.constants.ip.private-b-second-octet-max` | `31` | B 类私网第二段最大值。 |
-
-**User-Agent 组**
-
-| 配置键 | 默认值 | 说明 |
-|---|---|---|
-| `log.constants.user-agent.unknown` | `Unknown` | 无法识别时的默认名称。 |
-| `log.constants.user-agent.pc` | `PC` | 桌面设备默认名称。 |
-| `log.constants.user-agent.browser-edge-token` | `edg/` | Edge 浏览器关键字。 |
-| `log.constants.user-agent.browser-chrome-token` | `chrome/` | Chrome 浏览器关键字。 |
-| `log.constants.user-agent.browser-firefox-token` | `firefox/` | Firefox 浏览器关键字。 |
-| `log.constants.user-agent.browser-safari-token` | `safari/` | Safari 浏览器关键字。 |
-| `log.constants.user-agent.browser-ie-token` | `msie` | IE 浏览器关键字（旧版）。 |
-| `log.constants.user-agent.browser-trident-token` | `trident/` | IE 浏览器关键字（Trident）。 |
-| `log.constants.user-agent.browser-edge-name` | `Edge` | Edge 命中后的浏览器名称。 |
-| `log.constants.user-agent.browser-chrome-name` | `Chrome` | Chrome 命中后的浏览器名称。 |
-| `log.constants.user-agent.browser-firefox-name` | `Firefox` | Firefox 命中后的浏览器名称。 |
-| `log.constants.user-agent.browser-safari-name` | `Safari` | Safari 命中后的浏览器名称。 |
-| `log.constants.user-agent.browser-ie-name` | `IE` | IE 命中后的浏览器名称。 |
-| `log.constants.user-agent.os-windows-token` | `windows` | Windows 关键字。 |
-| `log.constants.user-agent.os-mac-token` | `mac os x` | macOS 关键字。 |
-| `log.constants.user-agent.os-android-token` | `android` | Android 关键字。 |
-| `log.constants.user-agent.os-iphone-token` | `iphone` | iPhone 关键字。 |
-| `log.constants.user-agent.os-ipad-token` | `ipad` | iPad 关键字。 |
-| `log.constants.user-agent.os-ios-token` | `ios` | iOS 关键字。 |
-| `log.constants.user-agent.os-linux-token` | `linux` | Linux 关键字。 |
-| `log.constants.user-agent.os-windows-name` | `Windows` | Windows 命中后的系统名称。 |
-| `log.constants.user-agent.os-mac-name` | `macOS` | macOS 命中后的系统名称。 |
-| `log.constants.user-agent.os-android-name` | `Android` | Android 命中后的系统名称。 |
-| `log.constants.user-agent.os-ios-name` | `iOS` | iOS 命中后的系统名称。 |
-| `log.constants.user-agent.os-linux-name` | `Linux` | Linux 命中后的系统名称。 |
-| `log.constants.user-agent.device-tablet-token` | `tablet` | 平板设备关键字。 |
-| `log.constants.user-agent.device-mobile-token` | `mobile` | 手机设备关键字。 |
-| `log.constants.user-agent.device-tablet-name` | `Tablet` | 平板命中后的设备类型名称。 |
-| `log.constants.user-agent.device-mobile-name` | `Mobile` | 手机命中后的设备类型名称。 |
-
 ### Common 模块常量覆盖（common.constants）
 
 - 默认值集中定义在 `src/main/java/com/example/demo/common/config/CommonConstants.java`。
@@ -1207,11 +1027,6 @@ server:
 | `auth.constants.password.aes-transformation` | `AES/GCM/NoPadding` | AES 解密 transformation。 |
 | `auth.constants.password.aes-gcm-tag-length-bits` | `128` | AES-GCM Tag 位数。 |
 | `auth.constants.profile.new-password-min-length` | `6` | 个人资料修改密码最小长度。 |
-| `auth.constants.profile.user-agent-header` | `User-Agent` | 登录日志读取 UA 的请求头名。 |
-| `auth.constants.login-log.type-login` | `1` | 登录日志：登录类型编码。 |
-| `auth.constants.login-log.type-logout` | `2` | 登录日志：登出类型编码。 |
-| `auth.constants.login-log.status-fail` | `0` | 登录日志：失败状态编码。 |
-| `auth.constants.login-log.status-success` | `1` | 登录日志：成功状态编码。 |
 | `auth.constants.controller.bad-request-code` | `400` | AuthController 参数错误状态码。 |
 | `auth.constants.controller.unauthorized-code` | `401` | AuthController 未授权状态码。 |
 | `auth.constants.controller.forbidden-code` | `403` | AuthTokenFilter 禁止访问状态码。 |

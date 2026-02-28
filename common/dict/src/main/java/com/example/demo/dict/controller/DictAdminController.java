@@ -12,8 +12,6 @@ import com.example.demo.dict.entity.DictType;
 import com.example.demo.dict.service.DictDataService;
 import com.example.demo.dict.service.DictService;
 import com.example.demo.dict.service.DictTypeService;
-import com.example.demo.log.annotation.OperLog;
-import com.example.demo.log.enums.BusinessType;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,7 +52,6 @@ public class DictAdminController extends BaseController {
 
     @PostMapping("/type")
     @RequirePermission("dict:create")
-    @OperLog(title = "字典管理", operation = "新增字典类型", businessType = BusinessType.INSERT)
     public CommonResult<DictTypeVO> createType(@Valid @RequestBody DictTypeCreateRequest request) {
         if (existsType(request.getDictType(), null)) {
             return error(dictConstants.getController().getBadRequestCode(), i18n(dictConstants.getMessage().getDictTypeExists()));
@@ -72,7 +69,6 @@ public class DictAdminController extends BaseController {
 
     @PutMapping("/type/{id}")
     @RequirePermission("dict:update")
-    @OperLog(title = "字典管理", operation = "更新字典类型", businessType = BusinessType.UPDATE)
     @Transactional(rollbackFor = Exception.class)
     public CommonResult<Void> updateType(@PathVariable Long id, @Valid @RequestBody DictTypeUpdateRequest request) {
         DictType existing = dictTypeService.getById(id);
@@ -105,7 +101,6 @@ public class DictAdminController extends BaseController {
 
     @DeleteMapping("/type/{id}")
     @RequirePermission("dict:delete")
-    @OperLog(title = "字典管理", operation = "删除字典类型", businessType = BusinessType.DELETE)
     @Transactional(rollbackFor = Exception.class)
     public CommonResult<Void> deleteType(@PathVariable Long id) {
         DictType existing = dictTypeService.getById(id);
@@ -137,7 +132,6 @@ public class DictAdminController extends BaseController {
 
     @PostMapping("/data")
     @RequirePermission("dict:create")
-    @OperLog(title = "字典管理", operation = "新增字典数据", businessType = BusinessType.INSERT)
     public CommonResult<DictDataVO> createData(@Valid @RequestBody DictDataCreateRequest request) {
         DictType type = dictTypeService.getOne(Wrappers.lambdaQuery(DictType.class)
                 .eq(DictType::getDictType, request.getDictType()));
@@ -161,7 +155,6 @@ public class DictAdminController extends BaseController {
 
     @PutMapping("/data/{id}")
     @RequirePermission("dict:update")
-    @OperLog(title = "字典管理", operation = "更新字典数据", businessType = BusinessType.UPDATE)
     public CommonResult<Void> updateData(@PathVariable Long id, @Valid @RequestBody DictDataUpdateRequest request) {
         DictData existing = dictDataService.getById(id);
         if (existing == null) {
@@ -186,7 +179,6 @@ public class DictAdminController extends BaseController {
 
     @DeleteMapping("/data/{id}")
     @RequirePermission("dict:delete")
-    @OperLog(title = "字典管理", operation = "删除字典数据", businessType = BusinessType.DELETE)
     public CommonResult<Void> deleteData(@PathVariable Long id) {
         DictData existing = dictDataService.getById(id);
         if (existing == null) {
@@ -201,7 +193,6 @@ public class DictAdminController extends BaseController {
 
     @DeleteMapping("/cache/refresh")
     @RequirePermission("dict:cache:refresh")
-    @OperLog(title = "字典管理", operation = "刷新字典缓存", businessType = BusinessType.CLEAN)
     public CommonResult<Void> refreshCache() {
         dictService.refreshCache();
         return success();

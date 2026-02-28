@@ -72,39 +72,6 @@ export interface DynamicApiTypeMeta {
     name?: string;
 }
 
-export interface DynamicApiLog {
-    id: number;
-    apiId?: number;
-    apiPath?: string;
-    apiMethod?: string;
-    apiType?: string;
-    authMode?: string;
-    status?: number;
-    responseCode?: number;
-    errorMsg?: string;
-    errorDetails?: string;
-    meta?: string;
-    traceId?: string;
-    userId?: number;
-    userName?: string;
-    requestIp?: string;
-    requestParam?: string;
-    durationMs?: number;
-    requestTime?: string;
-}
-
-export interface DynamicApiLogQuery {
-    pageNum?: number;
-    pageSize?: number;
-    apiId?: number;
-    apiPath?: string;
-    apiMethod?: string;
-    status?: number;
-    userName?: string;
-    beginTime?: string;
-    endTime?: string;
-}
-
 export async function listDynamicApis(params: DynamicApiQuery): Promise<ApiResponse<PageResult<DynamicApi>>> {
     const response = await api.get<ApiResponse<PageResult<DynamicApi>>>("/dynamic-api", {params});
     return response.data;
@@ -139,15 +106,6 @@ export async function reloadDynamicApis(): Promise<ApiResponse<void>> {
     return response.data;
 }
 
-export async function listDynamicApiLogs(params: DynamicApiLogQuery): Promise<ApiResponse<PageResult<DynamicApiLog>>> {
-    const response = await api.get<ApiResponse<PageResult<DynamicApiLog>>>("/logs/dynamic-api", {params});
-    return response.data;
-}
-
-export async function deleteDynamicApiLog(id: number): Promise<ApiResponse<void>> {
-    const response = await api.delete<ApiResponse<void>>(`/logs/dynamic-api/${id}`);
-    return response.data;
-}
 export async function listDynamicApiBeans(): Promise<ApiResponse<DynamicApiBeanMeta[]>> {
     const response = await api.get<ApiResponse<DynamicApiBeanMeta[]>>("/dynamic-api/metadata/beans");
     return response.data;

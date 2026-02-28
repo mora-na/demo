@@ -35,13 +35,9 @@ const MENU_ICON_MAP: Record<string, Component> = {
     notice: Bell,
     order: ShoppingCart,
     job: Wrench,
-    log: ScrollText,
     report: Monitor,
     monitor: Monitor,
-    "oper-log": ScrollText,
-    "login-log": KeyRound,
     "notice-stream-metrics": Bell,
-    "job-log-metrics": Wrench,
     "druid-monitor": Database,
     "druid-monitor-home": Database,
     "druid-monitor-datasource": Database,
@@ -56,8 +52,7 @@ const MENU_ICON_MAP: Record<string, Component> = {
     file: Package,
     dict: ScrollText,
     tool: Wrench,
-    "dynamic-api": Package,
-    "dynamic-api-log": ScrollText
+    "dynamic-api": Package
 };
 
 const FALLBACK_ICONS: Component[] = [

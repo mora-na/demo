@@ -23,23 +23,11 @@
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
-            <artifactId>redis</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
             <artifactId>security</artifactId>
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
-            <artifactId>mybatis</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>datascope</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>log-core</artifactId>
+            <artifactId>data</artifactId>
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
@@ -59,10 +47,6 @@
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
-            <artifactId>i18n</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
             <artifactId>system</artifactId>
         </dependency>
         <dependency>
@@ -76,10 +60,6 @@
         <dependency>
             <groupId>com.example</groupId>
             <artifactId>job</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>log</artifactId>
         </dependency>
         <dependency>
             <groupId>com.example</groupId>

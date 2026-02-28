@@ -167,7 +167,6 @@ export default {
             no: "No",
             edit: "Edit",
             run: "Run now",
-            logs: "Run logs",
             delete: "Delete"
         },
         dialog: {
@@ -185,8 +184,6 @@ export default {
             misfireIgnore: "Ignore misfires",
             misfireFire: "Fire and proceed",
             misfireDoNothing: "Do nothing",
-            logCollectLevel: "Log collect level",
-            logCollectLevelPlaceholder: "Select a level",
             concurrent: "Allow concurrent",
             concurrentPlaceholder: "Select",
             concurrentYes: "Allow",
@@ -276,39 +273,6 @@ export default {
             invalid: "Generated expression is invalid",
             timeZone: "Time zone"
         },
-        logs: {
-            title: "Execution logs",
-            task: "Job",
-            handler: "Handler",
-            status: "Status",
-            statusSuccess: "Success",
-            statusFail: "Failed",
-            startTime: "Start time",
-            duration: "Duration (ms)",
-            message: "Failure reason",
-            action: "Action",
-            viewLog: "View log",
-            detailTitle: "Execution log",
-            emptyLog: "No log content",
-            close: "Close"
-        },
-        metrics: {
-            title: "Log Collector Metrics",
-            subtitle: "JobLogCollector buffer status.",
-            buffers: "Buffer usage",
-            maxLength: "Max length {value}",
-            hold: "Hold time",
-            mergeDelay: "Merge delay {value}ms",
-            degrade: "Degrade status",
-            degraded: "Degraded",
-            normal: "Normal",
-            enabled: "Enabled",
-            disabled: "Disabled",
-            autoDegrade: "Auto degrade",
-            enabledLabel: "Collector status",
-            ratio: "Threshold {value}",
-            loadFailed: "Failed to load metrics"
-        },
         msg: {
             loadFailed: "Failed to load jobs",
             createSuccess: "Job created",
@@ -322,8 +286,6 @@ export default {
             runFailed: "Failed to trigger job",
             deleteSuccess: "Job deleted",
             deleteFailed: "Failed to delete job",
-            loadLogFailed: "Failed to load logs",
-            loadLogDetailFailed: "Failed to load execution log",
             validateName: "Enter a job name",
             validateHandler: "Select a handler",
             validateCron: "Enter a Cron expression"
@@ -491,13 +453,10 @@ export default {
     },
     monitorPanel: {
         title: "System Monitor",
-        subtitle: "Runtime and login auditing.",
+        subtitle: "Runtime monitoring and system health.",
         placeholder: "Select a monitor tab.",
         tabs: {
-            operLog: "Operation Logs",
-            loginLog: "Login Logs",
             noticeStream: "Notice Stream",
-            jobLog: "Job Log Metrics",
             druid: "Druid Monitor"
         }
     },
@@ -927,90 +886,10 @@ export default {
     },
     extensionPanel: {
         title: "API Extension",
-        subtitle: "Manage dynamic endpoints and audit calls.",
+        subtitle: "Manage dynamic endpoints safely.",
         placeholder: "Select an extension tab.",
         tabs: {
-            dynamicApi: "Dynamic APIs",
-            dynamicApiLog: "API Logs"
-        }
-    },
-    operLog: {
-        title: "Operation Logs",
-        subtitle: "Audit backend actions and API behavior.",
-        filter: {
-            user: "Operator",
-            title: "Module",
-            type: "Type",
-            status: "Status",
-            begin: "Start time",
-            end: "End time",
-            reset: "Reset"
-        },
-        table: {
-            time: "Time",
-            user: "Operator",
-            title: "Module",
-            operation: "Operation",
-            type: "Type",
-            method: "Method",
-            ip: "IP",
-            status: "Status",
-            cost: "Cost",
-            error: "Error"
-        },
-        type: {
-            other: "Other",
-            insert: "Create",
-            update: "Update",
-            delete: "Delete",
-            grant: "Grant",
-            export: "Export",
-            import: "Import",
-            forceLogout: "Force logout",
-            clean: "Clean"
-        },
-        status: {
-            success: "Success",
-            fail: "Failed"
-        },
-        msg: {
-            loadFailed: "Failed to load operation logs"
-        }
-    },
-    loginLog: {
-        title: "Login Logs",
-        subtitle: "Track login, logout, and exceptions.",
-        filter: {
-            user: "Account",
-            ip: "IP",
-            type: "Type",
-            status: "Status",
-            begin: "Start time",
-            end: "End time",
-            reset: "Reset"
-        },
-        table: {
-            time: "Time",
-            user: "Account",
-            type: "Type",
-            status: "Status",
-            ip: "IP",
-            location: "Location",
-            browser: "Browser",
-            os: "OS",
-            device: "Device",
-            msg: "Message"
-        },
-        type: {
-            login: "Login",
-            logout: "Logout"
-        },
-        status: {
-            success: "Success",
-            fail: "Failed"
-        },
-        msg: {
-            loadFailed: "Failed to load login logs"
+            dynamicApi: "Dynamic APIs"
         }
     },
     dynamicApi: {
@@ -1113,43 +992,6 @@ export default {
             beanMetaFailed: "Failed to load bean list.",
             policyLoadFailed: "Failed to load rate limit policies.",
             typeLoadFailed: "Failed to load type list."
-        }
-    },
-    dynamicApiLog: {
-        title: "Dynamic API Logs",
-        subtitle: "Trace dynamic endpoint calls.",
-        filter: {
-            apiPath: "API path",
-            apiMethod: "Method",
-            user: "User",
-            status: "Status",
-            begin: "Start time",
-            end: "End time",
-            reset: "Reset"
-        },
-        table: {
-            time: "Time",
-            api: "API",
-            method: "Method",
-            status: "Status",
-            code: "Code",
-            duration: "Duration",
-            user: "User",
-            ip: "IP",
-            error: "Error",
-            params: "Params",
-            errorDetails: "Error details",
-            meta: "Meta",
-            trace: "TraceId",
-            action: "Action"
-        },
-        status: {
-            success: "Success",
-            fail: "Failed"
-        },
-        msg: {
-            loadFailed: "Failed to load logs",
-            deleteConfirm: "Delete log #{id}?"
         }
     },
     dataScope: {

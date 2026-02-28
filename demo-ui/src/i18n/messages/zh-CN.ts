@@ -167,7 +167,6 @@ export default {
             no: "否",
             edit: "编辑",
             run: "立即执行",
-            logs: "执行记录",
             delete: "删除"
         },
         dialog: {
@@ -185,8 +184,6 @@ export default {
             misfireIgnore: "忽略错过",
             misfireFire: "立即执行",
             misfireDoNothing: "跳过执行",
-            logCollectLevel: "日志收集级别",
-            logCollectLevelPlaceholder: "请选择级别",
             concurrent: "允许并发",
             concurrentPlaceholder: "请选择",
             concurrentYes: "允许",
@@ -276,39 +273,6 @@ export default {
             invalid: "生成的表达式无效",
             timeZone: "时区"
         },
-        logs: {
-            title: "执行记录",
-            task: "任务",
-            handler: "处理器",
-            status: "状态",
-            statusSuccess: "成功",
-            statusFail: "失败",
-            startTime: "开始时间",
-            duration: "耗时(ms)",
-            message: "失败原因",
-            action: "操作",
-            viewLog: "查看日志",
-            detailTitle: "执行日志",
-            emptyLog: "暂无执行日志",
-            close: "关闭"
-        },
-        metrics: {
-            title: "任务日志监控",
-            subtitle: "JobLogCollector 缓冲状态。",
-            buffers: "缓冲占用",
-            maxLength: "单次最大长度 {value}",
-            hold: "保留时间",
-            mergeDelay: "合并延迟 {value}ms",
-            degrade: "降级状态",
-            degraded: "已降级",
-            normal: "正常",
-            enabled: "启用",
-            disabled: "关闭",
-            autoDegrade: "自动降级",
-            enabledLabel: "采集状态",
-            ratio: "阈值 {value}",
-            loadFailed: "加载监控指标失败"
-        },
         msg: {
             loadFailed: "加载任务失败",
             createSuccess: "任务创建成功",
@@ -322,8 +286,6 @@ export default {
             runFailed: "任务触发失败",
             deleteSuccess: "任务已删除",
             deleteFailed: "删除失败",
-            loadLogFailed: "加载日志失败",
-            loadLogDetailFailed: "加载执行日志失败",
             validateName: "请输入任务名称",
             validateHandler: "请选择处理器",
             validateCron: "请输入 Cron 表达式"
@@ -491,13 +453,10 @@ export default {
     },
     monitorPanel: {
         title: "系统监控",
-        subtitle: "运行与登录审计。",
+        subtitle: "运行监控与系统状态。",
         placeholder: "请选择系统监控子菜单。",
         tabs: {
-            operLog: "操作日志",
-            loginLog: "登录日志",
             noticeStream: "通知流监控",
-            jobLog: "任务日志监控",
             druid: "数据源监控"
         }
     },
@@ -927,90 +886,10 @@ export default {
     },
     extensionPanel: {
         title: "接口扩展",
-        subtitle: "动态接口配置与调用审计。",
+        subtitle: "动态接口配置与管理。",
         placeholder: "请选择扩展模块页签。",
         tabs: {
-            dynamicApi: "动态接口",
-            dynamicApiLog: "调用日志"
-        }
-    },
-    operLog: {
-        title: "操作日志",
-        subtitle: "记录后台操作与接口行为。",
-        filter: {
-            user: "操作人",
-            title: "模块",
-            type: "类型",
-            status: "状态",
-            begin: "开始时间",
-            end: "结束时间",
-            reset: "重置"
-        },
-        table: {
-            time: "时间",
-            user: "操作人",
-            title: "模块",
-            operation: "操作",
-            type: "类型",
-            method: "方法",
-            ip: "IP",
-            status: "状态",
-            cost: "耗时",
-            error: "异常"
-        },
-        type: {
-            other: "其他",
-            insert: "新增",
-            update: "修改",
-            delete: "删除",
-            grant: "授权",
-            export: "导出",
-            import: "导入",
-            forceLogout: "强退",
-            clean: "清空"
-        },
-        status: {
-            success: "成功",
-            fail: "失败"
-        },
-        msg: {
-            loadFailed: "操作日志加载失败"
-        }
-    },
-    loginLog: {
-        title: "登录日志",
-        subtitle: "记录登录、登出与异常行为。",
-        filter: {
-            user: "账号",
-            ip: "IP",
-            type: "类型",
-            status: "状态",
-            begin: "开始时间",
-            end: "结束时间",
-            reset: "重置"
-        },
-        table: {
-            time: "时间",
-            user: "账号",
-            type: "类型",
-            status: "状态",
-            ip: "IP",
-            location: "归属地",
-            browser: "浏览器",
-            os: "系统",
-            device: "设备",
-            msg: "提示"
-        },
-        type: {
-            login: "登录",
-            logout: "登出"
-        },
-        status: {
-            success: "成功",
-            fail: "失败"
-        },
-        msg: {
-            loadFailed: "登录日志加载失败"
+            dynamicApi: "动态接口"
         }
     },
     dynamicApi: {
@@ -1113,43 +992,6 @@ export default {
             beanMetaFailed: "加载 Bean 列表失败。",
             policyLoadFailed: "加载限流策略失败。",
             typeLoadFailed: "加载类型列表失败。"
-        }
-    },
-    dynamicApiLog: {
-        title: "动态接口日志",
-        subtitle: "跟踪动态接口调用情况。",
-        filter: {
-            apiPath: "接口路径",
-            apiMethod: "方法",
-            user: "用户",
-            status: "状态",
-            begin: "开始时间",
-            end: "结束时间",
-            reset: "重置"
-        },
-        table: {
-            time: "时间",
-            api: "接口",
-            method: "方法",
-            status: "状态",
-            code: "响应码",
-            duration: "耗时",
-            user: "用户",
-            ip: "IP",
-            error: "错误",
-            params: "参数",
-            errorDetails: "错误详情",
-            meta: "元数据",
-            trace: "TraceId",
-            action: "操作"
-        },
-        status: {
-            success: "成功",
-            fail: "失败"
-        },
-        msg: {
-            loadFailed: "加载日志失败",
-            deleteConfirm: "确认删除日志 #{id}？"
         }
     },
     dataScope: {

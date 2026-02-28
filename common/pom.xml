@@ -17,15 +17,11 @@
 
     <modules>
         <module>core</module>
-        <module>redis</module>
+        <module>cache</module>
+        <module>data</module>
         <module>security</module>
-        <module>mybatis</module>
-        <module>datascope</module>
-        <module>log</module>
         <module>dict</module>
         <module>web</module>
-        <module>cache</module>
         <module>autoconfigure</module>
-        <module>i18n</module>
     </modules>
 </project>

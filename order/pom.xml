@@ -25,7 +25,7 @@
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
-            <artifactId>datascope</artifactId>
+            <artifactId>data</artifactId>
         </dependency>
         <dependency>
             <groupId>com.example</groupId>

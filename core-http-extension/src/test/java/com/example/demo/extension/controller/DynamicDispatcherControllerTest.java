@@ -132,7 +132,6 @@ class DynamicDispatcherControllerTest {
                 rateLimitAdapter,
                 i18nService,
                 commonConstants,
-                null,
                 objectMapper
         );
 

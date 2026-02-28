@@ -52,7 +52,6 @@
           <div class="action-buttons">
             <el-button v-permission="'job:update'" size="small" text @click="openEdit(row)">{{ t("job.table.edit") }}</el-button>
             <el-button v-permission="'job:run'" size="small" text @click="runOnce(row)">{{ t("job.table.run") }}</el-button>
-            <el-button size="small" text @click="openLogs(row)">{{ t("job.table.logs") }}</el-button>
             <el-button v-permission="'job:delete'" size="small" text type="danger" @click="removeJob(row)">{{ t("job.table.delete") }}</el-button>
           </div>
         </template>
@@ -100,16 +99,6 @@
             <el-option :label="t('job.dialog.misfireDoNothing')" value="DO_NOTHING"/>
           </el-select>
         </el-form-item>
-        <el-form-item :label="t('job.dialog.logCollectLevel')">
-          <el-select v-model="form.logCollectLevel" :placeholder="t('job.dialog.logCollectLevelPlaceholder')">
-            <el-option
-                v-for="level in logCollectLevelOptions"
-                :key="level"
-                :label="level"
-                :value="level"
-            />
-          </el-select>
-        </el-form-item>
         <el-form-item :label="t('job.dialog.concurrent')">
           <el-select v-model="form.allowConcurrent" :placeholder="t('job.dialog.concurrentPlaceholder')">
             <el-option :value="1" :label="t('job.dialog.concurrentYes')"/>
@@ -132,61 +121,6 @@
       <template #footer>
         <el-button @click="editorVisible = false">{{ t("common.cancel") }}</el-button>
         <el-button v-permission="editorMode === 'create' ? 'job:create' : 'job:update'" :loading="saving" type="primary" @click="saveJob">{{ t("common.save") }}</el-button>
-      </template>
-    </el-dialog>
-
-    <el-dialog v-model="logVisible" :title="t('job.logs.title')" align-center width="850px">
-      <el-table v-loading="logLoading" :data="logs" row-key="id" size="small" style="width: 100%">
-        <el-table-column :label="t('job.logs.task')" prop="jobName" width="120" show-overflow-tooltip/>
-        <el-table-column :label="t('job.logs.handler')" prop="handlerName" width="120" show-overflow-tooltip/>
-        <el-table-column :label="t('job.logs.status')" width="70">
-          <template #default="{row}">
-            {{ row.status === 1 ? t("job.logs.statusSuccess") : t("job.logs.statusFail") }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('job.logs.startTime')" width="140">
-          <template #default="{row}">
-            {{ formatDateTime(row.startTime) }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('job.logs.duration')" width="80">
-          <template #default="{row}">
-            {{ row.durationMs ?? 0 }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="t('job.logs.message')" prop="message" width="180" show-overflow-tooltip/>
-        <el-table-column :label="t('job.logs.action')" width="90">
-          <template #default="{row}">
-            <el-button size="small" text @click="openLogDetail(row)">{{ t("job.logs.viewLog") }}</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <div class="module-footer">
-        <el-pagination
-            :current-page="logPageNum"
-            :page-size="logPageSize"
-            :total="logTotal"
-            layout="total, sizes, prev, pager, next"
-            @current-change="handleLogPageChange"
-            @size-change="handleLogSizeChange"
-        />
-      </div>
-      <template #footer>
-        <el-button @click="logVisible = false">{{ t("job.logs.close") }}</el-button>
-      </template>
-    </el-dialog>
-
-    <el-dialog v-model="logDetailVisible" :title="t('job.logs.detailTitle')" align-center class="log-detail-dialog">
-      <div class="log-detail-body" v-loading="logDetailLoading">
-        <div class="log-detail-meta">
-          <span>{{ logDetail?.jobName || "-" }}</span>
-          <span>{{ formatDateTime(logDetail?.startTime) }}</span>
-          <span>{{ logDetail?.status === 1 ? t("job.logs.statusSuccess") : t("job.logs.statusFail") }}</span>
-        </div>
-        <pre class="log-detail-content">{{ logDetailText }}</pre>
-      </div>
-      <template #footer>
-        <el-button @click="logDetailVisible = false">{{ t("job.logs.close") }}</el-button>
       </template>
     </el-dialog>
 
@@ -657,15 +591,11 @@ import {useI18n} from "vue-i18n";
 import {
   createJob,
   deleteJob,
-  getJobLogDetail,
   type JobCreatePayload,
   type JobHandlerInfo,
-  type JobLogDetailVO,
-  type JobLogVO,
   type JobUpdatePayload,
   type JobVO,
   listJobHandlers,
-  listJobLogs,
   listJobs,
   previewJobCron,
   runJob,
@@ -681,27 +611,6 @@ const editorVisible = ref(false);
 const editorMode = ref<"create" | "edit">("create");
 const editorId = ref<number | null>(null);
 const {t} = useI18n();
-
-const logs = ref<JobLogVO[]>([]);
-const logVisible = ref(false);
-const logLoading = ref(false);
-const logPageNum = ref(1);
-const logPageSize = ref(10);
-const logTotal = ref(0);
-const activeLogJobId = ref<number | null>(null);
-const logDetailVisible = ref(false);
-const logDetailLoading = ref(false);
-const logDetail = ref<JobLogDetailVO | null>(null);
-
-const logDetailText = computed(() => {
-  const raw = logDetail.value?.logDetail;
-  if (!raw) {
-    return t("job.logs.emptyLog");
-  }
-  const decoded = decodeHtmlEntities(raw);
-  return decoded.trim() ? decoded : t("job.logs.emptyLog");
-});
-
 
 const filters = reactive({
   name: "",
@@ -721,15 +630,12 @@ const form = reactive<JobCreatePayload & JobUpdatePayload>({
   allowConcurrent: 1,
   misfirePolicy: "DEFAULT",
   params: "",
-  logCollectLevel: "ERROR",
   remark: ""
 });
 
 const editorTitle = computed(() =>
     editorMode.value === "create" ? t("job.dialog.createTitle") : t("job.dialog.editTitle")
 );
-
-const logCollectLevelOptions = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"];
 
 type CronTemplate =
     | "freq_seconds"
@@ -1002,18 +908,6 @@ function formatDateTime(value?: string) {
   )}:${pad(date.getMinutes())}`;
 }
 
-function decodeHtmlEntities(value: string): string {
-  if (!value.includes("&")) {
-    return value;
-  }
-  if (typeof document === "undefined") {
-    return value;
-  }
-  const textarea = document.createElement("textarea");
-  textarea.innerHTML = value;
-  return textarea.value;
-}
-
 function clampNumber(value: number, min: number, max: number) {
   if (!Number.isFinite(value)) {
     return min;
@@ -1143,7 +1037,6 @@ function resetForm() {
   form.allowConcurrent = 1;
   form.misfirePolicy = "DEFAULT";
   form.params = "";
-  form.logCollectLevel = "ERROR";
   form.remark = "";
 }
 
@@ -1164,7 +1057,6 @@ function openEdit(row: JobVO) {
   form.allowConcurrent = row.allowConcurrent ?? 1;
   form.misfirePolicy = row.misfirePolicy || "DEFAULT";
   form.params = row.params || "";
-  form.logCollectLevel = row.logCollectLevel || "ERROR";
   form.remark = row.remark || "";
   editorVisible.value = true;
 }
@@ -1242,70 +1134,6 @@ async function removeJob(row: JobVO) {
   }
 }
 
-async function openLogs(row: JobVO) {
-  activeLogJobId.value = row.id;
-  logVisible.value = true;
-  logPageNum.value = 1;
-  await loadLogs();
-}
-
-async function loadLogs() {
-  if (logLoading.value || activeLogJobId.value == null) {
-    return;
-  }
-  logLoading.value = true;
-  try {
-    const result = await listJobLogs(activeLogJobId.value, {
-      pageNum: logPageNum.value,
-      pageSize: logPageSize.value
-    });
-    if (result?.code === 200 && result.data) {
-      logs.value = result.data.data || [];
-      logTotal.value = result.data.total || 0;
-    } else {
-      ElMessage.error(result?.message || t("job.msg.loadLogFailed"));
-    }
-  } catch (error) {
-    ElMessage.error(t("job.msg.loadLogFailed"));
-  } finally {
-    logLoading.value = false;
-  }
-}
-
-async function openLogDetail(row: JobLogVO) {
-  if (row?.id == null) {
-    return;
-  }
-  logDetailLoading.value = true;
-  logDetailVisible.value = true;
-  logDetail.value = null;
-  try {
-    const result = await getJobLogDetail(row.id);
-    if (result?.code === 200) {
-      logDetail.value = result.data || null;
-    } else {
-      ElMessage.error(result?.message || t("job.msg.loadLogDetailFailed"));
-      logDetailVisible.value = false;
-    }
-  } catch (error) {
-    ElMessage.error(t("job.msg.loadLogDetailFailed"));
-    logDetailVisible.value = false;
-  } finally {
-    logDetailLoading.value = false;
-  }
-}
-
-function handleLogPageChange(value: number) {
-  logPageNum.value = value;
-  loadLogs();
-}
-
-function handleLogSizeChange(value: number) {
-  logPageSize.value = value;
-  logPageNum.value = 1;
-  loadLogs();
-}
-
 onMounted(() => {
   loadHandlers();
   loadJobs();
@@ -1359,41 +1187,6 @@ onUnmounted(() => {
 .module-footer {
   display: flex;
   justify-content: flex-end;
-}
-
-.log-detail-body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-:deep(.log-detail-dialog) {
-  width: min(96vw, 1000px);
-}
-
-.log-detail-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.log-detail-content {
-  margin: 0;
-  padding: 12px;
-  min-height: 220px;
-  max-height: 68vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-  border-radius: 12px;
-  border: 1px solid rgba(18, 18, 18, 0.08);
-  background: rgba(255, 255, 255, 0.7);
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-width: 100%;
 }
 
 .job-editor-form {

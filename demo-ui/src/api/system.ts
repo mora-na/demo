@@ -249,67 +249,6 @@ export interface PostVO {
     remark?: string;
 }
 
-export interface OperLog {
-    id: number;
-    userId?: number | null;
-    userName?: string;
-    deptId?: number | null;
-    deptName?: string;
-    title?: string;
-    operation?: string;
-    businessType?: number;
-    method?: string;
-    requestMethod?: string;
-    operUrl?: string;
-    operIp?: string;
-    operLocation?: string;
-    operParam?: string;
-    operResult?: string;
-    beforeData?: string;
-    afterData?: string;
-    status?: number;
-    errorMsg?: string;
-    costTime?: number;
-    operTime?: string;
-}
-
-export interface LoginLog {
-    id: number;
-    userId?: number | null;
-    userName?: string;
-    loginIp?: string;
-    loginLocation?: string;
-    browser?: string;
-    os?: string;
-    deviceType?: string;
-    loginType?: number;
-    status?: number;
-    msg?: string;
-    loginTime?: string;
-}
-
-export interface OperLogQuery {
-    pageNum?: number;
-    pageSize?: number;
-    userName?: string;
-    title?: string;
-    status?: number;
-    businessType?: number;
-    beginTime?: string;
-    endTime?: string;
-}
-
-export interface LoginLogQuery {
-    pageNum?: number;
-    pageSize?: number;
-    userName?: string;
-    loginIp?: string;
-    status?: number;
-    loginType?: number;
-    beginTime?: string;
-    endTime?: string;
-}
-
 export interface UserQuery {
     pageNum?: number;
     pageSize?: number;
@@ -575,15 +514,6 @@ export async function assignRoleMenus(id: number, menuIds: number[]): Promise<Ap
     return response.data;
 }
 
-export async function listOperLogs(params: OperLogQuery): Promise<ApiResponse<PageResult<OperLog>>> {
-    const response = await api.get<ApiResponse<PageResult<OperLog>>>("/logs/oper", {params});
-    return response.data;
-}
-
-export async function listLoginLogs(params: LoginLogQuery): Promise<ApiResponse<PageResult<LoginLog>>> {
-    const response = await api.get<ApiResponse<PageResult<LoginLog>>>("/logs/login", {params});
-    return response.data;
-}
 export async function getRoleMenuDataScope(id: number): Promise<ApiResponse<RoleMenuDataScopeResponse>> {
     const response = await api.get<ApiResponse<RoleMenuDataScopeResponse>>(`/roles/${id}/menu-data-scope`);
     return response.data;
@@ -866,7 +796,6 @@ export interface JobVO {
     allowConcurrent?: number;
     misfirePolicy?: string;
     params?: string;
-    logCollectLevel?: string;
     remark?: string;
     createdName?: string;
     createdAt?: string;
@@ -895,7 +824,6 @@ export interface JobCreatePayload {
     allowConcurrent?: number;
     misfirePolicy?: string;
     params?: string;
-    logCollectLevel?: string;
     remark?: string;
 }
 
@@ -907,36 +835,7 @@ export interface JobUpdatePayload {
     allowConcurrent?: number;
     misfirePolicy?: string;
     params?: string;
-    logCollectLevel?: string;
     remark?: string;
-}
-
-export interface JobLogVO {
-    id: number;
-    jobId: number;
-    jobName: string;
-    handlerName: string;
-    status?: number;
-    message?: string;
-    startTime?: string;
-    endTime?: string;
-    durationMs?: number;
-}
-
-export interface JobLogDetailVO extends JobLogVO {
-    logDetail?: string;
-}
-
-export interface JobLogCollectorMetrics {
-    enabled: boolean;
-    autoDegradeEnabled: boolean;
-    degraded: boolean;
-    bufferSize: number;
-    maxBuffers: number;
-    maxLength: number;
-    maxHoldMillis: number;
-    mergeDelayMillis: number;
-    degradeBufferRatio: number;
 }
 
 export interface JobCronPreviewVO {
@@ -981,24 +880,6 @@ export async function listJobHandlers(): Promise<ApiResponse<JobHandlerInfo[]>> 
 
 export async function previewJobCron(cronExpression: string): Promise<ApiResponse<JobCronPreviewVO>> {
     const response = await api.post<ApiResponse<JobCronPreviewVO>>('/jobs/cron/preview', {cronExpression});
-    return response.data;
-}
-
-export async function listJobLogs(id: number, params: {
-    pageNum?: number;
-    pageSize?: number
-}): Promise<ApiResponse<PageResult<JobLogVO>>> {
-    const response = await api.get<ApiResponse<PageResult<JobLogVO>>>(`/jobs/${id}/logs`, {params});
-    return response.data;
-}
-
-export async function getJobLogDetail(logId: number): Promise<ApiResponse<JobLogDetailVO>> {
-    const response = await api.get<ApiResponse<JobLogDetailVO>>(`/jobs/logs/${logId}`);
-    return response.data;
-}
-
-export async function getJobLogCollectorMetrics(): Promise<ApiResponse<JobLogCollectorMetrics>> {
-    const response = await api.get<ApiResponse<JobLogCollectorMetrics>>('/jobs/logs/metrics');
     return response.data;
 }
 

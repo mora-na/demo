@@ -26,10 +26,6 @@
             <artifactId>web</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>log-core</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
         </dependency>

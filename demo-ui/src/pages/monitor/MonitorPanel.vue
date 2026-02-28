@@ -22,10 +22,7 @@
     </el-tabs>
 
     <div class="system-body">
-      <OperLogTable v-if="activeMenuCode === 'oper-log'"/>
-      <LoginLogTable v-else-if="activeMenuCode === 'login-log'"/>
-      <NoticeStreamMetrics v-else-if="activeMenuCode === 'notice-stream-metrics'"/>
-      <JobLogMetrics v-else-if="activeMenuCode === 'job-log-metrics'"/>
+      <NoticeStreamMetrics v-if="activeMenuCode === 'notice-stream-metrics'"/>
       <DruidMonitor v-else-if="isDruidActive" :section="druidSection"/>
       <div v-else class="system-placeholder">{{ t("monitorPanel.placeholder") }}</div>
     </div>
@@ -37,10 +34,7 @@ import {computed, defineAsyncComponent, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import type {MenuTree} from "../../api/auth";
 
-const OperLogTable = defineAsyncComponent(() => import("./OperLogTable.vue"));
-const LoginLogTable = defineAsyncComponent(() => import("./LoginLogTable.vue"));
 const NoticeStreamMetrics = defineAsyncComponent(() => import("./NoticeStreamMetrics.vue"));
-const JobLogMetrics = defineAsyncComponent(() => import("./JobLogMetrics.vue"));
 const DruidMonitor = defineAsyncComponent(() => import("./DruidMonitor.vue"));
 
 const props = defineProps<{
@@ -108,14 +102,8 @@ const druidTab = ref("");
 
 function menuLabel(menu: MenuTree) {
   switch (menu.code) {
-    case "oper-log":
-      return t("monitorPanel.tabs.operLog");
-    case "login-log":
-      return t("monitorPanel.tabs.loginLog");
     case "notice-stream-metrics":
       return t("monitorPanel.tabs.noticeStream");
-    case "job-log-metrics":
-      return t("monitorPanel.tabs.jobLog");
     case "druid-monitor":
       return t("monitorPanel.tabs.druid");
     default:

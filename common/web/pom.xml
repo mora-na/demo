@@ -22,10 +22,6 @@
             <artifactId>cache</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>i18n</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-extension</artifactId>
         </dependency>
