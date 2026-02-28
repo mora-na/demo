@@ -47,11 +47,14 @@
           />
         </template>
       </el-table-column>
-      <el-table-column :label="t('job.table.action')" width="280">
+      <el-table-column :label="t('job.table.action')" width="340">
         <template #default="{row}">
           <div class="action-buttons">
             <el-button v-permission="'job:update'" size="small" text @click="openEdit(row)">{{ t("job.table.edit") }}</el-button>
             <el-button v-permission="'job:run'" size="small" text @click="runOnce(row)">{{ t("job.table.run") }}</el-button>
+            <el-button v-permission="'job:query'" size="small" text @click="openLogDrawer(row)">
+              {{ t("job.table.history") }}
+            </el-button>
             <el-button v-permission="'job:delete'" size="small" text type="danger" @click="removeJob(row)">{{ t("job.table.delete") }}</el-button>
           </div>
         </template>
@@ -581,6 +584,208 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <el-drawer v-model="logDrawerVisible" :title="logDrawerTitle" direction="rtl" size="60%">
+      <div class="job-log-panel">
+        <div class="job-log-header">
+          <div class="job-log-title">{{ logJob?.name || "-" }}</div>
+          <div class="job-log-meta">
+            <span>{{ logJob?.handlerName || "-" }}</span>
+            <span class="job-log-meta-sep">|</span>
+            <span>{{ logJob?.cronExpression || "-" }}</span>
+          </div>
+        </div>
+        <div class="job-log-filters" @keyup.enter="handleLogSearch">
+          <el-date-picker
+              v-model="logFilters.timeRange"
+              :end-placeholder="t('job.history.endPlaceholder')"
+              :start-placeholder="t('job.history.startPlaceholder')"
+              class="job-log-range"
+              range-separator="~"
+              size="small"
+              type="datetimerange"
+              value-format="YYYY-MM-DD HH:mm:ss"
+          />
+          <el-select v-model="logFilters.status" :placeholder="t('job.history.statusPlaceholder')" class="filter-select-wide"
+                     clearable
+                     size="small">
+            <el-option :label="t('job.history.statusRunning')" :value="0"/>
+            <el-option :label="t('job.history.statusSuccess')" :value="1"/>
+            <el-option :label="t('job.history.statusFailed')" :value="2"/>
+          </el-select>
+          <el-select v-model="logFilters.triggerType" :placeholder="t('job.history.triggerPlaceholder')" class="filter-select-wide"
+                     clearable size="small">
+            <el-option :label="t('job.history.triggerScheduled')" value="SCHEDULED"/>
+            <el-option :label="t('job.history.triggerManual')" value="MANUAL"/>
+          </el-select>
+          <el-button size="small" @click="handleLogSearch">{{ t("job.filter.search") }}</el-button>
+          <el-button size="small" @click="resetLogFilters">{{ t("job.history.reset") }}</el-button>
+        </div>
+
+        <el-table v-loading="logLoading" :data="logRecords" row-key="id" size="small">
+          <el-table-column :label="t('job.history.startTime')" width="170">
+            <template #default="{row}">
+              {{ formatDateTime(row.startTime) }}
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('job.history.status')" width="110">
+            <template #default="{row}">
+              <el-tag :type="logStatusTagType(row.status)" size="small">
+                {{ logStatusLabel(row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('job.history.duration')" width="120">
+            <template #default="{row}">
+              {{ formatDuration(row.durationMs) }}
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('job.history.triggerType')" width="120">
+            <template #default="{row}">
+              {{ formatTriggerType(row.triggerType) }}
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('job.history.triggerUser')" width="120">
+            <template #default="{row}">
+              {{ row.triggerUserName || "-" }}
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('job.history.fireTime')" width="170">
+            <template #default="{row}">
+              {{ formatDateTime(row.fireTime) }}
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('job.history.error')" min-width="200">
+            <template #default="{row}">
+              <span class="job-log-error">{{ row.errorMessage || "-" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column :label="t('job.history.action')" width="150">
+            <template #default="{row}">
+              <div class="action-buttons">
+                <el-button size="small" text @click="openLogDetail(row)">{{ t("job.history.detail") }}</el-button>
+                <el-button size="small" text @click="openLogContent(row)">{{ t("job.history.viewLog") }}</el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <div class="job-log-footer">
+          <el-pagination
+              :current-page="logPageNum"
+              :page-size="logPageSize"
+              :total="logTotal"
+              layout="total, sizes, prev, pager, next"
+              @current-change="handleLogPageChange"
+              @size-change="handleLogSizeChange"
+          />
+        </div>
+      </div>
+    </el-drawer>
+
+    <el-dialog v-model="recordDetailVisible" :title="t('job.history.detailTitle')" width="720px">
+      <div class="job-log-detail">
+        <div class="job-log-detail-grid">
+          <div class="job-log-detail-item">
+            <span class="job-log-detail-label">{{ t("job.history.detailStatus") }}</span>
+            <span>{{ logStatusLabel(recordDetail?.status) }}</span>
+          </div>
+          <div class="job-log-detail-item">
+            <span class="job-log-detail-label">{{ t("job.history.detailDuration") }}</span>
+            <span>{{ formatDuration(recordDetail?.durationMs) }}</span>
+          </div>
+          <div class="job-log-detail-item">
+            <span class="job-log-detail-label">{{ t("job.history.detailTrigger") }}</span>
+            <span>{{ formatTriggerType(recordDetail?.triggerType) }}</span>
+          </div>
+          <div class="job-log-detail-item">
+            <span class="job-log-detail-label">{{ t("job.history.detailStart") }}</span>
+            <span>{{ formatDateTime(recordDetail?.startTime) }}</span>
+          </div>
+          <div class="job-log-detail-item">
+            <span class="job-log-detail-label">{{ t("job.history.detailEnd") }}</span>
+            <span>{{ formatDateTime(recordDetail?.endTime) }}</span>
+          </div>
+          <div class="job-log-detail-item">
+            <span class="job-log-detail-label">{{ t("job.history.detailFire") }}</span>
+            <span>{{ formatDateTime(recordDetail?.fireTime) }}</span>
+          </div>
+          <div class="job-log-detail-item">
+            <span class="job-log-detail-label">{{ t("job.history.detailInstance") }}</span>
+            <span>{{ recordDetail?.fireInstanceId || "-" }}</span>
+          </div>
+          <div class="job-log-detail-item">
+            <span class="job-log-detail-label">{{ t("job.history.detailScheduler") }}</span>
+            <span>{{ recordDetail?.schedulerInstance || "-" }}</span>
+          </div>
+        </div>
+
+        <div class="job-log-detail-block">
+          <div class="job-log-detail-label">{{ t("job.history.detailParams") }}</div>
+          <pre class="job-log-detail-content">{{ recordDetail?.params || "-" }}</pre>
+        </div>
+
+        <div class="job-log-detail-block">
+          <div class="job-log-detail-label">{{ t("job.history.detailError") }}</div>
+          <pre class="job-log-detail-content">{{ recordDetail?.errorStacktrace || "-" }}</pre>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="recordDetailVisible = false">{{ t("common.cancel") }}</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="logContentVisible" :title="logContentTitle" width="860px">
+      <div class="job-log-content-panel">
+        <div class="job-log-content-filters" @keyup.enter="handleLogContentSearch">
+          <el-date-picker
+              v-model="logContentFilters.timeRange"
+              :end-placeholder="t('job.history.endPlaceholder')"
+              :start-placeholder="t('job.history.startPlaceholder')"
+              class="job-log-range"
+              range-separator="~"
+              size="small"
+              type="datetimerange"
+              value-format="YYYY-MM-DD HH:mm:ss"
+          />
+          <el-select v-model="logContentFilters.level" :placeholder="t('job.history.levelPlaceholder')" class="filter-select-wide"
+                     clearable size="small">
+            <el-option :label="t('job.history.levelInfo')" value="INFO"/>
+            <el-option :label="t('job.history.levelWarn')" value="WARN"/>
+            <el-option :label="t('job.history.levelError')" value="ERROR"/>
+            <el-option :label="t('job.history.levelDebug')" value="DEBUG"/>
+          </el-select>
+          <el-button size="small" @click="handleLogContentSearch">{{ t("job.filter.search") }}</el-button>
+          <el-button size="small" @click="resetLogContentFilters">{{ t("job.history.reset") }}</el-button>
+        </div>
+
+        <el-scrollbar height="420px" @scroll="handleLogContentScroll">
+          <div class="job-log-content-list">
+            <div v-for="item in logContentRecords" :key="item.id" class="job-log-content-item">
+              <div class="job-log-content-meta">
+                <span :class="logLevelClass(item.logLevel)" class="job-log-content-level">
+                  {{ formatLogLevel(item.logLevel) }}
+                </span>
+                <span class="job-log-content-time">{{ formatDateTimeRange(item.logStartTime, item.logEndTime) }}</span>
+              </div>
+              <pre class="job-log-content-text">{{ item.logContent || "-" }}</pre>
+            </div>
+            <div v-if="!logContentRecords.length && !logContentLoading" class="job-log-content-empty">
+              {{ t("job.history.logEmpty") }}
+            </div>
+            <div v-if="logContentLoading" class="job-log-content-loading">
+              {{ t("job.history.loading") }}
+            </div>
+            <div v-else-if="logContentFinished && logContentRecords.length" class="job-log-content-finished">
+              {{ t("job.history.noMore") }}
+            </div>
+          </div>
+        </el-scrollbar>
+      </div>
+      <template #footer>
+        <el-button @click="logContentVisible = false">{{ t("common.cancel") }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -593,9 +798,13 @@ import {
   deleteJob,
   type JobCreatePayload,
   type JobHandlerInfo,
+  type JobLogDetailVO,
+  type JobLogVO,
   type JobUpdatePayload,
   type JobVO,
   listJobHandlers,
+  listJobLogDetails,
+  listJobLogs,
   listJobs,
   previewJobCron,
   runJob,
@@ -611,6 +820,24 @@ const editorVisible = ref(false);
 const editorMode = ref<"create" | "edit">("create");
 const editorId = ref<number | null>(null);
 const {t} = useI18n();
+
+const logDrawerVisible = ref(false);
+const logLoading = ref(false);
+const logRecords = ref<JobLogVO[]>([]);
+const logPageNum = ref(1);
+const logPageSize = ref(10);
+const logTotal = ref(0);
+const logJob = ref<JobVO | null>(null);
+const recordDetailVisible = ref(false);
+const recordDetail = ref<JobLogVO | null>(null);
+
+const logContentVisible = ref(false);
+const logContentTarget = ref<JobLogVO | null>(null);
+const logContentRecords = ref<JobLogDetailVO[]>([]);
+const logContentLoading = ref(false);
+const logContentFinished = ref(false);
+const logContentPageNum = ref(1);
+const logContentPageSize = ref(50);
 
 const filters = reactive({
   name: "",
@@ -633,9 +860,34 @@ const form = reactive<JobCreatePayload & JobUpdatePayload>({
   remark: ""
 });
 
+const logFilters = reactive({
+  status: undefined as number | undefined,
+  triggerType: "",
+  timeRange: null as string[] | null
+});
+
+const logContentFilters = reactive({
+  level: "",
+  timeRange: null as string[] | null
+});
+
 const editorTitle = computed(() =>
     editorMode.value === "create" ? t("job.dialog.createTitle") : t("job.dialog.editTitle")
 );
+
+const logDrawerTitle = computed(() => {
+  if (logJob.value?.name) {
+    return `${t("job.history.title")} - ${logJob.value.name}`;
+  }
+  return t("job.history.title");
+});
+
+const logContentTitle = computed(() => {
+  if (logContentTarget.value?.id != null) {
+    return `${t("job.history.logTitle")} #${logContentTarget.value.id}`;
+  }
+  return t("job.history.logTitle");
+});
 
 type CronTemplate =
     | "freq_seconds"
@@ -1134,6 +1386,223 @@ async function removeJob(row: JobVO) {
   }
 }
 
+function openLogDrawer(row: JobVO) {
+  logJob.value = row;
+  logDrawerVisible.value = true;
+  logPageNum.value = 1;
+  loadJobLogs();
+}
+
+function handleLogSearch() {
+  logPageNum.value = 1;
+  loadJobLogs();
+}
+
+function handleLogPageChange(value: number) {
+  logPageNum.value = value;
+  loadJobLogs();
+}
+
+function handleLogSizeChange(value: number) {
+  logPageSize.value = value;
+  logPageNum.value = 1;
+  loadJobLogs();
+}
+
+function resetLogFilters() {
+  logFilters.status = undefined;
+  logFilters.triggerType = "";
+  logFilters.timeRange = null;
+  handleLogSearch();
+}
+
+function openLogDetail(row: JobLogVO) {
+  recordDetail.value = row;
+  recordDetailVisible.value = true;
+}
+
+function openLogContent(row: JobLogVO) {
+  logContentTarget.value = row;
+  logContentVisible.value = true;
+  logContentPageNum.value = 1;
+  logContentFinished.value = false;
+  logContentRecords.value = [];
+  loadLogContent(true);
+}
+
+function handleLogContentSearch() {
+  logContentPageNum.value = 1;
+  logContentFinished.value = false;
+  logContentRecords.value = [];
+  loadLogContent(true);
+}
+
+function resetLogContentFilters() {
+  logContentFilters.level = "";
+  logContentFilters.timeRange = null;
+  handleLogContentSearch();
+}
+
+function handleLogContentScroll(payload: { scrollTop: number; scrollHeight: number; clientHeight: number }) {
+  if (logContentLoading.value || logContentFinished.value) {
+    return;
+  }
+  const {scrollTop, scrollHeight, clientHeight} = payload;
+  if (scrollTop + clientHeight >= scrollHeight - 24) {
+    logContentPageNum.value += 1;
+    loadLogContent(false);
+  }
+}
+
+function formatLogLevel(level?: string) {
+  const value = String(level || "").trim().toUpperCase();
+  if (!value) {
+    return "-";
+  }
+  if (value === "INFO") {
+    return t("job.history.levelInfo");
+  }
+  if (value === "WARN") {
+    return t("job.history.levelWarn");
+  }
+  if (value === "ERROR") {
+    return t("job.history.levelError");
+  }
+  if (value === "DEBUG") {
+    return t("job.history.levelDebug");
+  }
+  return value;
+}
+
+function logLevelClass(level?: string) {
+  const value = String(level || "").trim().toLowerCase();
+  return value ? `job-log-content-level-${value}` : "";
+}
+
+function logStatusLabel(status?: number) {
+  if (status === 0) {
+    return t("job.history.statusRunning");
+  }
+  if (status === 1) {
+    return t("job.history.statusSuccess");
+  }
+  if (status === 2) {
+    return t("job.history.statusFailed");
+  }
+  return "-";
+}
+
+function logStatusTagType(status?: number) {
+  if (status === 1) {
+    return "success";
+  }
+  if (status === 2) {
+    return "danger";
+  }
+  return "warning";
+}
+
+function formatTriggerType(type?: string) {
+  const normalized = String(type || "").trim().toUpperCase();
+  if (!normalized) {
+    return "-";
+  }
+  if (normalized === "MANUAL") {
+    return t("job.history.triggerManual");
+  }
+  if (normalized === "SCHEDULED") {
+    return t("job.history.triggerScheduled");
+  }
+  return normalized;
+}
+
+function formatDuration(value?: number) {
+  if (value == null) {
+    return "-";
+  }
+  const ms = Math.max(Math.floor(value), 0);
+  if (ms < 1000) {
+    return `${ms} ms`;
+  }
+  const seconds = ms / 1000;
+  if (seconds < 60) {
+    return `${seconds.toFixed(2)} s`;
+  }
+  const minutes = Math.floor(seconds / 60);
+  const remainSeconds = Math.round(seconds % 60);
+  return `${minutes}m ${remainSeconds}s`;
+}
+
+function formatDateTimeRange(start?: string, end?: string) {
+  const startText = formatDateTime(start);
+  const endText = formatDateTime(end);
+  if (startText === "-" && endText === "-") {
+    return "-";
+  }
+  return `${startText} ~ ${endText}`;
+}
+
+async function loadJobLogs() {
+  if (logLoading.value || !logJob.value) {
+    return;
+  }
+  logLoading.value = true;
+  const [startTimeFrom, startTimeTo] = logFilters.timeRange || [];
+  try {
+    const result = await listJobLogs(logJob.value.id, {
+      pageNum: logPageNum.value,
+      pageSize: logPageSize.value,
+      startTimeFrom: startTimeFrom || undefined,
+      startTimeTo: startTimeTo || undefined,
+      status: logFilters.status,
+      triggerType: logFilters.triggerType || undefined
+    });
+    if (result?.code === 200 && result.data) {
+      logRecords.value = result.data.data || [];
+      logTotal.value = result.data.total || 0;
+    } else {
+      ElMessage.error(result?.message || t("job.history.loadFailed"));
+    }
+  } catch (error) {
+    ElMessage.error(t("job.history.loadFailed"));
+  } finally {
+    logLoading.value = false;
+  }
+}
+
+async function loadLogContent(resetList: boolean) {
+  if (logContentLoading.value || !logContentTarget.value || !logJob.value) {
+    return;
+  }
+  logContentLoading.value = true;
+  const [logTimeFrom, logTimeTo] = logContentFilters.timeRange || [];
+  try {
+    const result = await listJobLogDetails(logJob.value.id, logContentTarget.value.id, {
+      pageNum: logContentPageNum.value,
+      pageSize: logContentPageSize.value,
+      logLevel: logContentFilters.level || undefined,
+      logTimeFrom: logTimeFrom || undefined,
+      logTimeTo: logTimeTo || undefined
+    });
+    if (result?.code === 200 && result.data) {
+      const next = result.data.data || [];
+      if (resetList) {
+        logContentRecords.value = next;
+      } else {
+        logContentRecords.value = logContentRecords.value.concat(next);
+      }
+      const total = result.data.total || 0;
+      logContentFinished.value = logContentRecords.value.length >= total || next.length === 0;
+    } else {
+      ElMessage.error(result?.message || t("job.history.loadFailed"));
+    }
+  } catch (error) {
+    ElMessage.error(t("job.history.loadFailed"));
+  } finally {
+    logContentLoading.value = false;
+  }
+}
+
 onMounted(() => {
   loadHandlers();
   loadJobs();
@@ -1143,6 +1612,21 @@ onUnmounted(() => {
   if (cronPreviewTimer != null) {
     window.clearTimeout(cronPreviewTimer);
     cronPreviewTimer = null;
+  }
+});
+
+watch(logDrawerVisible, (visible) => {
+  if (!visible) {
+    logRecords.value = [];
+    logTotal.value = 0;
+    recordDetailVisible.value = false;
+    recordDetail.value = null;
+    logContentVisible.value = false;
+    logContentTarget.value = null;
+    logContentRecords.value = [];
+    logContentFinished.value = false;
+    logContentLoading.value = false;
+    logContentPageNum.value = 1;
   }
 });
 </script>
@@ -1307,6 +1791,175 @@ onUnmounted(() => {
   font-size: 12px;
 }
 
+.job-log-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.job-log-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.job-log-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.job-log-meta {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.job-log-meta-sep {
+  color: var(--el-border-color);
+}
+
+.job-log-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.job-log-range {
+  min-width: 260px;
+}
+
+.job-log-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.job-log-error {
+  color: var(--el-text-color-secondary);
+}
+
+.job-log-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.job-log-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.job-log-detail-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.job-log-detail-label {
+  color: var(--el-text-color-secondary);
+  min-width: 88px;
+}
+
+.job-log-detail-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.job-log-detail-content {
+  background: var(--el-fill-color-light);
+  border-radius: 8px;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  font-size: 12px;
+  margin: 0;
+}
+
+.job-log-content-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.job-log-content-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.job-log-content-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 2px;
+}
+
+.job-log-content-item {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color);
+}
+
+.job-log-content-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.job-log-content-level {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 11px;
+  background: var(--el-color-info-light-9);
+  color: var(--el-color-info);
+}
+
+.job-log-content-level-warn {
+  background: var(--el-color-warning-light-9);
+  color: var(--el-color-warning);
+}
+
+.job-log-content-level-error {
+  background: var(--el-color-danger-light-9);
+  color: var(--el-color-danger);
+}
+
+.job-log-content-level-debug {
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+}
+
+.job-log-content-text {
+  margin: 0;
+  font-size: 12px;
+  white-space: pre-wrap;
+  color: var(--el-text-color-primary);
+}
+
+.job-log-content-empty,
+.job-log-content-loading,
+.job-log-content-finished {
+  text-align: center;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  padding: 8px 0;
+}
+
 @media (max-width: 720px) {
   .job-editor-form {
     grid-template-columns: 1fr;
@@ -1322,6 +1975,14 @@ onUnmounted(() => {
 
   .cron-row {
     grid-template-columns: 1fr;
+  }
+
+  .job-log-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .job-log-range {
+    width: 100%;
   }
 }
 </style>

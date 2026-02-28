@@ -137,12 +137,18 @@ public class JobConstants {
         public static final String DEFAULT_HANDLER_NAME_KEY = "handlerName";
         public static final String DEFAULT_CRON_EXPRESSION_KEY = "cronExpression";
         public static final String DEFAULT_PARAMS_KEY = "params";
+        public static final String DEFAULT_TRIGGER_TYPE_KEY = "triggerType";
+        public static final String DEFAULT_TRIGGER_USER_ID_KEY = "triggerUserId";
+        public static final String DEFAULT_TRIGGER_USER_NAME_KEY = "triggerUserName";
 
         private String jobIdKey = DEFAULT_JOB_ID_KEY;
         private String jobNameKey = DEFAULT_JOB_NAME_KEY;
         private String handlerNameKey = DEFAULT_HANDLER_NAME_KEY;
         private String cronExpressionKey = DEFAULT_CRON_EXPRESSION_KEY;
         private String paramsKey = DEFAULT_PARAMS_KEY;
+        private String triggerTypeKey = DEFAULT_TRIGGER_TYPE_KEY;
+        private String triggerUserIdKey = DEFAULT_TRIGGER_USER_ID_KEY;
+        private String triggerUserNameKey = DEFAULT_TRIGGER_USER_NAME_KEY;
     }
 
 }

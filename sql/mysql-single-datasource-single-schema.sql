@@ -525,6 +525,57 @@ CREATE TABLE IF NOT EXISTS sys_job
     COMMENT
         ='定时任务表';
 
+CREATE TABLE IF NOT EXISTS sys_job_log
+(
+    id                  BIGINT      NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    job_id              BIGINT      NOT NULL COMMENT '任务ID',
+    job_name            VARCHAR(128) COMMENT '任务名称',
+    handler_name        VARCHAR(128) COMMENT '处理器名称',
+    cron_expression     VARCHAR(128) COMMENT 'Cron表达式',
+    params              TEXT COMMENT '任务参数',
+    trigger_type        VARCHAR(32) NOT NULL DEFAULT 'SCHEDULED' COMMENT '触发类型',
+    trigger_user_id     BIGINT COMMENT '触发人ID',
+    trigger_user_name   VARCHAR(64) COMMENT '触发人名称',
+    fire_time           DATETIME COMMENT '触发时间',
+    scheduled_fire_time DATETIME COMMENT '计划触发时间',
+    start_time          DATETIME    NOT NULL COMMENT '开始时间',
+    end_time            DATETIME COMMENT '结束时间',
+    duration_ms         BIGINT COMMENT '耗时毫秒',
+    status              TINYINT     NOT NULL DEFAULT 0 COMMENT '状态：0-执行中 1-成功 2-失败',
+    error_message       VARCHAR(500) COMMENT '错误摘要',
+    error_stacktrace    TEXT COMMENT '错误堆栈',
+    scheduler_instance  VARCHAR(64) COMMENT '调度器实例ID',
+    fire_instance_id    VARCHAR(128) COMMENT '执行实例ID',
+    created_at          DATETIME    NOT NULL COMMENT '创建时间',
+    updated_at          DATETIME COMMENT '更新时间',
+    PRIMARY KEY (id),
+    KEY idx_sys_job_log_job (job_id),
+    KEY idx_sys_job_log_job_time (job_id, start_time),
+    KEY idx_sys_job_log_status (status),
+    KEY idx_sys_job_log_trigger_type (trigger_type)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='定时任务执行记录表';
+
+CREATE TABLE IF NOT EXISTS sys_job_log_detail
+(
+    id             BIGINT      NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    job_log_id     BIGINT      NOT NULL COMMENT '执行记录ID',
+    log_level      VARCHAR(16) NOT NULL DEFAULT 'INFO' COMMENT '日志级别',
+    log_start_time DATETIME    NOT NULL COMMENT '日志开始时间',
+    log_end_time   DATETIME    NOT NULL COMMENT '日志结束时间',
+    log_content    LONGTEXT    NOT NULL COMMENT '日志内容',
+    create_time    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (id),
+    KEY idx_sys_job_log_detail_log_start (job_log_id, log_start_time),
+    KEY idx_sys_job_log_detail_log_end (job_log_id, log_end_time),
+    KEY idx_sys_job_log_detail_level (job_log_id, log_level)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+    COMMENT
+        ='定时任务执行明细日志表';
+
 CREATE TABLE IF NOT EXISTS dynamic_api
 (
     id                BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',

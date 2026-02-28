@@ -56,6 +56,8 @@
         <checker-qual.version>3.49.4</checker-qual.version>
 
         <poi.version>5.5.1</poi.version>
+
+        <logcollect.version>1.0.0</logcollect.version>
     </properties>
 
     <dependencyManagement>
@@ -260,11 +262,6 @@
             </dependency>
             <dependency>
                 <groupId>com.example</groupId>
-                <artifactId>log</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.example</groupId>
                 <artifactId>notice</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -277,6 +274,13 @@
                 <groupId>com.example</groupId>
                 <artifactId>app</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.logcollect</groupId>
+                <artifactId>logcollect-bom</artifactId>
+                <version>${logcollect.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -4,7 +4,12 @@ import com.example.demo.common.spring.SpringContextHolder;
 import com.example.demo.job.api.JobContext;
 import com.example.demo.job.api.JobHandler;
 import com.example.demo.job.config.JobConstants;
+import com.example.demo.job.entity.SysJobLog;
+import com.example.demo.job.service.SysJobLogService;
+import com.logcollect.api.annotation.LogCollect;
+import com.logcollect.api.model.LogCollectContext;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -29,11 +34,18 @@ public abstract class AbstractQuartzJob implements Job {
     private static final String EXECUTE_ERROR_PREFIX = "执行异常: ";
 
     @Override
+    @LogCollect(handler = QuartzLogCollectHandler.class, level = "DEBUG")
     public void execute(JobExecutionContext context) throws JobExecutionException {
         JobConstants constants = resolveConstants();
         JobDataMap dataMap = context.getMergedJobDataMap();
         JobContext jobContext = buildContext(dataMap, constants);
         LocalDateTime start = LocalDateTime.now();
+        SysJobLogService logService = SpringContextHolder.getBean(SysJobLogService.class);
+        SysJobLog logRecord = logService == null ? null : logService.createStartLog(context, jobContext, start);
+        if (logRecord != null) {
+            LogCollectContext.setCurrentBusinessId(logRecord.getId());
+            jobContext.setExecutionLogId(logRecord.getId());
+        }
         logExecutionInfo(EXECUTE_START_PREFIX + start);
         if (jobContext.getParams() != null && !jobContext.getParams().trim().isEmpty()) {
             logExecutionInfo(PARAMS_PREFIX + jobContext.getParams());
@@ -43,17 +55,29 @@ public abstract class AbstractQuartzJob implements Job {
             JobHandler handler = registry == null ? null : registry.getHandler(jobContext.getHandlerName());
             if (handler == null) {
                 logExecutionWarn(HANDLER_NOT_FOUND_LOG_PREFIX + jobContext.getHandlerName());
+                if (logService != null) {
+                    logService.markFailure(logRecord, LocalDateTime.now(),
+                            HANDLER_NOT_FOUND_LOG_PREFIX + jobContext.getHandlerName(), null);
+                }
                 return;
             }
             handler.execute(jobContext);
             logExecutionInfo(EXECUTE_SUCCESS_LOG);
+            if (logService != null) {
+                logService.markSuccess(logRecord, LocalDateTime.now());
+            }
         } catch (Exception ex) {
             String message = ex.getMessage();
             logExecutionError(EXECUTE_ERROR_PREFIX
                     + (message == null ? ex.getClass().getSimpleName() : message), ex);
+            if (logService != null) {
+                String errorMessage = message == null ? ex.getClass().getSimpleName() : message;
+                logService.markFailure(logRecord, LocalDateTime.now(), errorMessage, ExceptionUtils.getStackTrace(ex));
+            }
             throw new JobExecutionException(ex);
         }
     }
+
 
     private JobContext buildContext(JobDataMap dataMap, JobConstants constants) {
         JobContext context = new JobContext();
@@ -66,15 +90,15 @@ public abstract class AbstractQuartzJob implements Job {
     }
 
     private void logExecutionInfo(String message) {
-        log.info(LOG_PREFIX + message);
+        log.info(LOG_PREFIX + "{}", message);
     }
 
     private void logExecutionWarn(String message) {
-        log.warn(LOG_PREFIX + message);
+        log.warn(LOG_PREFIX + "{}", message);
     }
 
     private void logExecutionError(String message, Exception ex) {
-        log.error(LOG_PREFIX + message, ex);
+        log.error(LOG_PREFIX + "{}", message, ex);
     }
 
     private JobConstants resolveConstants() {

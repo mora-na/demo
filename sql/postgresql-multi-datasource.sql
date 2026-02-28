@@ -768,6 +768,81 @@ COMMENT ON COLUMN sys_job.created_name IS '创建人名称';
 COMMENT ON COLUMN sys_job.created_at IS '创建时间';
 COMMENT ON COLUMN sys_job.updated_at IS '更新时间';
 
+CREATE SEQUENCE IF NOT EXISTS sys_job_log_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_job_log
+(
+    id                  BIGINT PRIMARY KEY   DEFAULT nextval('sys_job_log_id_seq'),
+    job_id              BIGINT      NOT NULL,
+    job_name            VARCHAR(128),
+    handler_name        VARCHAR(128),
+    cron_expression     VARCHAR(128),
+    params              TEXT,
+    trigger_type        VARCHAR(32) NOT NULL DEFAULT 'SCHEDULED',
+    trigger_user_id     BIGINT,
+    trigger_user_name   VARCHAR(64),
+    fire_time           TIMESTAMP,
+    scheduled_fire_time TIMESTAMP,
+    start_time          TIMESTAMP   NOT NULL,
+    end_time            TIMESTAMP,
+    duration_ms         BIGINT,
+    status              SMALLINT    NOT NULL DEFAULT 0,
+    error_message       VARCHAR(500),
+    error_stacktrace    TEXT,
+    scheduler_instance  VARCHAR(64),
+    fire_instance_id    VARCHAR(128),
+    created_at          TIMESTAMP   NOT NULL,
+    updated_at          TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_sys_job_log_job ON sys_job_log (job_id);
+CREATE INDEX IF NOT EXISTS idx_sys_job_log_job_time ON sys_job_log (job_id, start_time);
+CREATE INDEX IF NOT EXISTS idx_sys_job_log_status ON sys_job_log (status);
+CREATE INDEX IF NOT EXISTS idx_sys_job_log_trigger_type ON sys_job_log (trigger_type);
+COMMENT ON TABLE sys_job_log IS '定时任务执行记录表';
+COMMENT ON COLUMN sys_job_log.id IS '主键ID';
+COMMENT ON COLUMN sys_job_log.job_id IS '任务ID';
+COMMENT ON COLUMN sys_job_log.job_name IS '任务名称';
+COMMENT ON COLUMN sys_job_log.handler_name IS '处理器名称';
+COMMENT ON COLUMN sys_job_log.cron_expression IS 'Cron表达式';
+COMMENT ON COLUMN sys_job_log.params IS '任务参数';
+COMMENT ON COLUMN sys_job_log.trigger_type IS '触发类型';
+COMMENT ON COLUMN sys_job_log.trigger_user_id IS '触发人ID';
+COMMENT ON COLUMN sys_job_log.trigger_user_name IS '触发人名称';
+COMMENT ON COLUMN sys_job_log.fire_time IS '触发时间';
+COMMENT ON COLUMN sys_job_log.scheduled_fire_time IS '计划触发时间';
+COMMENT ON COLUMN sys_job_log.start_time IS '开始时间';
+COMMENT ON COLUMN sys_job_log.end_time IS '结束时间';
+COMMENT ON COLUMN sys_job_log.duration_ms IS '耗时毫秒';
+COMMENT ON COLUMN sys_job_log.status IS '状态：0-执行中 1-成功 2-失败';
+COMMENT ON COLUMN sys_job_log.error_message IS '错误摘要';
+COMMENT ON COLUMN sys_job_log.error_stacktrace IS '错误堆栈';
+COMMENT ON COLUMN sys_job_log.scheduler_instance IS '调度器实例ID';
+COMMENT ON COLUMN sys_job_log.fire_instance_id IS '执行实例ID';
+COMMENT ON COLUMN sys_job_log.created_at IS '创建时间';
+COMMENT ON COLUMN sys_job_log.updated_at IS '更新时间';
+
+CREATE SEQUENCE IF NOT EXISTS sys_job_log_detail_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TABLE IF NOT EXISTS sys_job_log_detail
+(
+    id             BIGINT PRIMARY KEY   DEFAULT nextval('sys_job_log_detail_id_seq'),
+    job_log_id     BIGINT      NOT NULL,
+    log_level      VARCHAR(16) NOT NULL DEFAULT 'INFO',
+    log_start_time TIMESTAMP   NOT NULL,
+    log_end_time   TIMESTAMP   NOT NULL,
+    log_content    TEXT        NOT NULL,
+    create_time    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_sys_job_log_detail_log_start ON sys_job_log_detail (job_log_id, log_start_time);
+CREATE INDEX IF NOT EXISTS idx_sys_job_log_detail_log_end ON sys_job_log_detail (job_log_id, log_end_time);
+CREATE INDEX IF NOT EXISTS idx_sys_job_log_detail_level ON sys_job_log_detail (job_log_id, log_level);
+COMMENT ON TABLE sys_job_log_detail IS '定时任务执行明细日志表';
+COMMENT ON COLUMN sys_job_log_detail.id IS '主键ID';
+COMMENT ON COLUMN sys_job_log_detail.job_log_id IS '执行记录ID';
+COMMENT ON COLUMN sys_job_log_detail.log_level IS '日志级别';
+COMMENT ON COLUMN sys_job_log_detail.log_start_time IS '日志开始时间';
+COMMENT ON COLUMN sys_job_log_detail.log_end_time IS '日志结束时间';
+COMMENT ON COLUMN sys_job_log_detail.log_content IS '日志内容';
+COMMENT ON COLUMN sys_job_log_detail.create_time IS '创建时间';
+
 
 SET search_path TO demo_extension, public;
 
@@ -1503,6 +1578,8 @@ SELECT setval('demo_notice.sys_notice_id_seq', (SELECT COALESCE(MAX(id), 1) FROM
 SELECT setval('demo_notice.sys_notice_recipient_id_seq',
               (SELECT COALESCE(MAX(id), 1) FROM demo_notice.sys_notice_recipient));
 SELECT setval('demo_job.sys_job_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_job.sys_job));
+SELECT setval('demo_job.sys_job_log_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_job.sys_job_log));
+SELECT setval('demo_job.sys_job_log_detail_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_job.sys_job_log_detail));
 SELECT setval('demo_extension.dynamic_api_id_seq', (SELECT COALESCE(MAX(id), 1) FROM demo_extension.dynamic_api));
 
 

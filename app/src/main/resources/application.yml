@@ -82,33 +82,36 @@ spring:
       max-request-size: 120MB
 
 # Actuator 健康检查配置
+# 生产环境Actuator配置 - 严格安全限制
 management:
+  server:
+    port: 9090  # 独立端口，仅内网运维网段可访问
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,loggers  # 仅暴露运维必需的端点
+        exclude: env,beans,threaddump,heapdump,shutdown  # 禁用高风险端点
+  endpoint:
+    shutdown:
+      enabled: false  # 强制禁用关闭应用的端点
+    health:
+      show-details: when_authorized  # 仅授权用户能看到健康检查详情
+      probes:
+        enabled: true  # 启用K8s/容器平台的健康探针
+    loggers:
+      enabled: true  # 仅保留动态调整日志级别的能力
+    metrics:
+      enabled: true  # 保留指标监控能力
   health:
+    # 生产环境按需开启组件健康探测，避免无意义的探测告警
     mail:
-      # 默认跟随 NOTIFY_MAIL_ENABLED，未启用邮件时不探测 SMTP，避免无密码告警
       enabled: ${MANAGEMENT_HEALTH_MAIL_ENABLED:${NOTIFY_MAIL_ENABLED:false}}
-
-# 日志配置
-logging:
-  # 日志编码配置
-  charset:
-    # 控制台编码
-    console: UTF-8
-    # 文件编码
-    file: UTF-8
-  # 日志格式配置
-  pattern:
-    # 控制台日志格式
-    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %X{traceId} %cyan([%thread]) %magenta(%logger{36} - %msg%n)'
-    # 文件日志格式
-    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %X{traceId} %cyan([%thread]) %magenta(%logger{36} - %msg%n)'
-  # Logback 滚动策略
-  logback:
-    # 滚动策略配置
-    rollingpolicy:
-      # 日志文件命名模式
-      file-name-pattern: 'logs/${spring.application.name}%d{yyyy-MM-dd}.log'
-      # 保留历史天数
-      max-history: 30
-      # 日志总大小上限
-      total-size-cap: 1GB
+    db:
+      enabled: true  # 数据库是核心依赖，必须探测
+    redis:
+      enabled: true  # 如有Redis依赖则开启
+    diskSpace:
+      enabled: true  # 磁盘空间探测（防止磁盘满）
+  metrics:
+    tags:
+      application: ${spring.application.name}  # 指标添加应用名标签（方便监控平台识别）

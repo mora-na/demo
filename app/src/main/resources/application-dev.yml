@@ -42,29 +42,6 @@ config:
       # 负缓存 TTL（秒）
       miss-ttl-seconds: 30
 
-# 日志级别配置
-logging:
-  # 日志文件配置
-  file:
-    # 日志文件路径
-    name: logs/${spring.application.name}.log
-  # 日志级别配置
-  level:
-    # 根日志级别（未命中包名规则时使用）
-    root: info
-    # 业务包通用级别（覆盖 root，便于开发调试）
-    com: debug
-    # 兼容历史包名前缀（避免漏日志）
-    cn.com: debug
-    # Spring 核心日志级别（建议 warn 以减少噪音）
-    org.springframework: warn
-    # Spring Web 日志级别（请求链路相关）
-    org.springframework.web: warn
-    # 动态数据源切换日志（如 DynamicRoutingDataSource）
-    com.baomidou.dynamic.datasource: info
-    # Druid 连接池内部日志（如 PreparedStatementPool）
-    com.alibaba.druid: info
-
 # SQL 日志配置
 sql-log:
   # 是否打印 SQL
@@ -140,6 +117,7 @@ auth:
       - /auth/captcha # 排除验证码接口
       - /auth/login # 排除登录接口
       - /error # 排除错误接口
+      - /actuator/** # 测试环境放开
   # 安全增强配置
   security:
     # 登录异常告警配置
@@ -168,6 +146,34 @@ auth:
       ticket-ttl-seconds: 900
       # 二次确认邮件主题（不含 notify.mail.subject-prefix）
       mail-subject: 敏感操作确认验证码
+
+# 开发环境Actuator配置 - 白名单暴露（避免第三方ControllerEndpoint兼容性问题）
+management:
+  server:
+    port: 9090  # 也可改为8080（和业务端口共用），dev环境无需隔离
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers,logcollect,env,beans,threaddump,heapdump,shutdown
+  endpoint:
+    shutdown:
+      enabled: true  # dev环境可启用关闭功能（方便调试）
+    health:
+      show-details: always  # 始终显示健康检查的完整详情
+      probes:
+        enabled: true  # 启用健康探针（通用配置，dev也可开启）
+    heapdump:
+      enabled: true  # 启用堆转储（dev排查内存问题）
+    threaddump:
+      enabled: true  # 启用线程快照（dev排查线程问题）
+  health:
+    # dev环境可探测所有组件（包括邮件、数据库等），方便排查依赖问题
+    mail:
+      enabled: false
+    db:
+      enabled: true
+    redis:
+      enabled: true
 
 # 通知能力配置
 notify:

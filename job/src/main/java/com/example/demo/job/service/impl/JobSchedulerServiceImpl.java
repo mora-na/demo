@@ -2,6 +2,7 @@ package com.example.demo.job.service.impl;
 
 import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.entity.SysJob;
+import com.example.demo.job.model.JobLogTriggerType;
 import com.example.demo.job.model.JobMisfirePolicy;
 import com.example.demo.job.service.JobSchedulerService;
 import com.example.demo.job.support.ConcurrentQuartzJob;
@@ -76,12 +77,20 @@ public class JobSchedulerServiceImpl implements JobSchedulerService {
     }
 
     @Override
-    public void runOnce(SysJob job) {
+    public void runOnce(SysJob job, Long triggerUserId, String triggerUserName) {
         if (job == null || job.getId() == null) {
             return;
         }
         try {
-            scheduler.triggerJob(buildJobKey(job));
+            JobDataMap dataMap = new JobDataMap();
+            dataMap.put(jobConstants.getDataMap().getTriggerTypeKey(), JobLogTriggerType.MANUAL);
+            if (triggerUserId != null) {
+                dataMap.put(jobConstants.getDataMap().getTriggerUserIdKey(), triggerUserId);
+            }
+            if (StringUtils.isNotBlank(triggerUserName)) {
+                dataMap.put(jobConstants.getDataMap().getTriggerUserNameKey(), triggerUserName);
+            }
+            scheduler.triggerJob(buildJobKey(job), dataMap);
         } catch (SchedulerException ex) {
             log.error("Failed to trigger quartz job: {}", job.getId(), ex);
         }

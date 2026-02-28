@@ -218,7 +218,7 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
     }
 
     @Override
-    public boolean runOnce(Long id) {
+    public boolean runOnce(Long id, AuthUser triggerUser) {
         if (id == null) {
             return false;
         }
@@ -226,8 +226,12 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         if (job == null) {
             return false;
         }
+        Long triggerUserId = triggerUser == null ? null : triggerUser.getId();
+        String triggerUserName = triggerUser == null
+                ? null
+                : StringUtils.defaultIfBlank(triggerUser.getNickName(), triggerUser.getUserName());
         jobSchedulerService.syncJob(job);
-        jobSchedulerService.runOnce(job);
+        jobSchedulerService.runOnce(job, triggerUserId, triggerUserName);
         return true;
     }
 

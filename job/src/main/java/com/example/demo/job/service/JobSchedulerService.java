@@ -14,7 +14,7 @@ public interface JobSchedulerService {
 
     void deleteJob(SysJob job);
 
-    void runOnce(SysJob job);
+    void runOnce(SysJob job, Long triggerUserId, String triggerUserName);
 
     java.time.LocalDateTime getNextFireTime(SysJob job);
 }

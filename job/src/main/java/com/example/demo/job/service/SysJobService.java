@@ -32,7 +32,7 @@ public interface SysJobService extends IService<SysJob> {
 
     boolean updateStatus(Long id, Integer status);
 
-    boolean runOnce(Long id);
+    boolean runOnce(Long id, AuthUser triggerUser);
 
     JobVO toView(SysJob job);
 

@@ -16,4 +16,5 @@ public class JobContext {
     private String handlerName;
     private String cronExpression;
     private String params;
+    private Long executionLogId;
 }

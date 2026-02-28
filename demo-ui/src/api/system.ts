@@ -844,6 +844,54 @@ export interface JobCronPreviewVO {
     nextFireTimes: string[];
 }
 
+export interface JobLogVO {
+    id: number;
+    jobId: number;
+    jobName?: string;
+    handlerName?: string;
+    cronExpression?: string;
+    params?: string;
+    triggerType?: string;
+    triggerUserId?: number;
+    triggerUserName?: string;
+    fireTime?: string;
+    scheduledFireTime?: string;
+    startTime?: string;
+    endTime?: string;
+    durationMs?: number;
+    status?: number;
+    errorMessage?: string;
+    errorStacktrace?: string;
+    schedulerInstance?: string;
+    fireInstanceId?: string;
+}
+
+export interface JobLogQuery {
+    pageNum?: number;
+    pageSize?: number;
+    startTimeFrom?: string;
+    startTimeTo?: string;
+    status?: number;
+    triggerType?: string;
+}
+
+export interface JobLogDetailVO {
+    id: number;
+    jobLogId: number;
+    logLevel?: string;
+    logStartTime?: string;
+    logEndTime?: string;
+    logContent?: string;
+}
+
+export interface JobLogDetailQuery {
+    pageNum?: number;
+    pageSize?: number;
+    logLevel?: string;
+    logTimeFrom?: string;
+    logTimeTo?: string;
+}
+
 export async function listJobs(params: JobQuery): Promise<ApiResponse<PageResult<JobVO>>> {
     const response = await api.get<ApiResponse<PageResult<JobVO>>>('/jobs', {params});
     return response.data;
@@ -880,6 +928,22 @@ export async function listJobHandlers(): Promise<ApiResponse<JobHandlerInfo[]>> 
 
 export async function previewJobCron(cronExpression: string): Promise<ApiResponse<JobCronPreviewVO>> {
     const response = await api.post<ApiResponse<JobCronPreviewVO>>('/jobs/cron/preview', {cronExpression});
+    return response.data;
+}
+
+export async function listJobLogs(jobId: number, params: JobLogQuery): Promise<ApiResponse<PageResult<JobLogVO>>> {
+    const response = await api.get<ApiResponse<PageResult<JobLogVO>>>(`/jobs/${jobId}/logs`, {params});
+    return response.data;
+}
+
+export async function listJobLogDetails(
+    jobId: number,
+    logId: number,
+    params: JobLogDetailQuery
+): Promise<ApiResponse<PageResult<JobLogDetailVO>>> {
+    const response = await api.get<ApiResponse<PageResult<JobLogDetailVO>>>(`/jobs/${jobId}/logs/${logId}/details`, {
+        params
+    });
     return response.data;
 }
 
