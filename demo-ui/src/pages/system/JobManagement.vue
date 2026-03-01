@@ -585,7 +585,13 @@
       </template>
     </el-dialog>
 
-    <el-drawer v-model="logDrawerVisible" :title="logDrawerTitle" direction="rtl" size="60%">
+    <el-dialog
+        v-model="logDrawerVisible"
+        :title="logDrawerTitle"
+        align-center
+        class="job-log-dialog"
+        width="1200px"
+    >
       <div class="job-log-panel">
         <div class="job-log-header">
           <div class="job-log-title">{{ logJob?.name || "-" }}</div>
@@ -596,71 +602,77 @@
           </div>
         </div>
         <div class="job-log-filters" @keyup.enter="handleLogSearch">
-          <el-date-picker
-              v-model="logFilters.timeRange"
-              :end-placeholder="t('job.history.endPlaceholder')"
-              :start-placeholder="t('job.history.startPlaceholder')"
-              class="job-log-range"
-              range-separator="~"
-              size="small"
-              type="datetimerange"
-              value-format="YYYY-MM-DD HH:mm:ss"
-          />
-          <el-select v-model="logFilters.status" :placeholder="t('job.history.statusPlaceholder')" class="filter-select-wide"
-                     clearable
-                     size="small">
-            <el-option :label="t('job.history.statusRunning')" :value="0"/>
-            <el-option :label="t('job.history.statusSuccess')" :value="1"/>
-            <el-option :label="t('job.history.statusFailed')" :value="2"/>
-          </el-select>
-          <el-select v-model="logFilters.triggerType" :placeholder="t('job.history.triggerPlaceholder')" class="filter-select-wide"
-                     clearable size="small">
-            <el-option :label="t('job.history.triggerScheduled')" value="SCHEDULED"/>
-            <el-option :label="t('job.history.triggerManual')" value="MANUAL"/>
-          </el-select>
-          <el-button size="small" @click="handleLogSearch">{{ t("job.filter.search") }}</el-button>
-          <el-button size="small" @click="resetLogFilters">{{ t("job.history.reset") }}</el-button>
+          <div class="job-log-filters-left">
+            <el-date-picker
+                v-model="logFilters.timeRange"
+                :end-placeholder="t('job.history.endPlaceholder')"
+                :start-placeholder="t('job.history.startPlaceholder')"
+                class="job-log-range"
+                range-separator="~"
+                size="small"
+                type="datetimerange"
+                value-format="YYYY-MM-DD HH:mm:ss"
+            />
+            <el-select v-model="logFilters.status" :placeholder="t('job.history.statusPlaceholder')"
+                       class="job-log-select"
+                       clearable
+                       size="small">
+              <el-option :label="t('job.history.statusRunning')" :value="0"/>
+              <el-option :label="t('job.history.statusSuccess')" :value="1"/>
+              <el-option :label="t('job.history.statusFailed')" :value="2"/>
+            </el-select>
+            <el-select v-model="logFilters.triggerType" :placeholder="t('job.history.triggerPlaceholder')"
+                       class="job-log-select"
+                       clearable size="small">
+              <el-option :label="t('job.history.triggerScheduled')" value="SCHEDULED"/>
+              <el-option :label="t('job.history.triggerManual')" value="MANUAL"/>
+            </el-select>
+          </div>
+          <div class="job-log-filters-right">
+            <el-button size="small" @click="handleLogSearch">{{ t("job.filter.search") }}</el-button>
+            <el-button size="small" @click="resetLogFilters">{{ t("job.history.reset") }}</el-button>
+          </div>
         </div>
 
         <el-table v-loading="logLoading" :data="logRecords" row-key="id" size="small">
-          <el-table-column :label="t('job.history.startTime')" width="170">
+          <el-table-column :label="t('job.history.startTime')" width="160">
             <template #default="{row}">
               {{ formatDateTime(row.startTime) }}
             </template>
           </el-table-column>
-          <el-table-column :label="t('job.history.status')" width="110">
+          <el-table-column :label="t('job.history.status')" width="100">
             <template #default="{row}">
               <el-tag :type="logStatusTagType(row.status)" size="small">
                 {{ logStatusLabel(row.status) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column :label="t('job.history.duration')" width="120">
+          <el-table-column :label="t('job.history.duration')" width="100">
             <template #default="{row}">
               {{ formatDuration(row.durationMs) }}
             </template>
           </el-table-column>
-          <el-table-column :label="t('job.history.triggerType')" width="120">
+          <el-table-column :label="t('job.history.triggerType')" width="110">
             <template #default="{row}">
               {{ formatTriggerType(row.triggerType) }}
             </template>
           </el-table-column>
-          <el-table-column :label="t('job.history.triggerUser')" width="120">
+          <el-table-column :label="t('job.history.triggerUser')" width="110">
             <template #default="{row}">
               {{ row.triggerUserName || "-" }}
             </template>
           </el-table-column>
-          <el-table-column :label="t('job.history.fireTime')" width="170">
+          <el-table-column :label="t('job.history.fireTime')" width="160">
             <template #default="{row}">
               {{ formatDateTime(row.fireTime) }}
             </template>
           </el-table-column>
-          <el-table-column :label="t('job.history.error')" min-width="200">
+          <el-table-column :label="t('job.history.error')" min-width="180">
             <template #default="{row}">
               <span class="job-log-error">{{ row.errorMessage || "-" }}</span>
             </template>
           </el-table-column>
-          <el-table-column :label="t('job.history.action')" width="150">
+          <el-table-column :label="t('job.history.action')" width="160">
             <template #default="{row}">
               <div class="action-buttons">
                 <el-button size="small" text @click="openLogDetail(row)">{{ t("job.history.detail") }}</el-button>
@@ -681,7 +693,10 @@
           />
         </div>
       </div>
-    </el-drawer>
+      <template #footer>
+        <el-button @click="logDrawerVisible = false">{{ t("common.cancel") }}</el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog v-model="recordDetailVisible" :title="t('job.history.detailTitle')" width="720px">
       <div class="job-log-detail">
@@ -738,25 +753,30 @@
     <el-dialog v-model="logContentVisible" :title="logContentTitle" width="860px">
       <div class="job-log-content-panel">
         <div class="job-log-content-filters" @keyup.enter="handleLogContentSearch">
-          <el-date-picker
-              v-model="logContentFilters.timeRange"
-              :end-placeholder="t('job.history.endPlaceholder')"
-              :start-placeholder="t('job.history.startPlaceholder')"
-              class="job-log-range"
-              range-separator="~"
-              size="small"
-              type="datetimerange"
-              value-format="YYYY-MM-DD HH:mm:ss"
-          />
-          <el-select v-model="logContentFilters.level" :placeholder="t('job.history.levelPlaceholder')" class="filter-select-wide"
-                     clearable size="small">
-            <el-option :label="t('job.history.levelInfo')" value="INFO"/>
-            <el-option :label="t('job.history.levelWarn')" value="WARN"/>
-            <el-option :label="t('job.history.levelError')" value="ERROR"/>
-            <el-option :label="t('job.history.levelDebug')" value="DEBUG"/>
-          </el-select>
-          <el-button size="small" @click="handleLogContentSearch">{{ t("job.filter.search") }}</el-button>
-          <el-button size="small" @click="resetLogContentFilters">{{ t("job.history.reset") }}</el-button>
+          <div class="job-log-content-filters-left">
+            <el-date-picker
+                v-model="logContentFilters.timeRange"
+                :end-placeholder="t('job.history.endPlaceholder')"
+                :start-placeholder="t('job.history.startPlaceholder')"
+                class="job-log-range"
+                range-separator="~"
+                size="small"
+                type="datetimerange"
+                value-format="YYYY-MM-DD HH:mm:ss"
+            />
+            <el-select v-model="logContentFilters.level" :placeholder="t('job.history.levelPlaceholder')"
+                       class="job-log-select"
+                       clearable size="small">
+              <el-option :label="t('job.history.levelInfo')" value="INFO"/>
+              <el-option :label="t('job.history.levelWarn')" value="WARN"/>
+              <el-option :label="t('job.history.levelError')" value="ERROR"/>
+              <el-option :label="t('job.history.levelDebug')" value="DEBUG"/>
+            </el-select>
+          </div>
+          <div class="job-log-content-filters-right">
+            <el-button size="small" @click="handleLogContentSearch">{{ t("job.filter.search") }}</el-button>
+            <el-button size="small" @click="resetLogContentFilters">{{ t("job.history.reset") }}</el-button>
+          </div>
         </div>
 
         <el-scrollbar height="420px" @scroll="handleLogContentScroll">
@@ -1791,6 +1811,10 @@ watch(logDrawerVisible, (visible) => {
   font-size: 12px;
 }
 
+:deep(.job-log-dialog) {
+  max-width: 92vw;
+}
+
 .job-log-panel {
   display: flex;
   flex-direction: column;
@@ -1822,14 +1846,36 @@ watch(logDrawerVisible, (visible) => {
 }
 
 .job-log-filters {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
 }
 
 .job-log-range {
-  min-width: 260px;
+  --el-date-editor-daterange-width: 240px;
+  --el-date-editor-datetimerange-width: 240px;
+}
+
+.job-log-filters-left,
+.job-log-content-filters-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.job-log-filters-right,
+.job-log-content-filters-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.job-log-select {
+  width: 110px;
+  min-width: 110px;
 }
 
 .job-log-footer {
@@ -1887,8 +1933,8 @@ watch(logDrawerVisible, (visible) => {
 }
 
 .job-log-content-filters {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
 }
@@ -1983,6 +2029,23 @@ watch(logDrawerVisible, (visible) => {
 
   .job-log-range {
     width: 100%;
+    --el-date-editor-daterange-width: 100%;
+    --el-date-editor-datetimerange-width: 100%;
+  }
+
+  .job-log-filters,
+  .job-log-content-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .job-log-filters-left,
+  .job-log-content-filters-left {
+    flex-wrap: wrap;
+  }
+
+  .job-log-filters-right,
+  .job-log-content-filters-right {
+    justify-content: flex-end;
   }
 }
 </style>
