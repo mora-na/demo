@@ -276,7 +276,7 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.github.mora-na</groupId>
+                <groupId>org.dpdns.mora</groupId>
                 <artifactId>logcollect-bom</artifactId>
                 <version>${logcollect.version}</version>
                 <type>pom</type>
