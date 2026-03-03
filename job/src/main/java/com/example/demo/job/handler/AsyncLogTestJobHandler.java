@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Async logging demo job handler.
@@ -40,6 +41,7 @@ public class AsyncLogTestJobHandler implements JobHandler {
                                   @Qualifier("jobAsyncExecutor") ThreadPoolTaskExecutor jobAsyncExecutor) {
         this.asyncSupport = asyncSupport;
         this.jobAsyncExecutor = jobAsyncExecutor;
+        // 手动线程池（非 Spring 管理）需使用工具类包装，避免线程切换后丢失 LogCollect 上下文。
         this.manualExecutor = asyncSupport.wrapExecutorService(
                 Executors.newFixedThreadPool(2, newNamedThreadFactory("job-manual-"))
         );
@@ -66,41 +68,64 @@ public class AsyncLogTestJobHandler implements JobHandler {
 
         asyncStages.add(asyncSupport.asyncLog(runId, "SPRING_ASYNC", "@Async invoked"));
 
+        // CompletableFuture 回调线程不固定，提前创建 wrapped 回调，确保任意线程执行时都能恢复采集上下文。
+        Runnable springPoolSuccessCallback = asyncSupport.wrapRunnable(
+                () -> logInfo(runId, "CF_SPRING_POOL", "CompletableFuture callback success")
+        );
+        AtomicReference<Throwable> springPoolCallbackError = new AtomicReference<>();
+        Runnable springPoolErrorCallback = asyncSupport.wrapRunnable(
+                () -> logWarn(runId, "CF_SPRING_POOL",
+                        "CompletableFuture callback error: "
+                                + resolveThrowableMessage(springPoolCallbackError.get()))
+        );
         CompletableFuture<Void> springPoolFuture = CompletableFuture.runAsync(
                         () -> logInfo(runId, "CF_SPRING_POOL", "CompletableFuture.runAsync"),
                         jobAsyncExecutor
                 )
                 .whenComplete((ignored, ex) -> {
                     if (ex == null) {
-                        logInfo(runId, "CF_SPRING_POOL", "CompletableFuture callback success");
+                        springPoolSuccessCallback.run();
                     } else {
-                        logWarn(runId, "CF_SPRING_POOL", "CompletableFuture callback error: " + ex.getMessage());
+                        springPoolCallbackError.set(unwrapCompletionThrowable(ex));
+                        springPoolErrorCallback.run();
                     }
                 });
         asyncStages.add(springPoolFuture);
 
+        // ListenableFuture 的 success/failure 回调同样可能在非业务线程触发，需提前包装回调逻辑。
         CompletableFuture<Void> listenableStage = new CompletableFuture<>();
+        Runnable listenableSuccessCallback = asyncSupport.wrapRunnable(() -> {
+            logInfo(runId, "SPRING_LISTENABLE", "callback success");
+            listenableStage.complete(null);
+        });
+        AtomicReference<Throwable> listenableCallbackError = new AtomicReference<>();
+        Runnable listenableErrorCallback = asyncSupport.wrapRunnable(() -> {
+            Throwable callbackError = listenableCallbackError.get();
+            logWarn(runId, "SPRING_LISTENABLE", "callback error: " + resolveThrowableMessage(callbackError));
+            listenableStage.completeExceptionally(callbackError == null
+                    ? new IllegalStateException("ListenableFuture callback error")
+                    : callbackError);
+        });
         ListenableFuture<?> listenableFuture = jobAsyncExecutor.submitListenable(
                 () -> logInfo(runId, "SPRING_LISTENABLE", "ListenableFuture task")
         );
         listenableFuture.addCallback(
-                result -> {
-                    logInfo(runId, "SPRING_LISTENABLE", "callback success");
-                    listenableStage.complete(null);
-                },
+                result -> listenableSuccessCallback.run(),
                 ex -> {
-                    logWarn(runId, "SPRING_LISTENABLE", "callback error: " + ex.getMessage());
-                    listenableStage.completeExceptionally(ex);
+                    listenableCallbackError.set(unwrapCompletionThrowable(ex));
+                    listenableErrorCallback.run();
                 }
         );
         asyncStages.add(listenableStage);
 
+        // 手动 ExecutorService 已在构造阶段 wrapExecutorService，一行兜底 submit/execute 全路径透传。
         asyncStages.add(CompletableFuture.runAsync(
                 () -> logInfo(runId, "MANUAL_EXECUTOR", "Executors.newFixedThreadPool"),
                 manualExecutor
         ));
 
         CompletableFuture<Void> rawThreadStage = new CompletableFuture<>();
+        // 直接创建线程使用 newDaemonThread 包装，确保新线程恢复 LogCollect 上下文并在 finally 清理。
         Thread rawThread = asyncSupport.newDaemonThread(() -> {
             try {
                 logInfo(runId, "RAW_THREAD", "new Thread()");
@@ -115,6 +140,7 @@ public class AsyncLogTestJobHandler implements JobHandler {
         for (int i = 0; i < 3; i++) {
             final int item = i;
             CompletableFuture<Void> forkJoinStage = new CompletableFuture<>();
+            // ForkJoin/commonPool 非 Spring 托管入口，提交任务前用 wrapRunnable 包装。
             ForkJoinPool.commonPool().execute(asyncSupport.wrapRunnable(() -> {
                 try {
                     logInfo(runId, "FORK_JOIN", "commonPool task item=" + item);
@@ -127,19 +153,21 @@ public class AsyncLogTestJobHandler implements JobHandler {
         }
 
         CompletableFuture<Void> callbackStage = new CompletableFuture<>();
+        AtomicReference<String> callbackDetailRef = new AtomicReference<>("Caffeine removal callback");
+        // 第三方回调（Caffeine removalListener）提前创建 wrapped 回调，避免在未知线程触发时丢上下文。
+        Runnable wrappedRemovalCallback = asyncSupport.wrapRunnable(() -> {
+            try {
+                logInfo(runId, "THIRD_PARTY_CALLBACK", callbackDetailRef.get());
+                callbackStage.complete(null);
+            } catch (Throwable ex) {
+                callbackStage.completeExceptionally(ex);
+            }
+        });
         Cache<String, String> cache = Caffeine.newBuilder()
-                .removalListener((key, value, cause) -> jobAsyncExecutor.execute(
-                        asyncSupport.wrapRunnable(() -> {
-                            try {
-                                logInfo(runId,
-                                        "THIRD_PARTY_CALLBACK",
-                                        "Caffeine removal key=" + key + ", cause=" + cause);
-                                callbackStage.complete(null);
-                            } catch (Throwable ex) {
-                                callbackStage.completeExceptionally(ex);
-                            }
-                        })
-                ))
+                .removalListener((key, value, cause) -> {
+                    callbackDetailRef.set("Caffeine removal key=" + key + ", cause=" + cause);
+                    jobAsyncExecutor.execute(wrappedRemovalCallback);
+                })
                 .build();
         cache.put("async-log", "value");
         cache.invalidate("async-log");
@@ -211,9 +239,26 @@ public class AsyncLogTestJobHandler implements JobHandler {
             logWarn(runId, "SYNC", "wait async stages interrupted");
         } catch (Exception ex) {
             Throwable cause = ex.getCause() == null ? ex : ex.getCause();
-            String message = cause.getMessage();
-            logWarn(runId, "SYNC", "wait async stages error: "
-                    + (message == null ? cause.getClass().getSimpleName() : message));
+            logWarn(runId, "SYNC", "wait async stages error: " + resolveThrowableMessage(cause));
         }
+    }
+
+    private Throwable unwrapCompletionThrowable(Throwable throwable) {
+        Throwable current = throwable;
+        while ((current instanceof CompletionException || current instanceof ExecutionException)
+                && current.getCause() != null) {
+            current = current.getCause();
+        }
+        return current;
+    }
+
+    private String resolveThrowableMessage(Throwable throwable) {
+        if (throwable == null) {
+            return "unknown";
+        }
+        String message = throwable.getMessage();
+        return message == null || message.trim().isEmpty()
+                ? throwable.getClass().getSimpleName()
+                : message;
     }
 }

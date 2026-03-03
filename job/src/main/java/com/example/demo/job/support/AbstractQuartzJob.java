@@ -34,7 +34,7 @@ public abstract class AbstractQuartzJob implements Job {
     private static final String EXECUTE_ERROR_PREFIX = "执行异常: ";
 
     @Override
-    @LogCollect(handler = QuartzLogCollectHandler.class, level = "DEBUG")
+    @LogCollect(handler = QuartzLogCollectHandler.class, minLevel = "DEBUG")
     public void execute(JobExecutionContext context) throws JobExecutionException {
         JobConstants constants = resolveConstants();
         JobDataMap dataMap = context.getMergedJobDataMap();
