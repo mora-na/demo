@@ -6,8 +6,6 @@ import com.example.demo.job.api.JobHandler;
 import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.entity.SysJobLog;
 import com.example.demo.job.service.SysJobLogService;
-import com.logcollect.api.annotation.LogCollect;
-import com.logcollect.api.model.LogCollectContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.quartz.Job;
@@ -34,7 +32,6 @@ public abstract class AbstractQuartzJob implements Job {
     private static final String EXECUTE_ERROR_PREFIX = "执行异常: ";
 
     @Override
-    @LogCollect(handler = QuartzLogCollectHandler.class, minLevel = "DEBUG")
     public void execute(JobExecutionContext context) throws JobExecutionException {
         JobConstants constants = resolveConstants();
         JobDataMap dataMap = context.getMergedJobDataMap();
@@ -43,7 +40,6 @@ public abstract class AbstractQuartzJob implements Job {
         SysJobLogService logService = SpringContextHolder.getBean(SysJobLogService.class);
         SysJobLog logRecord = logService == null ? null : logService.createStartLog(context, jobContext, start);
         if (logRecord != null) {
-            LogCollectContext.setCurrentBusinessId(logRecord.getId());
             jobContext.setExecutionLogId(logRecord.getId());
         }
         logExecutionInfo(EXECUTE_START_PREFIX + start);

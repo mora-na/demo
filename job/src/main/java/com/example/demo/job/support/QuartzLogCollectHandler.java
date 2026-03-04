@@ -1,5 +1,6 @@
 package com.example.demo.job.support;
 
+import com.example.demo.job.api.JobContext;
 import com.example.demo.job.service.SysJobLogDetailService;
 import com.logcollect.api.handler.LogCollectHandler;
 import com.logcollect.api.model.AggregatedLog;
@@ -15,6 +16,7 @@ public class QuartzLogCollectHandler implements LogCollectHandler {
 
     @Override
     public void before(LogCollectContext context) {
+        context.setBusinessId(((JobContext) context.getMethodArgs()[0]).getExecutionLogId());
     }
 
     @Override

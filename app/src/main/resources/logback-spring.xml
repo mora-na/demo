@@ -18,6 +18,24 @@
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
     <include resource="org/springframework/boot/logging/logback/file-appender.xml"/>
 
+    <property name="ASYNC_QUEUE_SIZE" value="${LOGBACK_ASYNC_QUEUE_SIZE:-8192}"/>
+
+    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>${ASYNC_QUEUE_SIZE}</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="CONSOLE"/>
+    </appender>
+
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>${ASYNC_QUEUE_SIZE}</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="FILE"/>
+    </appender>
+
     <springProfile name="dev">
         <logger name="com" level="${LOG_LEVEL_COM:-DEBUG}"/>
         <logger name="cn.com" level="${LOG_LEVEL_CN_COM:-DEBUG}"/>
@@ -28,7 +46,7 @@
     </springProfile>
 
     <root level="${LOG_LEVEL_ROOT:-INFO}">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="FILE"/>
+        <appender-ref ref="ASYNC_CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE"/>
     </root>
 </configuration>

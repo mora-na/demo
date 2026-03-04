@@ -2,8 +2,10 @@ package com.example.demo.job.handler;
 
 import com.example.demo.job.api.JobContext;
 import com.example.demo.job.api.JobHandler;
+import com.example.demo.job.support.QuartzLogCollectHandler;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.logcollect.api.annotation.LogCollect;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -58,6 +60,7 @@ public class AsyncLogTestJobHandler implements JobHandler {
     }
 
     @Override
+    @LogCollect(handler = QuartzLogCollectHandler.class, minLevel = "DEBUG")
     public void execute(JobContext context) {
         String runId = buildRunId(context);
         String contextSummary = buildContextSummary(context);

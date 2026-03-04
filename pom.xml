@@ -57,7 +57,7 @@
 
         <poi.version>5.5.1</poi.version>
 
-        <logcollect.version>1.0.0</logcollect.version>
+        <logcollect.version>1.1.0</logcollect.version>
     </properties>
 
     <dependencyManagement>
@@ -276,7 +276,7 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.dpdns.mora</groupId>
+                <groupId>io.github.mora-na</groupId>
                 <artifactId>logcollect-bom</artifactId>
                 <version>${logcollect.version}</version>
                 <type>pom</type>
