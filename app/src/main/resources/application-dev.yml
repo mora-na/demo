@@ -25,6 +25,13 @@ server:
     # 启用跨节点配置变更同步，确保动态配置在多节点一致生效。
     config.change-sync.enabled: true
 
+job:
+  async-log:
+    coverage:
+      mode: baseline
+#       mode: branches
+#       branch-wait-timeout-seconds: 1
+
 # 配置种子开关（仅对显式标记 seed=true 的字段生效）
 config:
   seed:

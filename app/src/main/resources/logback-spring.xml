@@ -47,6 +47,7 @@
 
     <root level="${LOG_LEVEL_ROOT:-INFO}">
         <appender-ref ref="ASYNC_CONSOLE"/>
+        <!--<appender-ref ref="CONSOLE"/>-->
         <appender-ref ref="ASYNC_FILE"/>
     </root>
 </configuration>

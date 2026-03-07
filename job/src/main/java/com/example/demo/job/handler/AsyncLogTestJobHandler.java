@@ -2,15 +2,28 @@ package com.example.demo.job.handler;
 
 import com.example.demo.job.api.JobContext;
 import com.example.demo.job.api.JobHandler;
+import com.example.demo.job.config.AsyncLogCoverageMode;
+import com.example.demo.job.config.AsyncLogCoverageProperties;
+import com.example.demo.job.handler.support.AsyncLogCustomConfigurerProbe;
+import com.example.demo.job.handler.support.AsyncLogScenario;
+import com.example.demo.job.handler.support.AsyncLogTestSupport;
+import com.example.demo.job.handler.support.AsyncNestedLogCollectProbe;
 import com.example.demo.job.support.QuartzLogCollectHandler;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.logcollect.api.annotation.LogCollect;
+import com.logcollect.core.context.LogCollectContextUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.SpringBootVersion;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
@@ -21,6 +34,7 @@ import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 /**
  * Async logging demo job handler.
@@ -34,15 +48,30 @@ public class AsyncLogTestJobHandler implements JobHandler {
 
     private static final String LOG_PREFIX = "[AsyncJobTest]";
     private static final long ASYNC_WAIT_TIMEOUT_SECONDS = 10L;
+    private static final long BRANCH_STAGE_AWAIT_TIMEOUT_SECONDS = 5L;
+    private static final String SERVLET_ASYNC_SOURCE = "/jobs/async-log/servlet-async";
+    private static final String DIRECT_SOURCE = "/jobs/async-log/direct";
 
     private final AsyncLogTestSupport asyncSupport;
+    private final AsyncNestedLogCollectProbe nestedLogCollectProbe;
+    private final ObjectProvider<AsyncLogCustomConfigurerProbe> customConfigurerProbeProvider;
+    private final AsyncLogCoverageProperties coverageProperties;
     private final ThreadPoolTaskExecutor jobAsyncExecutor;
+    private final ExecutorService springBeanExecutorService;
     private final ExecutorService manualExecutor;
 
     public AsyncLogTestJobHandler(AsyncLogTestSupport asyncSupport,
-                                  @Qualifier("jobAsyncExecutor") ThreadPoolTaskExecutor jobAsyncExecutor) {
+                                  AsyncNestedLogCollectProbe nestedLogCollectProbe,
+                                  ObjectProvider<AsyncLogCustomConfigurerProbe> customConfigurerProbeProvider,
+                                  AsyncLogCoverageProperties coverageProperties,
+                                  @Qualifier("jobAsyncExecutor") ThreadPoolTaskExecutor jobAsyncExecutor,
+                                  @Qualifier("jobBeanExecutorService") ExecutorService springBeanExecutorService) {
         this.asyncSupport = asyncSupport;
+        this.nestedLogCollectProbe = nestedLogCollectProbe;
+        this.customConfigurerProbeProvider = customConfigurerProbeProvider;
+        this.coverageProperties = coverageProperties;
         this.jobAsyncExecutor = jobAsyncExecutor;
+        this.springBeanExecutorService = springBeanExecutorService;
         // 手动线程池（非 Spring 管理）需使用工具类包装，避免线程切换后丢失 LogCollect 上下文。
         this.manualExecutor = asyncSupport.wrapExecutorService(
                 Executors.newFixedThreadPool(2, newNamedThreadFactory("job-manual-"))
@@ -63,107 +92,310 @@ public class AsyncLogTestJobHandler implements JobHandler {
     @LogCollect(handler = QuartzLogCollectHandler.class, minLevel = "DEBUG")
     public void execute(JobContext context) {
         String runId = buildRunId(context);
-        String contextSummary = buildContextSummary(context);
+        logInfo(runId, AsyncLogScenario.RUN_START,
+                "AsyncLogTestJobHandler.execute(JobContext)",
+                buildContextSummary(context));
+        logInfo(runId, AsyncLogScenario.SYNC_DIRECT,
+                "execute() 主线程直接输出",
+                null);
+
+        AsyncLogCoverageMode mode = coverageProperties.getModeEnum();
+        if (mode == AsyncLogCoverageMode.BRANCHES) {
+            executeBranchCoverage(runId, context);
+        } else {
+            executeBaselineCoverage(runId, context);
+        }
+
+        logInfo(runId, AsyncLogScenario.RUN_FINISHED,
+                "AsyncLogTestJobHandler.execute(JobContext)",
+                null);
+    }
+
+    private void executeBaselineCoverage(String runId, JobContext context) {
+        ensureBaselineRuntime(context);
+
         List<CompletableFuture<?>> asyncStages = new ArrayList<>();
+        probeNestedLogCollect(runId, context);
 
-        logInfo(runId, "SYNC", "start " + contextSummary);
-        logInfo(runId, "SYNC", "direct log in execute()");
+        asyncStages.add(asyncSupport.asyncLogWithDefaultConfigurer(
+                runId,
+                AsyncLogScenario.SPRING_ASYNC_DEFAULT,
+                "@Async 默认执行器"
+        ));
+        logInfo(runId, AsyncLogScenario.SPRING_ASYNC_CUSTOM_SKIP,
+                "profile job-async-custom 未启用",
+                null);
 
-        asyncStages.add(asyncSupport.asyncLog(runId, "SPRING_ASYNC", "@Async invoked"));
+        asyncStages.add(asyncSupport.asyncLog(
+                runId,
+                AsyncLogScenario.SPRING_THREAD_POOL_ASYNC,
+                "@Async(\"jobAsyncExecutor\")"
+        ));
+        asyncStages.add(runSpringBeanExecutorServiceProbe(runId));
+        asyncStages.add(runCompletableFutureSuccessProbe(runId));
+        asyncStages.add(runListenableFutureSuccessProbe(runId));
+        asyncStages.add(runManualExecutorProbe(runId));
+        asyncStages.add(runRawThreadProbe(runId));
+        asyncStages.addAll(runForkJoinCommonPoolProbes(runId));
+        asyncStages.add(runParallelStreamProbe(runId));
+        asyncStages.add(runThirdPartyCallbackProbe(runId));
+        asyncStages.add(runReactorMonoFluxProbe(runId));
 
-        // CompletableFuture 回调线程不固定，提前创建 wrapped 回调，确保任意线程执行时都能恢复采集上下文。
-        Runnable springPoolSuccessCallback = asyncSupport.wrapRunnable(
-                () -> logInfo(runId, "CF_SPRING_POOL", "CompletableFuture callback success")
+        logInfo(runId, AsyncLogScenario.WEBFLUX_NOTE,
+                "Reactor publishOn + Spring Scheduler",
+                "currentBoot=" + currentBootVersion());
+        logServletAsyncScenario(runId, context);
+        waitForAsyncStages(runId,
+                "baseline.asyncStages",
+                asyncStages,
+                ASYNC_WAIT_TIMEOUT_SECONDS);
+    }
+
+    private void executeBranchCoverage(String runId, JobContext context) {
+        AsyncLogCustomConfigurerProbe customConfigurerProbe = requireBranchRuntime(context);
+        probeNestedLogCollect(runId, null);
+
+        logInfo(runId, AsyncLogScenario.SPRING_ASYNC_DEFAULT_SKIP,
+                "AsyncConfigurer#getAsyncExecutor 已覆盖默认路径",
+                null);
+        logServletAsyncScenario(runId, context);
+
+        List<CompletableFuture<?>> branchStages = new ArrayList<>();
+        branchStages.add(customConfigurerProbe.asyncLog(
+                runId,
+                AsyncLogScenario.SPRING_ASYNC_CUSTOM,
+                "@Async + 自定义 AsyncConfigurer"
+        ));
+        branchStages.add(runCompletableFutureErrorProbe(runId));
+        branchStages.add(runListenableFutureErrorProbe(runId));
+        branchStages.add(runReactorSetupErrorProbe(runId));
+        awaitBranchStages(runId, branchStages);
+
+        probeWaitError(runId);
+        probeWaitTimeout(runId);
+        probeWaitInterrupted(runId);
+    }
+
+    private void ensureBaselineRuntime(JobContext context) {
+        if (customConfigurerProbeProvider.getIfAvailable() != null) {
+            throw new IllegalStateException("Coverage mode 'baseline' requires profile job-async-custom to be disabled");
+        }
+        if (!isServletAsyncProbeContext(context)) {
+            throw new IllegalStateException("Coverage mode 'baseline' requires /jobs/async-log/servlet-async entry");
+        }
+    }
+
+    private AsyncLogCustomConfigurerProbe requireBranchRuntime(JobContext context) {
+        AsyncLogCustomConfigurerProbe customConfigurerProbe = customConfigurerProbeProvider.getIfAvailable();
+        if (customConfigurerProbe == null) {
+            throw new IllegalStateException("Coverage mode 'branches' requires profile job-async-custom to be enabled");
+        }
+        if (isServletAsyncProbeContext(context)) {
+            throw new IllegalStateException("Coverage mode 'branches' requires /jobs/async-log/direct entry");
+        }
+        return customConfigurerProbe;
+    }
+
+    private void probeNestedLogCollect(String runId, JobContext context) {
+        if (context != null) {
+            nestedLogCollectProbe.nestedLog(context, runId);
+            return;
+        }
+        logInfo(runId, AsyncLogScenario.NESTED_LOGCOLLECT_SKIP,
+                "nestedLogCollectProbe.nestedLog(...)",
+                "jobContext=null");
+    }
+
+    private CompletableFuture<Void> runSpringBeanExecutorServiceProbe(String runId) {
+        return CompletableFuture.runAsync(
+                () -> logInfo(runId, AsyncLogScenario.SPRING_BEAN_EXECUTOR_SERVICE,
+                        "@Qualifier(\"jobBeanExecutorService\") ExecutorService",
+                        null),
+                springBeanExecutorService
         );
-        AtomicReference<Throwable> springPoolCallbackError = new AtomicReference<>();
-        Runnable springPoolErrorCallback = asyncSupport.wrapRunnable(
-                () -> logWarn(runId, "CF_SPRING_POOL",
-                        "CompletableFuture callback error: "
-                                + resolveThrowableMessage(springPoolCallbackError.get()))
+    }
+
+    private CompletableFuture<Void> runCompletableFutureSuccessProbe(String runId) {
+        Runnable successCallback = asyncSupport.wrapRunnable(
+                () -> logInfo(runId, AsyncLogScenario.CF_SPRING_POOL_CALLBACK_SUCCESS,
+                        "CompletableFuture.whenComplete(success)",
+                        null)
         );
-        CompletableFuture<Void> springPoolFuture = CompletableFuture.runAsync(
-                        () -> logInfo(runId, "CF_SPRING_POOL", "CompletableFuture.runAsync"),
+        AtomicReference<Throwable> callbackError = new AtomicReference<>();
+        Runnable errorCallback = asyncSupport.wrapRunnable(
+                () -> logWarn(runId, AsyncLogScenario.CF_SPRING_POOL_CALLBACK_ERROR,
+                        "CompletableFuture.whenComplete(error)",
+                        "error=" + resolveThrowableMessage(callbackError.get()))
+        );
+        return CompletableFuture.runAsync(
+                        () -> logInfo(runId, AsyncLogScenario.CF_SPRING_POOL_TASK,
+                                "CompletableFuture.runAsync(..., jobAsyncExecutor)",
+                                null),
                         jobAsyncExecutor
                 )
                 .whenComplete((ignored, ex) -> {
                     if (ex == null) {
-                        springPoolSuccessCallback.run();
+                        successCallback.run();
                     } else {
-                        springPoolCallbackError.set(unwrapCompletionThrowable(ex));
-                        springPoolErrorCallback.run();
+                        callbackError.set(unwrapCompletionThrowable(ex));
+                        errorCallback.run();
                     }
                 });
-        asyncStages.add(springPoolFuture);
+    }
 
-        // ListenableFuture 的 success/failure 回调同样可能在非业务线程触发，需提前包装回调逻辑。
-        CompletableFuture<Void> listenableStage = new CompletableFuture<>();
-        Runnable listenableSuccessCallback = asyncSupport.wrapRunnable(() -> {
-            logInfo(runId, "SPRING_LISTENABLE", "callback success");
-            listenableStage.complete(null);
+    private CompletableFuture<Void> runCompletableFutureErrorProbe(String runId) {
+        CompletableFuture<Void> stage = new CompletableFuture<>();
+        AtomicReference<Throwable> callbackError = new AtomicReference<>();
+        Runnable errorCallback = asyncSupport.wrapRunnable(() -> {
+            logWarn(runId, AsyncLogScenario.CF_SPRING_POOL_CALLBACK_ERROR,
+                    "CompletableFuture.whenComplete(error)",
+                    "error=" + resolveThrowableMessage(callbackError.get()));
+            stage.complete(null);
         });
-        AtomicReference<Throwable> listenableCallbackError = new AtomicReference<>();
-        Runnable listenableErrorCallback = asyncSupport.wrapRunnable(() -> {
-            Throwable callbackError = listenableCallbackError.get();
-            logWarn(runId, "SPRING_LISTENABLE", "callback error: " + resolveThrowableMessage(callbackError));
-            listenableStage.completeExceptionally(callbackError == null
+        CompletableFuture.runAsync(
+                        () -> {
+                            throw new IllegalStateException("coverage-branches-completableFuture-error");
+                        },
+                        jobAsyncExecutor
+                )
+                .whenComplete((ignored, ex) -> {
+                    if (ex == null) {
+                        stage.completeExceptionally(new IllegalStateException("CompletableFuture error probe finished without exception"));
+                        return;
+                    }
+                    callbackError.set(unwrapCompletionThrowable(ex));
+                    errorCallback.run();
+                });
+        return stage;
+    }
+
+    private CompletableFuture<Void> runListenableFutureSuccessProbe(String runId) {
+        CompletableFuture<Void> stage = new CompletableFuture<>();
+        Runnable successCallback = asyncSupport.wrapRunnable(() -> {
+            logInfo(runId, AsyncLogScenario.SPRING_THREAD_POOL_LISTENABLE_SUCCESS,
+                    "ListenableFuture.addCallback(success)",
+                    null);
+            stage.complete(null);
+        });
+        AtomicReference<Throwable> callbackError = new AtomicReference<>();
+        Runnable errorCallback = asyncSupport.wrapRunnable(() -> {
+            Throwable callbackThrowable = callbackError.get();
+            logWarn(runId, AsyncLogScenario.SPRING_THREAD_POOL_LISTENABLE_ERROR,
+                    "ListenableFuture.addCallback(failure)",
+                    "error=" + resolveThrowableMessage(callbackThrowable));
+            stage.completeExceptionally(callbackThrowable == null
                     ? new IllegalStateException("ListenableFuture callback error")
-                    : callbackError);
+                    : callbackThrowable);
         });
         ListenableFuture<?> listenableFuture = jobAsyncExecutor.submitListenable(
-                () -> logInfo(runId, "SPRING_LISTENABLE", "ListenableFuture task")
+                () -> logInfo(runId, AsyncLogScenario.SPRING_THREAD_POOL_LISTENABLE_TASK,
+                        "ThreadPoolTaskExecutor.submitListenable(...)",
+                        null)
         );
         listenableFuture.addCallback(
-                result -> listenableSuccessCallback.run(),
+                result -> successCallback.run(),
                 ex -> {
-                    listenableCallbackError.set(unwrapCompletionThrowable(ex));
-                    listenableErrorCallback.run();
+                    callbackError.set(unwrapCompletionThrowable(ex));
+                    errorCallback.run();
                 }
         );
-        asyncStages.add(listenableStage);
+        return stage;
+    }
 
-        // 手动 ExecutorService 已在构造阶段 wrapExecutorService，一行兜底 submit/execute 全路径透传。
-        asyncStages.add(CompletableFuture.runAsync(
-                () -> logInfo(runId, "MANUAL_EXECUTOR", "Executors.newFixedThreadPool"),
+    private CompletableFuture<Void> runListenableFutureErrorProbe(String runId) {
+        CompletableFuture<Void> stage = new CompletableFuture<>();
+        AtomicReference<Throwable> callbackError = new AtomicReference<>();
+        Runnable errorCallback = asyncSupport.wrapRunnable(() -> {
+            logWarn(runId, AsyncLogScenario.SPRING_THREAD_POOL_LISTENABLE_ERROR,
+                    "ListenableFuture.addCallback(failure)",
+                    "error=" + resolveThrowableMessage(callbackError.get()));
+            stage.complete(null);
+        });
+        ListenableFuture<?> listenableFuture = jobAsyncExecutor.submitListenable(
+                () -> {
+                    throw new IllegalStateException("coverage-branches-listenableFuture-error");
+                }
+        );
+        listenableFuture.addCallback(
+                result -> stage.completeExceptionally(new IllegalStateException("ListenableFuture error probe finished without exception")),
+                ex -> {
+                    callbackError.set(unwrapCompletionThrowable(ex));
+                    errorCallback.run();
+                }
+        );
+        return stage;
+    }
+
+    private CompletableFuture<Void> runManualExecutorProbe(String runId) {
+        return CompletableFuture.runAsync(
+                () -> logInfo(runId, AsyncLogScenario.MANUAL_EXECUTOR,
+                        "LogCollectContextUtils.wrapExecutorService(Executors.newFixedThreadPool)",
+                        null),
                 manualExecutor
-        ));
+        );
+    }
 
-        CompletableFuture<Void> rawThreadStage = new CompletableFuture<>();
-        // 直接创建线程使用 newDaemonThread 包装，确保新线程恢复 LogCollect 上下文并在 finally 清理。
+    private CompletableFuture<Void> runRawThreadProbe(String runId) {
+        CompletableFuture<Void> stage = new CompletableFuture<>();
         Thread rawThread = asyncSupport.newDaemonThread(() -> {
             try {
-                logInfo(runId, "RAW_THREAD", "new Thread()");
-                rawThreadStage.complete(null);
+                logInfo(runId, AsyncLogScenario.RAW_THREAD,
+                        "LogCollectContextUtils.newDaemonThread(...)",
+                        null);
+                stage.complete(null);
             } catch (Throwable ex) {
-                rawThreadStage.completeExceptionally(ex);
+                stage.completeExceptionally(ex);
             }
         }, "job-raw-thread-" + runId);
         rawThread.start();
-        asyncStages.add(rawThreadStage);
+        return stage;
+    }
 
+    private List<CompletableFuture<?>> runForkJoinCommonPoolProbes(String runId) {
+        List<CompletableFuture<?>> stages = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             final int item = i;
-            CompletableFuture<Void> forkJoinStage = new CompletableFuture<>();
-            // ForkJoin/commonPool 非 Spring 托管入口，提交任务前用 wrapRunnable 包装。
+            CompletableFuture<Void> stage = new CompletableFuture<>();
             ForkJoinPool.commonPool().execute(asyncSupport.wrapRunnable(() -> {
                 try {
-                    logInfo(runId, "FORK_JOIN", "commonPool task item=" + item);
-                    forkJoinStage.complete(null);
+                    logInfo(runId, AsyncLogScenario.FORK_JOIN_COMMON_POOL,
+                            "ForkJoinPool.commonPool().execute(...)",
+                            "item=" + item);
+                    stage.complete(null);
                 } catch (Throwable ex) {
-                    forkJoinStage.completeExceptionally(ex);
+                    stage.completeExceptionally(ex);
                 }
             }));
-            asyncStages.add(forkJoinStage);
+            stages.add(stage);
         }
+        return stages;
+    }
 
-        CompletableFuture<Void> callbackStage = new CompletableFuture<>();
+    private CompletableFuture<Void> runParallelStreamProbe(String runId) {
+        return asyncSupport.runAsync(
+                () -> IntStream.range(0, 3)
+                        .boxed()
+                        .parallel()
+                        .forEach(asyncSupport.wrapConsumer(item -> logInfo(
+                                runId,
+                                AsyncLogScenario.FORK_JOIN_PARALLEL_STREAM,
+                                "IntStream.range(...).parallel().forEach(...)",
+                                "item=" + item
+                        )))
+        );
+    }
+
+    private CompletableFuture<Void> runThirdPartyCallbackProbe(String runId) {
+        CompletableFuture<Void> stage = new CompletableFuture<>();
         AtomicReference<String> callbackDetailRef = new AtomicReference<>("Caffeine removal callback");
-        // 第三方回调（Caffeine removalListener）提前创建 wrapped 回调，避免在未知线程触发时丢上下文。
         Runnable wrappedRemovalCallback = asyncSupport.wrapRunnable(() -> {
             try {
-                logInfo(runId, "THIRD_PARTY_CALLBACK", callbackDetailRef.get());
-                callbackStage.complete(null);
+                logInfo(runId, AsyncLogScenario.THIRD_PARTY_CALLBACK,
+                        "Caffeine.removalListener -> wrapped callback",
+                        callbackDetailRef.get());
+                stage.complete(null);
             } catch (Throwable ex) {
-                callbackStage.completeExceptionally(ex);
+                stage.completeExceptionally(ex);
             }
         });
         Cache<String, String> cache = Caffeine.newBuilder()
@@ -174,11 +406,116 @@ public class AsyncLogTestJobHandler implements JobHandler {
                 .build();
         cache.put("async-log", "value");
         cache.invalidate("async-log");
-        asyncStages.add(callbackStage);
+        return stage;
+    }
 
-        waitForAsyncStages(runId, asyncStages);
+    private CompletableFuture<Void> runReactorMonoFluxProbe(String runId) {
+        CompletableFuture<Void> stage = new CompletableFuture<>();
+        try {
+            Scheduler scheduler = Schedulers.fromExecutor(jobAsyncExecutor);
+            Mono<Void> monoStage = Mono.just("mono")
+                    .publishOn(scheduler)
+                    .doOnNext(item -> logInfo(runId, AsyncLogScenario.WEBFLUX_MONO,
+                            "Mono.publishOn(Schedulers.fromExecutor(jobAsyncExecutor))",
+                            "item=" + item))
+                    .then();
+            Mono<Void> fluxStage = Flux.range(0, 2)
+                    .publishOn(scheduler)
+                    .doOnNext(item -> logInfo(runId, AsyncLogScenario.WEBFLUX_FLUX,
+                            "Flux.publishOn(Schedulers.fromExecutor(jobAsyncExecutor))",
+                            "item=" + item))
+                    .then();
+            Mono.when(monoStage, fluxStage)
+                    .doOnSuccess(ignore -> stage.complete(null))
+                    .doOnError(stage::completeExceptionally)
+                    .subscribe();
+        } catch (Throwable ex) {
+            stage.completeExceptionally(ex);
+            logWarn(runId, AsyncLogScenario.WEBFLUX_SETUP_ERROR,
+                    "Mono.when(monoStage, fluxStage).subscribe()",
+                    "error=" + resolveThrowableMessage(ex));
+        }
+        return stage;
+    }
 
-        logInfo(runId, "SYNC", "dispatch finished");
+    private CompletableFuture<Void> runReactorSetupErrorProbe(String runId) {
+        CompletableFuture<Void> stage = new CompletableFuture<>();
+        try {
+            throw new IllegalStateException("coverage-branches-reactor-setup-error");
+        } catch (Throwable ex) {
+            logWarn(runId, AsyncLogScenario.WEBFLUX_SETUP_ERROR,
+                    "Mono.when(monoStage, fluxStage).subscribe()",
+                    "error=" + resolveThrowableMessage(ex));
+            stage.complete(null);
+        }
+        return stage;
+    }
+
+    private void logServletAsyncScenario(String runId, JobContext context) {
+        String source = resolveContextSource(context);
+        if (isServletAsyncProbeContext(context)) {
+            logInfo(runId, AsyncLogScenario.SERVLET_ASYNC_ACTIVE,
+                    "POST " + SERVLET_ASYNC_SOURCE + " -> WebAsyncTask",
+                    "source=" + source);
+            return;
+        }
+        logInfo(runId, AsyncLogScenario.SERVLET_ASYNC_NOTE,
+                "non-servlet-async entry",
+                "source=" + source);
+    }
+
+    private void probeWaitError(String runId) {
+        CompletableFuture<Void> failedStage = new CompletableFuture<>();
+        failedStage.completeExceptionally(new IllegalStateException("coverage-branches-wait-error"));
+        List<CompletableFuture<?>> stages = new ArrayList<>();
+        stages.add(failedStage);
+        waitForAsyncStages(runId,
+                "branches.wait.error",
+                stages,
+                coverageProperties.getBranchWaitTimeoutSeconds());
+    }
+
+    private void probeWaitTimeout(String runId) {
+        CompletableFuture<Void> neverEndingStage = new CompletableFuture<>();
+        List<CompletableFuture<?>> stages = new ArrayList<>();
+        stages.add(neverEndingStage);
+        waitForAsyncStages(runId,
+                "branches.wait.timeout",
+                stages,
+                coverageProperties.getBranchWaitTimeoutSeconds());
+    }
+
+    private void probeWaitInterrupted(String runId) {
+        CompletableFuture<Void> neverEndingStage = new CompletableFuture<>();
+        List<CompletableFuture<?>> stages = new ArrayList<>();
+        stages.add(neverEndingStage);
+        Thread waitingThread = Thread.currentThread();
+        Thread interrupter = asyncSupport.newDaemonThread(() -> {
+            try {
+                TimeUnit.MILLISECONDS.sleep(100);
+                waitingThread.interrupt();
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+        }, "job-branch-interrupt-" + runId);
+        interrupter.start();
+        waitForAsyncStages(runId,
+                "branches.wait.interrupted",
+                stages,
+                Math.max(coverageProperties.getBranchWaitTimeoutSeconds(), 1L));
+        Thread.interrupted();
+    }
+
+    private void awaitBranchStages(String runId, List<CompletableFuture<?>> stages) {
+        if (stages == null || stages.isEmpty()) {
+            return;
+        }
+        try {
+            CompletableFuture.allOf(stages.toArray(new CompletableFuture[0]))
+                    .get(BRANCH_STAGE_AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Branch coverage stages did not complete cleanly for runId=" + runId, ex);
+        }
     }
 
     @PreDestroy
@@ -204,12 +541,14 @@ public class AsyncLogTestJobHandler implements JobHandler {
 
     private String buildContextSummary(JobContext context) {
         if (context == null) {
-            return "jobContext=null";
+            return "jobContext=null, coverageMode=" + coverageProperties.getModeEnum().getValue();
         }
         return "jobId=" + safe(context.getJobId())
                 + ", jobName=" + safe(context.getJobName())
                 + ", handler=" + safe(context.getHandlerName())
                 + ", cron=" + safe(context.getCronExpression())
+                + ", source=" + resolveContextSource(context)
+                + ", coverageMode=" + coverageProperties.getModeEnum().getValue()
                 + ", now=" + LocalDateTime.now();
     }
 
@@ -217,33 +556,76 @@ public class AsyncLogTestJobHandler implements JobHandler {
         return Objects.toString(value, "-");
     }
 
-    private void logInfo(String runId, String stage, String detail) {
-        log.info("{}[{}][{}] {} | thread={}",
-                LOG_PREFIX, runId, stage, detail, Thread.currentThread().getName());
+    private void logInfo(String runId, AsyncLogScenario scenario, String implementation, String extra) {
+        log.info("{}[{}][{}] {} | thread={} | inCollectContext={}",
+                LOG_PREFIX,
+                runId,
+                scenario.stage(),
+                scenario.message(implementation, extra),
+                Thread.currentThread().getName(),
+                LogCollectContextUtils.isInLogCollectContext());
     }
 
-    private void logWarn(String runId, String stage, String detail) {
-        log.warn("{}[{}][{}] {} | thread={}",
-                LOG_PREFIX, runId, stage, detail, Thread.currentThread().getName());
+    private void logWarn(String runId, AsyncLogScenario scenario, String implementation, String extra) {
+        log.warn("{}[{}][{}] {} | thread={} | inCollectContext={}",
+                LOG_PREFIX,
+                runId,
+                scenario.stage(),
+                scenario.message(implementation, extra),
+                Thread.currentThread().getName(),
+                LogCollectContextUtils.isInLogCollectContext());
     }
 
-    private void waitForAsyncStages(String runId, List<CompletableFuture<?>> asyncStages) {
+    private void waitForAsyncStages(String runId,
+                                    String probeName,
+                                    List<CompletableFuture<?>> asyncStages,
+                                    long timeoutSeconds) {
         if (asyncStages == null || asyncStages.isEmpty()) {
             return;
         }
         CompletableFuture<Void> all = CompletableFuture.allOf(asyncStages.toArray(new CompletableFuture[0]));
         try {
-            all.get(ASYNC_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            logInfo(runId, "SYNC", "all async stages completed");
+            all.get(timeoutSeconds, TimeUnit.SECONDS);
+            logInfo(runId, AsyncLogScenario.RUN_ALL_COMPLETED,
+                    probeName + " -> CompletableFuture.allOf(...).get(...)",
+                    "stageCount=" + asyncStages.size());
         } catch (TimeoutException ex) {
-            logWarn(runId, "SYNC", "wait async stages timeout after " + ASYNC_WAIT_TIMEOUT_SECONDS + "s");
+            logWarn(runId, AsyncLogScenario.RUN_WAIT_TIMEOUT,
+                    probeName + " -> CompletableFuture.allOf(...).get(timeout)",
+                    "timeoutSeconds=" + timeoutSeconds);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            logWarn(runId, "SYNC", "wait async stages interrupted");
+            logWarn(runId, AsyncLogScenario.RUN_WAIT_INTERRUPTED,
+                    probeName + " -> CompletableFuture.allOf(...).get(...)",
+                    null);
         } catch (Exception ex) {
             Throwable cause = ex.getCause() == null ? ex : ex.getCause();
-            logWarn(runId, "SYNC", "wait async stages error: " + resolveThrowableMessage(cause));
+            logWarn(runId, AsyncLogScenario.RUN_WAIT_ERROR,
+                    probeName + " -> CompletableFuture.allOf(...).get(...)",
+                    "error=" + resolveThrowableMessage(cause));
         }
+    }
+
+    private boolean isServletAsyncProbeContext(JobContext context) {
+        return resolveContextSource(context).contains(SERVLET_ASYNC_SOURCE);
+    }
+
+    private String resolveContextSource(JobContext context) {
+        if (context == null || context.getParams() == null) {
+            return "unknown";
+        }
+        if (context.getParams().contains(SERVLET_ASYNC_SOURCE)) {
+            return SERVLET_ASYNC_SOURCE;
+        }
+        if (context.getParams().contains(DIRECT_SOURCE)) {
+            return DIRECT_SOURCE;
+        }
+        return context.getParams();
+    }
+
+    private String currentBootVersion() {
+        String version = SpringBootVersion.getVersion();
+        return version == null || version.trim().isEmpty() ? "unknown" : version;
     }
 
     private Throwable unwrapCompletionThrowable(Throwable throwable) {

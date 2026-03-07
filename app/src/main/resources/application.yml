@@ -65,6 +65,7 @@ spring:
   # 默认使用 dev 配置，可通过环境变量覆盖
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  #    active: ${SPRING_PROFILES_ACTIVE:dev,job-async-custom}
   # 控制台输出配置
   output:
     # ANSI 颜色输出配置

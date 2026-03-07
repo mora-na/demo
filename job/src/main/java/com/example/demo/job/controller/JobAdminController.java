@@ -6,11 +6,13 @@ import com.example.demo.common.model.CommonResult;
 import com.example.demo.common.model.PageResult;
 import com.example.demo.common.web.BaseController;
 import com.example.demo.common.web.permission.RequirePermission;
+import com.example.demo.job.api.JobContext;
 import com.example.demo.job.config.JobConstants;
 import com.example.demo.job.dto.*;
 import com.example.demo.job.entity.SysJob;
 import com.example.demo.job.entity.SysJobLog;
 import com.example.demo.job.entity.SysJobLogDetail;
+import com.example.demo.job.handler.AsyncLogTestJobHandler;
 import com.example.demo.job.service.SysJobLogDetailService;
 import com.example.demo.job.service.SysJobLogService;
 import com.example.demo.job.service.SysJobService;
@@ -19,9 +21,12 @@ import com.example.demo.job.support.JobParamValidator;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.CronExpression;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.WebAsyncTask;
 
+import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.text.ParseException;
 import java.time.ZoneId;
@@ -31,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.Callable;
 
 /**
  * 定时任务管理接口。
@@ -44,12 +50,17 @@ import java.util.TimeZone;
 @RequiredArgsConstructor
 public class JobAdminController extends BaseController {
 
+    private static final long ASYNC_LOG_ENDPOINT_TIMEOUT_MS = 20_000L;
+
     private final SysJobService jobService;
     private final SysJobLogService jobLogService;
     private final SysJobLogDetailService jobLogDetailService;
     private final JobHandlerRegistry jobHandlerRegistry;
     private final JobConstants jobConstants;
     private final JobParamValidator jobParamValidator;
+    private final AsyncLogTestJobHandler asyncLogTestJobHandler;
+    @Resource(name = "jobAsyncExecutor")
+    private ThreadPoolTaskExecutor jobAsyncExecutor;
 
     @GetMapping
     @RequirePermission("job:query")
@@ -173,6 +184,41 @@ public class JobAdminController extends BaseController {
         return success();
     }
 
+    @PostMapping("/async-log/servlet-async")
+    @RequirePermission("job:run")
+    public WebAsyncTask<CommonResult<String>> runAsyncLogByServletAsync(
+            @RequestParam(value = "executionLogId", required = false) Long executionLogId) {
+        JobContext probeContext = buildAsyncProbeContext(
+                executionLogId,
+                "asyncLogServletAsyncProbe",
+                "manual-http-servlet-async",
+                "/jobs/async-log/servlet-async"
+        );
+        Callable<CommonResult<String>> task = () -> {
+            asyncLogTestJobHandler.execute(probeContext);
+            return success("AsyncLogTestJobHandler.execute invoked in Servlet async context");
+        };
+        WebAsyncTask<CommonResult<String>> webAsyncTask =
+                new WebAsyncTask<>(ASYNC_LOG_ENDPOINT_TIMEOUT_MS, jobAsyncExecutor, task);
+        webAsyncTask.onTimeout(() -> error(408, "Servlet async invoke timeout"));
+        webAsyncTask.onError(() -> error(500, "Servlet async invoke error"));
+        return webAsyncTask;
+    }
+
+    @PostMapping("/async-log/direct")
+    @RequirePermission("job:run")
+    public CommonResult<String> runAsyncLogDirect(
+            @RequestParam(value = "executionLogId", required = false) Long executionLogId) {
+        JobContext probeContext = buildAsyncProbeContext(
+                executionLogId,
+                "asyncLogDirectProbe",
+                "manual-http-direct",
+                "/jobs/async-log/direct"
+        );
+        asyncLogTestJobHandler.execute(probeContext);
+        return success("AsyncLogTestJobHandler.execute invoked in direct controller thread");
+    }
+
     @GetMapping("/{id}/logs")
     @RequirePermission("job:query")
     public CommonResult<PageResult<JobLogVO>> logs(@PathVariable Long id, @ModelAttribute JobLogQuery query) {
@@ -255,6 +301,20 @@ public class JobAdminController extends BaseController {
         preview.setTimeZone(zoneId.getId());
         preview.setNextFireTimes(nextTimes);
         return preview;
+    }
+
+    private JobContext buildAsyncProbeContext(Long executionLogId,
+                                              String jobName,
+                                              String cronExpression,
+                                              String source) {
+        JobContext context = new JobContext();
+        context.setJobId(-1L);
+        context.setJobName(jobName);
+        context.setHandlerName("asyncLogTestJobHandler");
+        context.setCronExpression(cronExpression);
+        context.setParams("{\"source\":\"" + source + "\"}");
+        context.setExecutionLogId(executionLogId);
+        return context;
     }
 
 }

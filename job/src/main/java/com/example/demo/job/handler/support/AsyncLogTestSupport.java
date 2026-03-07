@@ -1,4 +1,4 @@
-package com.example.demo.job.handler;
+package com.example.demo.job.handler.support;
 
 import com.logcollect.core.context.LogCollectContextUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 
 /**
  * Spring @Async demo support for job logging.
@@ -20,14 +21,15 @@ import java.util.concurrent.ExecutorService;
 public class AsyncLogTestSupport {
 
     @Async("jobAsyncExecutor")
-    public CompletableFuture<Void> asyncLog(String runId, String stage, String detail) {
-        log.info("[AsyncJobTest][{}][{}] {} | thread={} | inCollectContext={}",
-                runId,
-                stage,
-                detail,
-                Thread.currentThread().getName(),
-                LogCollectContextUtils.isInLogCollectContext());
-        return CompletableFuture.completedFuture(null);
+    public CompletableFuture<Void> asyncLog(String runId, AsyncLogScenario scenario, String implementation) {
+        return logAsync(runId, scenario, implementation);
+    }
+
+    @Async
+    public CompletableFuture<Void> asyncLogWithDefaultConfigurer(String runId,
+                                                                 AsyncLogScenario scenario,
+                                                                 String implementation) {
+        return logAsync(runId, scenario, implementation);
     }
 
     public ExecutorService wrapExecutorService(ExecutorService executorService) {
@@ -45,6 +47,11 @@ public class AsyncLogTestSupport {
         return LogCollectContextUtils.wrapCallable(callable);
     }
 
+    public <T> Consumer<T> wrapConsumer(Consumer<T> consumer) {
+        // 用于 parallelStream / 各类回调型 API 的 Consumer 入口。
+        return LogCollectContextUtils.wrapConsumer(consumer);
+    }
+
     public CompletableFuture<Void> runAsync(Runnable runnable) {
         // CompletableFuture 默认 commonPool 时，使用工具方法兜底上下文透传。
         return LogCollectContextUtils.runAsync(runnable);
@@ -53,5 +60,15 @@ public class AsyncLogTestSupport {
     public Thread newDaemonThread(Runnable runnable, String threadName) {
         // 直接创建线程时使用工具方法，确保子线程可继承采集上下文。
         return LogCollectContextUtils.newDaemonThread(runnable, threadName);
+    }
+
+    private CompletableFuture<Void> logAsync(String runId, AsyncLogScenario scenario, String implementation) {
+        log.info("[AsyncJobTest][{}][{}] {} | thread={} | inCollectContext={}",
+                runId,
+                scenario.stage(),
+                scenario.message(implementation),
+                Thread.currentThread().getName(),
+                LogCollectContextUtils.isInLogCollectContext());
+        return CompletableFuture.completedFuture(null);
     }
 }

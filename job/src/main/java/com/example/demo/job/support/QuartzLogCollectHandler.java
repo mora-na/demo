@@ -21,16 +21,13 @@ public class QuartzLogCollectHandler implements LogCollectHandler {
 
     @Override
     public void flushAggregatedLog(LogCollectContext context, AggregatedLog aggregatedLog) {
+//        System.out.println("收集到批量日志刷新");
+//        System.out.println(aggregatedLog.getContent());
         sysJobLogDetailService.appendDetail(context.getBusinessId(Long.class),
                 aggregatedLog.getMaxLevel(),
                 aggregatedLog.getFirstLogTime(),
                 aggregatedLog.getLastLogTime(),
                 aggregatedLog.getContent());
     }
-
-    @Override
-    public void after(LogCollectContext context) {
-    }
-
 
 }

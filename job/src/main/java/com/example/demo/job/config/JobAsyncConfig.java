@@ -5,7 +5,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Job module async executor configuration.
@@ -28,5 +32,20 @@ public class JobAsyncConfig {
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(5);
         return executor;
+    }
+
+    @Bean(name = "jobBeanExecutorService", destroyMethod = "shutdown")
+    public ExecutorService jobBeanExecutorService() {
+        return Executors.newFixedThreadPool(2, newNamedThreadFactory("job-bean-executor-"));
+    }
+
+    private ThreadFactory newNamedThreadFactory(String prefix) {
+        AtomicInteger counter = new AtomicInteger(0);
+        return runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setName(prefix + counter.incrementAndGet());
+            thread.setDaemon(true);
+            return thread;
+        };
     }
 }
