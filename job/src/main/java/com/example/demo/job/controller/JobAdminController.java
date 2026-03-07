@@ -195,7 +195,7 @@ public class JobAdminController extends BaseController {
                 "/jobs/async-log/servlet-async"
         );
         Callable<CommonResult<String>> task = () -> {
-            asyncLogTestJobHandler.execute(probeContext);
+            asyncLogTestJobHandler.logTest(probeContext);
             return success("AsyncLogTestJobHandler.execute invoked in Servlet async context");
         };
         WebAsyncTask<CommonResult<String>> webAsyncTask =
@@ -215,7 +215,7 @@ public class JobAdminController extends BaseController {
                 "manual-http-direct",
                 "/jobs/async-log/direct"
         );
-        asyncLogTestJobHandler.execute(probeContext);
+        asyncLogTestJobHandler.logTest(probeContext);
         return success("AsyncLogTestJobHandler.execute invoked in direct controller thread");
     }
 

@@ -87,10 +87,24 @@ public class AsyncLogTestJobHandler implements JobHandler {
             return thread;
         };
     }
-
     @Override
     @LogCollect(handler = QuartzLogCollectHandler.class, minLevel = "DEBUG")
-    public void execute(JobContext context) {
+    public void execute(JobContext context) throws Exception {
+        String runId = buildRunId(context);
+        logInfo(runId, AsyncLogScenario.RUN_START,
+                "AsyncLogTestJobHandler.execute(JobContext)",
+                buildScheduledContextSummary(context));
+        logInfo(runId, AsyncLogScenario.SYNC_DIRECT,
+                "execute() 主线程直接输出",
+                null);
+        executeScheduledCoverage(runId, context);
+        logInfo(runId, AsyncLogScenario.RUN_FINISHED,
+                "AsyncLogTestJobHandler.execute(JobContext)",
+                null);
+    }
+
+    @LogCollect(handler = QuartzLogCollectHandler.class, minLevel = "DEBUG")
+    public void logTest(JobContext context) {
         String runId = buildRunId(context);
         logInfo(runId, AsyncLogScenario.RUN_START,
                 "AsyncLogTestJobHandler.execute(JobContext)",
@@ -109,6 +123,35 @@ public class AsyncLogTestJobHandler implements JobHandler {
         logInfo(runId, AsyncLogScenario.RUN_FINISHED,
                 "AsyncLogTestJobHandler.execute(JobContext)",
                 null);
+    }
+
+    private void executeScheduledCoverage(String runId, JobContext context) {
+        List<CompletableFuture<?>> asyncStages = new ArrayList<>();
+        probeNestedLogCollect(runId, context);
+        executeScheduledAsyncConfigurerProbe(runId, asyncStages);
+
+        asyncStages.add(asyncSupport.asyncLog(
+                runId,
+                AsyncLogScenario.SPRING_THREAD_POOL_ASYNC,
+                "@Async(\"jobAsyncExecutor\")"
+        ));
+        asyncStages.add(runSpringBeanExecutorServiceProbe(runId));
+        asyncStages.add(runCompletableFutureSuccessProbe(runId));
+        asyncStages.add(runListenableFutureSuccessProbe(runId));
+        asyncStages.add(runManualExecutorProbe(runId));
+        asyncStages.add(runRawThreadProbe(runId));
+        asyncStages.addAll(runForkJoinCommonPoolProbes(runId));
+        asyncStages.add(runParallelStreamProbe(runId));
+        asyncStages.add(runThirdPartyCallbackProbe(runId));
+        asyncStages.add(runReactorMonoFluxProbe(runId));
+
+        logInfo(runId, AsyncLogScenario.WEBFLUX_NOTE,
+                "Reactor publishOn + Spring Scheduler",
+                "currentBoot=" + currentBootVersion());
+        waitForAsyncStages(runId,
+                "scheduled.asyncStages",
+                asyncStages,
+                ASYNC_WAIT_TIMEOUT_SECONDS);
     }
 
     private void executeBaselineCoverage(String runId, JobContext context) {
@@ -149,6 +192,29 @@ public class AsyncLogTestJobHandler implements JobHandler {
                 "baseline.asyncStages",
                 asyncStages,
                 ASYNC_WAIT_TIMEOUT_SECONDS);
+    }
+
+    private void executeScheduledAsyncConfigurerProbe(String runId, List<CompletableFuture<?>> asyncStages) {
+        AsyncLogCustomConfigurerProbe customConfigurerProbe = customConfigurerProbeProvider.getIfAvailable();
+        if (customConfigurerProbe == null) {
+            asyncStages.add(asyncSupport.asyncLogWithDefaultConfigurer(
+                    runId,
+                    AsyncLogScenario.SPRING_ASYNC_DEFAULT,
+                    "@Async 默认执行器"
+            ));
+            logInfo(runId, AsyncLogScenario.SPRING_ASYNC_CUSTOM_SKIP,
+                    "profile job-async-custom 未启用",
+                    null);
+            return;
+        }
+        logInfo(runId, AsyncLogScenario.SPRING_ASYNC_DEFAULT_SKIP,
+                "AsyncConfigurer#getAsyncExecutor 已覆盖默认路径",
+                null);
+        asyncStages.add(customConfigurerProbe.asyncLog(
+                runId,
+                AsyncLogScenario.SPRING_ASYNC_CUSTOM,
+                "@Async + 自定义 AsyncConfigurer"
+        ));
     }
 
     private void executeBranchCoverage(String runId, JobContext context) {
@@ -549,6 +615,21 @@ public class AsyncLogTestJobHandler implements JobHandler {
                 + ", cron=" + safe(context.getCronExpression())
                 + ", source=" + resolveContextSource(context)
                 + ", coverageMode=" + coverageProperties.getModeEnum().getValue()
+                + ", now=" + LocalDateTime.now();
+    }
+
+    private String buildScheduledContextSummary(JobContext context) {
+        if (context == null) {
+            return "jobContext=null, configuredLogTestMode=" + coverageProperties.getModeEnum().getValue()
+                    + ", trigger=quartz-scheduled, scope=schedulable-only";
+        }
+        return "jobId=" + safe(context.getJobId())
+                + ", jobName=" + safe(context.getJobName())
+                + ", handler=" + safe(context.getHandlerName())
+                + ", cron=" + safe(context.getCronExpression())
+                + ", source=" + resolveContextSource(context)
+                + ", configuredLogTestMode=" + coverageProperties.getModeEnum().getValue()
+                + ", trigger=quartz-scheduled, scope=schedulable-only"
                 + ", now=" + LocalDateTime.now();
     }
 
