@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -50,6 +51,11 @@ public class AsyncLogTestSupport {
     public <T> Consumer<T> wrapConsumer(Consumer<T> consumer) {
         // 用于 parallelStream / 各类回调型 API 的 Consumer 入口。
         return LogCollectContextUtils.wrapConsumer(consumer);
+    }
+
+    public <T, U> BiConsumer<T, U> wrapBiConsumer(BiConsumer<T, U> consumer) {
+        // 用于 CompletableFuture.whenComplete 等双参回调入口。
+        return LogCollectContextUtils.wrapBiConsumer(consumer);
     }
 
     public CompletableFuture<Void> runAsync(Runnable runnable) {

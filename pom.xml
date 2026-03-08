@@ -57,7 +57,7 @@
 
         <poi.version>5.5.1</poi.version>
 
-        <logcollect.version>2.2.3</logcollect.version>
+        <logcollect.version>2.2.4</logcollect.version>
     </properties>
 
     <dependencyManagement>

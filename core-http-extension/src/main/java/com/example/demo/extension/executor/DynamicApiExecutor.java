@@ -5,6 +5,7 @@ import com.example.demo.extension.api.executor.DynamicApiTerminationReason;
 import com.example.demo.extension.api.executor.ExecuteStrategy;
 import com.example.demo.extension.config.DynamicApiConstants;
 import com.example.demo.extension.metrics.DynamicApiMetrics;
+import com.logcollect.core.context.LogCollectContextUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,6 +16,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 
 /**
  * 动态接口执行器。
@@ -390,12 +392,14 @@ public class DynamicApiExecutor {
                 execution.cancelTimeout();
             }, timeoutMs, TimeUnit.MILLISECONDS);
             timeoutRef.set(timeoutFuture);
-            resultFuture.whenComplete((r, t) -> {
+            BiConsumer<DynamicApiExecuteResult, Throwable> completionCallback =
+                    LogCollectContextUtils.wrapBiConsumer((r, t) -> {
                 ScheduledFuture<?> scheduled = timeoutRef.get();
                 if (scheduled != null) {
                     scheduled.cancel(false);
                 }
             });
+            resultFuture.whenComplete(completionCallback);
         } catch (RejectedExecutionException ex) {
             log.warn("Dynamic api timeout schedule rejected: apiId={}, type={}",
                     context.getMeta() == null || context.getMeta().getApi() == null

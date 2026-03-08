@@ -25,10 +25,10 @@ server:
     # 启用跨节点配置变更同步，确保动态配置在多节点一致生效。
     config.change-sync.enabled: true
 
-job:
-  async-log:
-    coverage:
-      mode: baseline
+#job:
+#  async-log:
+#    coverage:
+#      mode: baseline
 #       mode: branches
 #       branch-wait-timeout-seconds: 1
 

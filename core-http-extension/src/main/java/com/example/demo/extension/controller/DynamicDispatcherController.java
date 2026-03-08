@@ -23,6 +23,7 @@ import com.example.demo.extension.registry.DynamicApiMatch;
 import com.example.demo.extension.registry.DynamicApiRegistry;
 import com.example.demo.extension.support.DynamicApiRequestExtractor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.logcollect.core.context.LogCollectContextUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 /**
  * 动态接口统一入口。
@@ -120,7 +122,8 @@ public class DynamicDispatcherController {
         DynamicApiExecution execution = executor.submit(context);
         java.util.concurrent.atomic.AtomicBoolean timeoutHandled = new java.util.concurrent.atomic.AtomicBoolean(false);
         java.util.concurrent.atomic.AtomicBoolean cancelHandled = new java.util.concurrent.atomic.AtomicBoolean(false);
-        execution.getFuture().whenComplete((executeResult, throwable) -> {
+        BiConsumer<DynamicApiExecuteResult, Throwable> completionCallback =
+                LogCollectContextUtils.wrapBiConsumer((executeResult, throwable) -> {
             if (timeoutHandled.get() || result.isSetOrExpired()) {
                 return;
             }
@@ -142,6 +145,7 @@ public class DynamicDispatcherController {
             ResponseEntity<DynamicApiResponse<Object>> response = buildResponseEntity(request, payload, finalStart);
             result.setResult(response);
         });
+        execution.getFuture().whenComplete(completionCallback);
         result.onError(throwable -> {
             if (cancelHandled.compareAndSet(false, true) && !execution.getFuture().isDone()) {
                 execution.cancel(DynamicApiTerminationReason.CANCELLED, throwable);

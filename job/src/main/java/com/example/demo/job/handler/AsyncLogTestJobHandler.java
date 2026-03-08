@@ -34,6 +34,7 @@ import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
 /**
@@ -282,40 +283,36 @@ public class AsyncLogTestJobHandler implements JobHandler {
     }
 
     private CompletableFuture<Void> runCompletableFutureSuccessProbe(String runId) {
-        Runnable successCallback = asyncSupport.wrapRunnable(
-                () -> logInfo(runId, AsyncLogScenario.CF_SPRING_POOL_CALLBACK_SUCCESS,
+        BiConsumer<Void, Throwable> completionCallback = asyncSupport.wrapBiConsumer((ignored, ex) -> {
+            if (ex == null) {
+                logInfo(runId, AsyncLogScenario.CF_SPRING_POOL_CALLBACK_SUCCESS,
                         "CompletableFuture.whenComplete(success)",
-                        null)
-        );
-        AtomicReference<Throwable> callbackError = new AtomicReference<>();
-        Runnable errorCallback = asyncSupport.wrapRunnable(
-                () -> logWarn(runId, AsyncLogScenario.CF_SPRING_POOL_CALLBACK_ERROR,
-                        "CompletableFuture.whenComplete(error)",
-                        "error=" + resolveThrowableMessage(callbackError.get()))
-        );
+                        null);
+                return;
+            }
+            logWarn(runId, AsyncLogScenario.CF_SPRING_POOL_CALLBACK_ERROR,
+                    "CompletableFuture.whenComplete(error)",
+                    "error=" + resolveThrowableMessage(unwrapCompletionThrowable(ex)));
+        });
         return CompletableFuture.runAsync(
                         () -> logInfo(runId, AsyncLogScenario.CF_SPRING_POOL_TASK,
                                 "CompletableFuture.runAsync(..., jobAsyncExecutor)",
                                 null),
                         jobAsyncExecutor
                 )
-                .whenComplete((ignored, ex) -> {
-                    if (ex == null) {
-                        successCallback.run();
-                    } else {
-                        callbackError.set(unwrapCompletionThrowable(ex));
-                        errorCallback.run();
-                    }
-                });
+                .whenComplete(completionCallback);
     }
 
     private CompletableFuture<Void> runCompletableFutureErrorProbe(String runId) {
         CompletableFuture<Void> stage = new CompletableFuture<>();
-        AtomicReference<Throwable> callbackError = new AtomicReference<>();
-        Runnable errorCallback = asyncSupport.wrapRunnable(() -> {
+        BiConsumer<Void, Throwable> completionCallback = asyncSupport.wrapBiConsumer((ignored, ex) -> {
+            if (ex == null) {
+                stage.completeExceptionally(new IllegalStateException("CompletableFuture error probe finished without exception"));
+                return;
+            }
             logWarn(runId, AsyncLogScenario.CF_SPRING_POOL_CALLBACK_ERROR,
                     "CompletableFuture.whenComplete(error)",
-                    "error=" + resolveThrowableMessage(callbackError.get()));
+                    "error=" + resolveThrowableMessage(unwrapCompletionThrowable(ex)));
             stage.complete(null);
         });
         CompletableFuture.runAsync(
@@ -324,14 +321,7 @@ public class AsyncLogTestJobHandler implements JobHandler {
                         },
                         jobAsyncExecutor
                 )
-                .whenComplete((ignored, ex) -> {
-                    if (ex == null) {
-                        stage.completeExceptionally(new IllegalStateException("CompletableFuture error probe finished without exception"));
-                        return;
-                    }
-                    callbackError.set(unwrapCompletionThrowable(ex));
-                    errorCallback.run();
-                });
+                .whenComplete(completionCallback);
         return stage;
     }
 
