@@ -31,12 +31,17 @@ public class UserProfileService {
     private final IdentityReadFacade identityReadFacade;
     private final PermissionProperties permissionProperties;
     private final PasswordPolicyService passwordPolicyService;
+    private final UserProfileCache userProfileCache;
 
     public UserProfileResponse buildProfile(AuthUser authUser) {
-        UserProfileResponse response = new UserProfileResponse();
         if (authUser == null || authUser.getId() == null) {
-            return response;
+            return new UserProfileResponse();
         }
+        UserProfileResponse cached = userProfileCache.get(authUser.getId());
+        if (cached != null) {
+            return cached;
+        }
+        UserProfileResponse response = new UserProfileResponse();
         IdentityUserDTO user = identityReadFacade.getUserById(authUser.getId());
         response.setUser(toProfileInfo(authUser, user));
         response.setPasswordExpired(passwordPolicyService.isPasswordExpired(user));
@@ -46,6 +51,7 @@ public class UserProfileService {
         response.setRoleTargets(loadRoleTargets(authUser.getId()));
         response.setPermissions(loadPermissions(authUser));
         response.setMenus(buildMenuTree(loadMenus(authUser)));
+        userProfileCache.put(authUser.getId(), response);
         return response;
     }
 
