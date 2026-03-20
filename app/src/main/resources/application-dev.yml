@@ -24,7 +24,15 @@ server:
     cache.location: redis
     # 启用跨节点配置变更同步，确保动态配置在多节点一致生效。
     config.change-sync.enabled: true
-
+security:
+  # CORS 配置
+  cors:
+    # 是否启用 CORS
+    enabled: true
+    # 允许的来源域名
+    allowed-origins:
+      - http://localhost:8080
+      - http://127.0.0.1:8080
 #job:
 #  async-log:
 #    coverage:

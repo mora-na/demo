@@ -313,6 +313,7 @@ import {getUnreadNoticeCount, listMyNotices, markAllNoticesRead, markNoticeRead,
 import {useAuthStore} from "../stores/auth";
 import {useDictStore} from "../stores/dict";
 import Sidebar from "../components/Sidebar.vue";
+import {API_BASE_URL} from "../config/api";
 
 const SystemManagementPanel = defineAsyncComponent(() => import("./system/SystemManagementPanel.vue"));
 const DataScopePanel = defineAsyncComponent(() => import("./system/DataScopePanel.vue"));
@@ -1014,7 +1015,7 @@ function startNoticeStream() {
   if (!token) {
     return;
   }
-  const baseUrl = (import.meta.env.VITE_API_BASE_URL || "/prod-api").replace(/\/$/, "");
+  const baseUrl = API_BASE_URL;
   const url = `${baseUrl}/notices/stream?token=${encodeURIComponent(token)}`;
   const withCredentials = String(import.meta.env.VITE_API_WITH_CREDENTIALS || "").toLowerCase() === "true";
   const source = new EventSource(url, {withCredentials});
