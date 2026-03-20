@@ -5,7 +5,7 @@ server:
   # 是否以多节点集群模式运行。
   # false: 不强制覆盖任何配置，用户显式配置保持原样（默认）。
   # true : 启用 server.clustered-cover-config 中定义的强制覆盖，用于一键切换到多节点部署安全配置。
-  is-clustered: true
+  is-clustered: false
   # 多节点模式下的强制覆盖配置表。
   # 仅当 server.is-clustered=true 时生效，且会以最高优先级覆盖已有配置。
   # 使用点号 key 形式（如 spring.quartz.properties.org.quartz.jobStore.isClustered）。
@@ -24,6 +24,10 @@ server:
     cache.location: redis
     # 启用跨节点配置变更同步，确保动态配置在多节点一致生效。
     config.change-sync.enabled: true
+# 缓存配置
+cache:
+  # 缓存位置：redis | memory（仅限单机部署） | db
+  location: memory
 security:
   # CORS 配置
   cors:
