@@ -34,6 +34,7 @@ security:
     # 是否启用 CORS
     enabled: true
     # 允许的来源域名
+    #可以指定环境变量覆盖，例如：SECURITY_CORS_ALLOWED_ORIGINS=https://demo.morana.dns.army,https://demo-api.mora.dpdns.org
     allowed-origins:
       - http://localhost:8080
       - http://127.0.0.1:8080
