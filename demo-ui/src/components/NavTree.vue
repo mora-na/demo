@@ -2,15 +2,33 @@
   <template v-for="item in menus" :key="item.id">
     <el-sub-menu v-if="item.children?.length" :index="menuIndex(item)">
       <template #title>
-        <component :is="menuIconComponent(item)" class="menu-icon"/>
-        <span>{{ menuLabel(item) }}</span>
+        <el-tooltip
+            :content="menuLabel(item)"
+            :disabled="!collapsed"
+            :show-after="200"
+            placement="right"
+        >
+          <span class="menu-item-content">
+            <component :is="menuIconComponent(item)" class="menu-icon"/>
+            <span class="menu-label">{{ menuLabel(item) }}</span>
+          </span>
+        </el-tooltip>
       </template>
-      <NavTree :menus="item.children"/>
+      <NavTree :collapsed="collapsed" :menus="item.children"/>
     </el-sub-menu>
 
     <el-menu-item v-else :index="menuIndex(item)">
-      <component :is="menuIconComponent(item)" class="menu-icon"/>
-      <span>{{ menuLabel(item) }}</span>
+      <el-tooltip
+          :content="menuLabel(item)"
+          :disabled="!collapsed"
+          :show-after="200"
+          placement="right"
+      >
+        <span class="menu-item-content">
+          <component :is="menuIconComponent(item)" class="menu-icon"/>
+          <span class="menu-label">{{ menuLabel(item) }}</span>
+        </span>
+      </el-tooltip>
     </el-menu-item>
   </template>
 </template>
@@ -22,7 +40,7 @@ import {menuIndex} from "../utils/menuIndex";
 
 defineOptions({name: "NavTree"});
 
-defineProps<{ menus: MenuTree[] }>();
+defineProps<{ menus: MenuTree[]; collapsed?: boolean }>();
 
 function menuLabel(menu: MenuTree): string {
   return menu.name || menu.code || "-";

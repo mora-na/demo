@@ -1276,7 +1276,8 @@ VALUES (1, 'user:query', '用户查询', 1),
        (87, 'config:create', '配置创建', 1),
        (88, 'config:update', '配置更新', 1),
        (89, 'config:delete', '配置删除', 1),
-       (90, 'config:cache:refresh', '配置缓存刷新', 1)
+       (90, 'config:cache:refresh', '配置缓存刷新', 1),
+       (91, 'formula:query', '公式查询', 1)
 ;
 
 INSERT INTO sys_menu (id, name, code, parent_id, path, component, permission, status, sort, remark)
@@ -1325,7 +1326,9 @@ VALUES (100, '系统管理', 'system', NULL, '/system', 'Layout', NULL, 1, 10, '
        (200, '订单管理', 'order', NULL, '/orders', 'OrderPage', 'order:query', 1, 20, '订单管理'),
        (210, '接口扩展', 'extension', NULL, '/extension', 'Layout', NULL, 1, 50, '接口扩展'),
        (211, '动态接口', 'dynamic-api', 210, '/extension/dynamic-api', 'DynamicApiPage', 'dynamic-api:query', 1, 10,
-        '动态接口管理')
+        '动态接口管理'),
+       (212, '公式构建器', 'formula-builder', 210, '/extension/formula-builder', 'FormulaBuilderPage',
+        'formula:query', 1, 20, '公式可视化编辑')
 ;
 
 SET search_path TO demo_dict, public;
@@ -1477,6 +1480,7 @@ VALUES (1, 1),
        (1, 88),
        (1, 89),
        (1, 90),
+       (1, 91),
        (2, 1),
        (2, 4),
        (2, 5),
@@ -1489,10 +1493,12 @@ VALUES (1, 1),
        (2, 62),
        (2, 63),
        (2, 64),
+       (2, 91),
        (3, 28),
        (3, 56),
        (3, 60),
-       (3, 61)
+       (3, 61),
+       (3, 91)
 ;
 
 INSERT INTO sys_role_menu (role_id, menu_id, data_scope_type)
@@ -1532,13 +1538,15 @@ VALUES (1, 10, NULL),
        (2, 110, NULL),
        (2, 160, 'DEPT'),
        (2, 200, NULL),
+       (2, 212, NULL),
        (3, 10, NULL),
        (3, 11, NULL),
        (3, 20, NULL),
        (3, 21, NULL),
        (3, 100, NULL),
        (3, 160, NULL),
-       (3, 200, NULL)
+       (3, 200, NULL),
+       (3, 212, NULL)
 ;
 
 SET search_path TO demo_order, public;

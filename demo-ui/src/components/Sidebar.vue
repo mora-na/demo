@@ -27,7 +27,7 @@
           @close="handleClose"
           @open="handleOpen"
       >
-        <NavTree :menus="menus"/>
+        <NavTree :collapsed="collapsed" :menus="menus"/>
       </el-menu>
     </el-scrollbar>
   </aside>

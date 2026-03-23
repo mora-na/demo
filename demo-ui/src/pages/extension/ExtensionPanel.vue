@@ -13,6 +13,7 @@
 
     <div class="system-body">
       <DynamicApiManagement v-if="activeMenuCode === 'dynamic-api'"/>
+      <FormulaBuilder v-else-if="activeMenuCode === 'formula-builder'"/>
       <div v-else class="system-placeholder">{{ t("extensionPanel.placeholder") }}</div>
     </div>
   </section>
@@ -23,6 +24,7 @@ import {computed, ref, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import type {MenuTree} from "../../api/auth";
 import DynamicApiManagement from "./DynamicApiManagement.vue";
+import FormulaBuilder from "../formula/FormulaBuilder.vue";
 
 const props = defineProps<{
   menus: MenuTree[];
