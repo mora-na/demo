@@ -1,10 +1,17 @@
 package com.example.demo.common.web.filter;
 
 import com.example.demo.common.config.CommonConstants;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.MDC;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.servlet.*;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -15,7 +22,13 @@ import java.util.UUID;
  * @date 2026/2/9
  */
 @Component
-public class TraceIdFilter implements Filter {
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
+public class TraceIdFilter extends OncePerRequestFilter {
+
+    private static final String HEADER_REQUEST_ID = "X-Request-Id";
+    private static final String HEADER_TRACE_ID = "X-Trace-Id";
+    private static final String HEADER_CF_RAY = "CF-Ray";
+    private static final String HEADER_X_CF_RAY = "X-Cf-Ray";
 
     private final CommonConstants systemConstants;
 
@@ -35,13 +48,48 @@ public class TraceIdFilter implements Filter {
      * @date 2026/2/9
      */
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain chain) throws IOException, ServletException {
         String mdcKey = systemConstants.getTrace().getMdcKey();
+        String traceId = resolveTraceId(request);
+        String cfRay = firstNonBlank(request.getHeader(HEADER_X_CF_RAY), request.getHeader(HEADER_CF_RAY));
         try {
-            MDC.put(mdcKey, UUID.randomUUID().toString()); // 可改为从请求头提取 traceId
+            MDC.put(mdcKey, traceId);
+            request.setAttribute(HEADER_REQUEST_ID, traceId);
+            response.setHeader(HEADER_REQUEST_ID, traceId);
+            response.setHeader(HEADER_TRACE_ID, traceId);
+            if (cfRay != null) {
+                response.setHeader(HEADER_X_CF_RAY, cfRay);
+            }
             chain.doFilter(request, response);
         } finally {
             MDC.remove(mdcKey);
         }
+    }
+
+    private String resolveTraceId(HttpServletRequest request) {
+        String candidate = firstNonBlank(
+                request.getHeader(HEADER_REQUEST_ID),
+                request.getHeader(HEADER_TRACE_ID),
+                request.getHeader(HEADER_X_CF_RAY),
+                request.getHeader(HEADER_CF_RAY)
+        );
+        return candidate != null ? candidate : UUID.randomUUID().toString();
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null) {
+                String trimmed = value.trim();
+                if (!trimmed.isEmpty()) {
+                    return trimmed;
+                }
+            }
+        }
+        return null;
     }
 }
