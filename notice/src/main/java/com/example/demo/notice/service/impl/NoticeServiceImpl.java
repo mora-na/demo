@@ -179,11 +179,19 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         NoticeRecipient update = new NoticeRecipient();
         update.setReadStatus(noticeConstants.getRecipient().getRead());
         update.setReadTime(LocalDateTime.now());
-        return noticeRecipientService.update(update,
+        boolean updated = noticeRecipientService.update(update,
                 Wrappers.lambdaUpdate(NoticeRecipient.class)
                         .eq(NoticeRecipient::getNoticeId, noticeId)
                         .eq(NoticeRecipient::getUserId, userId)
                         .eq(NoticeRecipient::getReadStatus, noticeConstants.getRecipient().getUnread()));
+        if (updated) {
+            noticeStreamService.pushUnreadCounts(
+                    Collections.singletonList(userId),
+                    buildUnreadCountMap(Collections.singletonList(userId)),
+                    null
+            );
+        }
+        return updated;
     }
 
     @Override
@@ -194,10 +202,18 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
         NoticeRecipient update = new NoticeRecipient();
         update.setReadStatus(noticeConstants.getRecipient().getRead());
         update.setReadTime(LocalDateTime.now());
-        return noticeRecipientMapper.update(update,
+        int updated = noticeRecipientMapper.update(update,
                 Wrappers.lambdaUpdate(NoticeRecipient.class)
                         .eq(NoticeRecipient::getUserId, userId)
                         .eq(NoticeRecipient::getReadStatus, noticeConstants.getRecipient().getUnread()));
+        if (updated > 0) {
+            noticeStreamService.pushUnreadCounts(
+                    Collections.singletonList(userId),
+                    buildUnreadCountMap(Collections.singletonList(userId)),
+                    null
+            );
+        }
+        return updated;
     }
 
     @Override
@@ -239,16 +255,34 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
                 })
                 .collect(Collectors.toList());
         noticeRecipientService.saveBatch(recipients);
-        Map<Long, Long> unreadCounts = noticeRecipientMapper.countUnreadByUserIds(targetUserIds)
-                .stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(
-                        com.example.demo.notice.dto.NoticeUnreadCount::getUserId,
-                        count -> count.getUnreadCount() == null ? noticeConstants.getNumeric().getZeroLong() : count.getUnreadCount(),
-                        (left, right) -> right
-                ));
+        Map<Long, Long> unreadCounts = buildUnreadCountMap(targetUserIds);
         noticeStreamService.pushToUsers(targetUserIds, notice, unreadCounts);
         return notice;
+    }
+
+    private Map<Long, Long> buildUnreadCountMap(Collection<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Long> targets = userIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (targets.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<Long, Long> unreadCounts = new LinkedHashMap<>();
+        for (Long userId : targets) {
+            unreadCounts.put(userId, noticeConstants.getNumeric().getZeroLong());
+        }
+        noticeRecipientMapper.countUnreadByUserIds(targets)
+                .stream()
+                .filter(Objects::nonNull)
+                .forEach(count -> unreadCounts.put(
+                        count.getUserId(),
+                        count.getUnreadCount() == null ? noticeConstants.getNumeric().getZeroLong() : count.getUnreadCount()
+                ));
+        return unreadCounts;
     }
 
     private Long parseLong(String value) {

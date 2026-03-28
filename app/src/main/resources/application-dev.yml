@@ -57,6 +57,9 @@ config:
     enabled: false
     # 预热范围：ALL / SEEDED / HOT / SEEDED_OR_HOT / NONE
     mode: NONE
+  change-sync:
+    # 单节点测试环境关闭跨节点配置同步，减少轮询线程和缓存访问
+    enabled: false
   # 配置模块常量覆盖
   constants:
     cache:
@@ -66,7 +69,7 @@ config:
 # SQL 日志配置
 sql-log:
   # 是否打印 SQL
-  enabled: true
+  enabled: false
 
 # 认证配置
 auth:
@@ -194,7 +197,7 @@ management:
     db:
       enabled: true
     redis:
-      enabled: true
+      enabled: false
 
 # 通知能力配置
 notify:
@@ -229,11 +232,11 @@ spring:
     execution:
       pool:
         # 异步任务线程池核心线程数
-        core-size: 4
+        core-size: 2
         # 异步任务线程池最大线程数
-        max-size: 8
+        max-size: 4
         # 异步任务队列容量
-        queue-capacity: 100
+        queue-capacity: 50
         # 线程保活时间（秒）
         keep-alive: 60s
       # 线程名前缀
@@ -286,12 +289,38 @@ spring:
     type: com.alibaba.druid.pool.DruidDataSource
     # Druid 连接池通用配置
     druid:
+      # 初始化连接数
+      initial-size: 1
+      # 最小空闲连接数
+      min-idle: 1
+      # 最大活跃连接数
+      max-active: 6
+      # 获取连接最大等待时间（ms）
+      max-wait: 30000
+      # 连接检测间隔（ms）
+      time-between-eviction-runs-millis: 60000
+      # 连接最小空闲时间（ms）
+      min-evictable-idle-time-millis: 300000
+      # 最大空闲时长（ms）
+      max-evictable-idle-time-millis: 900000
+      # 连接校验 SQL
+      validation-query: SELECT 1
+      # 空闲时检测连接
+      test-while-idle: true
+      # 获取连接时检测
+      test-on-borrow: false
+      # 归还连接时检测
+      test-on-return: false
+      # 保活检测
+      keep-alive: true
+      # 小规格测试机上关闭 PS 缓存，减少每连接额外内存
+      pool-prepared-statements: false
       # 开启连接泄漏检测
       removeAbandoned: true
       # Druid 监控页面配置
       stat-view-servlet:
         # 是否启用监控页面
-        enabled: true
+        enabled: false
         # 监控页面 URL 匹配
         url-pattern: /druid/*
         # 监控页面登录用户名 admin
@@ -301,7 +330,7 @@ spring:
       # Web 统计过滤器配置
       web-stat-filter:
         # 是否启用 Web 统计
-        enabled: true
+        enabled: false
         # Web 统计过滤 URL 匹配
         url-pattern: /*
         # 启用 Session 监控（需要应用实际创建 HttpSession）
@@ -309,7 +338,7 @@ spring:
         # 过滤器排除资源
         exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
       # SQL 监控 + 防火墙 + 日志（单数据源模式也启用）
-      filters: stat,wall,slf4j
+      filters: stat,wall
       filter:
         # SQL 统计
         stat:
@@ -334,7 +363,7 @@ spring:
             none-base-statement-allow: true
         # 日志输出
         slf4j:
-          enabled: true
+          enabled: false
       # Spring 监控（按需调整包路径）
       aop-patterns: com.example.demo.*.service.*
     # 动态数据源配置
@@ -357,9 +386,9 @@ spring:
         # 最小空闲连接数
         min-idle: 1
         # 最大活跃连接数
-        max-active: 3
+        max-active: 4
         # 获取连接最大等待时间（ms）
-        max-wait: 60000
+        max-wait: 30000
         # 连接检测间隔（ms）
         time-between-eviction-runs-millis: 60000
         # 连接最小空闲时间（ms）
@@ -373,15 +402,15 @@ spring:
         # 归还连接时检测
         test-on-return: false
         # 是否缓存预编译语句
-        pool-prepared-statements: true
+        pool-prepared-statements: false
         # 每连接最大缓存 PS 数
         max-pool-prepared-statement-per-connection-size: 20
         # 启用过滤器
-        filters: stat,wall,slf4j
+        filters: stat,wall
         # 是否回收泄漏连接 建议：开发/联调环境：可以保留，便于发现连接泄漏。生产环境：关闭
         remove-abandoned: true
         # 泄漏连接回收超时（毫秒）
-        remove-abandoned-timeout-millis: 180000
+        remove-abandoned-timeout-millis: 120000
         # 是否记录泄漏连接日志
         log-abandoned: false
         # 保活检测

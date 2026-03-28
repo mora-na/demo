@@ -27,7 +27,7 @@ spring:
             # 线程池实现类
             class: org.quartz.simpl.SimpleThreadPool
             # 线程数（按并发任务量配置）
-            threadCount: 4
+            threadCount: 2
             # 线程优先级（1-10）
             threadPriority: 5
             # 继承初始化线程的上下文类加载器

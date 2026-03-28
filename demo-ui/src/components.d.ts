@@ -63,7 +63,6 @@ declare module 'vue' {
     SubExpressionItem: typeof import('./components/formula/SubExpressionItem.vue')['default']
     TokenChip: typeof import('./components/formula/TokenChip.vue')['default']
   }
-
   export interface ComponentCustomProperties {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }

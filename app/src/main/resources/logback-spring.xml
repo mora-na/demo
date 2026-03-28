@@ -18,7 +18,7 @@
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
     <include resource="org/springframework/boot/logging/logback/file-appender.xml"/>
 
-    <property name="ASYNC_QUEUE_SIZE" value="${LOGBACK_ASYNC_QUEUE_SIZE:-8192}"/>
+    <property name="ASYNC_QUEUE_SIZE" value="${LOGBACK_ASYNC_QUEUE_SIZE:-2048}"/>
 
     <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
         <queueSize>${ASYNC_QUEUE_SIZE}</queueSize>
@@ -37,12 +37,12 @@
     </appender>
 
     <springProfile name="dev">
-        <logger name="com" level="${LOG_LEVEL_COM:-DEBUG}"/>
-        <logger name="cn.com" level="${LOG_LEVEL_CN_COM:-DEBUG}"/>
+        <logger name="com" level="${LOG_LEVEL_COM:-INFO}"/>
+        <logger name="cn.com" level="${LOG_LEVEL_CN_COM:-INFO}"/>
         <logger name="org.springframework" level="${LOG_LEVEL_SPRING:-WARN}"/>
         <logger name="org.springframework.web" level="${LOG_LEVEL_SPRING_WEB:-WARN}"/>
-        <logger name="com.baomidou.dynamic.datasource" level="${LOG_LEVEL_DYNAMIC_DATASOURCE:-INFO}"/>
-        <logger name="com.alibaba.druid" level="${LOG_LEVEL_DRUID:-INFO}"/>
+        <logger name="com.baomidou.dynamic.datasource" level="${LOG_LEVEL_DYNAMIC_DATASOURCE:-WARN}"/>
+        <logger name="com.alibaba.druid" level="${LOG_LEVEL_DRUID:-WARN}"/>
     </springProfile>
 
     <root level="${LOG_LEVEL_ROOT:-INFO}">

@@ -365,7 +365,7 @@ public class NoticeStreamService {
             }
             List<NoticeLatestVO> latestSnapshot = hasRemoved
                     ? removeFromLatestCache(userId, removedSet)
-                    : latestSnapshot(userId);
+                    : null;
             Long unreadCount = resolveUnreadCount(event.getUnreadCounts(), userId);
             NoticePushPayload payload = new NoticePushPayload(
                     null,

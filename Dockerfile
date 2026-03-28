@@ -10,4 +10,4 @@ RUN apt-get update \
 
 WORKDIR /app
 COPY ./app/target/demo.jar /app/demo.jar
-ENTRYPOINT ["java","-jar","/app/demo.jar"]
+ENTRYPOINT ["java","-Xms256m","-Xmx512m","-XX:+UseG1GC","-XX:+ExitOnOutOfMemoryError","-jar","/app/demo.jar"]

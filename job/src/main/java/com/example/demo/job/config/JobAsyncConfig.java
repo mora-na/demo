@@ -24,9 +24,9 @@ public class JobAsyncConfig {
     @Bean(name = "jobAsyncExecutor")
     public ThreadPoolTaskExecutor jobAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(8);
-        executor.setQueueCapacity(200);
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(50);
         executor.setThreadNamePrefix("job-async-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setWaitForTasksToCompleteOnShutdown(true);
@@ -36,7 +36,7 @@ public class JobAsyncConfig {
 
     @Bean(name = "jobBeanExecutorService", destroyMethod = "shutdown")
     public ExecutorService jobBeanExecutorService() {
-        return Executors.newFixedThreadPool(2, newNamedThreadFactory("job-bean-executor-"));
+        return Executors.newFixedThreadPool(1, newNamedThreadFactory("job-bean-executor-"));
     }
 
     private ThreadFactory newNamedThreadFactory(String prefix) {

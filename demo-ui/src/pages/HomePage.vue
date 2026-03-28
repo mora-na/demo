@@ -309,7 +309,7 @@ import {useI18n} from "vue-i18n";
 import {useRoute, useRouter} from "vue-router";
 import {Bell, SlidersHorizontal} from "lucide-vue-next";
 import {logout, type MenuTree, updateProfile} from "../api/auth";
-import {getUnreadNoticeCount, listMyNotices, markAllNoticesRead, markNoticeRead, type NoticeMyVO} from "../api/system";
+import {listMyNotices, markAllNoticesRead, markNoticeRead, type NoticeMyVO} from "../api/system";
 import {useAuthStore} from "../stores/auth";
 import {useDictStore} from "../stores/dict";
 import Sidebar from "../components/Sidebar.vue";
@@ -513,7 +513,6 @@ watch(
       }
       if (prevLocked) {
         void dictStore.loadAll();
-        refreshUnreadCount();
       }
     }
 );
@@ -526,7 +525,6 @@ watch(
       }
       if (visible) {
         loadMyNotices();
-        refreshUnreadCount();
       }
     }
 );
@@ -545,7 +543,6 @@ watch(
       if (token !== prevToken || locked !== prevLocked) {
         resetNoticeStreamRetryState();
         startNoticeStream();
-        refreshUnreadCount();
       }
     },
     {immediate: true}
@@ -881,25 +878,6 @@ function formatDateTime(value?: string) {
   )}:${pad(date.getMinutes())}`;
 }
 
-async function refreshUnreadCount() {
-  if (passwordPolicyLock.value) {
-    unreadCount.value = 0;
-    return;
-  }
-  if (!authStore.token) {
-    unreadCount.value = 0;
-    return;
-  }
-  try {
-    const result = await getUnreadNoticeCount();
-    if (result?.code === 200) {
-      unreadCount.value = result.data ?? 0;
-    }
-  } catch (error) {
-    unreadCount.value = 0;
-  }
-}
-
 let noticePingTimeoutMs = 45000;
 
 function markNoticeStreamAlive() {
@@ -947,8 +925,6 @@ function mapLatestToNotice(item: Record<string, any>): NoticeMyVO {
 
 function applyNoticePayload(payload: any) {
   let updated = false;
-  let hasUnreadCount = payload && typeof payload.unreadCount === "number";
-  let skipRefresh = false;
   if (payload && typeof payload.unreadCount === "number") {
     unreadCount.value = payload.unreadCount;
     updated = true;
@@ -964,8 +940,6 @@ function applyNoticePayload(payload: any) {
   }
   if (payload && payload.streamStatus === "rejected") {
     noticeStreamRetryExhausted.value = false;
-    skipRefresh = true;
-    hasUnreadCount = true;
     if (noticeStreamRetryTimer != null) {
       window.clearTimeout(noticeStreamRetryTimer);
       noticeStreamRetryTimer = null;
@@ -977,7 +951,7 @@ function applyNoticePayload(payload: any) {
     noticeItems.value = payload.latestNotices.map(mapLatestToNotice);
     updated = true;
   }
-  return {updated, hasUnreadCount: hasUnreadCount || skipRefresh};
+  return updated;
 }
 
 function resetNoticeStreamRetryCounter() {
@@ -1028,18 +1002,13 @@ function startNoticeStream() {
   };
   const handlePayloadEvent = (event: MessageEvent) => {
     markNoticeStreamAlive();
-    let hasUnreadCount = false;
     if (event?.data) {
       try {
         const payload = JSON.parse(event.data);
-        const result = applyNoticePayload(payload);
-        hasUnreadCount = result.hasUnreadCount;
+        applyNoticePayload(payload);
       } catch {
         // ignore parse errors
       }
-    }
-    if (!hasUnreadCount) {
-      refreshUnreadCount();
     }
     if (noticeVisible.value) {
       loadMyNotices();
@@ -1141,11 +1110,10 @@ async function openNotice(item: NoticeMyVO) {
       if (result?.code === 200) {
         item.readStatus = 1;
         item.readTime = new Date().toISOString();
+        unreadCount.value = Math.max(0, unreadCount.value - 1);
       }
     } catch (error) {
       ElMessage.error(getErrorMessage(error, t("common.error")));
-    } finally {
-      await refreshUnreadCount();
     }
   }
 }
@@ -1434,7 +1402,6 @@ onMounted(async () => {
     return;
   }
   void dictStore.loadAll();
-  await refreshUnreadCount();
 });
 
 onUnmounted(() => {

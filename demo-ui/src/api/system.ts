@@ -745,11 +745,6 @@ export async function listMyNotices(params: {
     return response.data;
 }
 
-export async function getUnreadNoticeCount(): Promise<ApiResponse<number>> {
-    const response = await api.get<ApiResponse<number>>('/notices/unread-count');
-    return response.data;
-}
-
 export async function markNoticeRead(id: number): Promise<ApiResponse<void>> {
     const response = await api.put<ApiResponse<void>>(`/notices/${id}/read`);
     return response.data;
