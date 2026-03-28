@@ -25,6 +25,9 @@ import java.io.IOException;
 @Order(Ordered.HIGHEST_PRECEDENCE + 2)
 public class RequestTraceLoggingFilter extends OncePerRequestFilter {
 
+    private static final String ATTR_CLIENT_REQUEST_ID = "clientRequestId";
+    private static final String ATTR_TRACE_ID = "traceId";
+    private static final String HEADER_CLIENT_REQUEST_ID = "X-Client-Request-Id";
     private static final String HEADER_REQUEST_ID = "X-Request-Id";
     private static final String HEADER_CF_RAY = "CF-Ray";
     private static final String HEADER_X_CF_RAY = "X-Cf-Ray";
@@ -42,27 +45,32 @@ public class RequestTraceLoggingFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         long startedAt = System.currentTimeMillis();
-        String requestId = firstNonBlank(request.getHeader(HEADER_REQUEST_ID), (String) request.getAttribute(HEADER_REQUEST_ID));
+        String clientRequestId = firstNonBlank(
+                (String) request.getAttribute(ATTR_CLIENT_REQUEST_ID),
+                request.getHeader(HEADER_CLIENT_REQUEST_ID),
+                request.getHeader(HEADER_REQUEST_ID)
+        );
+        String traceId = firstNonBlank((String) request.getAttribute(ATTR_TRACE_ID), org.slf4j.MDC.get("traceId"));
         String cfRay = firstNonBlank(request.getHeader(HEADER_X_CF_RAY), request.getHeader(HEADER_CF_RAY));
         String requestUri = buildRequestUri(request);
         String clientIp = clientIpResolver.resolve(request);
         String origin = trimToNull(request.getHeader(HEADER_ORIGIN));
         boolean fromWorker = "true".equalsIgnoreCase(request.getHeader(HEADER_X_FROM_WORKER));
 
-        log.info("http.request.start requestId={} cfRay={} method={} uri={} clientIp={} origin={} fromWorker={}",
-                requestId, cfRay, request.getMethod(), requestUri, clientIp, origin, fromWorker);
+        log.info("http.request.start traceId={} clientRequestId={} cfRay={} method={} uri={} clientIp={} origin={} fromWorker={}",
+                traceId, clientRequestId, cfRay, request.getMethod(), requestUri, clientIp, origin, fromWorker);
 
         try {
             filterChain.doFilter(request, response);
         } catch (Exception ex) {
             long durationMs = System.currentTimeMillis() - startedAt;
-            log.error("http.request.error requestId={} cfRay={} method={} uri={} status={} durationMs={} error={}",
-                    requestId, cfRay, request.getMethod(), requestUri, response.getStatus(), durationMs, ex.getMessage(), ex);
+            log.error("http.request.error traceId={} clientRequestId={} cfRay={} method={} uri={} status={} durationMs={} error={}",
+                    traceId, clientRequestId, cfRay, request.getMethod(), requestUri, response.getStatus(), durationMs, ex.getMessage(), ex);
             throw ex;
         } finally {
             long durationMs = System.currentTimeMillis() - startedAt;
-            log.info("http.request.complete requestId={} cfRay={} method={} uri={} status={} durationMs={}",
-                    requestId, cfRay, request.getMethod(), requestUri, response.getStatus(), durationMs);
+            log.info("http.request.complete traceId={} clientRequestId={} cfRay={} method={} uri={} status={} durationMs={}",
+                    traceId, clientRequestId, cfRay, request.getMethod(), requestUri, response.getStatus(), durationMs);
         }
     }
 

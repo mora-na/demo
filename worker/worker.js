@@ -1,8 +1,8 @@
 export default {
     async fetch(request, env) {
         const requestStartedAt = Date.now();
-        const incomingRequestId = request.headers.get("X-Request-Id");
-        const requestId = incomingRequestId || crypto.randomUUID();
+        const incomingClientRequestId = request.headers.get("X-Client-Request-Id");
+        const clientRequestId = incomingClientRequestId || crypto.randomUUID();
         const cfRay = request.headers.get("cf-ray") || "";
 
         // ===== 1. 配置 =====
@@ -20,7 +20,7 @@ export default {
         let path = incomingUrl.pathname;
 
         console.info("worker.request.start", {
-            requestId,
+            clientRequestId,
             cfRay,
             method: request.method,
             url: incomingUrl.toString(),
@@ -40,7 +40,7 @@ export default {
         // ❗只允许浏览器 + 指定域名
         if (!requestOrigin) {
             console.warn("worker.request.reject", {
-                requestId,
+                clientRequestId,
                 cfRay,
                 method: request.method,
                 url: incomingUrl.toString(),
@@ -51,7 +51,7 @@ export default {
                 status: 403,
                 headers: {
                     "Content-Type": "text/plain; charset=utf-8",
-                    "X-Request-Id": requestId,
+                    "X-Client-Request-Id": clientRequestId,
                     "X-Cf-Ray": cfRay,
                 },
             });
@@ -65,7 +65,7 @@ export default {
         if (request.method === "OPTIONS") {
             if (!allowOrigin) {
                 console.warn("worker.request.reject", {
-                    requestId,
+                    clientRequestId,
                     cfRay,
                     method: request.method,
                     url: incomingUrl.toString(),
@@ -82,7 +82,7 @@ export default {
                         status: 403,
                         headers: {
                             "Content-Type": "application/json; charset=utf-8",
-                            "X-Request-Id": requestId,
+                            "X-Client-Request-Id": clientRequestId,
                             "X-Cf-Ray": cfRay,
                             "Vary": "Origin",
                         },
@@ -102,7 +102,7 @@ export default {
                     "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
                     "Access-Control-Allow-Headers": allowHeaders,
                     "Access-Control-Max-Age": "86400",
-                    "X-Request-Id": requestId,
+                    "X-Client-Request-Id": clientRequestId,
                     "X-Cf-Ray": cfRay,
                     "Vary": "Origin",
                 },
@@ -112,7 +112,7 @@ export default {
         // ===== 5. 非法来源直接拒绝 =====
         if (!allowOrigin) {
             console.warn("worker.request.reject", {
-                requestId,
+                clientRequestId,
                 cfRay,
                 method: request.method,
                 url: incomingUrl.toString(),
@@ -129,7 +129,7 @@ export default {
                     status: 403,
                     headers: {
                         "Content-Type": "application/json; charset=utf-8",
-                        "X-Request-Id": requestId,
+                        "X-Client-Request-Id": clientRequestId,
                         "X-Cf-Ray": cfRay,
                         "Vary": "Origin",
                     },
@@ -142,8 +142,7 @@ export default {
 
         // ✅ 保持真实 Origin（关键！）
         headers.set("Origin", requestOrigin);
-        headers.set("X-Request-Id", requestId);
-        headers.set("X-Trace-Id", requestId);
+        headers.set("X-Client-Request-Id", clientRequestId);
         if (cfRay) {
             headers.set("X-Cf-Ray", cfRay);
         }
@@ -183,10 +182,12 @@ export default {
             // ===== 8. 转发请求 =====
             const upstreamStartedAt = Date.now();
             console.info("worker.origin.fetch.start", {
-                requestId,
+                clientRequestId,
                 cfRay,
                 method: request.method,
                 targetUrl: targetUrl.toString(),
+                forwardedClientRequestId: headers.get("X-Client-Request-Id"),
+                forwardedCfRay: headers.get("X-Cf-Ray"),
             });
             const response = await fetch(targetUrl.toString(), init);
 
@@ -205,17 +206,22 @@ export default {
             respHeaders.set("X-Content-Type-Options", "nosniff");
             respHeaders.set("X-Frame-Options", "SAMEORIGIN");
             respHeaders.set("Referrer-Policy", "strict-origin-when-cross-origin");
-            respHeaders.set("X-Request-Id", requestId);
+            respHeaders.set("X-Client-Request-Id", clientRequestId);
+            const upstreamTraceId = response.headers.get("X-Trace-Id") || response.headers.get("X-Upstream-Trace-Id") || "";
+            if (upstreamTraceId) {
+                respHeaders.set("X-Upstream-Trace-Id", upstreamTraceId);
+            }
             if (cfRay) {
                 respHeaders.set("X-Cf-Ray", cfRay);
             }
 
             console.info("worker.origin.fetch.complete", {
-                requestId,
+                clientRequestId,
                 cfRay,
                 method: request.method,
                 targetUrl: targetUrl.toString(),
                 status: response.status,
+                upstreamTraceId,
                 upstreamDurationMs: Date.now() - upstreamStartedAt,
                 durationMs,
             });
@@ -228,7 +234,7 @@ export default {
         } catch (err) {
             // ===== 10. 异常处理 =====
             console.error("worker.origin.fetch.error", {
-                requestId,
+                clientRequestId,
                 cfRay,
                 method: request.method,
                 targetUrl: targetUrl.toString(),
@@ -238,7 +244,7 @@ export default {
             return new Response(
                 JSON.stringify({
                     message: "Bad Gateway",
-                    requestId,
+                    clientRequestId,
                     cfRay,
                     error: err?.message || String(err),
                 }),
@@ -248,7 +254,7 @@ export default {
                         "Content-Type": "application/json; charset=utf-8",
                         "Access-Control-Allow-Origin": allowOrigin,
                         "Access-Control-Allow-Credentials": "true",
-                        "X-Request-Id": requestId,
+                        "X-Client-Request-Id": clientRequestId,
                         "X-Cf-Ray": cfRay,
                         "Vary": "Origin",
                     },

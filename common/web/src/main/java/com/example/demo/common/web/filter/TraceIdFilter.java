@@ -25,10 +25,14 @@ import java.util.UUID;
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 public class TraceIdFilter extends OncePerRequestFilter {
 
+    private static final String HEADER_CLIENT_REQUEST_ID = "X-Client-Request-Id";
     private static final String HEADER_REQUEST_ID = "X-Request-Id";
     private static final String HEADER_TRACE_ID = "X-Trace-Id";
+    private static final String HEADER_UPSTREAM_TRACE_ID = "X-Upstream-Trace-Id";
     private static final String HEADER_CF_RAY = "CF-Ray";
     private static final String HEADER_X_CF_RAY = "X-Cf-Ray";
+    private static final String ATTR_CLIENT_REQUEST_ID = "clientRequestId";
+    private static final String ATTR_TRACE_ID = "traceId";
 
     private final CommonConstants systemConstants;
 
@@ -52,13 +56,26 @@ public class TraceIdFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain chain) throws IOException, ServletException {
         String mdcKey = systemConstants.getTrace().getMdcKey();
+        String headerClientRequestId = firstNonBlank(request.getHeader(HEADER_CLIENT_REQUEST_ID));
+        String headerRequestId = firstNonBlank(request.getHeader(HEADER_REQUEST_ID));
+        String headerTraceId = firstNonBlank(request.getHeader(HEADER_TRACE_ID));
+        String headerCfRay = firstNonBlank(request.getHeader(HEADER_X_CF_RAY), request.getHeader(HEADER_CF_RAY));
+        String clientRequestId = resolveClientRequestId(request);
         String traceId = resolveTraceId(request);
-        String cfRay = firstNonBlank(request.getHeader(HEADER_X_CF_RAY), request.getHeader(HEADER_CF_RAY));
+        String cfRay = headerCfRay;
+        String traceSource = headerTraceId != null ? "header-trace-id" : "generated";
+        org.slf4j.LoggerFactory.getLogger(TraceIdFilter.class).info(
+                "http.trace.bind method={} uri={} headerClientRequestId={} headerRequestId={} headerTraceId={} headerCfRay={} resolvedClientRequestId={} resolvedTraceId={} traceSource={}",
+                request.getMethod(), request.getRequestURI(), headerClientRequestId, headerRequestId, headerTraceId, headerCfRay,
+                clientRequestId, traceId, traceSource
+        );
         try {
             MDC.put(mdcKey, traceId);
-            request.setAttribute(HEADER_REQUEST_ID, traceId);
-            response.setHeader(HEADER_REQUEST_ID, traceId);
+            request.setAttribute(ATTR_CLIENT_REQUEST_ID, clientRequestId);
+            request.setAttribute(ATTR_TRACE_ID, traceId);
+            response.setHeader(HEADER_CLIENT_REQUEST_ID, clientRequestId);
             response.setHeader(HEADER_TRACE_ID, traceId);
+            response.setHeader(HEADER_UPSTREAM_TRACE_ID, traceId);
             if (cfRay != null) {
                 response.setHeader(HEADER_X_CF_RAY, cfRay);
             }
@@ -68,12 +85,18 @@ public class TraceIdFilter extends OncePerRequestFilter {
         }
     }
 
+    private String resolveClientRequestId(HttpServletRequest request) {
+        String candidate = firstNonBlank(
+                request.getHeader(HEADER_CLIENT_REQUEST_ID),
+                request.getHeader(HEADER_REQUEST_ID)
+        );
+        return candidate != null ? candidate : UUID.randomUUID().toString();
+    }
+
     private String resolveTraceId(HttpServletRequest request) {
         String candidate = firstNonBlank(
-                request.getHeader(HEADER_REQUEST_ID),
                 request.getHeader(HEADER_TRACE_ID),
-                request.getHeader(HEADER_X_CF_RAY),
-                request.getHeader(HEADER_CF_RAY)
+                (String) request.getAttribute(ATTR_TRACE_ID)
         );
         return candidate != null ? candidate : UUID.randomUUID().toString();
     }
